@@ -38,7 +38,7 @@ transformation is through `Transformer[From, To]`:
     }
 
     // There are better ways of defining implicit Transformer - see Transformer.derive[From, To] and
-    // Transformer.define[From, To].buildTransformer - but for completely arbitrary type it's ok
+    // Transformer.define[From, To].buildTransformer - but for completely arbitrary type it's ok:
     val transformer: Transformer[MyType, MyOtherType] = (src: MyType) => new MyOtherType(src.a.toString)
 
     transformer.transform(new MyType(10)) // new MyOtherType("10")
@@ -111,10 +111,10 @@ function was not defined, "empty value" when something was expected) and even th
 
     import io.scalaland.chimney.dsl._
 
-    // When the compiler can find an implicit Transformer...
+    // When the compiler can find an implicit Transformer...:
     implicit val transformerAsImplicit: PartialTransformer[MyType, MyOtherType] = transformer
 
-    // ...we can use this extension method to call it
+    // ...we can use this extension method to call it:
     pprint.pprintln(
       (new MyType("10"))
         .transformIntoPartial[MyOtherType]
@@ -180,10 +180,10 @@ away with just providing a throwing function, and letting some utility catch the
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.dsl._
 
-    val fn: String => Int = str => str.toInt // throws Exception if String is not a number
+    val fn: String => Int = str => str.toInt // Throws Exception if String is not a number.
 
     implicit val transformer: PartialTransformer[String, Int] =
-      PartialTransformer.fromFunction(fn) // catches exception
+      PartialTransformer.fromFunction(fn) // Catches exception!
 
     pprint.pprintln(
       "1".transformIntoPartial[Int].asEitherErrorPathMessageStrings
@@ -214,7 +214,7 @@ Other times you might need to convert `PartialFunction` into total function with
     }
 
     implicit val transformer: PartialTransformer[String, Int] =
-      PartialTransformer(partial.Result.fromPartialFunction(fn)) // handled "not defined at" case
+      PartialTransformer(partial.Result.fromPartialFunction(fn)) // Handled "not defined at" case!
 
     pprint.pprintln(
       "1".transformIntoPartial[Int].asEitherErrorPathMessageStrings
@@ -317,19 +317,21 @@ If you transform one type into itself or its supertype, it will be upcast withou
     trait A
     class B extends A
     val b = new B
-    b.transformInto[A]
+    b.transformInto[A] // == (b: A)
     b.into[A].transform // == (b: A)
     b.transformIntoPartial[A].asEither // == Right(b: A)
     b.intoPartial[A].transform.asEither // == Right(b: A)
 
     import io.scalaland.chimney.{Transformer, PartialTransformer}
 
-    // If we want to reuse Transformer we can create implicits using
+    // If we want to reuse Transformer, we can create implicits using:
     val totalTransformer: Transformer[A, B] = Transformer.derive[A, B]
     val partialTransformer: PartialTransformer[A, B] = PartialTransformer.derive[A, B]
-    // or)
-    val totalTransformer2: Transformer[A, B] = Transformer.define[A, B].buildTransformer
-    val partialTransformer2: PartialTransformer[A, B] = PartialTransformer.define[A, B].buildTransformer
+    // or (if you want to pass overrides):
+    val totalTransformer2: Transformer[A, B] = Transformer.define[A, B]
+      .buildTransformer
+    val partialTransformer2: PartialTransformer[A, B] = PartialTransformer.define[A, B]
+      .buildTransformer
     ```
 
 In particular, when the source type is (`=:=`) the target type, you will end up with an identity transformation.
@@ -352,7 +354,7 @@ In particular, when the source type is (`=:=`) the target type, you will end up 
     b.into[A].withFieldConst(_.a, "copied").transform // new A("copied")
 
     import io.scalaland.chimney.Transformer
-    Transformer.derive[A, B].withFieldConst(_.a, "copied").buildTransformer.transform(b) // new A("copied")
+    Transformer.define[A, B].withFieldConst(_.a, "copied").buildTransformer.transform(b) // new A("copied")
     ```
     
     since that customization couldn't be applied if we only upcasted the value. 
@@ -382,7 +384,7 @@ But default conversions using `=:=` and `<:<` are disabled, but they can be enab
     // Bar(value = "bar")
 
     def fooToBar2[A, B](value: Foo[A])(implicit ev: A <:< B): Bar[B] = {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default.enableTypeConstraintEvidence
 
       value.transformInto[Bar[B]]
@@ -407,7 +409,7 @@ If the flag was enabled in the implicit config it can be disabled with `.enableT
     case class Foo[A](value: A)
     case class Bar[A](value: A)
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableTypeConstraintEvidence
 
 
@@ -480,10 +482,10 @@ The obvious examples are `case class`es with the same fields:
 
     import io.scalaland.chimney.{Transformer, PartialTransformer}
 
-    // If we want to reuse Transformer we can create implicits using
+    // If we want to reuse Transformer, we can create implicits using:
     val totalTransformer: Transformer[Source, Target] = Transformer.derive[Source, Target]
     val partialTransformer: PartialTransformer[Source, Target] = PartialTransformer.derive[Source, Target]
-    // or (if you want to pass overrides)
+    // or (if you want to pass overrides):
     val totalTransformer2: Transformer[Source, Target] = Transformer.define[Source, Target]
       .buildTransformer
     val partialTransformer2: PartialTransformer[Source, Target] = PartialTransformer.define[Source, Target]
@@ -650,7 +652,7 @@ side effects - you need to enable the `.enableMethodAccessors` flag:
     // partial.Result.fromValue(new Target(source.a, source.b()))
 
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default.enableMethodAccessors
 
       (new Source("value", 512)).transformInto[Target]
@@ -663,7 +665,7 @@ side effects - you need to enable the `.enableMethodAccessors` flag:
 
     import io.scalaland.chimney.Transformer
 
-    // If we want to reuse Transformer with overrides we can create implicits using
+    // If we want to reuse Transformer, we can create implicits using:
     val transformer: Transformer[Source, Target] = Transformer.define[Source, Target]
       .enableMethodAccessors
       .buildTransformer
@@ -689,7 +691,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     }
     class Target(a: String, b: Int)
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableMethodAccessors
 
     (new Source("value", 512)).into[Target].disableMethodAccessors.transform
@@ -734,7 +736,7 @@ inherited from a source value's supertype, you need to enable the `.enableInheri
     // Right(value = Target(a = "value", b = 10))
 
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default.enableInheritedAccessors
 
       pprint.pprintln(
@@ -750,7 +752,7 @@ inherited from a source value's supertype, you need to enable the `.enableInheri
 
     import io.scalaland.chimney.Transformer
 
-    // If we want to reuse Transformer with overrides we can create implicits using
+    // If we want to reuse Transformer, we can create implicits using:
     val transformer: Transformer[Source, Target] = Transformer.define[Source, Target]
       .enableInheritedAccessors
       .buildTransformer
@@ -775,7 +777,7 @@ If the flag was enabled in the implicit config it can be disabled with `.enableI
     case class Source(b: Int) extends Parent
     case class Target(a: String, b: Int)
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableInheritedAccessors
 
     Source(10).into[Target].disableInheritedAccessors.transform
@@ -821,7 +823,7 @@ If we want to read `def getFieldName(): A` as if it was `val fieldName: A` - whi
     // partial.Result.fromValue(new Target(source.getA(), source.getB()))
 
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default.enableBeanGetters
 
       (new Source("value", 512)).transformInto[Target]
@@ -834,7 +836,7 @@ If we want to read `def getFieldName(): A` as if it was `val fieldName: A` - whi
 
     import io.scalaland.chimney.Transformer
 
-    // If we want to reuse Transformer with overrides we can create implicits using
+    // If we want to reuse Transformer, we can create implicits using:
     val transformer: Transformer[Source, Target] = Transformer.define[Source, Target]
       .enableBeanGetters
       .buildTransformer
@@ -864,7 +866,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     }
     class Target(a: String, b: Int)
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableBeanGetters
 
     (new Source("value", 512)).into[Target].disableBeanGetters.transform
@@ -920,7 +922,7 @@ flag:
     // partial.Result.fromValue(target)
 
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default.enableBeanSetters
 
       (new Source("value", 512)).transformInto[Target]
@@ -939,7 +941,7 @@ flag:
 
     import io.scalaland.chimney.Transformer
 
-    // If we want to reuse Transformer with overrides we can create implicits using
+    // If we want to reuse Transformer, we can create implicits using:
     val transformer: Transformer[Source, Target] = Transformer.define[Source, Target]
       .enableBeanSetters
       .buildTransformer
@@ -981,7 +983,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
       def setB(bb: Int): Unit = b = bb
     }
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableBeanSetters
 
     (new Source("value", 512)).into[Target].disableBeanSetters.transform
@@ -994,7 +996,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
-This flag would ALSO enable writing to public `var`s:
+This flag would **also** enable writing to public `var`s:
 
 !!! example
 
@@ -1008,7 +1010,7 @@ This flag would ALSO enable writing to public `var`s:
       var b: Int = 0
     }
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableBeanSetters
 
     (new Source("value", 512)).transformInto[Target]
@@ -1109,7 +1111,7 @@ them:
       .transform // partial.Result.fromValue(new Target())
 
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default.enableIgnoreUnmatchedBeanSetters
 
       ().transformInto[Target] // new Target()
@@ -1118,7 +1120,7 @@ them:
 
     import io.scalaland.chimney.Transformer
 
-    // If we want to reuse Transformer with overrides we can create implicits using
+    // If we want to reuse Transformer, we can create implicits using:
     val transformer: Transformer[Unit, Target] = Transformer.define[Unit, Target]
       .enableIgnoreUnmatchedBeanSetters
       .buildTransformer
@@ -1141,7 +1143,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
       def setB(bb: Int): Unit = b = bb
     }
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableIgnoreUnmatchedBeanSetters
 
     ().into[Target].disableIgnoreUnmatchedBeanSetters.transform
@@ -1197,7 +1199,7 @@ making this setting sort of a setters' counterpart to a default value in a const
     // partial.Result.fromValue(target)
 
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default.enableBeanSetters.enableIgnoreUnmatchedBeanSetters
 
       (new Source("value")).transformInto[Target]
@@ -1268,7 +1270,7 @@ To consider such methods (and fail compilation if they are not matched) you can 
     // partial.Result.fromValue(target)
 
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default.enableBeanSetters.enableNonUnitBeanSetters
 
       new Source("value", 128).transformInto[Target]
@@ -1288,7 +1290,7 @@ To consider such methods (and fail compilation if they are not matched) you can 
 
     import io.scalaland.chimney.Transformer
 
-    // If we want to reuse Transformer with overrides we can create implicits using
+    // If we want to reuse Transformer, we can create implicits using:
     val transformer: Transformer[Source, Target] = Transformer.define[Source, Target]
       .enableBeanSetters
       .enableNonUnitBeanSetters
@@ -1488,7 +1490,7 @@ to default values with the `.enableDefaultValues` flag:
 
     import io.scalaland.chimney.Transformer
 
-    // If we want to reuse Transformer with overrides we can create implicits using
+    // If we want to reuse Transformer, we can create implicits using:
     val transformer: Transformer[Source, Target] = Transformer.define[Source, Target]
       .enableDefaultValues
       .buildTransformer
@@ -1515,7 +1517,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     case class Source(a: String, b: Int)
     case class Target(a: String, b: Int = 0, c: Long = 0L)
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableDefaultValues
 
     (new Source("value", 512)).into[Target].disableDefaultValues.transform
@@ -1575,7 +1577,7 @@ similar reasons to default values support, but we can enable it with the `.enabl
     case class Foo(a: String)
     case class Bar(a: String, b: Option[String] = Some("a"))
 
-    // without flags -> compilation error
+    // Without these flags -> compilation error!
     pprint.pprintln(
       Foo("value").into[Bar].enableOptionDefaultsToNone.transform
     )
@@ -1587,7 +1589,7 @@ similar reasons to default values support, but we can enable it with the `.enabl
     // Some(value = Bar(a = "value", b = None))
 
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default.enableOptionDefaultsToNone
 
       pprint.pprintln(
@@ -1603,7 +1605,7 @@ similar reasons to default values support, but we can enable it with the `.enabl
 
     import io.scalaland.chimney.Transformer
 
-    // If we want to reuse Transformer with overrides we can create implicits using
+    // If we want to reuse Transformer, we can create implicits using:
     val transformer: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
       .enableOptionDefaultsToNone
       .buildTransformer
@@ -1644,7 +1646,7 @@ The `None` value is used as a fallback, meaning:
     // Some(value = Bar(a = "value", b = Some(value = "a")))
 
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default.enableOptionDefaultsToNone.enableDefaultValues
 
       pprint.pprintln(
@@ -1672,7 +1674,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     case class Foo(a: String)
     case class Bar(a: String, b: Option[String] = Some("a"))
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableOptionDefaultsToNone
 
     Foo("value").into[Bar].disableOptionDefaultsToNone.transform
@@ -1773,7 +1775,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
       def setC(cc: Int): Unit = c = cc
     }
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
 
     (new Foo())
@@ -1883,7 +1885,7 @@ the constructor's argument/setter yourself. The successful value can be provided
     case class Foo(a: String, b: Int)
     case class Bar(a: String, b: Int, c: Long)
 
-    // providing missing value...
+    // Providing missing value...:
     pprint.pprintln(
       Foo("value", 10).into[Bar].withFieldConst(_.c, 1000L).transform
     )
@@ -1894,7 +1896,7 @@ the constructor's argument/setter yourself. The successful value can be provided
     // Bar(a = "value", b = 10, c = 1000L)
     // Right(value = Bar(a = "value", b = 10, c = 1000L))
     
-    // ...and overriding existing value
+    // ...and overriding existing value:
     pprint.pprintln(
       Foo("value", 10).into[Bar].withFieldConst(_.c, 1000L).withFieldConst(_.b, 20).transform
     )
@@ -1907,7 +1909,7 @@ the constructor's argument/setter yourself. The successful value can be provided
 
     import io.scalaland.chimney.Transformer
 
-    // If we want to reuse Transformer with overrides we can create implicits using
+    // If we want to reuse Transformer, we can create implicits using:
     val transformer: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
       .withFieldConst(_.c, 1000L)
       .withFieldConst(_.b, 20)
@@ -1933,7 +1935,7 @@ These cases can be handled only with `PartialTransformer` using `.withFieldConst
     case class Foo(a: String, b: Int)
     case class Bar(a: String, b: Int, c: Long)
 
-    // successful partial.Result constant
+    // Successful partial.Result constant:
     pprint.pprintln(
       Foo("value", 10)
         .intoPartial[Bar]
@@ -1946,7 +1948,7 @@ These cases can be handled only with `PartialTransformer` using `.withFieldConst
     // expected output:
     // Right(value = Bar(a = "value", b = 10, c = 100L))    
 
-    // a few different partial.Result failures constants
+    // A few different partial.Result failures constants:
     pprint.pprintln(
       Foo("value", 10)
         .intoPartial[Bar]
@@ -2032,7 +2034,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
       def setC(cc: Int): Unit = c = cc
     }
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
 
     (new Foo())
@@ -2110,7 +2112,7 @@ using `.withFieldComputed`:
     case class Foo(a: String, b: Int)
     case class Bar(a: String, b: Int, c: Long)
 
-    // providing missing value...
+    // Providing missing value...:
     pprint.pprintln(
       Foo("value", 10).into[Bar].withFieldComputed(_.c, foo => foo.b.toLong * 2).transform
     )
@@ -2121,7 +2123,7 @@ using `.withFieldComputed`:
     // Bar(a = "value", b = 10, c = 20L)
     // Right(value = Bar(a = "value", b = 10, c = 20L))
 
-    // ...and overriding existing value
+    // ...and overriding existing value:
     pprint.pprintln(
       Foo("value", 10)
         .into[Bar]
@@ -2141,7 +2143,7 @@ using `.withFieldComputed`:
     // Bar(a = "value", b = 40, c = 20L)
     // Right(value = Bar(a = "value", b = 40, c = 20L))
     
-    // we can also use values extracted from the source
+    // We can also use values extracted from the source:
     pprint.pprintln(
       List(Foo("value", 10))
         .into[Vector[Bar]]
@@ -2163,7 +2165,7 @@ using `.withFieldComputed`:
 
     import io.scalaland.chimney.Transformer
 
-    // If we want to reuse Transformer with overrides we can create implicits using
+    // If we want to reuse Transformer, we can create implicits using:
     val transformer: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
       .withFieldComputed(_.c, foo => foo.b.toLong * 2)
       .withFieldComputed(_.b, foo => foo.b * 4)
@@ -2191,7 +2193,7 @@ These cases can be handled only with `PartialTransformer` using
     case class Foo(a: String, b: Int)
     case class Bar(a: String, b: Int, c: Long)
 
-    // always successful partial.Result
+    // Always successful partial.Result:
     pprint.pprintln(
       Foo("value", 10)
         .intoPartial[Bar]
@@ -2204,7 +2206,7 @@ These cases can be handled only with `PartialTransformer` using
     // expected output:
     // Right(value = Bar(a = "value", b = 10, c = 20L))
     
-    // always failing with a partial.Result.fromErrorString
+    // Always failing with a partial.Result.fromErrorString:
     pprint.pprintln(
       Foo("value", 10)
         .intoPartial[Bar]
@@ -2217,7 +2219,7 @@ These cases can be handled only with `PartialTransformer` using
     // expected output:
     // Left(value = List(("<computed for _.c>", StringMessage(message = "bad value"))))
     
-    // failure depends on the input (whether .toLong throws or not)
+    // Failure depends on the input (whether .toLong throws or not):
     pprint.pprintln(
       Foo("20", 10)
         .intoPartial[Bar]
@@ -2247,7 +2249,7 @@ These cases can be handled only with `PartialTransformer` using
     //   )
     // )
     
-    // we can also use values extracted from the source
+    // We can also use values extracted from the source:
     pprint.pprintln(
       List(Foo("20", 10))
         .intoPartial[Vector[Bar]]
@@ -2330,7 +2332,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
       def setC(cc: Long): Unit = c = cc
     }
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
 
     (new Foo())
@@ -2448,7 +2450,7 @@ The field name matching predicate can be overridden with a flag:
     // Right(value = Bar(baz = Baz(s = "test"), a = 1024))
 
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default
         .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
 
@@ -2475,7 +2477,7 @@ The field name matching predicate can be overridden with a flag:
 
     import io.scalaland.chimney.Transformer
 
-    // If we want to reuse Transformer with overrides we can create implicits using
+    // If we want to reuse Transformer, we can create implicits using:
     val transformer: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
       .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
       .buildTransformer
@@ -2519,7 +2521,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
       case class Baz(s: String)
     }
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default
       .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
 
@@ -2569,6 +2571,17 @@ constructor's argument is made by position instead of name:
     )
     // expected output:
     // Right(value = Foo(a = "value", b = 42, c = 1024L))
+
+    import io.scalaland.chimney.{Transformer, PartialTransformer}
+
+    // If we want to reuse Transformer, we can create implicits using:
+    val totalTransformer: Transformer[Foo, (String, Int, Long)] = Transformer.derive[Foo, (String, Int, Long)]
+    val partialTransformer: PartialTransformer[Foo, (String, Int, Long)] = PartialTransformer.derive[Foo, (String, Int, Long)]
+    // or (if you want to pass overrides):
+    val totalTransformer2: Transformer[Foo, (String, Int, Long)] = Transformer.define[Foo, (String, Int, Long)]
+      .buildTransformer
+    val partialTransformer2: PartialTransformer[Foo, (String, Int, Long)] = PartialTransformer.define[Foo, (String, Int, Long)]
+      .buildTransformer
     ```
 
 !!! tip
@@ -2616,6 +2629,17 @@ as transparent, similarly to virtually every other Scala library.
     // expected output:
     // Right(value = Bar(b = 10))
     // Right(value = Bar(b = 10))
+
+    import io.scalaland.chimney.{Transformer, PartialTransformer}
+
+    // If we want to reuse Transformer, we can create implicits using:
+    val totalTransformer: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar]
+    val partialTransformer: PartialTransformer[Foo, Bar] = PartialTransformer.derive[Foo, Bar]
+    // or (if you want to pass overrides):
+    val totalTransformer2: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
+      .buildTransformer
+    val partialTransformer2: PartialTransformer[Foo, Bar] = PartialTransformer.define[Foo, Bar]
+      .buildTransformer
     ```
 
 !!! tip
@@ -2692,7 +2716,7 @@ a flag:
     // Right(value = "user name")
     
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
       
       pprint.pprintln(
@@ -2716,6 +2740,13 @@ a flag:
       // Right(value = UserName(value = "user name"))
       // Right(value = UserName(value = "user name"))
     }
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer, we can create implicits using:
+    val transformer: Transformer[String, UserName] = Transformer.define[String, UserName]
+      .enableNonAnyValWrappers
+      .buildTransformer
     ```
 
 !!! tip
@@ -2976,6 +3007,11 @@ In such cases, Chimney is able to automatically wrap/unwrap these inner values a
     // expected output:
     // A(value = A(a = "value", b = 42))
     // B(value = B())
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer, we can create implicits using:
+    val transformer: Transformer[protobuf.Foo, domain.Bar] = Transformer.derive[protobuf.Foo, domain.Bar]
     ```
 
 ### Java's `enum`s
@@ -3033,6 +3069,11 @@ Java's `enum` can also be converted this way to/from `sealed`/Scala 3's `enum`/a
     // Red
     // Green
     // Blue
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer, we can create implicits using:
+    val transformer: Transformer[ColorJ, ColorS] = Transformer.derive[ColorJ, ColorS]
     ```
 
 !!! example
@@ -3116,6 +3157,13 @@ Or we might want to redirect two subtypes into the same target subtype. For that
     )
     // expected output:
     // Bar(a = 10)
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer, we can create implicits using:
+    val transformer: Transformer[Source, Target] = Transformer.define[Source, Target]
+      .withSealedSubtypeRenamed[Source.Baz, Target.Bar]
+      .buildTransformer
     ```
 
 !!! notice
@@ -3248,6 +3296,15 @@ computation. This can be done using `.withSealedSubtypeHandled`:
     )
     // expected output:
     // Buzz
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer, we can create implicits using:
+    val transformer: Transformer[Bar, Foo] = Transformer.define[Bar, Foo]
+      .withSealedSubtypeHandled[Bar.Fizz.type] { fizz =>
+        Foo.Baz(fizz.toString)
+      }
+      .buildTransformer
     ```
 
 If the computation needs to allow failure, there is `.withSealedSubtypeHandledPartial`:
@@ -3663,7 +3720,7 @@ The subtype name matching predicate can be overridden with a flag:
     // Right(value = Baz)
 
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default
         .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
 
@@ -3687,6 +3744,13 @@ The subtype name matching predicate can be overridden with a flag:
       // Right(value = Baz)
       // Right(value = Baz)
     }
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer, we can create implicits using:
+    val transformer: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
+      .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+      .buildTransformer
     ```
 
 For details about `TransformedNamesComparison` look at [their dedicated section](#defining-custom-name-matching-predicate).
@@ -3735,7 +3799,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
       case object Baz extends Bar
     }
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default
       .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
 
@@ -3805,6 +3869,17 @@ The transformation from one `Option` into another is obviously always supported:
     // expected output:
     // Right(value = Some(value = Bar(a = "value")))
     // Right(value = None)
+
+    import io.scalaland.chimney.{Transformer, PartialTransformer}
+
+    // If we want to reuse Transformer, we can create implicits using:
+    val totalTransformer: Transformer[Option[Foo], Option[Bar]] = Transformer.derive[Option[Foo], Option[Bar]]
+    val partialTransformer: PartialTransformer[Option[Foo], Option[Bar]] = PartialTransformer.derive[Option[Foo], Option[Bar]]
+    // or (if you want to pass overrides):
+    val totalTransformer2: Transformer[Option[Foo], Option[Bar]] = Transformer.define[Option[Foo], Option[Bar]]
+      .buildTransformer
+    val partialTransformer2: PartialTransformer[Option[Foo], Option[Bar]] = PartialTransformer.define[Option[Foo], Option[Bar]]
+      .buildTransformer
     ```
 
 Additionally, an automatic wrapping with `Option` is also considered safe and always available:
@@ -3931,7 +4006,7 @@ However, sometimes you might prefer to opt out of such behavior. You can disable
     // Consult https://chimney.readthedocs.io for usage examples.
 
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default.disablePartialUnwrapsOption
 
       Foo(Some(10)).transformIntoPartial[Bar]
@@ -3971,7 +4046,7 @@ If the flag was disabled in the implicit config it can be enabled with `.disable
     case class Foo(a: Option[Int])
     case class Bar(a: Int)
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.disablePartialUnwrapsOption
 
     pprint.pprintln(
@@ -4018,6 +4093,22 @@ A transformation from one `Either` to another is supported as long as both left 
     // expected output:
     // Some(value = Left(value = Bar(a = "value")))
     // Some(value = Right(value = Foo(a = "value")))
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer, we can create implicits using:
+    val transformer: Transformer[Either[Foo, Bar], Either[Bar, Foo]] = Transformer.derive[Either[Foo, Bar], Either[Bar, Foo]]
+
+    import io.scalaland.chimney.{Transformer, PartialTransformer}
+
+    // If we want to reuse Transformer, we can create implicits using:
+    val totalTransformer: Transformer[Either[Foo, Bar], Either[Bar, Foo]] = Transformer.derive[Either[Foo, Bar], Either[Bar, Foo]]
+    val partialTransformer: PartialTransformer[Either[Foo, Bar], Either[Bar, Foo]] = PartialTransformer.derive[Either[Foo, Bar], Either[Bar, Foo]]
+    // or (if you want to pass overrides):
+    val totalTransformer2: Transformer[Either[Foo, Bar], Either[Bar, Foo]] = Transformer.define[Either[Foo, Bar], Either[Bar, Foo]]
+      .buildTransformer
+    val partialTransformer2: PartialTransformer[Either[Foo, Bar], Either[Bar, Foo]] = PartialTransformer.define[Either[Foo, Bar], Either[Bar, Foo]]
+      .buildTransformer
     ```
 
 A transformation from `Left` and `Right` into `Either` requires existence of only the transformation from the type we
@@ -4082,6 +4173,17 @@ the types stored within these collections can also be converted.
     // Vector(Bar(a = Some(value = "value")))
     // Array((Bar(a = Some(value = "key")), Bar(a = Some(value = "value"))))
     // ListMap(Bar(a = Some(value = "key")) -> Bar(a = Some(value = "value")))
+
+    import io.scalaland.chimney.{Transformer, PartialTransformer}
+
+    // If we want to reuse Transformer, we can create implicits using:
+    val totalTransformer: Transformer[List[Foo], Vector[Bar]] = Transformer.derive[List[Foo], Vector[Bar]]
+    val partialTransformer: PartialTransformer[List[Foo], Vector[Bar]] = PartialTransformer.derive[List[Foo], Vector[Bar]]
+    // or (if you want to pass overrides):
+    val totalTransformer2: Transformer[List[Foo], Vector[Bar]] = Transformer.define[List[Foo], Vector[Bar]]
+      .buildTransformer
+    val partialTransformer2: PartialTransformer[List[Foo], Vector[Bar]] = PartialTransformer.define[List[Foo], Vector[Bar]]
+      .buildTransformer
     ```
 
 With `PartialTransformer`s ware able to handle fallible conversions, tracing at which key/index the failure occurred:
@@ -4149,6 +4251,17 @@ The most obvious case is having all type parameters applied to non-abstract type
     )
     // expected output:
     // Bar(value = Baz(value = "value"))
+
+    import io.scalaland.chimney.{Transformer, PartialTransformer}
+
+    // If we want to reuse Transformer, we can create implicits using:
+    val totalTransformer: Transformer[Foo[Baz[String]], Bar[Bar[String]]] = Transformer.derive[Foo[Baz[String]], Bar[Bar[String]]]
+    val partialTransformer: PartialTransformer[Foo[Baz[String]], Bar[Bar[String]]] = PartialTransformer.derive[Foo[Baz[String]], Bar[Bar[String]]]
+    // or (if you want to pass overrides):
+    val totalTransformer2: Transformer[Foo[Baz[String]], Bar[Bar[String]]] = Transformer.define[Foo[Baz[String]], Bar[Bar[String]]]
+      .buildTransformer
+    val partialTransformer2: PartialTransformer[Foo[Baz[String]], Bar[Bar[String]]] = PartialTransformer.define[Foo[Baz[String]], Bar[Bar[String]]]
+      .buildTransformer
     ```
 
 or having type parameter being not used at all:
@@ -4352,9 +4465,9 @@ Scala 2.13 and 3 allow using [literal-based singleton types](https://docs.scala-
     // "str"
     ```
 
-### Into a case class
+### Into a case object
 
-When the target is a `case class`, the transformation can always be provided:
+When the target is a `case object`, the transformation can always be provided:
 
 !!! example
 
@@ -4484,6 +4597,20 @@ Then Chimney will try to match the source type's getters against the method's pa
     )
     // expected output:
     // Vector(Bar(value = "1000"))
+
+    import io.scalaland.chimney.{Transformer, PartialTransformer}
+
+    // If we want to reuse Transformer, we can create implicits using:
+    val totalTransformer: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
+      .withConstructor { (value: Int) =>
+        Bar.make(value * 100)
+      }
+      .buildTransformer
+    val partialTransformer: PartialTransformer[Foo, Bar] = PartialTransformer.define[Foo, Bar]
+      .withConstructor { (value: Int) =>
+        Bar.make(value * 100)
+      }
+      .buildTransformer
     ```
 
 !!! note
@@ -5260,7 +5387,7 @@ with a flag `.enableImplicitConversions`:
     // "10"
 
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default.enableImplicitConversions
 
       pprint.pprintln(
@@ -5284,7 +5411,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
 
     implicit def convert(a: Int): String = a.toString
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableImplicitConversions
 
     10.into[String].disableImplicitConversions.transform
@@ -5367,7 +5494,39 @@ for which they would not have a reasonable mapping:
     ```
     
     If you pass field or coproduct overrides, they could not be applied if we used the implicit, so in such case Chimney
-    assumed that the user wants to ignore the implicit. 
+    assumed that the user wants to ignore the implicit.
+
+!!! warning
+
+    Make sure that you are:
+    
+     * **not** using `.transformInto`/`.transformIntoPartial`/`.patchUsing`
+     * **nor** `.into.transform`/`.intoPartial.transform`/`.using.patch` **without overrides**
+     * when transforming/patching **top-level object**
+
+    as the code like:
+
+    ```scala
+    implicit val totalTransformer: Transformer[Foo, Bar] = (foo: Foo) => foo.transformInto[Bar]
+    implicit val partialTransformer: PartialTransformer[Foo, Bar] = (foo: Foo) => foo.transformIntoPartial[Bar]
+    implicit val patcher: Patcher[A, Patch] = (obj: A, patch: Patch) => obj.patchUsing(patch)
+    ```
+
+    will [create inifinite recursion in runtime and result in `StackOverflowError`](troubleshooting.md#recursive-calls-on-implicits).
+
+    In such cases derive the code with `.derive`/.define` utilities:
+
+    ```scala
+    implicit val totalTransformer: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar]
+    implicit val partialTransformer: PartialTransformer[Foo, Bar] = PartialTransformer.derive[Foo, Bar]
+    implicit val patcher: Patcher[A, Patch] = Patcher.derive[A, Patch]
+    ```
+
+    A manual definition of `Transfrormer`s/`PartialTransformer`s/`Patcher`s is necessary only when the derivation cannot happed
+    for a particular type - and them using `.transformInto`/`.into.transform`/etc is usually not helpful.
+
+    The only exception is when we would like to use the implicit we're currently deriving for some nested field as we're working with
+    [recursive data structures (which can be safely handled with `.derive`/`.define`)](#recursive-data-types).
 
 Total `Transformer`s can be utilized by `PartialTransformer`s as well - handling every input is a stronger guarantee
 than handling only some of them, so we can always relax it:

@@ -261,7 +261,7 @@ These can be enabled with `UnusedFieldPolicy`:
     // User2(id = 1, name = "Adam")
 
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default.enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal)
 
       pprint.pprintln(
@@ -345,7 +345,7 @@ and `UnmatchedSubtypePolicy`:
     // Green
 
     locally {
-      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
       implicit val cfg = TransformerConfiguration.default.enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
 
       pprint.pprintln(

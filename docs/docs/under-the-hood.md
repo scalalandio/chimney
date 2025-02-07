@@ -260,7 +260,7 @@ And since it is an implicit, it can be shared between several different macro ex
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableMacrosLogging
 
     "test".transformInto[Option[String]]

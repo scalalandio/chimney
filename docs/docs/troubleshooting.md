@@ -385,7 +385,7 @@ If you used default values a lot, remember that you can enable them for all tran
 !!! example
 
     ```scala
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableDefaultValues
     ```
 
@@ -2351,7 +2351,7 @@ above, or with a shared implicit config:
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
-    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableMacrosLogging
     ```
 
