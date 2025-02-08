@@ -6,10 +6,10 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
 /** Type class expressing total transformation between source type `From` and target type `To`.
   *
   * @note
-  *   You should not need to instantiate this class manually, if you can derive it - take a look at [[.derive]] and
-  *   [[.define]] methods for that. Manual intantiation is only necessary if you want to add support for the
-  *   transformation that is not supported out of the box. Even then consult
-  *   [[https://chimney.readthedocs.io/cookbook/#integrations]] first!
+  *   You should not need to instantiate this class manually, if you can derive it - take a look at
+  *   [[io.scalaland.chimney.Transformer.derive]] and [[io.scalaland.chimney.Transformer.define]] methods for that.
+  *   Manual intantiation is only necessary if you want to add support for the transformation that is not supported out
+  *   of the box. Even then consult [[https://chimney.readthedocs.io/cookbook/#integrations]] first!
   *
   * @see
   *   [[https://chimney.readthedocs.io/supported-transformations/]]
@@ -113,7 +113,7 @@ object Transformer extends TransformerCompanionPlatform {
 private[chimney] trait TransformerLowPriorityImplicits1 extends TransformerLowPriorityImplicits2 {
   this: Transformer.type =>
 
-  /** Extracts [[io.scalaland.chimney.Transformer]] from existing [[io.scalaland.chimney.Iso#left]].
+  /** Extracts [[io.scalaland.chimney.Transformer]] from existing [[io.scalaland.chimney.Iso.first]].
     *
     * @tparam First
     *   input type of the first conversion, output type of the second conversion
@@ -128,7 +128,7 @@ private[chimney] trait TransformerLowPriorityImplicits1 extends TransformerLowPr
 private[chimney] trait TransformerLowPriorityImplicits2 extends TransformerLowPriorityImplicits3 {
   this: Transformer.type =>
 
-  /** Extracts [[io.scalaland.chimney.Transformer]] from existing [[io.scalaland.chimney.Iso#right]].
+  /** Extracts [[io.scalaland.chimney.Transformer]] from existing [[io.scalaland.chimney.Iso.second]].
     *
     * @tparam First
     *   input type of the first conversion, output type of the second conversion
@@ -142,7 +142,7 @@ private[chimney] trait TransformerLowPriorityImplicits2 extends TransformerLowPr
 }
 private[chimney] trait TransformerLowPriorityImplicits3 { this: Transformer.type =>
 
-  /** Extracts [[io.scalaland.chimney.Transformer]] from existing [[io.scalaland.chimney.Codec#encode]].
+  /** Extracts [[io.scalaland.chimney.Transformer]] from existing [[io.scalaland.chimney.Codec.encode]].
     *
     * @tparam Domain
     *   type of domain value
