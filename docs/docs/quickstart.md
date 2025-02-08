@@ -89,7 +89,7 @@ apiUser.transformInto[User]
 But don't you worry! Usually Chimney only needs your help if there is no field in the source value with a matching name
 or whe the targeted type has a private constructor. Out of the box, it supports:
 
- * conversions [between `case class`es](supported-transformations.md#into-a-case-class)
+ * conversions [between `case class`es](supported-transformations.md#into-a-case-class-or-pojo)
     * actually, a conversion between *any* `class` and *another `class` with a public constructor*
     * with [an opt-in support for Java Beans](supported-transformations.md#reading-from-bean-getters)
  * conversions [between `sealed trait`s, Scala 3 `enum`s, Java `enum`s](supported-transformations.md#between-sealedenums)
