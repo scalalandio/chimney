@@ -7,10 +7,10 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
   * reporting path-annotated transformation error(s).
   *
   * @note
-  *   You should not need to instantiate this class manually, if you can derive it - take a look at [[.derive]] and
-  *   [[.define]] methods for that. Manual intantiation is only necessary if you want to add support for the
-  *   transformation that is not supported out of the box. Even then consult
-  *   [[https://chimney.readthedocs.io/cookbook/#integrations]] first!
+  *   You should not need to instantiate this class manually, if you can derive it - take a look at
+  *   [[io.scalaland.chimney.PartialTransformer.derive]] and [[io.scalaland.chimney.PartialTransformer.define]] methods
+  *   for that. Manual intantiation is only necessary if you want to add support for the transformation that is not
+  *   supported out of the box. Even then consult [[https://chimney.readthedocs.io/cookbook/#integrations]] first!
   *
   * @see
   *   [[https://chimney.readthedocs.io/supported-transformations/]]
@@ -183,7 +183,7 @@ object PartialTransformer extends PartialTransformerCompanionPlatform {
 // extended by PartialTransformerCompanionPlatform
 private[chimney] trait PartialTransformerLowPriorityImplicits1 { this: PartialTransformer.type =>
 
-  /** Extracts [[io.scalaland.chimney.PartialTransformer]] from existing [[io.scalaland.chimney.Codec#decode]].
+  /** Extracts [[io.scalaland.chimney.PartialTransformer]] from existing [[io.scalaland.chimney.Codec.decode]].
     *
     * @tparam Domain
     *   type of domain value
