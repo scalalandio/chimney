@@ -2948,6 +2948,111 @@ fields from the patching:
     // Foo(a = "a", b = "d")
     ```
 
+## Patching optional field with value decoded from JSON
+
+JSON cannot define a nested optional values - since there is no wrapper like `Some` there is no way to represent difference between
+`Some(None)` and `None` using build-in JSON semantics. If during `POST` request one want to always use `Some` values to **update**,
+and `None` values to always indicate *keep old* semantics **or** always indicate *clear value* semantics (if the modified value is `Option` as well),
+this is enough.
+
+The problem, arises when one wantes to express 3 possible outcomes for modifying an `Option` value: *update value*/*keep old*/*clear value*.
+
+The only solution in such case is to express in the API the 3 possible outcomes somwhow without resorting to nested `Option`s. As long as it can
+be done, the type can be converted to nested `Option`s which have unambguous semantics:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    //> using dep io.circe::circe-generic-extras::0.14.4
+    //> using dep io.circe::circe-parser::0.14.10
+    import io.circe.{Encoder, Decoder}
+    import io.circe.generic.extras.Configuration
+    import io.circe.generic.extras.auto._
+    import io.circe.generic.extras.semiauto._
+    import io.circe.parser.decode
+    import io.circe.syntax._
+
+    // An example of representing set-clean-keep operations in a way that cooperates with JSONs.
+    sealed trait OptionalUpdate[+A] extends Product with Serializable {
+
+      def toOption: Option[Option[A]] = this match {
+        case OptionalUpdate.Set(value) => Some(Some(value))
+        case OptionalUpdate.Clear      => Some(None)
+        case OptionalUpdate.Keep       => None
+      }
+    }
+    object OptionalUpdate {
+
+      case class Set[A](value: A) extends OptionalUpdate[A]
+      case object Clear extends OptionalUpdate[Nothing]
+      case object Keep extends OptionalUpdate[Nothing]
+
+      private implicit val customConfig: Configuration =
+        Configuration.default
+          .withDiscriminator("action")
+          .withSnakeCaseConstructorNames
+
+      implicit def encoder[A: Encoder]: Encoder[OptionalUpdate[A]] =
+        deriveConfiguredEncoder
+      implicit def decoder[A: Decoder]: Decoder[OptionalUpdate[A]] =
+        deriveConfiguredDecoder
+    }
+
+    case class Foo(field: Option[String], anotherField: String)
+
+    case class FooUpdate(field: OptionalUpdate[String])
+    object FooUpdate {
+
+      private implicit val customConfig: Configuration = Configuration.default
+      implicit val encoder: Encoder[FooUpdate] = deriveConfiguredEncoder
+      implicit val decoder: Decoder[FooUpdate] = deriveConfiguredDecoder
+    }
+
+    import io.scalaland.chimney.Patcher
+    import io.scalaland.chimney.dsl._
+
+    // This utility allows to automatically handle Option patching with OptionalUpdate values.
+    implicit def patchWithOptionalUpdate[A, Patch](implicit
+        inner: Patcher.AutoDerived[Option[A], Option[Option[A]]]
+    ): Patcher[Option[A], OptionalUpdate[A]] = (obj, patch) =>
+      obj.patchUsing(patch.toOption)
+
+    pprint.pprintln(
+      decode[FooUpdate](
+        """{ "field": { "action": "set", "value": "new-value" } }"""
+      ) match {
+        case Left(error)  => println(error)
+        case Right(patch) => Foo(Some("old-value"), "another-value").patchUsing(patch)
+      }
+    )
+    // expected output:
+    // Foo(field = Some(value = "new-value"), anotherField = "another-value")
+    pprint.pprintln(
+      decode[FooUpdate](
+        """{ "field": { "action": "clear" } }"""
+      ) match {
+        case Left(error)  => println(error)
+        case Right(patch) => Foo(Some("old-value"), "another-value").patchUsing(patch)
+      }
+    )
+    // expected output:
+    // Foo(field = None, anotherField = "another-value")
+    pprint.pprintln(
+      decode[FooUpdate](
+        """{ "field": { "action": "keep" } }"""
+      ) match {
+        case Left(error)  => println(error)
+        case Right(patch) => Foo(Some("old-value"), "another-value").patchUsing(patch)
+      }
+    )
+    // expected output:
+    // Foo(field = Some(value = "old-value"), anotherField = "another-value")
+    ```
+
+If we cannot modify our API, we have to [choose one semantics for `None` values](supported-patching.md#treating-none-as-no-update-instead-of-set-to-none).
+
 ## Mixing Scala 2.13 and Scala 3 types
 
 [Scala 2.13 project can use Scala 3 artifacts and vice versa](https://docs.scala-lang.org/scala3/guides/migration/compatibility-classpath.html).
