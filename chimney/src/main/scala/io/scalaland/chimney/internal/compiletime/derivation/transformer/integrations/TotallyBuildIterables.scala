@@ -35,8 +35,10 @@ trait TotallyBuildIterables { this: Derivation =>
   }
   protected object TotallyBuildIterable {
 
+    private type Cached[M] = Option[Existential[TotallyBuildIterable[M, *]]]
+    private val totallyBulidIterableCache = new Type.Cache[Cached]
     def unapply[M](implicit M: Type[M]): Option[Existential[TotallyBuildIterable[M, *]]] =
-      providedSupport[M].orElse(buildInSupport[M])
+      totallyBulidIterableCache(M)(providedSupport[M].orElse(buildInSupport[M]))
 
     private def providedSupport[Collection: Type]: Option[Existential[TotallyBuildIterable[Collection, *]]] =
       summonTotallyBuildIterable[Collection].map { totallyBuildIterable =>
