@@ -4319,7 +4319,40 @@ With `PartialTransformer`s ware able to handle fallible conversions, tracing at 
     If you need to integrate with Java's collections, please, read about
     [Java's collections integration](cookbook.md#java-collections-integration).
     
-    If you need to provide support for your collection types, you have to write your own implicit methods. 
+    If you need to provide support for your collection types, you have to write your own implicit methods.
+
+!!! tip
+
+    You can use all the flags, renames, value provisions, and computations that are available to case classes,
+    Java Beans and so on.
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(a: String)
+    case class Bar(a: String, b: String, c: Int, d: Char, e: Option[Float])
+
+    pprint.pprintln(
+      List(Foo("key") -> Foo("value")).into[Map[Bar, Bar]]
+        .withFieldRenamed(_.everyItem._1.a, _.everyMapKey.b)
+        .withFieldConst(_.everyMapKey.c, 10)
+        .withFieldComputedFrom(_.everyItem._1)(_.everyMapKey.d, foo => foo.a.headOption.getOrElse('0'))
+        .withTargetFlag(_.everyMapKey.e).enableOptionDefaultsToNone
+        .withFieldRenamed(_.everyItem._2.a, _.everyMapValue.b)
+        .withFieldConst(_.everyMapValue.c, 10)
+        .withFieldComputedFrom(_.everyItem._2)(_.everyMapValue.d, foo => foo.a.headOption.getOrElse('0'))
+        .withTargetFlag(_.everyMapValue.e).enableOptionDefaultsToNone
+        .transform
+    )
+    // expected output:
+    // Map(
+    //   Bar(a = "key", b = "key", c = 10, d = 'k', e = None) -> Bar(a = "value", b = "value", c = 10, d = 'v', e = None)
+    // )
+    ```
+
+    `.everyItem`/`.everyMapKey`/`.everyMapValue` work with [custom optional types](cookbook.md#custom-collection-types).
 
 ## Parametric types/generics
 
