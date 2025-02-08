@@ -6,6 +6,8 @@ import io.scalaland.chimney.partial
 
 trait TotalOuterTransformers { this: Derivation =>
 
+  import ChimneyType.Implicits.*
+
   abstract protected class TotalOuterTransformer[From: Type, To: Type] {
     type InnerFrom
     implicit val InnerFrom: Type[InnerFrom]
@@ -28,7 +30,10 @@ trait TotalOuterTransformers { this: Derivation =>
   }
   protected object TotalOuterTransformer {
 
+    private val implicitCache = new Type.Cache[Option]
     def unapply[From, To](implicit from: Type[From], to: Type[To]): Option[TotalOuterTransformer[From, To]] =
-      summonTotalOuterTransformer[From, To]
+      implicitCache(
+        Type[integrations.TotalOuterTransformer[From, To, From, To]].asInstanceOf[Type[TotalOuterTransformer[From, To]]]
+      )(summonTotalOuterTransformer[From, To])
   }
 }
