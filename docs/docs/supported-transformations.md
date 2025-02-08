@@ -2589,6 +2589,25 @@ constructor's argument is made by position instead of name:
     You can use all the flags, renames, value provisions, and computations that are available to case classes,
     Java Beans and so on.
 
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(a: String, b: Int, c: Long)
+
+    pprint.pprintln(
+      Foo("value", 42, 1024L).into[(String, Int, Long, String, Double, Long, Option[Double])]
+        .withFieldRenamed(_.a, _._4) // _4
+        .withFieldConst(_._5, 3.14) // _5
+        .withFieldComputed(_._6, foo => foo.c + 2) // _6
+        .withTargetFlag(_._7).enableOptionDefaultsToNone // _7
+        .transform
+    )
+    // expected output:
+    // ("value", 42, 1024L, "value", 3.14, 1026L, None)
+    ```
+
 !!! tip
 
     If you are not sure whether the derivation treats your case as tuple conversion, [try enabling macro logging](troubleshooting.md#debugging-macros).
@@ -2673,10 +2692,27 @@ as transparent, similarly to virtually every other Scala library.
     When `AnyVal` special handling cannot be used (e.g. because value/constructor is private), then Chimney falls back
     to treat them as a normal class.
 
-!!! warning
+!!! tip
 
-    If you use any value override (`.withFieldConst`, `.withFieldComputed`, etc.) getting value from/to `AnyVal`, it
-    _will_ be treated as just a normal product type.
+    You can use all the flags, renames, value provisions, and computations that are available to case classes,
+    Java Beans and so on.
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(a: Int) extends AnyVal
+    case class Bar(b: Int) extends AnyVal
+
+    pprint.pprintln(
+      Foo(10).into[Bar]
+        .withFieldComputed(_.b, foo => foo.a + 5)
+        .transform
+    )
+    // expected output:
+    // 15
+    ```
 
 ### From/into a wrapper type
 
@@ -3976,7 +4012,36 @@ automatically only with `PartialTransformer`:
     
     If you need to provide support for your optional types, please, read about
     [custom optional types](cookbook.md#custom-optional-types).
-    
+
+!!! tip
+
+    You can use all the flags, renames, value provisions, and computations that are available to case classes,
+    Java Beans and so on.
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(a: String)
+    case class Bar(a: String, b: String, c: Int, d: Char, e: Option[Float])
+
+    pprint.pprintln(
+      Option(Foo("value")).into[Option[Bar]]
+        .withFieldRenamed(_.matchingSome.a, _.matchingSome.b)
+        .withFieldConst(_.matchingSome.c, 10)
+        .withFieldComputedFrom(_.matchingSome)(_.matchingSome.d, foo => foo.a.headOption.getOrElse('0'))
+        .withTargetFlag(_.matchingSome.e).enableOptionDefaultsToNone
+        .transform
+    )
+    // expected output:
+    // Some(value = Bar(a = "value", b = "value", c = 10, d = 'v', e = None))
+    ```
+
+    While you could use `.matching[Some[Foo]].value` it is more convenient to use `.matchingSome` since it infers
+    the inner type and exposes it automatically. Additionally, `.matchingSome` works with
+    [custom optional types](cookbook.md#custom-optional-types).
+
 ### Controlling automatic `Option` unwrapping
 
 Automatic unwrapping of `Option`s by `PartialTransformer`s allows for seamless decoding of many PTO types into domain
@@ -4137,6 +4202,35 @@ know for sure is inside to their corresponding type in target `Either`:
     // Left(value = Bar(a = "value"))
     // Right(value = Bar(a = "value"))
     ```
+
+!!! tip
+
+    You can use all the flags, renames, value provisions, and computations that are available to case classes,
+    Java Beans and so on.
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(a0: String)
+    case class Bar(a: String, b: Int, c: Char, d: Option[Float])
+
+    pprint.pprintln(
+      (Right(Foo("value")): Either[Bar, Foo]).into[Either[Foo, Bar]]
+      .withFieldRenamed(_.matchingLeft.a, _.matchingLeft.a0)
+      .withFieldRenamed(_.matchingRight.a0, _.matchingRight.a)
+      .withFieldConst(_.matchingRight.b, 10)
+      .withFieldComputedFrom(_.matchingRight)(_.matchingRight.c, bar => bar.a0.headOption.getOrElse('0'))
+      .withTargetFlag(_.matchingRight.d).enableOptionDefaultsToNone
+      .transform
+    )
+    // expected output:
+    // Right(value = Bar(a = "value", b = 10, c = 'v', d = None))
+    ```
+
+    While you could use `.matching[Left[Foo]].value`/`.matching[Right[Bar]].value` it is more convenient to use
+    `.matchingLeft`/`.matchingRight` since it infers the inner type and exposes it automatically.
 
 ## Between Scala's collections/`Array`s
 
