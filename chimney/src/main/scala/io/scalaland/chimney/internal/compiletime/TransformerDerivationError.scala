@@ -8,6 +8,8 @@ import io.scalaland.chimney.internal.compiletime.datatypes.ProductTypes.BeanAwar
 sealed trait TransformerDerivationError extends Product with Serializable {
   def fromType: String
   def toType: String
+  def fromPath: String
+  def toPath: String
 }
 
 final case class MissingConstructorArgument(
@@ -17,7 +19,7 @@ final case class MissingConstructorArgument(
     availableInheritedAccessors: List[String],
     availableDefault: Boolean,
     availableNone: Boolean
-)(val fromType: String, val toType: String)
+)(val fromType: String, val toType: String, val fromPath: String, val toPath: String)
     extends TransformerDerivationError
 
 final case class MissingJavaBeanSetterParam(
@@ -26,27 +28,27 @@ final case class MissingJavaBeanSetterParam(
     availableMethodAccessors: List[String],
     availableInheritedAccessors: List[String],
     availableNone: Boolean
-)(val fromType: String, val toType: String)
+)(val fromType: String, val toType: String, val fromPath: String, val toPath: String)
     extends TransformerDerivationError
 
 final case class MissingFieldTransformer(
     toField: String,
     fromFieldType: String,
     toFieldType: String
-)(val fromType: String, val toType: String)
+)(val fromType: String, val toType: String, val fromPath: String, val toPath: String)
     extends TransformerDerivationError
 
 final case class AmbiguousFieldSources(
     foundFromFields: List[String],
     toField: String
-)(val fromType: String, val toType: String)
+)(val fromType: String, val toType: String, val fromPath: String, val toPath: String)
     extends TransformerDerivationError
 
 final case class AmbiguousFieldOverrides(
     toName: String,
     foundOverrides: List[String],
     fieldNamesComparator: String
-)(val fromType: String, val toType: String)
+)(val fromType: String, val toType: String, val fromPath: String, val toPath: String)
     extends TransformerDerivationError
 
 final case class NotSupportedOperationFromPath(
@@ -54,7 +56,7 @@ final case class NotSupportedOperationFromPath(
     toName: String,
     foundFromPath: String,
     allowedFromPaths: String
-)(val fromType: String, val toType: String)
+)(val fromType: String, val toType: String, val fromPath: String, val toPath: String)
     extends TransformerDerivationError
 object NotSupportedOperationFromPath {
   sealed trait Operation extends Product with Serializable
@@ -67,43 +69,45 @@ object NotSupportedOperationFromPath {
 
 final case class MissingSubtypeTransformer(
     fromSubtype: String
-)(val fromType: String, val toType: String)
+)(val fromType: String, val toType: String, val fromPath: String, val toPath: String)
     extends TransformerDerivationError
 
 final case class AmbiguousSubtypeTargets(
     fromSubtype: String,
     foundToSubtypes: List[String]
-)(val fromType: String, val toType: String)
+)(val fromType: String, val toType: String, val fromPath: String, val toPath: String)
     extends TransformerDerivationError
 
 final case class TupleArityMismatch(
     fromArity: Int,
     toArity: Int,
     fallbackArity: List[Int]
-)(val fromType: String, val toType: String)
+)(val fromType: String, val toType: String, val fromPath: String, val toPath: String)
     extends TransformerDerivationError
 
 final case class AmbiguousImplicitPriority(
     totalExprPrettyPrint: String,
     partialExprPrettyPrint: String
-)(val fromType: String, val toType: String)
+)(val fromType: String, val toType: String, val fromPath: String, val toPath: String)
     extends TransformerDerivationError
 
 final case class NotSupportedTransformerDerivation(
     exprPrettyPrint: String
-)(val fromType: String, val toType: String)
+)(val fromType: String, val toType: String, val fromPath: String, val toPath: String)
     extends TransformerDerivationError
 
-final case class FailedPolicyCheck(policyName: String, path: String, failedValues: List[String])(
-    val fromType: String,
-    val toType: String
-) extends TransformerDerivationError
+final case class FailedPolicyCheck(
+    policyName: String,
+    path: String,
+    failedValues: List[String]
+)(val fromType: String, val toType: String, val fromPath: String, val toPath: String)
+    extends TransformerDerivationError
 
 object TransformerDerivationError {
   def printErrors(errors: Seq[TransformerDerivationError]): String =
     errors
-      .groupBy(e => (e.toType, e.fromType))
-      .map { case ((toType, fromType), errs) =>
+      .groupBy(e => (e.fromType, e.toType, e.fromPath, e.toPath))
+      .map { case ((fromType, toType, fromPath, toPath), errs) =>
         val errStrings = errs.distinct.map {
           case MissingConstructorArgument(toField, toFieldType, _, _, _, _) =>
             s"  $toField: $toFieldType - no accessor named $MAGENTA$toField$RESET in source type $fromType"
@@ -189,7 +193,14 @@ object TransformerDerivationError {
           s"\n\nThere are default optional values available for $fields in $toType. Consider using $MAGENTA.enableOptionDefaultsToNone$RESET."
         }
 
-        s"""$toType
+        val pathHint = (fromPath.startsWith("_."), toPath.startsWith("_.")) match {
+          case (false, false) => ""
+          case (true, false)  => s" (transforming from: ${fromPath.drop(2)})"
+          case (false, true)  => s" (transforming into: ${toPath.drop(2)})"
+          case (true, true)   => s" (transforming from: ${fromPath.drop(2)} into: ${toPath.drop(2)})"
+        }
+
+        s"""$toType$pathHint
            |${errStrings.mkString("\n")}$methodAccessorHint$inheritedAccessorHint$defaultValueHint$noneValueHint
            |""".stripMargin
       }
