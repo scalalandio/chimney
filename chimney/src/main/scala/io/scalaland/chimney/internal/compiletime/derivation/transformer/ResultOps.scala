@@ -17,6 +17,7 @@ import io.scalaland.chimney.internal.compiletime.{
 }
 import io.scalaland.chimney.integrations as in
 import io.scalaland.chimney.{partial, PartialTransformer, Transformer}
+import io.scalaland.chimney.internal.compiletime.TransformerDerivationError
 
 private[compiletime] trait ResultOps { this: Derivation =>
 
@@ -45,6 +46,12 @@ private[compiletime] trait ResultOps { this: Derivation =>
     def attemptNextRuleBecause[A](reason: String): DerivationResult[Rule.ExpansionResult[A]] =
       DerivationResult.pure(Rule.ExpansionResult.AttemptNextRule(Some(reason)))
 
+    def transformerErrorFromCtx[From, To, A](thunk: (String, String, String, String) => TransformerDerivationError)(
+        implicit ctx: TransformationContext[From, To]
+    ): DerivationResult[A] = DerivationResult.transformerError(
+      thunk(Type.prettyPrint[From], Type.prettyPrint[To], ctx.srcJournal.last._1.toString, ctx.tgtJournal.last.toString)
+    )
+
     def missingConstructorArgument[From, To, Field: Type, A](
         toField: String,
         availableMethodAccessors: List[String],
@@ -53,7 +60,7 @@ private[compiletime] trait ResultOps { this: Derivation =>
         availableNone: Boolean
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[A] = DerivationResult.transformerError(
+    ): DerivationResult[A] = transformerErrorFromCtx(
       MissingConstructorArgument(
         toField = toField,
         toFieldType = Type.prettyPrint[Field],
@@ -61,7 +68,7 @@ private[compiletime] trait ResultOps { this: Derivation =>
         availableInheritedAccessors = availableInheritedAccessors,
         availableDefault = availableDefault,
         availableNone = availableNone
-      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+      )
     )
 
     def missingJavaBeanSetterParam[From, To, Setter: Type, A](
@@ -71,46 +78,46 @@ private[compiletime] trait ResultOps { this: Derivation =>
         availableNone: Boolean
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[A] = DerivationResult.transformerError(
+    ): DerivationResult[A] = transformerErrorFromCtx(
       MissingJavaBeanSetterParam(
         toSetter = toSetter,
         toSetterType = Type.prettyPrint[Setter],
         availableMethodAccessors = availableMethodAccessors,
         availableInheritedAccessors = availableInheritedAccessors,
         availableNone = availableNone
-      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+      )
     )
 
     def missingFieldTransformer[From, To, FromField: Type, ToField: Type, A](toField: String)(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[A] = DerivationResult.transformerError(
+    ): DerivationResult[A] = transformerErrorFromCtx(
       MissingFieldTransformer(
         toField = toField,
         fromFieldType = Type.prettyPrint[FromField],
         toFieldType = Type.prettyPrint[ToField]
-      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+      )
     )
 
     def ambiguousFieldSources[From, To, A](
         foundFromFields: List[String],
         toField: String
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[A] = DerivationResult.transformerError(
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[A] = transformerErrorFromCtx(
       AmbiguousFieldSources(
         foundFromFields = foundFromFields.sorted,
         toField = toField
-      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+      )
     )
 
     def ambiguousFieldOverrides[From, To, A](
         toName: String,
         foundOverrides: List[String],
         fieldNamesComparator: String
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[A] = DerivationResult.transformerError(
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[A] = transformerErrorFromCtx(
       AmbiguousFieldOverrides(
         toName = toName,
         foundOverrides = foundOverrides.sorted,
         fieldNamesComparator = fieldNamesComparator
-      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+      )
     )
 
     def notSupportedOperationFromPath[From, To, A](
@@ -118,27 +125,27 @@ private[compiletime] trait ResultOps { this: Derivation =>
         toName: String,
         foundFromPath: Path,
         allowedFromPaths: Path
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[A] = DerivationResult.transformerError(
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[A] = transformerErrorFromCtx(
       NotSupportedOperationFromPath(
         operation = operation,
         toName = toName,
         foundFromPath = foundFromPath.toString,
         allowedFromPaths = allowedFromPaths.toString
-      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+      )
     )
 
     def missingSubtypeTransformer[From, To, FromSubtype: Type, A](implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[A] = DerivationResult.transformerError(
+    ): DerivationResult[A] = transformerErrorFromCtx(
       MissingSubtypeTransformer(
         fromSubtype = Type.prettyPrint[FromSubtype]
-      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+      )
     )
 
     def ambiguousSubtypeTargets[From, To, A](
         fromSubtype: ExistentialType,
         foundToSubtypes: List[ExistentialType]
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[A] = DerivationResult.transformerError(
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[A] = transformerErrorFromCtx(
       AmbiguousSubtypeTargets(
         fromSubtype = {
           import fromSubtype.Underlying as FromSubtype
@@ -148,17 +155,17 @@ private[compiletime] trait ResultOps { this: Derivation =>
           import foundToSubtype.Underlying as ToSubtype
           Type.prettyPrint[ToSubtype]
         }.sorted
-      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+      )
     )
 
     def tupleArityMismatch[From, To, A](fromArity: Int, toArity: Int, fallbackArity: List[Int])(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[A] = DerivationResult.transformerError(
+    ): DerivationResult[A] = transformerErrorFromCtx(
       TupleArityMismatch(
         fromArity = fromArity,
         toArity = toArity,
         fallbackArity = fallbackArity
-      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+      )
     )
 
     def ambiguousImplicitPriority[From, To, A](
@@ -166,11 +173,11 @@ private[compiletime] trait ResultOps { this: Derivation =>
         partial: Expr[PartialTransformer[From, To]]
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[A] = DerivationResult.transformerError(
+    ): DerivationResult[A] = transformerErrorFromCtx(
       AmbiguousImplicitPriority(
         totalExprPrettyPrint = total.prettyPrint,
         partialExprPrettyPrint = partial.prettyPrint
-      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+      )
     )
 
     def ambiguousImplicitOuterPriority[From, To, InnerFromT: Type, InnerToT: Type, InnerFromP: Type, InnerToP: Type, A](
@@ -178,36 +185,36 @@ private[compiletime] trait ResultOps { this: Derivation =>
         partial: Expr[in.PartialOuterTransformer[From, To, InnerFromP, InnerToP]]
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[A] = DerivationResult.transformerError(
+    ): DerivationResult[A] = transformerErrorFromCtx(
       AmbiguousImplicitPriority(
         totalExprPrettyPrint = total.prettyPrint,
         partialExprPrettyPrint = partial.prettyPrint
-      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+      )
     )
 
     def notSupportedTransformerDerivation[From, To, A](implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[A] = DerivationResult.transformerError(
+    ): DerivationResult[A] = transformerErrorFromCtx(
       NotSupportedTransformerDerivation(
         exprPrettyPrint = ctx.src.prettyPrint
-      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+      )
     )
     def notSupportedTransformerDerivationForField[From, To, A](fieldName: String)(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[A] = DerivationResult.transformerError(
+    ): DerivationResult[A] = transformerErrorFromCtx(
       NotSupportedTransformerDerivation(
         exprPrettyPrint = fieldName
-      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+      )
     )
 
     def failedPolicyCheck[From, To, A](policy: Any, path: Path, failedValues: List[String])(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[A] = DerivationResult.transformerError(
+    ): DerivationResult[A] = transformerErrorFromCtx(
       FailedPolicyCheck(
         policyName = policy.toString,
         path = path.toString,
         failedValues = failedValues
-      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+      )
     )
 
     def summonImplicit[A: Type]: DerivationResult[Expr[A]] = DerivationResult(Expr.summonImplicitUnsafe[A])
