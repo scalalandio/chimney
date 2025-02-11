@@ -14,9 +14,9 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
     ).check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag to io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag",
       "io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag",
-      "id: java.lang.String - no accessor named id in source type io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag",
-      "name: java.lang.String - no accessor named name in source type io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag",
-      "flag: scala.Boolean - no accessor named flag in source type io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag",
+      "  id: java.lang.String - no accessor named id in source type io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag",
+      "  name: java.lang.String - no accessor named name in source type io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag",
+      "  flag: scala.Boolean - no accessor named flag in source type io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
   }
@@ -25,7 +25,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
     compileErrors("""CaseClassWithFlag("100", "name", flag = true).intoPartial[JavaBeanTarget].transform""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
       "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
-      "derivation from caseclasswithflag: io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
+      "  derivation from caseclasswithflag: io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
   }
@@ -41,9 +41,9 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       .check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithAmbiguity to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
-        "field setName: io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget has ambiguous matches in io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithAmbiguity: getName, name",
-        "field setFlag: io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget has ambiguous matches in io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithAmbiguity: flag, isFlag",
-        "field setId: io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget has ambiguous matches in io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithAmbiguity: getId, id",
+        "  field setId: io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget has ambiguous matches in io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithAmbiguity: getId, id",
+        "  field setName: io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget has ambiguous matches in io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithAmbiguity: getName, name",
+        "  field setFlag: io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget has ambiguous matches in io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithAmbiguity: flag, isFlag",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
   }
@@ -345,7 +345,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
-        "setFlag(flag: scala.Boolean) - no accessor named flag in source type io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod",
+        "  setFlag(flag: scala.Boolean) - no accessor named flag in source type io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod",
         "There are methods in io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod that might be used as accessors for setFlag (e.g. flag), the constructor argument/setter in io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget. Consider using .enableMethodAccessors.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -362,7 +362,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
         ).check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
           "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
-          "setFlag(flag: scala.Boolean) - no accessor named flag in source type io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod",
+          "  setFlag(flag: scala.Boolean) - no accessor named flag in source type io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod",
           "There are methods in io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod that might be used as accessors for setFlag (e.g. flag), the constructor argument/setter in io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget. Consider using .enableMethodAccessors.",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
@@ -405,7 +405,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
-        "derivation from caseclasswithflag: io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
+        "  derivation from caseclasswithflag: io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -417,18 +417,18 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       compileErrors("().transformIntoPartial[JavaBeanTarget]").check(
         "Chimney can't derive transformation from scala.Unit to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
-        "setName(name: java.lang.String) - no accessor named name in source type scala.Unit",
-        "setId(id: java.lang.String) - no accessor named id in source type scala.Unit",
-        "setFlag(flag: scala.Boolean) - no accessor named flag in source type scala.Unit",
+        "  setId(id: java.lang.String) - no accessor named id in source type scala.Unit",
+        "  setName(name: java.lang.String) - no accessor named name in source type scala.Unit",
+        "  setFlag(flag: scala.Boolean) - no accessor named flag in source type scala.Unit",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
       compileErrors("().intoPartial[JavaBeanTarget].transform").check(
         "Chimney can't derive transformation from scala.Unit to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
-        "setName(name: java.lang.String) - no accessor named name in source type scala.Unit",
-        "setId(id: java.lang.String) - no accessor named id in source type scala.Unit",
-        "setFlag(flag: scala.Boolean) - no accessor named flag in source type scala.Unit",
+        "  setId(id: java.lang.String) - no accessor named id in source type scala.Unit",
+        "  setName(name: java.lang.String) - no accessor named name in source type scala.Unit",
+        "  setFlag(flag: scala.Boolean) - no accessor named flag in source type scala.Unit",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -482,7 +482,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassNoFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
-        "derivation from caseclassnoflag: io.scalaland.chimney.fixtures.javabeans.CaseClassNoFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
+        "  derivation from caseclassnoflag: io.scalaland.chimney.fixtures.javabeans.CaseClassNoFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
@@ -499,7 +499,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
         ).check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassNoFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
           "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
-          "derivation from caseclassnoflag: io.scalaland.chimney.fixtures.javabeans.CaseClassNoFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
+          "  derivation from caseclassnoflag: io.scalaland.chimney.fixtures.javabeans.CaseClassNoFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
       }
@@ -543,7 +543,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
-        "derivation from caseclasswithflag: io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
+        "  derivation from caseclasswithflag: io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -685,7 +685,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
-        "setFlag(flag: scala.Boolean) - no accessor named flag in source type io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod",
+        "  setFlag(flag: scala.Boolean) - no accessor named flag in source type io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod",
         "There are methods in io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod that might be used as accessors for setFlag (e.g. flag), the constructor argument/setter in io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget. Consider using .enableMethodAccessors.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )

@@ -47,7 +47,7 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
     compileErrors("""Possible("foobar").into[None.type].transform""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] to scala.None",
       "scala.None",
-      "derivation from possible: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] to scala.None is not supported in Chimney!",
+      "  derivation from possible: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] to scala.None is not supported in Chimney!",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
   }
@@ -80,7 +80,7 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
     compileErrors("""CustomCollection.of(Foo("a")).transformInto[NonEmptyCollection[Bar]]""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerIntegrationsSpec.CustomCollection[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo] to io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyCollection[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar]",
       "io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyCollection[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar]",
-      "derivation from customcollection: io.scalaland.chimney.TotalTransformerIntegrationsSpec.CustomCollection[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo] to io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyCollection[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar] is not supported in Chimney!",
+      "  derivation from customcollection: io.scalaland.chimney.TotalTransformerIntegrationsSpec.CustomCollection[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo] to io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyCollection[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar] is not supported in Chimney!",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
   }
@@ -117,7 +117,7 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
     compileErrors("""CustomMap.of(Foo("k") -> Foo("v")).transformInto[NonEmptyMap[Bar, Bar]]""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerIntegrationsSpec.CustomMap[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo] to io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyMap[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar]",
       "io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyMap[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar]",
-      "derivation from custommap: io.scalaland.chimney.TotalTransformerIntegrationsSpec.CustomMap[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo] to io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyMap[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar] is not supported in Chimney!",
+      "  derivation from custommap: io.scalaland.chimney.TotalTransformerIntegrationsSpec.CustomMap[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo] to io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyMap[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar] is not supported in Chimney!",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
   }
@@ -146,7 +146,7 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
       compileErrors("""Source("foo").into[TargetWithOption].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerIntegrationsSpec.Source to io.scalaland.chimney.TotalTransformerIntegrationsSpec.TargetWithOption",
         "io.scalaland.chimney.TotalTransformerIntegrationsSpec.TargetWithOption",
-        "y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.TotalTransformerIntegrationsSpec.Source",
+        "  y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.TotalTransformerIntegrationsSpec.Source",
         "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.TotalTransformerIntegrationsSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -206,7 +206,7 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
       compileErrors("""Source("foo").into[TargetWithOption].disableOptionDefaultsToNone.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerIntegrationsSpec.Source to io.scalaland.chimney.TotalTransformerIntegrationsSpec.TargetWithOption",
         "io.scalaland.chimney.TotalTransformerIntegrationsSpec.TargetWithOption",
-        "y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.TotalTransformerIntegrationsSpec.Source",
+        "  y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.TotalTransformerIntegrationsSpec.Source",
         "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.TotalTransformerIntegrationsSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )

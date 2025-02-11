@@ -166,7 +166,7 @@ class PartialTransformerImplicitResolutionSpec extends ChimneySpec {
       compileErrors("""10.transformIntoPartial[String]""").check(
         "Chimney can't derive transformation from scala.Int to java.lang.String",
         "java.lang.String",
-        "derivation from int: scala.Int to java.lang.String is not supported in Chimney!",
+        "  derivation from int: scala.Int to java.lang.String is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -193,7 +193,7 @@ class PartialTransformerImplicitResolutionSpec extends ChimneySpec {
       compileErrors("""10.intoPartial[String].disableImplicitConversions.transform""").check(
         "Chimney can't derive transformation from scala.Int to java.lang.String",
         "java.lang.String",
-        "derivation from int: scala.Int to java.lang.String is not supported in Chimney!",
+        "  derivation from int: scala.Int to java.lang.String is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }

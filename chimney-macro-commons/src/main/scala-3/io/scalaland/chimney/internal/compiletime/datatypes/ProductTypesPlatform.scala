@@ -191,6 +191,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         val setters = sym.methodMembers
           .filterNot(isGarbageSymbol)
           .filter(isJavaSetterOrVar)
+          .sortBy(_.pos.fold(0)(_.start)) // Scala 2's syms are sorted by position, in Scala 3 we have to sort them
           .map { setter =>
             val n = setter.name
             val name = if isVar(setter) then n.stripSuffix("_$eq").stripSuffix("_=") else n
@@ -212,6 +213,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
               )
             )
           }
+
         val setterParameters = ListMap.from(setters.map { case (name, _, param) => name -> param })
         type Setter[B] = (Expr[A], Expr[B]) => Expr[Unit]
         val setterExprs = setters.map { case (name, symbol, param) =>

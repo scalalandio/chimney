@@ -33,14 +33,14 @@ class PartialTransformerProductSpec extends ChimneySpec {
     compileErrors("Bar(3, (3.14, 3.14)).intoPartial[Foo].transform").check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Bar to io.scalaland.chimney.fixtures.products.Foo",
       "io.scalaland.chimney.fixtures.products.Foo",
-      "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Bar",
+      "  y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Bar",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
 
     compileErrors("Bar(3, (3.14, 3.14)).transformIntoPartial[Foo]").check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Bar to io.scalaland.chimney.fixtures.products.Foo",
       "io.scalaland.chimney.fixtures.products.Foo",
-      "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Bar",
+      "  y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Bar",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
   }
@@ -1306,16 +1306,16 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("""User(1, "Kuba", Some(28)).transformInto[UserPL]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
-        "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
-        "wiek: scala.util.Either[scala.Unit, scala.Int] - no accessor named wiek in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "  imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "  wiek: scala.util.Either[scala.Unit, scala.Int] - no accessor named wiek in source type io.scalaland.chimney.fixtures.products.Renames.User",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
       compileErrors("""User(1, "Kuba", Some(28)).into[UserPL].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
-        "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
-        "wiek: scala.util.Either[scala.Unit, scala.Int] - no accessor named wiek in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "  imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "  wiek: scala.util.Either[scala.Unit, scala.Int] - no accessor named wiek in source type io.scalaland.chimney.fixtures.products.Renames.User",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -1485,7 +1485,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
-        "wiek: scala.util.Either[scala.Unit, scala.Int] - can't derive transformation from wiek: scala.Option[scala.Int] in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "  wiek: scala.util.Either[scala.Unit, scala.Int] - can't derive transformation from wiek: scala.Option[scala.Int] in source type io.scalaland.chimney.fixtures.products.Renames.User",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -1569,7 +1569,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("""Foo(10, "test", (1,2)).intoPartial[Bar].withFieldUnused(_.x).transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Foo to io.scalaland.chimney.fixtures.products.Bar",
         "io.scalaland.chimney.fixtures.products.Bar",
-        "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Foo",
+        "  x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Foo",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -1580,7 +1580,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Foo to io.scalaland.chimney.fixtures.products.Bar",
         "io.scalaland.chimney.fixtures.products.Bar",
-        "FailOnIgnoredSourceVal policy check failed at _, offenders: y!",
+        "  FailOnIgnoredSourceVal policy check failed at _, offenders: y!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
@@ -1614,8 +1614,8 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("""Source(1, "yy", 1.0).transformIntoPartial[Target]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
-        "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
-        "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "  x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "  y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
         "There are default values for x, y, constructor arguments/setters in io.scalaland.chimney.fixtures.products.Defaults.Target. Consider using .enableDefaultValues or .enableDefaultValueForType.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -1623,8 +1623,8 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("""Source(1, "yy", 1.0).intoPartial[Target].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
-        "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
-        "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "  x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "  y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
         "There are default values for x, y, constructor arguments/setters in io.scalaland.chimney.fixtures.products.Defaults.Target. Consider using .enableDefaultValues or .enableDefaultValueForType.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -1635,14 +1635,14 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("""User(1, "Adam", None).transformIntoPartial[User2ID]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.User2ID",
         "io.scalaland.chimney.fixtures.products.Renames.User2ID",
-        "extraID: scala.Int - no accessor named extraID in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "  extraID: scala.Int - no accessor named extraID in source type io.scalaland.chimney.fixtures.products.Renames.User",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
       compileErrors("""User(1, "Adam", None).intoPartial[User2ID].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.User2ID",
         "io.scalaland.chimney.fixtures.products.Renames.User2ID",
-        "extraID: scala.Int - no accessor named extraID in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "  extraID: scala.Int - no accessor named extraID in source type io.scalaland.chimney.fixtures.products.Renames.User",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -1762,7 +1762,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("""Source(1, "yy", 1.0).intoPartial[Target2].enableDefaultValues.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
         "io.scalaland.chimney.fixtures.products.Defaults.Target2",
-        "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "  xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
@@ -1772,13 +1772,13 @@ class PartialTransformerProductSpec extends ChimneySpec {
         compileErrors("""Source(1, "yy", 1.0).transformIntoPartial[Target2]""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "io.scalaland.chimney.fixtures.products.Defaults.Target2",
-          "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+          "  xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
         compileErrors("""Source(1, "yy", 1.0).intoPartial[Target2].transform""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "io.scalaland.chimney.fixtures.products.Defaults.Target2",
-          "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+          "  xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
       }
@@ -1889,8 +1889,8 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("""Source(1, "yy", 1.0).intoPartial[Target].disableDefaultValues.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
-        "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
-        "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "  x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "  y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
         "There are default values for x, y, constructor arguments/setters in io.scalaland.chimney.fixtures.products.Defaults.Target. Consider using .enableDefaultValues or .enableDefaultValueForType.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -1909,8 +1909,8 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("""Source(1, "yy", 1.0).into[Target].enableDefaultValueOfType[Long].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
-        "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
-        "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "  x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "  y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
         "There are default values for x, y, constructor arguments/setters in io.scalaland.chimney.fixtures.products.Defaults.Target. Consider using .enableDefaultValues or .enableDefaultValueForType.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -2026,7 +2026,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
         "io.scalaland.chimney.fixtures.products.Defaults.Target2",
-        "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "  xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
@@ -2038,13 +2038,13 @@ class PartialTransformerProductSpec extends ChimneySpec {
         compileErrors("""Source(1, "yy", 1.0).transformIntoPartial[Target2]""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "io.scalaland.chimney.fixtures.products.Defaults.Target2",
-          "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+          "  xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
         compileErrors("""Source(1, "yy", 1.0).intoPartial[Target2].transform""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "io.scalaland.chimney.fixtures.products.Defaults.Target2",
-          "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+          "  xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
       }
@@ -2145,8 +2145,8 @@ class PartialTransformerProductSpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
-        "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
-        "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "  x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "  y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
         "There are default values for x, y, constructor arguments/setters in io.scalaland.chimney.fixtures.products.Defaults.Target. Consider using .enableDefaultValues or .enableDefaultValueForType.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -2161,7 +2161,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("(new Source).transformIntoPartial[Target]").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Inherited.Source to io.scalaland.chimney.fixtures.products.Inherited.Target",
         "io.scalaland.chimney.fixtures.products.Inherited.Target",
-        "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
+        "  value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
         "There are inherited definitions in io.scalaland.chimney.fixtures.products.Inherited.Source that might be used as accessors for value (e.g. value), the constructor argument/setter in io.scalaland.chimney.fixtures.products.Inherited.Target. Consider using .enableInheritedAccessors.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -2169,7 +2169,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("(new Source).intoPartial[Target].transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Inherited.Source to io.scalaland.chimney.fixtures.products.Inherited.Target",
         "io.scalaland.chimney.fixtures.products.Inherited.Target",
-        "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
+        "  value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
         "There are inherited definitions in io.scalaland.chimney.fixtures.products.Inherited.Source that might be used as accessors for value (e.g. value), the constructor argument/setter in io.scalaland.chimney.fixtures.products.Inherited.Target. Consider using .enableInheritedAccessors.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -2217,7 +2217,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("(new Source).intoPartial[Target].disableInheritedAccessors.transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Inherited.Source to io.scalaland.chimney.fixtures.products.Inherited.Target",
         "io.scalaland.chimney.fixtures.products.Inherited.Target",
-        "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
+        "  value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
         "There are inherited definitions in io.scalaland.chimney.fixtures.products.Inherited.Source that might be used as accessors for value (e.g. value), the constructor argument/setter in io.scalaland.chimney.fixtures.products.Inherited.Target. Consider using .enableInheritedAccessors.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -2232,7 +2232,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("Source(10).transformIntoPartial[Target2]").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "io.scalaland.chimney.fixtures.products.Accessors.Target2",
-        "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
+        "  z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
         "There are methods in io.scalaland.chimney.fixtures.products.Accessors.Source that might be used as accessors for z (e.g. z), the constructor argument/setter in io.scalaland.chimney.fixtures.products.Accessors.Target2. Consider using .enableMethodAccessors.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -2240,7 +2240,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("Source(10).intoPartial[Target2].transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "io.scalaland.chimney.fixtures.products.Accessors.Target2",
-        "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
+        "  z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
         "There are methods in io.scalaland.chimney.fixtures.products.Accessors.Source that might be used as accessors for z (e.g. z), the constructor argument/setter in io.scalaland.chimney.fixtures.products.Accessors.Target2. Consider using .enableMethodAccessors.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -2381,7 +2381,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("""Source(10).into[Target2].disableMethodAccessors.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "io.scalaland.chimney.fixtures.products.Accessors.Target2",
-        "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
+        "  z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
         "There are methods in io.scalaland.chimney.fixtures.products.Accessors.Source that might be used as accessors for z (e.g. z), the constructor argument/setter in io.scalaland.chimney.fixtures.products.Accessors.Target2. Consider using .enableMethodAccessors.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -2397,19 +2397,19 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("""UserWithName("value").transformIntoPartial[String]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.valuetypes.UserWithName to java.lang.String",
         "java.lang.String",
-        "derivation from userwithname: io.scalaland.chimney.fixtures.valuetypes.UserWithName to java.lang.String is not supported in Chimney!",
+        "  derivation from userwithname: io.scalaland.chimney.fixtures.valuetypes.UserWithName to java.lang.String is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
       compileErrors(""""value".transformIntoPartial[UserWithName]""").check(
         "Chimney can't derive transformation from java.lang.String to io.scalaland.chimney.fixtures.valuetypes.UserWithName",
         "io.scalaland.chimney.fixtures.valuetypes.UserWithName",
-        "id: java.lang.String - no accessor named id in source type java.lang.String",
+        "  id: java.lang.String - no accessor named id in source type java.lang.String",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
       compileErrors("""UserWithName("value").transformIntoPartial[NestedProduct[String]]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.valuetypes.UserWithName to io.scalaland.chimney.fixtures.nestedpath.NestedProduct[java.lang.String]",
         "io.scalaland.chimney.fixtures.nestedpath.NestedProduct[java.lang.String]",
-        "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.valuetypes.UserWithName",
+        "  value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.valuetypes.UserWithName",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -2518,20 +2518,20 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("""UserWithName("value").intoPartial[String].disableNonAnyValWrappers.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.valuetypes.UserWithName to java.lang.String",
         "java.lang.String",
-        "derivation from userwithname: io.scalaland.chimney.fixtures.valuetypes.UserWithName to java.lang.String is not supported in Chimney!",
+        "  derivation from userwithname: io.scalaland.chimney.fixtures.valuetypes.UserWithName to java.lang.String is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
       compileErrors(""""value".intoPartial[UserWithName].disableNonAnyValWrappers.transform""").check(
         "Chimney can't derive transformation from java.lang.String to io.scalaland.chimney.fixtures.valuetypes.UserWithName",
         "io.scalaland.chimney.fixtures.valuetypes.UserWithName",
-        "id: java.lang.String - no accessor named id in source type java.lang.String",
+        "  id: java.lang.String - no accessor named id in source type java.lang.String",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
       compileErrors("""UserWithName("value").intoPartial[NestedProduct[String]].disableNonAnyValWrappers.transform""")
         .check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.valuetypes.UserWithName to io.scalaland.chimney.fixtures.nestedpath.NestedProduct[java.lang.String]",
           "io.scalaland.chimney.fixtures.nestedpath.NestedProduct[java.lang.String]",
-          "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.valuetypes.UserWithName",
+          "  value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.valuetypes.UserWithName",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
     }
@@ -2553,32 +2553,32 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrors("""Foo(Foo.Baz("test"), 1024).transformIntoPartial[Bar]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Foo to io.scalaland.chimney.PartialTransformerProductSpec.Bar",
         "io.scalaland.chimney.PartialTransformerProductSpec.Bar",
-        "baz: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
-        "a: scala.Int - no accessor named a in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+        "  baz: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+        "  a: scala.Int - no accessor named a in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
       compileErrors("""Foo(Foo.Baz("test"), 1024).intoPartial[Bar].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Foo to io.scalaland.chimney.PartialTransformerProductSpec.Bar",
         "io.scalaland.chimney.PartialTransformerProductSpec.Bar",
-        "baz: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
-        "a: scala.Int - no accessor named a in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+        "  baz: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+        "  a: scala.Int - no accessor named a in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
       compileErrors("""Bar(Bar.Baz("test"), 1024).transformIntoPartial[Foo]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Bar to io.scalaland.chimney.PartialTransformerProductSpec.Foo",
         "io.scalaland.chimney.PartialTransformerProductSpec.Foo",
-        "Baz: io.scalaland.chimney.PartialTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
-        "A: scala.Int - no accessor named A in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+        "  Baz: io.scalaland.chimney.PartialTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+        "  A: scala.Int - no accessor named A in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
       compileErrors("""Bar(Bar.Baz("test"), 1024).intoPartial[Foo].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Bar to io.scalaland.chimney.PartialTransformerProductSpec.Foo",
         "io.scalaland.chimney.PartialTransformerProductSpec.Foo",
-        "Baz: io.scalaland.chimney.PartialTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
-        "A: scala.Int - no accessor named A in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+        "  Baz: io.scalaland.chimney.PartialTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+        "  A: scala.Int - no accessor named A in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -2620,10 +2620,10 @@ class PartialTransformerProductSpec extends ChimneySpec {
         .check(
           "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.FooAmbiguous to io.scalaland.chimney.PartialTransformerProductSpec.Bar",
           "io.scalaland.chimney.PartialTransformerProductSpec.Bar",
-          "baz: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz - can't derive transformation from baz: io.scalaland.chimney.PartialTransformerProductSpec.FooAmbiguous.Baz in source type io.scalaland.chimney.PartialTransformerProductSpec.FooAmbiguous",
-          "field a: io.scalaland.chimney.PartialTransformerProductSpec.Bar has ambiguous matches in io.scalaland.chimney.PartialTransformerProductSpec.FooAmbiguous: A, a",
-          "io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz",
-          "field s: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz has ambiguous matches in io.scalaland.chimney.PartialTransformerProductSpec.FooAmbiguous.Baz: S, s",
+          "  baz: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz - can't derive transformation from baz: io.scalaland.chimney.PartialTransformerProductSpec.FooAmbiguous.Baz in source type io.scalaland.chimney.PartialTransformerProductSpec.FooAmbiguous",
+          "  field a: io.scalaland.chimney.PartialTransformerProductSpec.Bar has ambiguous matches in io.scalaland.chimney.PartialTransformerProductSpec.FooAmbiguous: A, a",
+          "io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz (transforming from: baz into: baz)",
+          "  field s: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz has ambiguous matches in io.scalaland.chimney.PartialTransformerProductSpec.FooAmbiguous.Baz: S, s",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
     }
@@ -2757,8 +2757,8 @@ class PartialTransformerProductSpec extends ChimneySpec {
         .check(
           "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Foo to io.scalaland.chimney.PartialTransformerProductSpec.Bar",
           "io.scalaland.chimney.PartialTransformerProductSpec.Bar",
-          "baz: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
-          "a: scala.Int - no accessor named a in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+          "  baz: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+          "  a: scala.Int - no accessor named a in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
 
@@ -2766,8 +2766,8 @@ class PartialTransformerProductSpec extends ChimneySpec {
         .check(
           "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Bar to io.scalaland.chimney.PartialTransformerProductSpec.Foo",
           "io.scalaland.chimney.PartialTransformerProductSpec.Foo",
-          "Baz: io.scalaland.chimney.PartialTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
-          "A: scala.Int - no accessor named A in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+          "  Baz: io.scalaland.chimney.PartialTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+          "  A: scala.Int - no accessor named A in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
     }
@@ -2795,7 +2795,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Foo to io.scalaland.chimney.fixtures.products.Bar",
         "io.scalaland.chimney.fixtures.products.Bar",
-        "FailOnIgnoredSourceVal policy check failed at _, offenders: y!",
+        "  FailOnIgnoredSourceVal policy check failed at _, offenders: y!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
@@ -2806,7 +2806,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         compileErrors("""Foo(10, "unused", (1.0, 2.0)).transformIntoPartial[Bar]""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Foo to io.scalaland.chimney.fixtures.products.Bar",
           "io.scalaland.chimney.fixtures.products.Bar",
-          "FailOnIgnoredSourceVal policy check failed at _, offenders: y!",
+          "  FailOnIgnoredSourceVal policy check failed at _, offenders: y!",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
       }
@@ -3097,13 +3097,13 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       compileErrors("""Foo("100").transformIntoPartial[Bar]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Foo to io.scalaland.chimney.PartialTransformerProductSpec.Bar",
-        "scala.Int",
-        "ambiguous implicits while resolving Chimney recursive transformation!",
-        "PartialTransformer[java.lang.String, scala.Int]: partialInner",
-        "Transformer[java.lang.String, scala.Int]: totalInner",
-        "Please eliminate total/partial ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used.",
         "io.scalaland.chimney.PartialTransformerProductSpec.Bar",
-        "value: scala.Int - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+        "  value: scala.Int - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+        "scala.Int (transforming from: value into: value)",
+        "  ambiguous implicits while resolving Chimney recursive transformation!",
+        "    PartialTransformer[java.lang.String, scala.Int]: partialInner",
+        "    Transformer[java.lang.String, scala.Int]: totalInner",
+        "  Please eliminate total/partial ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }

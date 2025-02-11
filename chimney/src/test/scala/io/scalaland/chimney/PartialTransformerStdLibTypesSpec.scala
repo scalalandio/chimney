@@ -16,9 +16,9 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     compileErrors("""Buzz("a").transformIntoPartial[ConflictingFooBuzz]""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Buzz to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.ConflictingFooBuzz",
       "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.ConflictingFooBuzz",
-      "value: scala.Unit - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Buzz",
+      "  value: scala.Unit - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Buzz",
       "scala.Unit",
-      "derivation from buzz.value: java.lang.String to scala.Unit is not supported in Chimney!",
+      "  derivation from buzz.value: java.lang.String to scala.Unit is not supported in Chimney!",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
   }
@@ -638,14 +638,14 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       compileErrors("""Source("foo").transformIntoPartial[TargetWithOption]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
-        "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
+        "  y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
         "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
       compileErrors("""Source("foo").intoPartial[TargetWithOption].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
-        "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
+        "  y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
         "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -719,7 +719,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       compileErrors("""Source("foo").intoPartial[TargetWithOption].disableOptionDefaultsToNone.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
-        "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
+        "  y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
         "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -762,10 +762,10 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     test("should fail compilation if Option unwrapping is not provided when disabled") {
       compileErrors("""Source(Some("value")).intoPartial[Target].disablePartialUnwrapsOption.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Target",
-        "java.lang.String",
-        "derivation from source.a: scala.Option[java.lang.String] to java.lang.String is not supported in Chimney!",
         "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Target",
-        "a: java.lang.String - can't derive transformation from a: scala.Option[java.lang.String] in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
+        "  a: java.lang.String - can't derive transformation from a: scala.Option[java.lang.String] in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
+        "java.lang.String (transforming from: a into: a)",
+        "  derivation from source.a: scala.Option[java.lang.String] to java.lang.String is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
       locally {
@@ -773,10 +773,10 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
 
         compileErrors("""Source(Some("value")).transformIntoPartial[Target]""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Target",
-          "java.lang.String",
-          "derivation from source.a: scala.Option[java.lang.String] to java.lang.String is not supported in Chimney!",
           "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Target",
-          "a: java.lang.String - can't derive transformation from a: scala.Option[java.lang.String] in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
+          "  a: java.lang.String - can't derive transformation from a: scala.Option[java.lang.String] in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
+          "java.lang.String (transforming from: a into: a)",
+          "  derivation from source.a: scala.Option[java.lang.String] to java.lang.String is not supported in Chimney!",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
       }

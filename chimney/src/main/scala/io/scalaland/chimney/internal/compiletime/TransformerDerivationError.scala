@@ -105,10 +105,10 @@ final case class FailedPolicyCheck(
 
 object TransformerDerivationError {
   def printErrors(errors: Seq[TransformerDerivationError]): String =
-    errors
-      .groupBy(e => (e.fromType, e.toType, e.fromPath, e.toPath))
+    errors.zipWithIndex
+      .groupBy { case (e, _) => (e.fromType, e.toType, e.fromPath, e.toPath) }
       .map { case ((fromType, toType, fromPath, toPath), errs) =>
-        val errStrings = errs.distinct.map {
+        val errStrings = errs.sortBy(_._2).map(_._1).distinct.map {
           case MissingConstructorArgument(toField, toFieldType, _, _, _, _) =>
             s"  $toField: $toFieldType - no accessor named $MAGENTA$toField$RESET in source type $fromType"
           case MissingJavaBeanSetterParam(toSetter, requiredTypeName, _, _, _) =>
@@ -200,9 +200,16 @@ object TransformerDerivationError {
           case (true, true)   => s" (transforming from: ${fromPath.drop(2)} into: ${toPath.drop(2)})"
         }
 
-        s"""$toType$pathHint
-           |${errStrings.mkString("\n")}$methodAccessorHint$inheritedAccessorHint$defaultValueHint$noneValueHint
-           |""".stripMargin
+        val key = errs.head._2
+        val value =
+          s"""$toType$pathHint
+             |${errStrings.mkString("\n")}$methodAccessorHint$inheritedAccessorHint$defaultValueHint$noneValueHint
+             |""".stripMargin
+
+        key -> value
       }
+      .toVector
+      .sortBy(_._1)
+      .map(_._2)
       .mkString("\n")
 }
