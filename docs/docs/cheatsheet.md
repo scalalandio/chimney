@@ -222,6 +222,30 @@ All flags and overrides are described in more detail in the [Supported Transform
 | `.withSealedSubtypeUnmatched[ToSubtype]`                                                            | `ToSubtype` should not be matched, [`UnmatchedSubtypePolicy` error](cookbook.md#checking-for-unused-source-fieldsunmatched-target-subtypes) should be suppressed            |
 | `.withEnumCaseUnmatched[ToSubtype]`                                                                 | the same as above should be suppressed                                                                                                                                      |
 
+!!! example "Providing Transformer flags"
+
+    ```scala
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.{Transformer, PartialTransformer}
+
+    // Flags can be added per derivation
+    source.into[Target].disableMacrosLogging.transform
+    source.intoPartial[Target].disableMacrosLogging.transform
+    Transformer.define[Source, Target].disableMacrosLogging.buildTransformer
+    PartialTransformer.define[Source, Target].disableMacrosLogging.buildTransformer
+
+    // Or for whole scope:
+    locally {
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
+      implicit val cfg = TransformerConfiguration.default.disableMacrosLogging
+
+      source.transformInto[Target]
+      source.transformIntoPartial[Target]
+      Transformer.derive[Source, Target]
+      PartialTransformer.derive[Source, Target]
+    }
+    ```
+
 | Flag example                                                  | What it does                                                                                                                                                                              |
 |---------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `.enableMethodAccessors`                                      | turn on [Reading from methods](supported-transformations.md#reading-from-methods)                                                                                                         |
@@ -297,6 +321,26 @@ All flags and overrides are described in more detail in the [Supported Patching 
 | `.withFieldIgnored(_.patchField)`                                                             | `patchField` should not be used, [derivation should not complain](supported-patching.md#ignoring-fields-in-patches) that it isn't |
 | `.withFieldIgnored(_.matchingSome.patchField)`                                                | the same as above (but fields are in `Option`s)                                                                                   |
 | `.withFieldIgnored(_.everyItem.patchField)`                                                   | the same as above (but a field is in collection)                                                                                  |
+
+!!! example "Providing Patcher flags"
+
+    ```scala
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.Patcher
+
+    // Flags can be added per derivation
+    obj.using(patch).disableMacrosLogging.patch
+    Patcher.define[A, Patch].disableMacrosLogging.buildPatcher
+
+    // Or for whole scope:
+    locally {
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
+      implicit val cfg = PatcherConfiguration.default.disableMacrosLogging
+
+      obj.patchUsing(patch)
+      Patcher.derive[A, Patch]
+    }
+    ```
 
 | Flag example                    | What it does                                                                                                                                          |
 |---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
