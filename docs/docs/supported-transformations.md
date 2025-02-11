@@ -425,7 +425,7 @@ If the flag was enabled in the implicit config it can be disabled with `.enableT
     // Bar[B]
     //   value: B - can't derive transformation from value: A in source type Foo[A]
     // 
-    // B
+    // B (transforming from: value into: value)
     //   derivation from foo.value: A to B is not supported in Chimney!
     //
     // Consult https://chimney.readthedocs.io for usage examples.
@@ -3844,8 +3844,9 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     // Chimney can't derive transformation from Foo to Bar
     //
     // Bar
-    //   baz: Bar.Baz - no accessor named baz in source type Foo
-    //   a: scala.Int - no accessor named a in source type Foo
+    //   can't transform coproduct instance Foo.BAZ to Bar
+    // Bar (transforming from: matching[Foo.BAZ])
+    //   derivation from baz: Foo.BAZ to Bar is not supported in Chimney!
     //
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
@@ -4065,7 +4066,7 @@ However, sometimes you might prefer to opt out of such behavior. You can disable
     // Bar
     //   a: scala.Int - can't derive transformation from a: scala.Option[scala.Int] in source type Foo
     //
-    // scala.Int
+    // scala.Int (transforming from: a into: a)
     //   derivation from foo.a: scala.Option[scala.Int] to scala.Int is not supported in Chimney!
     //
     // Consult https://chimney.readthedocs.io for usage examples.
@@ -4081,7 +4082,7 @@ However, sometimes you might prefer to opt out of such behavior. You can disable
       // Bar
       //   a: scala.Int - can't derive transformation from a: scala.Option[scala.Int] in source type Foo
       //
-      // scala.Int
+      // scala.Int (transforming from: a into: a)
       //   derivation from foo.a: scala.Option[scala.Int] to scala.Int is not supported in Chimney!
       //
       // Consult https://chimney.readthedocs.io for usage examples.
@@ -4092,7 +4093,7 @@ However, sometimes you might prefer to opt out of such behavior. You can disable
       // Bar
       //   a: scala.Int - can't derive transformation from a: scala.Option[scala.Int] in source type Foo
       //
-      // scala.Int
+      // scala.Int (transforming from: a into: a)
       //   derivation from foo.a: scala.Option[scala.Int] to scala.Int is not supported in Chimney!
       //
       // Consult https://chimney.readthedocs.io for usage examples.
