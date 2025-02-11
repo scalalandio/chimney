@@ -18,14 +18,14 @@ import io.scalaland.chimney.partial
   */
 trait PartialOuterTransformer[From, To, InnerFrom, InnerTo] {
 
-  /** Converts the outer type when the conversion of inner type turns out to be total. */
+  /** Converts the outer type when the conversion of inner types turn out to be total. */
   def transformWithTotalInner(
       src: From,
       failFast: Boolean,
       inner: InnerFrom => InnerTo
   ): partial.Result[To]
 
-  /** Converts the outer type when the conversion of inner type turns out to be partial. */
+  /** Converts the outer type when the conversion of inner types turn out to be partial. */
   def transformWithPartialInner(
       src: From,
       failFast: Boolean,
