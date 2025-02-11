@@ -25,14 +25,6 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
       else None
     }
 
-    implicit private val order: Ordering[Symbol] = Ordering
-      .Option(Ordering.fromLessThan[Position] { (a, b) =>
-        a.startLine < b.startLine || (a.startLine == b.startLine && a.startColumn < b.startColumn)
-      })
-      .on[Symbol](_.pos.filter(pos => scala.util.Try(pos.start).isSuccess))
-      // Stabilize order in case of https://github.com/scala/scala3/issues/21672 (does not solve the warnings!)
-      .orElseBy(_.name)
-
     private def extractSealedSubtypes[A: Type]: List[(String, ?<[A])] = {
       def extractRecursively(sym: Symbol): List[Symbol] =
         if sym.flags.is(Flags.Sealed) then sym.children.flatMap(extractRecursively)

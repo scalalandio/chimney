@@ -188,10 +188,12 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
             }
         }))
 
+        import Type.platformSpecific.symbolOrdering
+
         val setters = sym.methodMembers
           .filterNot(isGarbageSymbol)
           .filter(isJavaSetterOrVar)
-          .sortBy(_.pos.fold(0)(_.start)) // Scala 2's syms are sorted by position, in Scala 3 we have to sort them
+          .sorted // Scala 2's syms are sorted by position, in Scala 3 we have to sort them
           .map { setter =>
             val n = setter.name
             val name = if isVar(setter) then n.stripSuffix("_$eq").stripSuffix("_=") else n

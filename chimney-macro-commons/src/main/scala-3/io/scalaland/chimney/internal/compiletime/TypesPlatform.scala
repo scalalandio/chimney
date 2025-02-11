@@ -127,6 +127,14 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
             .map(Existential.UpperBounded[U, Id, U](_))
           else None
       }
+
+      implicit val symbolOrdering: Ordering[Symbol] = Ordering
+        .Option(Ordering.fromLessThan[Position] { (a, b) =>
+          a.startLine < b.startLine || (a.startLine == b.startLine && a.startColumn < b.startColumn)
+        })
+        .on[Symbol](_.pos.filter(pos => scala.util.Try(pos.start).isSuccess))
+        // Stabilize order in case of https://github.com/scala/scala3/issues/21672 (does not solve the warnings!)
+        .orElseBy(_.name)
     }
 
     val Nothing: Type[Nothing] = quoted.Type.of[Nothing]
