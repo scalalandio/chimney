@@ -31,6 +31,7 @@ This section is short summary of all Chimney features (described in more detail 
     // source.transformInto[Target]        summons Transformer.AutoDerived
     // source.transformIntoPartial[Target] summons PartialTransformer.AutoDerived
     // obj.patchUsing(patch)               summons Patcher.AutoDerived
+    //
     // Inlined code:
     // source.into[Target].customization.transform        generates inlined Transformer code
     // source.intoPartial[Target].customization.transform generates inlined PartialTransformer code
@@ -46,11 +47,13 @@ This section is short summary of all Chimney features (described in more detail 
     // source.transformIntoPartial[Target] summons PartialTransformer
     // obj.patchUsing(patch)               summons Patcher
     import io.scalaland.chimney.syntax._
+
     // Inlined code:
     // source.into[Target].customization.transform        generates inlined Transformer code
     // source.intoPartial[Target].customization.transform generates inlined PartialTransformer code
     // obj.using(patch).customization.patch               generates inlined Patcher code
     import io.scalaland.chimney.inline._
+
     // Automatic derivation returns Transformer/PartialTransformer/Patcher
     // instead of Transformer.AutoDerived/PartialTransformer.AutoDerived/Patcher.AutoDerived
     // (see below).
@@ -71,6 +74,7 @@ This section is short summary of all Chimney features (described in more detail 
     ```scala
     // To use partial.Result, partial.Path, partial.Errors, etc without polluting namespace with common names.
     import io.scalaland.chimney.partial
+
     // Provides .asResult syntax.
     import io.scalaland.chimney.partial.syntax._
     ```
@@ -79,7 +83,16 @@ This section is short summary of all Chimney features (described in more detail 
 
 ## Derivation
 
-We're assuming that you used the recommended `io.scalaland.chimney.dsl._` import.
+Out of the box, Chimney is able to generate transformations between: `case class`es, `sealed` hierarchies/Scala 3 `enum`s/Java `enum`s,
+`Option`s, `Either`s, collections, unwrapping/wrapping/rewrapping `AnyVal`s, etc.
+
+If it misses some information, derivation would report an informative error to the users, to help them fix it with a customization.
+
+This is the most common way users would use Chimney.
+
+!!! note
+
+    We're assuming that you imported the recommended `io.scalaland.chimney.dsl._` (and `Transformer`, `PartialTransformer` and `Patcher` for `.derive`/`.define`).
 
 ### Total Transformers' derivation
 
@@ -113,25 +126,139 @@ We're assuming that you used the recommended `io.scalaland.chimney.dsl._` import
 
 ## Customizations
 
+When out of the box derivation doesn't fit ones needs, they can provide overrides and flags to adjust it.
+
+For types supported out of the box, these are usually enough to allow Chimney generate the transformation.
+
 ### Total and Partial Transformers' customizations
 
 All flags and overrides are described in more detail in the [Supported Transformations page](supported-transformations.md).
 
-TODO: flags and overrides
+!!! note
+
+    Examples below assume:
+     *  transformation `From` into `To`
+     * `fromField: FromField`
+     * `toField: ToField`
+     * `FromSubtype <: From`
+     * `ToSubtype <: To`
+    for convention.
+
+    While they show only path selectors like `.toField`/`.fromField`/`.matchingSome`/`.everyItem`, you can
+    also use `.matching[Subtype]`/`.matchingLeft`/`.matchingRight`/`.everyMapKey`/`.everyMapValue`, combine them
+    together, etc. These examples aren't an exhaustive list but just show what is possible.
+
+    You can chain multiple overrides together.
+
+| Syntax                                                                                              | What it does                                                                           |
+|-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| `.withConstructor { (args) => ... }`                                                                | use the provided constructor to construct `To` (wiring arguments)                      |
+| `.withConstructorTo(_.toField) { (args) => ... }`                                                   | use the provided function to construct `ToField` (wiring arguments)                    |
+| `.withConstructorTo(_.matchingSome.toField) { (args) => ... }`                                      | the same as above (but field is in `Option`)                                           |
+| `.withConstructorTo(_.everyItem.toField) { (args) => ... }`                                         | the same as above (but field is in collection)                                         |
+| `.withConstructorPartial { (args) => ... }`                                                         | use the provided function to construct `partial.Result[To]`                            |
+| `.withConstructorPartialTo(_.toField) { (args) => ... }`                                            | use the provided function to construct `partial.Result[ToField]`                       |
+| `.withConstructorPartialTo(_.matchingSome.toField) { (args) => ... }`                               | the same as above (but field is in `Option`)                                           |
+| `.withConstructorPartialTo(_.matchingSome.toField) { (args) => ... }`                               | the same as above (but field is in collection)                                         |
+| `.withConstructorEither { (args) => ... }`                                                          | use the provided function to construct `Either[String, To]`                            |
+| `.withConstructorEitherTo(_.toField) { (args) => ... }`                                             | use the provided function to construct `Either[String, ToField]`                       |
+| `.withConstructorEitherTo(_.matchingSome.toField) { (args) => ... }`                                | the same as above (but a field is in `Option`)                                         |
+| `.withConstructorEitherTo(_.everyItem.toField) { (args) => ... }`                                   | the same as above (but a field is in collection)                                       |
+| `.withFallback(fallback)`                                                                           | when `From` is missing values, they will be taken from `fallback`                      |
+| `.withFallbackFrom(_.fromField)(fallback)`                                                          | when `FromField` is missing values, they will be taken from `fallback`                 |
+| `.withFallbackFrom(_.matchingSome)(fallback)`                                                       | the same as above (but a field is in `Option`)                                         |
+| `.withFallbackFrom(_.everyItem)(fallback)`                                                          | the same as above (but a field is in collection)                                       |
+| `.withFieldConst(_.toField, value)`                                                                 | use the provided value to construct `toField`                                          |
+| `.withFieldConst(_.matchingSome.toField, value)`                                                    | the same as above (but a field is in `Option`)                                         |
+| `.withFieldConst(_.everyItem.toField, value)`                                                       | the same as above (but a field is in collection)                                       |
+| `.withFieldConstPartial(_.toField, value)`                                                          | use the provided `partial.Result` to construct `toField`                               |
+| `.withFieldConstPartial(_.matchingSome.toField, value)`                                             | the same as above (but a field is in `Option`)                                         |
+| `.withFieldConstPartial(_.everyItem.toField, value)`                                                | the same as above (but a field is in collection)                                       |
+| `.withFieldComputed(_.toField, from => ...)`                                                        | use the provided function to construct `toField` from `From`                           |
+| `.withFieldComputed(_.matchingSome.toField, from => ...)`                                           | the same as above (but a field is in `Option`)                                         |
+| `.withFieldComputed(_.everyItem.toField, from => ...)`                                              | the same as above (but a field is in collection)                                       |
+| `.withFieldComputedFrom(_.fromField)(_.toField, fromField => ...)`                                  | use the provided function to construct `toField` from `fromField`                      |
+| `.withFieldComputedFrom(_.matchingSome.fromField)(_.matchingSome.toField, fromField => ...)`        | the same as above (but fields are in `Option`)                                         |
+| `.withFieldComputedFrom(_.everyItem.fromField)(_.everyItem.toField, fromField => ...)`              | the same as above (but fields are in collection)                                       |
+| `.withFieldComputedPartial(_.toField, from => ...)`                                                 | use the provided function to construct `toField` from `From`                           |
+| `.withFieldComputedPartial(_.matchingSome.toField, from => ...)`                                    | the same as above (but fields are in `Option`s)                                        |
+| `.withFieldComputedPartial(_.everyItem.toField, from => ...)`                                       | the same as above (but fields are in collections)                                      |
+| `.withFieldComputedPartialFrom(_.fromField)(_.toField, fromField => ...)`                           | use the provided function to construct `toField` from `fromField`                      |
+| `.withFieldComputedPartialFrom(_.matchingSome.fromField)(_.matchingSome.toField, fromField => ...)` | the same as above (but fields are in `Option`s)                                        |
+| `.withFieldComputedPartialFrom(_.everyItem.fromField)(_.everyItem.toField, fromField => ...)`       | the same as above (but fields are in collections)                                      |
+| `.withSealedSubtypeHandled { (subtype: FromSubtype) => ... }`                                       | when pattern matching on `From`, use provided function to handle `FromSubtype`         |
+| `.withEnumCaseHandled { (subtype: FromSubtype) => ... }`                                            | the same as above                                                                      |
+| `.withFieldComputedFrom(_.matching[FromSubtype]) { subtype => ... }`                                | the same as above                                                                      |
+| `.withSealedSubtypeHandledPartial { (subtype: FromSubtype) => ... }`                                | when pattern matching on `From`, use provided function to handle `FromSubtype`         |
+| `.withEnumCaseHandledPartial { (subtype: FromSubtype) => ... }`                                     | the same as above                                                                      |
+| `.withFieldComputedFromPartial(_.matching[FromSubtype]) { subtype => ... }`                         | the same as above                                                                      |
+| `.withFieldRenamed(_.fromField, _.toField)`                                                         | use the `fromField` value to construct `toField`                                       |
+| `.withFieldRenamed(_.matchingSome.fromField, _.matchingSome.toField)`                               | the same as above (but fields are in `Option`s)                                        |
+| `.withFieldRenamed(_.everyItem.fromField, _.everyItem.toField)`                                     | the same as above (but fields are in collections)                                      |
+| `.withSealedSubtypeRenamed[FromSubtype, ToSubtype]`                                                 | use the `FromSubtype` value to construct `ToSubtype`                                   |
+| `.withEnumCaseRenamed[FromSubtype, ToSubtype]`                                                      | the same as above                                                                      |
+| `.withFieldRenamed(_.matching[FromSubtype], _.matching[ToSubtype])`                                 | the same as above                                                                      |
+| `.withFieldUnused(_.fromField)`                                                                     | `fromField` should not be used, `UnusedFieldPolicy` error should be suppressed         |
+| `.withSealedSubtypeUnmatched[ToSubtype]`                                                            | `ToSubtype` should not be matched, `UnmatchedSubtypePolicy` error should be suppressed |
+| `.withEnumCaseUnmatched[ToSubtype]`                                                                 | the same as above should be suppresed                                                  |
+
+TODO: flags
 
 ### Patchers' customization
 
 All flags and overrides are described in more detail in the [Supported Patching page](supported-patching.md).
 
-TODO: flags and overrides
+!!! note
+
+    Examples below assume:
+     *  patching `A` using `Patch`
+     * `aField: AField`
+     * `patchField: PatchField`
+    for convention.
+
+    While they show only path selectors like `.aField`/`.patchField`/`.matchingSome`/`.everyItem`, you can
+    also use `.matchingLeft`/`.matchingRight`/`.everyMapKey`/`.everyMapValue`, combine them
+    together, etc. These examples aren't an exhaustive list but just show what is possible.
+
+    You can chain multiple overrides together.
+
+| Syntax                                                                                       | What it does                                                                  |
+|----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
+| `withFieldConst(_.aField, value)`                                                            | use the provided value to update `aField`                                     |
+| `withFieldConst(_.matchingSome.aField, value)`                                               | the same as above (but a field is in `Option`)                                |
+| `withFieldConst(_.everyItem.aField, value)`                                                  | the same as above (but a field is in collection)                              |
+| `withFieldComputed(_.aField, patch => ...)`                                                  | use the provided function to update `toField` from `patch`                    |
+| `withFieldComputed(_.matchingSome.aField, patch => ...)`                                     | the same as above (but a field is in `Option`)                                |
+| `withFieldComputed(_.everyItem.aField, patch => ...)`                                        | the same as above (but a field is in collection)                              |
+| `withFieldComputedFrom(_.patchField)(_.aField, patchField => ...)`                           | use the provided function to update `toField` from `patchField`               |
+| `withFieldComputedFrom(_.matchingSome.patchField)(_.matchingSome.aField, patchField => ...)` | the same as above (but fields are in `Option`s)                               |
+| `withFieldComputedFrom(_.everyItem.patchField)(_.everyItem.aField, patchField => ...)`       | the same as above (but a field is in collection)                              |
+| `withFieldIgnored(_.patchField)`                                                             | `patchField` should not be used, derivation should not complain that it isn't |
+| `withFieldIgnored(_.matchingSome.patchField)`                                                | the same as above (but fields are in `Option`s)                               |
+| `withFieldIgnored(_.everyItem.patchField)`                                                   | the same as above (but a field is in collection)                              |
+
+TODO: flags
 
 ## Integrations
 
+Only some types would require writing some implicits to handle them. This might include: new type libraries,
+custom collections (that don't implement Scala's collections interfaces), custom optional types, etc.
+
 Integrations are described in more detail in [Integrations section](cookbook.md#integrations).
+
+Before writing one, it's worth knowing that:
+
+ * [Cats' types have an integration imlemented](cookbook.md#cats-integration)
+ * [Java's types have an integration implemented](cookbook.md#java-collections-integration)
+ * [Protobufs have an integration implemented](cookbook.md#protocol-buffers-integration)
+
+!!! tip
+
+    All integrations for `Transformer`s work with `PartialTransformer`s and `Patcher`s as well!
 
 ### Total Transformers' integrations
 
-!!! example "Providing and using implicit Transformers"
+??? example "Providing and using implicit Transformers"
 
     ```scala
     import io.scalaland.chimney.Transformer
@@ -151,7 +278,7 @@ Integrations are described in more detail in [Integrations section](cookbook.md#
     ): Transformer[E, F] = ...
     ```
 
-!!! example "Providing integrations, more flexible than hardcoded Transformer"
+??? example "Providing integrations, more flexible than hardcoded Transformer"
 
     ```scala
     import io.scalaland.chimney.integrations
@@ -212,13 +339,9 @@ Integrations are described in more detail in [Integrations section](cookbook.md#
       }
     ```
 
-!!! tip
-
-    All integrations for `Transformer`s work with `PartialTransformer`s and `Patcher`s as well!
-
 ### Partial Transformations' integrations
 
-!!! example "Providing and using implicit PartialTransformers"
+??? example "Providing and using implicit PartialTransformers"
 
     ```scala
     import io.scalaland.chimney.PartialTransformer
@@ -238,7 +361,7 @@ Integrations are described in more detail in [Integrations section](cookbook.md#
     ): PartialTransformer[E, F] = ...
     ```
 
-!!! example "Providing integrations, more flexible than hardcoded Transformer"
+??? example "Providing integrations, more flexible than hardcoded Transformer"
 
     ```scala
     import io.scalaland.chimney.integrations
@@ -278,7 +401,7 @@ Integrations are described in more detail in [Integrations section](cookbook.md#
 
 ### Patchers' integrations
 
-!!! example "Providing and using implicit Patcher"
+??? example "Providing and using implicit Patcher"
 
     ```scala
     import io.scalaland.chimney.Patcher
