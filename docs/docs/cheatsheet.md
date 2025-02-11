@@ -2,6 +2,12 @@
 
 This section is short summary of all Chimney features (described in more detail in other sections).
 
+!!! tip
+
+    We're **strongly** recommend using the search bar (above) to quickly find the relevant piece of documentation.
+
+    Material for MkDocs' search implementation is really good!
+
 ## Type classes
 
  * `Transformer[From, To]` - transforms `From` value into `To` value. The transformation should succeed for all `From`
@@ -133,7 +139,7 @@ Integrations are described in more detail in [Integrations section](cookbook.md#
     // Such implicit Transformer would be used if there are no overrides, it cannot cooperate
     // with selectors in DSL (.matching[Type], .matchingSome, .matchingLeft, .matchingRight,
     // .everyItem, .everyMapKey, .everyMapValue, field name selection...), so it works best
-    // for types that we either don't intent to customize OR we want to define Transformer only
+    // for types that we either don't intend to customize OR we want to define Transformer only
     // once and then reuse everywhere.
     implicit val transformerWithHardcodedType: Transformer[A, B] = ...
 
@@ -153,11 +159,11 @@ Integrations are described in more detail in [Integrations section](cookbook.md#
 
     // Here, we're providing Transformers with the ability to .map F[_]/.traverse F[_] into partial.Result,
     // such impliclit allows us to use .everyItem in customizations of F[value] transformation.
-    implicit def outerTransformer[A, B]: integration.TotalOuterTransformer[F[A], F[B]] =
-      new integrations.TotalOuterTransformer[F[A], F[B]] {
-        /** Converts the outer type when the conversion of inner types turns out to be total. */
+    implicit def outerTransformer[A, B]: integration.TotalOuterTransformer[F[A], F[B], A, B] =
+      new integrations.TotalOuterTransformer[F[A], F[B], A, B] {
+        /** Converts the outer type when the conversion of inner types turn out to be total. */
         def transformWithTotalInner(inner: F[A], f: A => B): F[B] = ...
-        /** Converts the outer type when the conversion of inner types turns out to be partial. */
+        /** Converts the outer type when the conversion of inner types turn out to be partial. */
         def transformWithPartialInner(inner: F[A], failFast: Boolean, f: A => partial.Result[B]): partia.Result[F[B]] = ...
       }
 
@@ -199,7 +205,7 @@ Integrations are described in more detail in [Integrations section](cookbook.md#
     // or .enableDefaultValueOfType[DefaultValueSet] but the DefaultValueSet type is used
     // by some class that we're transformaing, which does not have default values defined.
     // With such implicit we can pretend it does.
-    implicit val provdedMissingDefault: integrations.DefaultValue[Value] =
+    implicit val providedMissingDefault: integrations.DefaultValue[Value] =
       new integrations.DefaultValue[Value] {
         /** Provide the default value. */
         def provide(): Value = ...
@@ -212,8 +218,82 @@ Integrations are described in more detail in [Integrations section](cookbook.md#
 
 ### Partial Transformations' integrations
 
-TODO
+!!! example "Providing and using implicit PartialTransformers"
+
+    ```scala
+    import io.scalaland.chimney.PartialTransformer
+
+    // Such implicit Transformer would be used if there are no overrides, it cannot cooperate
+    // with selectors in DSL (.matching[Type], .matchingSome, .matchingLeft, .matchingRight,
+    // .everyItem, .everyMapKey, .everyMapValue, field name selection...), so it works best
+    // for types that we either don't intend to customize OR we want to define Transformer only
+    // once and then reuse everywhere.
+    implicit val transformerWithHardcodedType: PartialTransformer[A, B] = ...
+
+    // Here, we're using Transformer in another implicit, when Transformer could be either
+    // derived or provided - use only when the derivation could not be customized
+    // nor can be provided by integrations.
+    implicit def transformerWithHardcodedTypes2(
+      implicit transformer: PartialTransformer.AutoDerived[C, D] // make sure it's .AutoDerived!
+    ): PartialTransformer[E, F] = ...
+    ```
+
+!!! example "Providing integrations, more flexible than hardcoded Transformer"
+
+    ```scala
+    import io.scalaland.chimney.integrations
+    import io.scalaland.chimney.partial
+
+    // Here, we're providing Transformers with the ability to .map F[_]/.traverse F[_] into partial.Result,
+    // such impliclit allows us to use .everyItem in customizations of F[value] transformation.
+    implicit def outerTransformer[A, B]: integration.PartialOuterTransformer[F[A], F[B], A, B] =
+      new integrations.PartialOuterTransformer[F[A], F[B], A, B] {
+        /** Converts the outer type when the conversion of inner types turn out to be total. */
+        def transformWithTotalInner(inner: F[A], failFast: Boolean,f: A => B): partia.Result[F[B]] = ...
+        /** Converts the outer type when the conversion of inner types turn out to be partial. */
+        def transformWithPartialInner(inner: F[A], failFast: Boolean, f: A => partial.Result[B]): partia.Result[F[B]] = ...
+      }
+
+    // Here', we're providing Transformer with the ability to convert into MyOwnCollection[A]
+    // from any other collection (whose items can be converted to A), convert from MyOwnCollection[A]
+    // (when every item can be converted to the target collection's type), and customize the
+    // transformation between the collections using .everyItem.
+    implicit def buildIterable[A]: integration.TotallyBuildIterable[MyOwnCollection[A], A] =
+      new integration.TotallyBuildIterable[MyOwnCollection[A], A] {
+        /** Factory of the `Collection`, validated with [[partial.Result]]. */
+        def partialFactory: Factory[A, partial.Result[MyOwnCollection[A]]] = ...
+        /** Creates [[Iterator]] for the `Collection`. */
+        def iterator(collection: MyOwnCollection[A]): Iterator[A] = ...
+      }
+
+    // Like above, but additionally allows working with .everyMapKey/.everyMapValue.
+    implicit def buildMap[K, V]: integration.PartiallyBuildMap[MyOwnMap[K, V], K, V] =
+      new integration.PartiallyBuildMap[MyOwnMap[K, V], K, V] {
+        /** Factory of the `Collection`, validated with [[partial.Result]]. */
+        def partialFactory: Factory[(K, V), partial.Result[MyOwnMap[K, V]]] = ...
+        /** Creates [[Iterator]] for the `Collection`. */
+        def iterator(collection: MyOwnMap[K, V]): Iterator[(K, V)] = ...
+      }
+    ```
 
 ### Patchers' integrations
 
-TODO
+!!! example "Providing and using implicit Patcher"
+
+    ```scala
+    import io.scalaland.chimney.Patcher
+
+    // Such implicit Patcher would be used if there are no overrides, it cannot cooperate
+    // with selectors in DSL (.matching[Type], .matchingSome, .matchingLeft, .matchingRight,
+    // .everyItem, .everyMapKey, .everyMapValue, field name selection...), so it works best
+    // for types that we either don't intend to customize OR we want to define Patcher only
+    // once and then reuse everywhere.
+    implicit val patcherWithHardcodedType: Patcher[A, B] = ...
+
+    // Here, we're using Patcher in another implicit, when Patcher could be either
+    // derived or provided - use only when the derivation could not be customized
+    // nor can be provided by integrations.
+    implicit def patcherWithHardcodedTypes2(
+      implicit patcher: Patcher.AutoDerived[C, D] // make sure it's .AutoDerived!
+    ): Patcher[E, F] = ...
+    ```
