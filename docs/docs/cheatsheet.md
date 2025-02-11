@@ -77,7 +77,7 @@ We're assuming that you used the recommended `io.scalaland.chimney.dsl._` import
 
 ### Total Transformers' derivation
 
-| code                                                                | meaning                                                                                                                                                                                                                                                                            |
+| Syntax                                                              | What it does                                                                                                                                                                                                                                                                       |
 |---------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `source.transformInto[Target]`                                      | summons a user-defined `Transformer[Source, Target]`, if there is none, falls back on a `Transformer.AutoDerived[Source, Target]`, then uses it to convert the `source: Source` into the `Target`                                                                                  |
 | `source.into[Target].transform`                                     | summons a user-defined `Transformer[Source, Target]` and uses it to convert the `source: Source` into the `Target`, if there is none, generates the inlined conversion (without a `new Transformer`!) - see: [inlined](cookbook.md#automatic-semiautomatic-and-inlined-derivation) |
@@ -87,7 +87,7 @@ We're assuming that you used the recommended `io.scalaland.chimney.dsl._` import
 
 ### Partial Transformers' derivation
 
-| code                                                                        | meaning                                                                                                                                                                                                                                                                                                                                                                                     |
+| Syntex                                                                      | What it does                                                                                                                                                                                                                                                                                                                                                                                |
 |-----------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `source .transformIntoPartial[Target]`                                      | summons a user-defined `PartialTransformer[Source, Target]`, if there is none, falls back on user-defined `Transformer[Source, Target]`, if there is none, falls back on a `PartialTransformer.AutoDerived[Source, Target]`, then uses it to convert the `source: Source` into the `partial.Result[Target]`                                                                                 |
 | `source.intoPartial[Target] .transform`                                     | summons a user-defined `PartialTransformer[Source, Target]` and uses it to convert the `source: Source` into the `partial.Result[Target]`, if there is none, falls back on user-defined `Transformer[Source, Target]`,if there is none, generates the inlined conversion (without a `new PartialTransformer`!) - see: [inlined](cookbook.md#automatic-semiautomatic-and-inlined-derivation) |
@@ -97,7 +97,7 @@ We're assuming that you used the recommended `io.scalaland.chimney.dsl._` import
 
 ### Patchers' derivation
 
-| code                                                  | meaning                                                                                                                                                                                                                                                          |
+| Syntax                                                | What it does                                                                                                                                                                                                                                                     |
 |-------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `obj.patchUsing(patch)`                               | summons a user-defined `Patcher[A, Patch]`, if there is none, falls back on a `Patcher.AutoDerived[A, Patch]`, then uses it to patch the `obj: A` with the `patch: Patch`                                                                                        |
 | `obj.using(patch).patch`                              | summons a user-defined `Patcher[A, Patch]` and uses it to patch the `obj: A` with the `patch: Patch`, if there is none, generates the inlined conversion (without a `new Patcher`!) - see: [inlined](cookbook.md#automatic-semiautomatic-and-inlined-derivation) |
@@ -148,19 +148,67 @@ Integrations are described in more detail in [Integrations section](cookbook.md#
 !!! example "Providing integrations, more flexible than hardcoded Transformer"
 
     ```scala
-    import io.scalaland.chimney.integrations.TotalOuterTransformer
+    import io.scalaland.chimney.integrations
     import io.scalaland.chimney.partial
 
-    // Here we're providing Transformers with the ability to .map F[_]/.traverse F[_] into partial.Result,
+    // Here, we're providing Transformers with the ability to .map F[_]/.traverse F[_] into partial.Result,
     // such impliclit allows us to use .everyItem in customizations of F[value] transformation.
     implicit def outerTransformer[A, B]: integration.TotalOuterTransformer[F[A], F[B]] =
       new integrations.TotalOuterTransformer[F[A], F[B]] {
+        /** Converts the outer type when the conversion of inner types turns out to be total. */
         def transformWithTotalInner(inner: F[A], f: A => B): F[B] = ...
-        def transformWithPartialInner(inner: F[A], f: A => partial.Result[B]): partia.Result[F[B]] = ...
+        /** Converts the outer type when the conversion of inner types turns out to be partial. */
+        def transformWithPartialInner(inner: F[A], failFast: Boolean, f: A => partial.Result[B]): partia.Result[F[B]] = ...
+      }
+
+    // Here', we're providing Transformer with the ability to convert into MyOwnCollection[A]
+    // from any other collection (whose items can be converted to A), convert from MyOwnCollection[A]
+    // (when every item can be converted to the target collection's type), and customize the
+    // transformation between the collections using .everyItem.
+    implicit def buildIterable[A]: integration.TotallyBuildIterable[MyOwnCollection[A], A] =
+      new integration.TotallyBuildIterable[MyOwnCollection[A], A] {
+        /** Factory of the `Collection` */
+        def totalFactory: Factory[A, MyOwnCollection[A]] = ...
+        /** Creates [[Iterator]] for the `Collection`. */
+        def iterator(collection: MyOwnCollection[A]): Iterator[A] = ...
+      }
+
+    // Like above, but additionally allows working with .everyMapKey/.everyMapValue.
+    implicit def buildMap[K, V]: integration.TotallyBuildMap[MyOwnMap[K, V], K, V] =
+      new integration.TotallyBuildMap[MyOwnMap[K, V], K, V] {
+        /** Factory of the `Collection` */
+        def totalFactory: Factory[(K, V), MyOwnMap[K, V]] = ...
+        /** Creates [[Iterator]] for the `Collection`. */
+        def iterator(collection: MyOwnMap[K, V]): Iterator[(K, V)] = ...
+      }
+
+    // Here, we're handling some type representing Option, which is not scala.Option,
+    // such implicit allows automatic unwrapping in PartialTransformer/wrapping in every case,
+    // and usage of .matchingSome in customization of MyOwnOptional[B] transformation.
+    implicit def nonStandardOptional[B]: integrations.OptionalValue[MyOwnOptional[B], B] =
+      new integrations.OptionalValue[MyOwnOptional[B], B] {
+        /** Creates an empty optional value. */
+        def empty: MyOwnOptional[B] = ...
+        /** Creates non-empty optional value (should handle nulls as empty). */
+        def of(value: B): MyOwnOptional[B] = ...
+        /** Folds optional value just like [[Option.fold]]. */
+        def fold[A](oa: MyOwnOptional[B], onNone: => A, onSome: B => A): A = ...
+      }
+
+    // Here, we're handling the case when we would like to use .enableDefaultValues,
+    // or .enableDefaultValueOfType[DefaultValueSet] but the DefaultValueSet type is used
+    // by some class that we're transformaing, which does not have default values defined.
+    // With such implicit we can pretend it does.
+    implicit val provdedMissingDefault: integrations.DefaultValue[Value] =
+      new integrations.DefaultValue[Value] {
+        /** Provide the default value. */
+        def provide(): Value = ...
       }
     ```
 
-TODO: TotallyBuildIterable
+!!! tip
+
+    All integrations for `Transformer`s work with `PartialTransformer`s and `Patcher`s as well!
 
 ### Partial Transformations' integrations
 
