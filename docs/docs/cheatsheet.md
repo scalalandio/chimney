@@ -137,11 +137,13 @@ All flags and overrides are described in more detail in the [Supported Transform
 !!! note
 
     Examples below assume:
+
      *  transformation `From` into `To`
      * `fromField: FromField`
      * `toField: ToField`
      * `FromSubtype <: From`
      * `ToSubtype <: To`
+
     for convention.
 
     While they show only path selectors like `.toField`/`.fromField`/`.matchingSome`/`.everyItem`, you can
@@ -150,7 +152,25 @@ All flags and overrides are described in more detail in the [Supported Transform
 
     You can chain multiple overrides together.
 
-| Syntax                                                                                              | What it does                                                                           |
+??? tip "How to remember which override to use"
+
+    Override names are constructed in the following way:
+
+     * they start with the target of on override:
+        * `withConstructor` - instead of using the primary contructor, provided constructor should be used
+        * `withFallback` - when the source value is missing a field, this value would be used next
+        * `withField` - instead of using the source field matched by name/position (in case of tuples), this value/function should be used
+        * `withSealedSubtype`/`withEnumCase` - instead of using the target subtype matched by name, this function should be used
+     * then, some of them reflect how override is provided:
+        * `Const` - value is provided as it is
+        * `Computed` - value would be computed from the source or its part
+        * `Handled` - only a subtype will be handled, with the provided function
+     * then, if the override can result in a failed value, name contain `Partial`
+     * finally, if the override does not target a whole `Source`/`Target` type, it describes the path to value:
+        * `From` - when only some part of `Source` type would be used
+        * `To` - when only part of the `Target` type would be created
+
+| Override example                                                                                    | What it does                                                                           |
 |-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
 | `.withConstructor { (args) => ... }`                                                                | use the provided constructor to construct `To` (wiring arguments)                      |
 | `.withConstructorTo(_.toField) { (args) => ... }`                                                   | use the provided function to construct `ToField` (wiring arguments)                    |
@@ -191,7 +211,7 @@ All flags and overrides are described in more detail in the [Supported Transform
 | `.withFieldComputedFrom(_.matching[FromSubtype]) { subtype => ... }`                                | the same as above                                                                      |
 | `.withSealedSubtypeHandledPartial { (subtype: FromSubtype) => ... }`                                | when pattern matching on `From`, use provided function to handle `FromSubtype`         |
 | `.withEnumCaseHandledPartial { (subtype: FromSubtype) => ... }`                                     | the same as above                                                                      |
-| `.withFieldComputedFromPartial(_.matching[FromSubtype]) { subtype => ... }`                         | the same as above                                                                      |
+| `.withFieldComputedPartialFrom(_.matching[FromSubtype]) { subtype => ... }`                         | the same as above                                                                      |
 | `.withFieldRenamed(_.fromField, _.toField)`                                                         | use the `fromField` value to construct `toField`                                       |
 | `.withFieldRenamed(_.matchingSome.fromField, _.matchingSome.toField)`                               | the same as above (but fields are in `Option`s)                                        |
 | `.withFieldRenamed(_.everyItem.fromField, _.everyItem.toField)`                                     | the same as above (but fields are in collections)                                      |
@@ -211,9 +231,11 @@ All flags and overrides are described in more detail in the [Supported Patching 
 !!! note
 
     Examples below assume:
+
      *  patching `A` using `Patch`
      * `aField: AField`
      * `patchField: PatchField`
+
     for convention.
 
     While they show only path selectors like `.aField`/`.patchField`/`.matchingSome`/`.everyItem`, you can
@@ -222,20 +244,20 @@ All flags and overrides are described in more detail in the [Supported Patching 
 
     You can chain multiple overrides together.
 
-| Syntax                                                                                       | What it does                                                                  |
-|----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
-| `withFieldConst(_.aField, value)`                                                            | use the provided value to update `aField`                                     |
-| `withFieldConst(_.matchingSome.aField, value)`                                               | the same as above (but a field is in `Option`)                                |
-| `withFieldConst(_.everyItem.aField, value)`                                                  | the same as above (but a field is in collection)                              |
-| `withFieldComputed(_.aField, patch => ...)`                                                  | use the provided function to update `toField` from `patch`                    |
-| `withFieldComputed(_.matchingSome.aField, patch => ...)`                                     | the same as above (but a field is in `Option`)                                |
-| `withFieldComputed(_.everyItem.aField, patch => ...)`                                        | the same as above (but a field is in collection)                              |
-| `withFieldComputedFrom(_.patchField)(_.aField, patchField => ...)`                           | use the provided function to update `toField` from `patchField`               |
-| `withFieldComputedFrom(_.matchingSome.patchField)(_.matchingSome.aField, patchField => ...)` | the same as above (but fields are in `Option`s)                               |
-| `withFieldComputedFrom(_.everyItem.patchField)(_.everyItem.aField, patchField => ...)`       | the same as above (but a field is in collection)                              |
-| `withFieldIgnored(_.patchField)`                                                             | `patchField` should not be used, derivation should not complain that it isn't |
-| `withFieldIgnored(_.matchingSome.patchField)`                                                | the same as above (but fields are in `Option`s)                               |
-| `withFieldIgnored(_.everyItem.patchField)`                                                   | the same as above (but a field is in collection)                              |
+| Override example                                                                              | What it does                                                                  |
+|-----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
+| `.withFieldConst(_.aField, value)`                                                            | use the provided value to update `aField`                                     |
+| `.withFieldConst(_.matchingSome.aField, value)`                                               | the same as above (but a field is in `Option`)                                |
+| `.withFieldConst(_.everyItem.aField, value)`                                                  | the same as above (but a field is in collection)                              |
+| `.withFieldComputed(_.aField, patch => ...)`                                                  | use the provided function to update `toField` from `patch`                    |
+| `.withFieldComputed(_.matchingSome.aField, patch => ...)`                                     | the same as above (but a field is in `Option`)                                |
+| `.withFieldComputed(_.everyItem.aField, patch => ...)`                                        | the same as above (but a field is in collection)                              |
+| `.withFieldComputedFrom(_.patchField)(_.aField, patchField => ...)`                           | use the provided function to update `toField` from `patchField`               |
+| `.withFieldComputedFrom(_.matchingSome.patchField)(_.matchingSome.aField, patchField => ...)` | the same as above (but fields are in `Option`s)                               |
+| `.withFieldComputedFrom(_.everyItem.patchField)(_.everyItem.aField, patchField => ...)`       | the same as above (but a field is in collection)                              |
+| `.withFieldIgnored(_.patchField)`                                                             | `patchField` should not be used, derivation should not complain that it isn't |
+| `.withFieldIgnored(_.matchingSome.patchField)`                                                | the same as above (but fields are in `Option`s)                               |
+| `.withFieldIgnored(_.everyItem.patchField)`                                                   | the same as above (but a field is in collection)                              |
 
 TODO: flags
 
