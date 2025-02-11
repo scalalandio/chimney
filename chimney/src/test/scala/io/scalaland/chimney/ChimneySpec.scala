@@ -36,19 +36,22 @@ trait ChimneySpec extends munit.BaseFunSuite with VersionCompat { self =>
       }
   }
 
-  implicit class CompileErrorsCheck(msg: String) {
+  implicit class CompileErrorsCheck(private val msg: String) {
 
     def check(msgs: String*): Unit = {
-      val msgNoColors = ChimneySpec.AnsiControlCode.replaceAllIn(this.msg, "")
-      for (msg <- msgs)
+      val msgNoColors = ChimneySpec.AnsiControlCode.replaceAllIn(msg, "")
+      var lastChar = 0
+      for (msg <- msgs) {
+        lastChar = msgNoColors.indexOf(msg, lastChar)
         Predef.assert(
-          msgNoColors.contains(msg),
+          0 <= lastChar,
           s"""Error message did not contain expected snippet
-            |Error message
+            |Error message:
             |${this.msg}
-            |Expected Snippet
+            |Expected Snippet:
             |$msg""".stripMargin
         )
+      }
     }
 
     def checkNot(msgs: String*): Unit = {
@@ -57,9 +60,9 @@ trait ChimneySpec extends munit.BaseFunSuite with VersionCompat { self =>
         Predef.assert(
           !msgNoColors.contains(msg),
           s"""Error message contain snippet that was expected to be not there
-            |Error message
+            |Error message:
             |${this.msg}
-            |Not Expected Snippet
+            |Not Expected Snippet:
             |$msg""".stripMargin
         )
     }

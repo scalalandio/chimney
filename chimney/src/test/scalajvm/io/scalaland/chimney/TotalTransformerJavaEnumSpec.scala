@@ -59,12 +59,12 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
     error.check(
       "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jcolors2.Color to io.scalaland.chimney.fixtures.colors4.Color",
       "io.scalaland.chimney.fixtures.colors4.Color",
-      "coproduct instance io.scalaland.chimney.javafixtures.jcolors2.Color.Green of io.scalaland.chimney.javafixtures.jcolors2.Color has ambiguous matches in io.scalaland.chimney.fixtures.colors4.Color: io.scalaland.chimney.fixtures.colors4.Color.Green, io.scalaland.chimney.fixtures.colors4.Green",
-      "coproduct instance io.scalaland.chimney.javafixtures.jcolors2.Color.Black of io.scalaland.chimney.javafixtures.jcolors2.Color has ambiguous matches in io.scalaland.chimney.fixtures.colors4.Color: io.scalaland.chimney.fixtures.colors4.Black, io.scalaland.chimney.fixtures.colors4.Color.Black",
+      "  coproduct instance io.scalaland.chimney.javafixtures.jcolors2.Color.Green of io.scalaland.chimney.javafixtures.jcolors2.Color has ambiguous matches in io.scalaland.chimney.fixtures.colors4.Color: io.scalaland.chimney.fixtures.colors4.Color.Green, io.scalaland.chimney.fixtures.colors4.Green",
+      "  coproduct instance io.scalaland.chimney.javafixtures.jcolors2.Color.Black of io.scalaland.chimney.javafixtures.jcolors2.Color has ambiguous matches in io.scalaland.chimney.fixtures.colors4.Color: io.scalaland.chimney.fixtures.colors4.Black, io.scalaland.chimney.fixtures.colors4.Color.Black",
       "io.scalaland.chimney.fixtures.colors4.Color",
-      "derivation from green: io.scalaland.chimney.javafixtures.jcolors2.Color.Green to io.scalaland.chimney.fixtures.colors4.Color is not supported in Chimney!",
+      "  derivation from green: io.scalaland.chimney.javafixtures.jcolors2.Color.Green to io.scalaland.chimney.fixtures.colors4.Color is not supported in Chimney!",
       "io.scalaland.chimney.fixtures.colors4.Color",
-      "derivation from black: io.scalaland.chimney.javafixtures.jcolors2.Color.Black to io.scalaland.chimney.fixtures.colors4.Color is not supported in Chimney!",
+      "  derivation from black: io.scalaland.chimney.javafixtures.jcolors2.Color.Black to io.scalaland.chimney.fixtures.colors4.Color is not supported in Chimney!",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
 
@@ -82,7 +82,7 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
       compileErrors("""(jcolors2.Color.Black: jcolors2.Color).transformInto[colors1.Color]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jcolors2.Color to io.scalaland.chimney.fixtures.colors1.Color",
         "io.scalaland.chimney.fixtures.colors1.Color",
-        "can't transform coproduct instance io.scalaland.chimney.javafixtures.jcolors2.Color.Black to io.scalaland.chimney.fixtures.colors1.Color",
+        "  can't transform coproduct instance io.scalaland.chimney.javafixtures.jcolors2.Color.Black to io.scalaland.chimney.fixtures.colors1.Color",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -154,18 +154,18 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
       compileErrors("(Foo.bar: Foo).transformInto[Bar]").check(
         "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jrenames.Foo to io.scalaland.chimney.javafixtures.jrenames.Bar",
         "io.scalaland.chimney.javafixtures.jrenames.Bar",
-        "derivation from bar: io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar is not supported in Chimney!",
-        "io.scalaland.chimney.javafixtures.jrenames.Bar",
-        "can't transform coproduct instance io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "  can't transform coproduct instance io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "io.scalaland.chimney.javafixtures.jrenames.Bar (transforming from: matching[io.scalaland.chimney.javafixtures.jrenames.Foo.bar])",
+        "  derivation from bar: io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
       compileErrors("(Foo.bar: Foo).into[Bar].transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jrenames.Foo to io.scalaland.chimney.javafixtures.jrenames.Bar",
         "io.scalaland.chimney.javafixtures.jrenames.Bar",
-        "derivation from bar: io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar is not supported in Chimney!",
-        "io.scalaland.chimney.javafixtures.jrenames.Bar",
-        "can't transform coproduct instance io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "  can't transform coproduct instance io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "io.scalaland.chimney.javafixtures.jrenames.Bar (transforming from: matching[io.scalaland.chimney.javafixtures.jrenames.Foo.bar])",
+        "  derivation from bar: io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -194,9 +194,9 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jrenames.Foo to io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous",
         "io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous",
-        "coproduct instance io.scalaland.chimney.javafixtures.jrenames.Foo.bar of io.scalaland.chimney.javafixtures.jrenames.Foo has ambiguous matches in io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous: io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous.bar, io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous.getBar",
+        "  coproduct instance io.scalaland.chimney.javafixtures.jrenames.Foo.bar of io.scalaland.chimney.javafixtures.jrenames.Foo has ambiguous matches in io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous: io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous.bar, io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous.getBar",
         "io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous",
-        "derivation from bar: io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous is not supported in Chimney!",
+        "  derivation from bar: io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -229,9 +229,9 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
       compileErrors("(Foo.bar: Foo).into[Bar].disableCustomSubtypeNameComparison.transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jrenames.Foo to io.scalaland.chimney.javafixtures.jrenames.Bar",
         "io.scalaland.chimney.javafixtures.jrenames.Bar",
-        "derivation from bar: io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar is not supported in Chimney!",
-        "io.scalaland.chimney.javafixtures.jrenames.Bar",
-        "can't transform coproduct instance io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "  can't transform coproduct instance io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "io.scalaland.chimney.javafixtures.jrenames.Bar (transforming from: matching[io.scalaland.chimney.javafixtures.jrenames.Foo.bar])",
+        "  derivation from bar: io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }

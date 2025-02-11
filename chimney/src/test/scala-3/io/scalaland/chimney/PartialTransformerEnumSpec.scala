@@ -187,7 +187,9 @@ class PartialTransformerEnumSpec extends ChimneySpec {
         .check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors2enums.Color to io.scalaland.chimney.fixtures.colors1enums.Color",
           "io.scalaland.chimney.fixtures.colors1enums.Color",
-          "can't transform coproduct instance io.scalaland.chimney.fixtures.colors2enums.Color.Black to io.scalaland.chimney.fixtures.colors1enums.Color",
+          "  can't transform coproduct instance io.scalaland.chimney.fixtures.colors2enums.Color.Black to io.scalaland.chimney.fixtures.colors1enums.Color",
+          "io.scalaland.chimney.fixtures.colors1enums.Color (transforming from: matching[io.scalaland.chimney.fixtures.colors2enums.Color.Black])",
+          "  derivation from black: io.scalaland.chimney.fixtures.colors2enums.Color.Black to io.scalaland.chimney.fixtures.colors1enums.Color is not supported in Chimney!",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
     }
@@ -406,12 +408,12 @@ class PartialTransformerEnumSpec extends ChimneySpec {
     error.check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.shapes1enums.Shape to io.scalaland.chimney.fixtures.shapes5enums.Shape",
       "io.scalaland.chimney.fixtures.shapes5enums.Shape",
-      "derivation from triangle: io.scalaland.chimney.fixtures.shapes1enums.Shape.Triangle to io.scalaland.chimney.fixtures.shapes5enums.Shape is not supported in Chimney!",
-      "io.scalaland.chimney.fixtures.shapes5enums.Shape",
-      "derivation from rectangle: io.scalaland.chimney.fixtures.shapes1enums.Shape.Rectangle to io.scalaland.chimney.fixtures.shapes5enums.Shape is not supported in Chimney!",
-      "io.scalaland.chimney.fixtures.shapes5enums.Shape",
-      "coproduct instance io.scalaland.chimney.fixtures.shapes1enums.Shape.Triangle of io.scalaland.chimney.fixtures.shapes1enums.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5enums.Shape: io.scalaland.chimney.fixtures.shapes5enums.Inner.Triangle, io.scalaland.chimney.fixtures.shapes5enums.Outer.Triangle",
-      "coproduct instance io.scalaland.chimney.fixtures.shapes1enums.Shape.Rectangle of io.scalaland.chimney.fixtures.shapes1enums.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5enums.Shape: io.scalaland.chimney.fixtures.shapes5enums.Inner.Rectangle, io.scalaland.chimney.fixtures.shapes5enums.Outer.Rectangle",
+      "  coproduct instance io.scalaland.chimney.fixtures.shapes1enums.Shape.Triangle of io.scalaland.chimney.fixtures.shapes1enums.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5enums.Shape: io.scalaland.chimney.fixtures.shapes5enums.Inner.Triangle, io.scalaland.chimney.fixtures.shapes5enums.Outer.Triangle",
+      "  coproduct instance io.scalaland.chimney.fixtures.shapes1enums.Shape.Rectangle of io.scalaland.chimney.fixtures.shapes1enums.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5enums.Shape: io.scalaland.chimney.fixtures.shapes5enums.Inner.Rectangle, io.scalaland.chimney.fixtures.shapes5enums.Outer.Rectangle",
+      "io.scalaland.chimney.fixtures.shapes5enums.Shape (transforming from: matching[io.scalaland.chimney.fixtures.shapes1enums.Shape.Triangle])",
+      "  derivation from triangle: io.scalaland.chimney.fixtures.shapes1enums.Shape.Triangle to io.scalaland.chimney.fixtures.shapes5enums.Shape is not supported in Chimney!",
+      "io.scalaland.chimney.fixtures.shapes5enums.Shape (transforming from: matching[io.scalaland.chimney.fixtures.shapes1enums.Shape.Rectangle])",
+      "  derivation from rectangle: io.scalaland.chimney.fixtures.shapes1enums.Shape.Rectangle to io.scalaland.chimney.fixtures.shapes5enums.Shape is not supported in Chimney!",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
 
@@ -607,18 +609,18 @@ class PartialTransformerEnumSpec extends ChimneySpec {
       compileErrors("(Foo.bar: Foo).transformIntoPartial[Bar]").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Foo to io.scalaland.chimney.fixtures.renames.Bar",
         "io.scalaland.chimney.fixtures.renames.Bar",
-        "derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar is not supported in Chimney!",
-        "io.scalaland.chimney.fixtures.renames.Bar",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar",
+        "  can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar",
+        "io.scalaland.chimney.fixtures.renames.Bar (transforming from: matching[io.scalaland.chimney.fixtures.renames.Foo.bar])",
+        "  derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
       compileErrors("(Foo.bar: Foo).intoPartial[Bar].transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Foo to io.scalaland.chimney.fixtures.renames.Bar",
         "io.scalaland.chimney.fixtures.renames.Bar",
-        "derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar is not supported in Chimney!",
-        "io.scalaland.chimney.fixtures.renames.Bar",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar",
+        "  can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar",
+        "io.scalaland.chimney.fixtures.renames.Bar (transforming from: matching[io.scalaland.chimney.fixtures.renames.Foo.bar])",
+        "  derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -649,9 +651,9 @@ class PartialTransformerEnumSpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Foo to io.scalaland.chimney.fixtures.renames.BarAmbiguous",
         "io.scalaland.chimney.fixtures.renames.BarAmbiguous",
-        "coproduct instance io.scalaland.chimney.fixtures.renames.Foo.bar of io.scalaland.chimney.fixtures.renames.Foo has ambiguous matches in io.scalaland.chimney.fixtures.renames.BarAmbiguous: io.scalaland.chimney.fixtures.renames.BarAmbiguous.bar, io.scalaland.chimney.fixtures.renames.BarAmbiguous.getBar",
+        "  coproduct instance io.scalaland.chimney.fixtures.renames.Foo.bar of io.scalaland.chimney.fixtures.renames.Foo has ambiguous matches in io.scalaland.chimney.fixtures.renames.BarAmbiguous: io.scalaland.chimney.fixtures.renames.BarAmbiguous.bar, io.scalaland.chimney.fixtures.renames.BarAmbiguous.getBar",
         "io.scalaland.chimney.fixtures.renames.BarAmbiguous",
-        "derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.BarAmbiguous is not supported in Chimney!",
+        "  derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.BarAmbiguous is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -698,9 +700,9 @@ class PartialTransformerEnumSpec extends ChimneySpec {
       compileErrors("(Foo.bar: Foo).intoPartial[Bar].disableCustomSubtypeNameComparison.transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Foo to io.scalaland.chimney.fixtures.renames.Bar",
         "io.scalaland.chimney.fixtures.renames.Bar",
-        "derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar is not supported in Chimney!",
-        "io.scalaland.chimney.fixtures.renames.Bar",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar",
+        "  can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar",
+        "io.scalaland.chimney.fixtures.renames.Bar (transforming from: matching[io.scalaland.chimney.fixtures.renames.Foo.bar])",
+        "  derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }

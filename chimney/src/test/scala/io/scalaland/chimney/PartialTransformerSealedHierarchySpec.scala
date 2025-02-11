@@ -141,12 +141,12 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
     error.check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.shapes1.Shape to io.scalaland.chimney.fixtures.shapes5.Shape",
       "io.scalaland.chimney.fixtures.shapes5.Shape",
-      "derivation from rectangle: io.scalaland.chimney.fixtures.shapes1.Rectangle to io.scalaland.chimney.fixtures.shapes5.Shape is not supported in Chimney!",
-      "io.scalaland.chimney.fixtures.shapes5.Shape",
-      "coproduct instance io.scalaland.chimney.fixtures.shapes1.Triangle of io.scalaland.chimney.fixtures.shapes1.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5.Shape: io.scalaland.chimney.fixtures.shapes5.Inner.Triangle, io.scalaland.chimney.fixtures.shapes5.Triangle",
-      "coproduct instance io.scalaland.chimney.fixtures.shapes1.Rectangle of io.scalaland.chimney.fixtures.shapes1.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5.Shape: io.scalaland.chimney.fixtures.shapes5.Inner.Rectangle, io.scalaland.chimney.fixtures.shapes5.Rectangle",
-      "io.scalaland.chimney.fixtures.shapes5.Shape",
-      "derivation from triangle: io.scalaland.chimney.fixtures.shapes1.Triangle to io.scalaland.chimney.fixtures.shapes5.Shape is not supported in Chimney!",
+      "  coproduct instance io.scalaland.chimney.fixtures.shapes1.Triangle of io.scalaland.chimney.fixtures.shapes1.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5.Shape: io.scalaland.chimney.fixtures.shapes5.Inner.Triangle, io.scalaland.chimney.fixtures.shapes5.Triangle",
+      "  coproduct instance io.scalaland.chimney.fixtures.shapes1.Rectangle of io.scalaland.chimney.fixtures.shapes1.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5.Shape: io.scalaland.chimney.fixtures.shapes5.Inner.Rectangle, io.scalaland.chimney.fixtures.shapes5.Rectangle",
+      "io.scalaland.chimney.fixtures.shapes5.Shape (transforming from: matching[io.scalaland.chimney.fixtures.shapes1.Triangle])",
+      "  derivation from triangle: io.scalaland.chimney.fixtures.shapes1.Triangle to io.scalaland.chimney.fixtures.shapes5.Shape is not supported in Chimney!",
+      "io.scalaland.chimney.fixtures.shapes5.Shape (transforming from: matching[io.scalaland.chimney.fixtures.shapes1.Rectangle])",
+      "  derivation from rectangle: io.scalaland.chimney.fixtures.shapes1.Rectangle to io.scalaland.chimney.fixtures.shapes5.Shape is not supported in Chimney!",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
 
@@ -163,7 +163,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
       compileErrors("""(colors2.Black: colors2.Color).transformIntoPartial[colors1.Color]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors2.Color to io.scalaland.chimney.fixtures.colors1.Color",
         "io.scalaland.chimney.fixtures.colors1.Color",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.colors2.Black to io.scalaland.chimney.fixtures.colors1.Color",
+        "  can't transform coproduct instance io.scalaland.chimney.fixtures.colors2.Black to io.scalaland.chimney.fixtures.colors1.Color",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -666,9 +666,9 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
       compileErrors("""(Foo3.Baz: Foo3).intoPartial[Bar].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo3 to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
-        "derivation from bazz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo3.Bazz to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
-        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo3.Bazz to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "  can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo3.Bazz to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar (transforming from: matching[io.scalaland.chimney.fixtures.renames.Subtypes.Foo3.Bazz])",
+        "  derivation from bazz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo3.Bazz to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -747,9 +747,9 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors1.Color to io.scalaland.chimney.fixtures.colors2.Color",
         "io.scalaland.chimney.fixtures.colors2.Color",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.colors1.Green to io.scalaland.chimney.fixtures.colors2.Color",
+        "  can't transform coproduct instance io.scalaland.chimney.fixtures.colors1.Green to io.scalaland.chimney.fixtures.colors2.Color",
         "io.scalaland.chimney.fixtures.colors2.Color",
-        "derivation from green: io.scalaland.chimney.fixtures.colors1.Green to io.scalaland.chimney.fixtures.colors2.Color is not supported in Chimney!",
+        "  derivation from green: io.scalaland.chimney.fixtures.colors1.Green to io.scalaland.chimney.fixtures.colors2.Color is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -760,7 +760,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors1.Color to io.scalaland.chimney.fixtures.colors2.Color",
         "io.scalaland.chimney.fixtures.colors2.Color",
-        "FailOnUnmatchedTargetSubtype policy check failed at _, offenders: io.scalaland.chimney.fixtures.colors2.Black!",
+        "  FailOnUnmatchedTargetSubtype policy check failed at _, offenders: io.scalaland.chimney.fixtures.colors2.Black!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
@@ -794,9 +794,9 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors1.Color to io.scalaland.chimney.fixtures.colors2.Color",
         "io.scalaland.chimney.fixtures.colors2.Color",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.colors1.Green to io.scalaland.chimney.fixtures.colors2.Color",
+        "  can't transform coproduct instance io.scalaland.chimney.fixtures.colors1.Green to io.scalaland.chimney.fixtures.colors2.Color",
         "io.scalaland.chimney.fixtures.colors2.Color",
-        "derivation from green: io.scalaland.chimney.fixtures.colors1.Green to io.scalaland.chimney.fixtures.colors2.Color is not supported in Chimney!",
+        "  derivation from green: io.scalaland.chimney.fixtures.colors1.Green to io.scalaland.chimney.fixtures.colors2.Color is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -807,7 +807,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors1.Color to io.scalaland.chimney.fixtures.colors2.Color",
         "io.scalaland.chimney.fixtures.colors2.Color",
-        "FailOnUnmatchedTargetSubtype policy check failed at _, offenders: io.scalaland.chimney.fixtures.colors2.Black!",
+        "  FailOnUnmatchedTargetSubtype policy check failed at _, offenders: io.scalaland.chimney.fixtures.colors2.Black!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
@@ -1117,36 +1117,36 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
       compileErrors("""(Foo.BAZ: Foo).transformIntoPartial[Bar]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
-        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
-        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "  can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar (transforming from: matching[io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ])",
+        "  derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
       compileErrors("""(Foo.BAZ: Foo).intoPartial[Bar].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
-        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
-        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "  can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar (transforming from: matching[io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ])",
+        "  derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
       compileErrors("""(Bar.Baz: Bar).transformIntoPartial[Foo]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Bar to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
-        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo is not supported in Chimney!",
-        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "  can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo (transforming from: matching[io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz])",
+        "  derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
       compileErrors("""(Bar.Baz: Bar).intoPartial[Foo].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Bar to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
-        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo is not supported in Chimney!",
-        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "  can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo (transforming from: matching[io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz])",
+        "  derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -1178,9 +1178,9 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo2 to io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous",
         "io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous",
-        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.baz to io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous is not supported in Chimney!",
-        "io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous",
-        "coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.baz of io.scalaland.chimney.fixtures.renames.Subtypes.Foo2 has ambiguous matches in io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous: io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous.baz, io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous.getBaz",
+        "  coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.baz of io.scalaland.chimney.fixtures.renames.Subtypes.Foo2 has ambiguous matches in io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous: io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous.baz, io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous.getBaz",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous (transforming from: matching[io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.baz])",
+        "  derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.baz to io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -1266,18 +1266,18 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
       compileErrors("""(Foo.BAZ: Foo).intoPartial[Bar].disableCustomSubtypeNameComparison.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
-        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
-        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "  can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar (transforming from: matching[io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ])",
+        "  derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
       compileErrors("""(Bar.Baz: Bar).intoPartial[Foo].disableCustomSubtypeNameComparison.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Bar to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
-        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo is not supported in Chimney!",
-        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "  can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo (transforming from: matching[io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz])",
+        "  derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -1297,7 +1297,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors1.Color to io.scalaland.chimney.fixtures.colors2.Color",
         "io.scalaland.chimney.fixtures.colors2.Color",
-        "FailOnUnmatchedTargetSubtype policy check failed at _, offenders: io.scalaland.chimney.fixtures.colors2.Black!",
+        "  FailOnUnmatchedTargetSubtype policy check failed at _, offenders: io.scalaland.chimney.fixtures.colors2.Black!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
@@ -1308,7 +1308,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         compileErrors("""(colors1.Red: colors1.Color).transformIntoPartial[colors2.Color]""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors1.Color to io.scalaland.chimney.fixtures.colors2.Color",
           "io.scalaland.chimney.fixtures.colors2.Color",
-          "FailOnUnmatchedTargetSubtype policy check failed at _, offenders: io.scalaland.chimney.fixtures.colors2.Black!",
+          "  FailOnUnmatchedTargetSubtype policy check failed at _, offenders: io.scalaland.chimney.fixtures.colors2.Black!",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
       }

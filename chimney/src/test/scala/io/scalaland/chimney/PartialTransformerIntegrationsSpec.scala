@@ -110,10 +110,10 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
     compileErrors("""NonEmptyWrapper(Foo("b"), Foo("a")).transformIntoPartial[SortedWrapper[Bar]]""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyWrapper[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo] to io.scalaland.chimney.TotalTransformerIntegrationsSpec.SortedWrapper[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar]",
       "io.scalaland.chimney.TotalTransformerIntegrationsSpec.SortedWrapper[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar]",
-      "ambiguous implicits while resolving Chimney recursive transformation!",
+      "  ambiguous implicits while resolving Chimney recursive transformation!",
       "TotalTransformerIntegrationsSpec.OuterTransformers.partialNonEmptyToSorted[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar](barOrdering)",
       "TotalTransformerIntegrationsSpec.OuterTransformers.totalNonEmptyToSorted[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar](barOrdering)",
-      "Please eliminate total/partial ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used.",
+      "  Please eliminate total/partial ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used.",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
   }
@@ -827,14 +827,14 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
       compileErrors("""Source("foo").transformIntoPartial[TargetWithOption]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source to io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
-        "y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
+        "  y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
         "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
       compileErrors("""Source("foo").intoPartial[TargetWithOption].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source to io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
-        "y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
+        "  y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
         "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -910,7 +910,7 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
       compileErrors("""Source("foo").intoPartial[TargetWithOption].disableOptionDefaultsToNone.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source to io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
-        "y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
+        "  y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
         "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -959,10 +959,10 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
         """Source(Possible.Present("value")).intoPartial[Target].disablePartialUnwrapsOption.transform"""
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source to io.scalaland.chimney.PartialTransformerIntegrationsSpec.Target",
-        "java.lang.String",
-        "derivation from source.a: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] to java.lang.String is not supported in Chimney!",
         "io.scalaland.chimney.PartialTransformerIntegrationsSpec.Target",
-        "a: java.lang.String - can't derive transformation from a: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
+        "  a: java.lang.String - can't derive transformation from a: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
+        "java.lang.String (transforming from: a into: a)",
+        "  derivation from source.a: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] to java.lang.String is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
       locally {
@@ -970,10 +970,10 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
 
         compileErrors("""Source(Possible.Present("value")).transformIntoPartial[Target]""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source to io.scalaland.chimney.PartialTransformerIntegrationsSpec.Target",
-          "java.lang.String",
-          "derivation from source.a: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] to java.lang.String is not supported in Chimney!",
           "io.scalaland.chimney.PartialTransformerIntegrationsSpec.Target",
-          "a: java.lang.String - can't derive transformation from a: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
+          "  a: java.lang.String - can't derive transformation from a: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
+          "java.lang.String (transforming from: a into: a)",
+          "  derivation from source.a: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] to java.lang.String is not supported in Chimney!",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
       }
