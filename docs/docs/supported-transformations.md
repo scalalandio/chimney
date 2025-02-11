@@ -412,9 +412,8 @@ If the flag was enabled in the implicit config it can be disabled with `.enableT
     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3!).
     implicit val cfg = TransformerConfiguration.default.enableTypeConstraintEvidence
 
-
     def fooToBar[A, B](value: Foo[A])(implicit ev: A <:< B): Bar[B] =
-        value.into[Bar[B]].disableTypeConstraintEvidence.transform
+      value.into[Bar[B]].disableTypeConstraintEvidence.transform
   
     pprint.pprintln(
        fooToBar[String, String](Foo("bar"))
