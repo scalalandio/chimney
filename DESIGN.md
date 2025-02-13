@@ -51,7 +51,7 @@ The simplified version of how the code above works:
    runtime, but also modify the type of the wrapper. Then when the macro is called it can read configuration from
    the type and compute which override is stored under which index.
 
-> Types computed by `.withField*`, `.withCoproduct*`, `.enable*` and `.disable*` are intended to be inferred, not shown
+> Types computed by `.withField*`, `.withSealedSubtype*`, `.enable*` and `.disable*` are intended to be inferred, not shown
 > to the user and not used by the user manually. For that reason all `*Cfg` and `*Flags` are defined in `internal`
 > subpackage.
 

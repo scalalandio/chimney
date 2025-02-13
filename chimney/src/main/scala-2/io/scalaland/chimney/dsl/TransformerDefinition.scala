@@ -214,16 +214,6 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerDefinitionMacros.withSealedSubtypeHandledImpl[From, To, Overrides, Flags, Subtype]
 
-  /** Renamed to [[withSealedSubtypeHandled]].
-    *
-    * @since 0.4.0
-    */
-  @deprecated("Use .withSealedSubtypeHandled or .withEnumCaseHandled for more clarity", "1.0.0")
-  def withCoproductInstance[Subtype](
-      f: Subtype => To
-  ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
-    macro TransformerDefinitionMacros.withSealedSubtypeHandledImpl[From, To, Overrides, Flags, Subtype]
-
   /** Use the `FromSubtype` in `From` as a source for the `ToSubtype` in `To`.
     *
     * @see

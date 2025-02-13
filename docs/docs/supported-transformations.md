@@ -3549,8 +3549,6 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     
     These methods are only aliases and there is no difference in behavior between `.withSealedCaseHandled` and
     `.withEnumCaseHandled` - the difference in names exist only for the sake of readability and discoverability.
-    For similar reason the only name of this method - `.withCoproductInstance` - was deprecated (although it was left as
-    an alias to let the old code work, while encourage users to use newer, more understanable names).
 
 !!! notice
 

@@ -208,16 +208,6 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
   ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerIntoMacros.withSealedSubtypeHandledImpl('this, 'f) }
 
-  /** Renamed to [[withSealedSubtypeHandled]].
-    *
-    * @since 0.1.2
-    */
-  @deprecated("Use .withSealedSubtypeHandled or .withEnumCaseHandled for more clarity", "1.0.0")
-  transparent inline def withCoproductInstance[Subtype](
-      inline f: Subtype => To
-  ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
-    ${ TransformerIntoMacros.withSealedSubtypeHandledImpl('this, 'f) }
-
   /** Use the `FromSubtype` in `From` as a source for the `ToSubtype` in `To`.
     *
     * @see
