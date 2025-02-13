@@ -35,7 +35,7 @@ class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils
     .asInstanceOfExpr(
       new ApplyFieldNameType {
         def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[TransformerInto[From, To, Computed[ToPath, Overrides], Flags]]
+          weakTypeTag[TransformerInto[From, To, Computed[Path.Root, ToPath, Overrides], Flags]]
       }.applyFromSelector(selector)
     )
 
@@ -49,7 +49,7 @@ class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils
     .asInstanceOfExpr(
       new ApplyFieldNameTypes {
         def apply[FromPath <: Path: WeakTypeTag, ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[TransformerInto[From, To, ComputedFrom[FromPath, ToPath, Overrides], Flags]]
+          weakTypeTag[TransformerInto[From, To, Computed[FromPath, ToPath, Overrides], Flags]]
       }.applyFromSelectors(selectorFrom, selectorTo)
     )
 
@@ -62,7 +62,7 @@ class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils
     .asInstanceOfExpr(
       new ApplyFieldNameTypes {
         def apply[FromPath <: Path: WeakTypeTag, ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[TransformerInto[From, To, RenamedFrom[FromPath, ToPath, Overrides], Flags]]
+          weakTypeTag[TransformerInto[From, To, Renamed[FromPath, ToPath, Overrides], Flags]]
       }.applyFromSelectors(selectorFrom, selectorTo)
     )
 
@@ -91,7 +91,7 @@ class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils
       .asInstanceOfExpr[TransformerInto[
         From,
         To,
-        CaseComputed[Path.SourceMatching[Path.Root, FixedSubtype], Overrides],
+        Computed[Path.SourceMatching[Path.Root, FixedSubtype], Path.Root, Overrides],
         Flags
       ]]
   }.applyJavaEnumFixFromClosureSignature[Subtype](f)
@@ -108,7 +108,7 @@ class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils
       weakTypeTag[TransformerInto[
         From,
         To,
-        RenamedTo[Path.SourceMatching[Path.Root, FromSubtype], Path.Matching[Path.Root, ToSubtype], Overrides],
+        Renamed[Path.SourceMatching[Path.Root, FromSubtype], Path.Matching[Path.Root, ToSubtype], Overrides],
         Flags
       ]]
     )

@@ -1,6 +1,7 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.partial.syntax.*
 import io.scalaland.chimney.utils.OptionUtils.*
 
 import scala.annotation.unused
@@ -156,7 +157,7 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
   group("transform from OptionalValue into OptionalValue, using Partial Transformer for inner type transformation") {
 
     implicit val intPartialParser: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResultOrString("bad int"))
+      PartialTransformer(_.parseInt.orStringAsResult("bad int"))
 
     test("when Result is success") {
       val result = Possible("123").transformIntoPartial[Possible[Int]]
@@ -214,7 +215,7 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
   ) {
 
     implicit val intPartialParser: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResultOrString("bad int"))
+      PartialTransformer(_.parseInt.orStringAsResult("bad int"))
 
     test("when Result is success") {
       val result = "123".transformIntoPartial[Possible[Int]]
@@ -270,7 +271,7 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
   ) {
 
     implicit val intPartialParser: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResultOrString("bad int"))
+      PartialTransformer(_.parseInt.orStringAsResult("bad int"))
 
     test("when option is non-empty and inner is success") {
       val result = Possible("10").transformIntoPartial[Int]
@@ -358,7 +359,7 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
     "transform TotallyBuildIterable/PartiallyBuildIterable to TotallyBuildIterable/PartiallyBuildIterable, using Partial Transformer for inner type transformation"
   ) {
     implicit val intParserOpt: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResult)
+      PartialTransformer(_.parseInt.asResult)
 
     CustomCollection
       .of("123", "456")
@@ -445,7 +446,7 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
     "transform between Array-type and TotallyBuildIterable/PartiallyBuildIterable, using Partial Transformer for inner type transformation"
   ) {
     implicit val intParserOpt: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResult)
+      PartialTransformer(_.parseInt.asResult)
 
     Array("123", "456").transformIntoPartial[CustomCollection[Int]].asOption ==> Some(CustomCollection.of(123, 456))
     Array("123", "456").transformIntoPartial[NonEmptyCollection[Int]].asOption ==> Some(NonEmptyCollection.of(123, 456))
@@ -559,7 +560,7 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
     "transform TotallyBuildMap/PartiallyBuildMap to TotallyBuildMap/PartiallyBuildMap, using Partial Transformer for inner type transformation"
   ) {
     implicit val intParserOpt: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResult)
+      PartialTransformer(_.parseInt.asResult)
 
     CustomMap
       .of("123" -> "456")
@@ -674,7 +675,7 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
     "transform between TotallyBuildIterable/PartiallyBuildIterable and TotallyBuildMap/PartiallyBuildMap, using Partial Transformer for inner type transformation"
   ) {
     implicit val intParserOpt: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResult)
+      PartialTransformer(_.parseInt.asResult)
 
     CustomCollection
       .of("1" -> "10", "2" -> "20")
@@ -739,7 +740,7 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
     "transform between Array-types and TotallyBuildMap/PartiallyBuildMap, using Partial Transformer for inner type transformation"
   ) {
     implicit val intParserOpt: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResult)
+      PartialTransformer(_.parseInt.asResult)
 
     Array("123" -> "456").transformIntoPartial[CustomMap[Int, Int]].asOption ==> Some(CustomMap.of(123 -> 456))
     Array("abc" -> "456")

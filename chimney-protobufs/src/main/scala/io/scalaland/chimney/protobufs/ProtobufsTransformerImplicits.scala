@@ -1,17 +1,19 @@
 package io.scalaland.chimney.protobufs
 
 import io.scalaland.chimney.Transformer
+// format: off
+import io.scalaland.chimney.integrations._
+// format: on
 
 // format: off
 import scala.collection.compat._
 // format: on
-
-// FIXME (2.0.0 cleanup): we should align the naming (Protobuf -> Protobufs)
+import scala.collection.mutable
 
 /** @since 0.8.0 */
-trait ProtobufTransformerImplicits extends ProtobufTransformerImplicitsLowPriorityImplicits1 {}
+trait ProtobufsTransformerImplicits extends ProtobufsTransformerImplicitsLowPriorityImplicits1 {}
 
-private[protobufs] trait ProtobufTransformerImplicitsLowPriorityImplicits1 { this: ProtobufTransformerImplicits =>
+private[protobufs] trait ProtobufsTransformerImplicitsLowPriorityImplicits1 { this: ProtobufsTransformerImplicits =>
 
   // com.google.protobuf.empty.Empty
 
@@ -69,18 +71,21 @@ private[protobufs] trait ProtobufTransformerImplicitsLowPriorityImplicits1 { thi
 
   // com.google.protobuf.ByteString
 
-  // FIXME (2.0.0 cleanup): ByteString should be TotallyBuildIterable
-
-  /** @since 0.8.0 */
-  implicit def totalTransformerFromByteStringToByteCollection[Coll[A] <: IterableOnce[A]](implicit
-      factory: Factory[Byte, Coll[Byte]]
-  ): Transformer[com.google.protobuf.ByteString, Coll[Byte]] =
-    byteString => byteString.toByteArray().to(factory)
-
-  /** @since 0.8.0 */
-  implicit def totalTransformerFromByteCollectionToByteString[Coll[A] <: IterableOnce[A]]
-      : Transformer[Coll[Byte], com.google.protobuf.ByteString] =
-    bytes => com.google.protobuf.ByteString.copyFrom(bytes.iterator.toArray)
+  implicit val protobufByteStringIsTotallyBuildIterable: TotallyBuildIterable[com.google.protobuf.ByteString, Byte] =
+    new TotallyBuildIterable[com.google.protobuf.ByteString, Byte] {
+      def totalFactory: Factory[Byte, com.google.protobuf.ByteString] =
+        new FactoryCompat[Byte, com.google.protobuf.ByteString] {
+          def newBuilder: mutable.Builder[Byte, com.google.protobuf.ByteString] =
+            new FactoryCompat.Builder[Byte, com.google.protobuf.ByteString] {
+              private val impl = mutable.ListBuffer.empty[Byte]
+              def clear(): Unit = impl.clear()
+              def result(): com.google.protobuf.ByteString =
+                com.google.protobuf.ByteString.copyFrom(impl.iterator.toArray)
+              def addOne(elem: Byte): this.type = { impl += elem; this }
+            }
+        }
+      def iterator(byteString: com.google.protobuf.ByteString): Iterator[Byte] = byteString.toByteArray().iterator
+    }
 
   // com.google.protobuf.wrappers.BoolValue
 
@@ -94,18 +99,23 @@ private[protobufs] trait ProtobufTransformerImplicitsLowPriorityImplicits1 { thi
 
   // com.google.protobuf.wrappers.BytesValue
 
-  // FIXME (2.0.0 cleanup): BytesValue should be TotallyBuildIterable
-
-  /** @since 0.8.0 */
-  implicit def totalTransformerFromBytesValueToByteCollection[Coll[A] <: IterableOnce[A]](implicit
-      factory: Factory[Byte, Coll[Byte]]
-  ): Transformer[com.google.protobuf.wrappers.BytesValue, Coll[Byte]] =
-    wrapper => totalTransformerFromByteStringToByteCollection[Coll].transform(wrapper.value)
-
-  /** @since 0.8.0 */
-  implicit def totalTransformerFromByteCollectionToBytesValue[Coll[A] <: IterableOnce[A]]
-      : Transformer[Coll[Byte], com.google.protobuf.wrappers.BytesValue] =
-    bytes => com.google.protobuf.wrappers.BytesValue.of(totalTransformerFromByteCollectionToByteString.transform(bytes))
+  implicit val protobufBytesValueIsTotallyBuildIterable
+      : TotallyBuildIterable[com.google.protobuf.wrappers.BytesValue, Byte] =
+    new TotallyBuildIterable[com.google.protobuf.wrappers.BytesValue, Byte] {
+      def totalFactory: Factory[Byte, com.google.protobuf.wrappers.BytesValue] =
+        new FactoryCompat[Byte, com.google.protobuf.wrappers.BytesValue] {
+          def newBuilder: mutable.Builder[Byte, com.google.protobuf.wrappers.BytesValue] =
+            new FactoryCompat.Builder[Byte, com.google.protobuf.wrappers.BytesValue] {
+              private val impl = protobufByteStringIsTotallyBuildIterable.totalFactory.newBuilder
+              def clear(): Unit = impl.clear()
+              def result(): com.google.protobuf.wrappers.BytesValue =
+                com.google.protobuf.wrappers.BytesValue.of(impl.result())
+              def addOne(elem: Byte): this.type = { impl.addOne(elem); this }
+            }
+        }
+      def iterator(byteValue: com.google.protobuf.wrappers.BytesValue): Iterator[Byte] =
+        protobufByteStringIsTotallyBuildIterable.iterator(byteValue.value)
+    }
 
   // com.google.protobuf.wrappers.DoubleValue
 

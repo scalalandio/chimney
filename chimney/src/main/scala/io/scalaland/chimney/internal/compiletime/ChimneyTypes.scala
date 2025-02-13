@@ -114,7 +114,8 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
 
       val Computed: ComputedModule
       trait ComputedModule
-          extends Type.Ctor2UpperBounded[
+          extends Type.Ctor3UpperBounded[
+            runtime.Path,
             runtime.Path,
             runtime.TransformerOverrides,
             runtime.TransformerOverrides.Computed
@@ -122,45 +123,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
 
       val ComputedPartial: ComputedPartialModule
       trait ComputedPartialModule
-          extends Type.Ctor2UpperBounded[
+          extends Type.Ctor3UpperBounded[
+            runtime.Path,
             runtime.Path,
             runtime.TransformerOverrides,
             runtime.TransformerOverrides.ComputedPartial
           ] { this: ComputedPartial.type => }
-
-      val ComputedFrom: ComputedFromModule
-      trait ComputedFromModule
-          extends Type.Ctor3UpperBounded[
-            runtime.Path,
-            runtime.Path,
-            runtime.TransformerOverrides,
-            runtime.TransformerOverrides.ComputedFrom
-          ] { this: ComputedFrom.type => }
-
-      val ComputedPartialFrom: ComputedPartialFromModule
-      trait ComputedPartialFromModule
-          extends Type.Ctor3UpperBounded[
-            runtime.Path,
-            runtime.Path,
-            runtime.TransformerOverrides,
-            runtime.TransformerOverrides.ComputedPartialFrom
-          ] { this: ComputedPartialFrom.type => }
-
-      val CaseComputed: CaseComputedModule
-      trait CaseComputedModule
-          extends Type.Ctor2UpperBounded[
-            runtime.Path,
-            runtime.TransformerOverrides,
-            runtime.TransformerOverrides.CaseComputed
-          ] { this: CaseComputed.type => }
-
-      val CaseComputedPartial: CaseComputedPartialModule
-      trait CaseComputedPartialModule
-          extends Type.Ctor2UpperBounded[
-            runtime.Path,
-            runtime.TransformerOverrides,
-            runtime.TransformerOverrides.CaseComputedPartial
-          ] { this: CaseComputedPartial.type => }
 
       val Fallback: FallbackModule
       trait FallbackModule
@@ -189,23 +157,14 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             runtime.TransformerOverrides.ConstructorPartial
           ] { this: ConstructorPartial.type => }
 
-      val RenamedFrom: RenamedFromModule
-      trait RenamedFromModule
+      val Renamed: RenamedModule
+      trait RenamedModule
           extends Type.Ctor3UpperBounded[
             runtime.Path,
             runtime.Path,
             runtime.TransformerOverrides,
-            runtime.TransformerOverrides.RenamedFrom
-          ] { this: RenamedFrom.type => }
-
-      val RenamedTo: RenamedToModule
-      trait RenamedToModule
-          extends Type.Ctor3UpperBounded[
-            runtime.Path,
-            runtime.Path,
-            runtime.TransformerOverrides,
-            runtime.TransformerOverrides.RenamedTo
-          ] { this: RenamedTo.type => }
+            runtime.TransformerOverrides.Renamed
+          ] { this: Renamed.type => }
     }
 
     val TransformerFlags: TransformerFlagsModule

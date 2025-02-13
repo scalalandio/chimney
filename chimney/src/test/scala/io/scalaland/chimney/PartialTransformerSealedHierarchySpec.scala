@@ -2,6 +2,7 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
+import io.scalaland.chimney.partial.syntax.*
 import io.scalaland.chimney.utils.OptionUtils.*
 
 import scala.annotation.unused
@@ -77,7 +78,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
       Some(shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0)))
 
     implicit val intParserOpt: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResult)
+      PartialTransformer(_.parseInt.asResult)
     import numbers.*, ScalesPartialTransformer.shortToLongPartialInner
 
     (short.Zero: short.NumScale[String, Nothing])

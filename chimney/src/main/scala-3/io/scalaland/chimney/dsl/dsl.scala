@@ -12,9 +12,7 @@ export io.scalaland.chimney.syntax.{
   matching,
   matchingLeft,
   matchingRight,
-  matchingSome,
-  toPartialResult,
-  toPartialResultOrString
+  matchingSome
 }
 
 // Extension methods in dsl.* summon TypeClass.AutoDerived while extension methods in syntax.* summon TypeClass.

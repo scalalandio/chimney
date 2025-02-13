@@ -153,11 +153,6 @@ final class PatcherUsing[A, Patch, Overrides <: PatcherOverrides, Flags <: Patch
       pc: PatcherConfiguration[ImplicitScopeFlags]
   ): A = macro PatcherMacros.derivePatchWithConfig[A, Patch, Overrides, Flags, ImplicitScopeFlags]
 
-  // FIXME: (2.0.0 cleanup) - kept to make MiMa happy
-  // $COVERAGE-OFF$
-  def this(obj: A, objPatch: Patch) = this(obj, objPatch, new PatcherDefinition())
-  // $COVERAGE-ON$
-
   private[chimney] def addOverride(overrideData: Any): this.type =
     new PatcherUsing(obj, objPatch, pd.addOverride(overrideData)).asInstanceOf[this.type]
 }

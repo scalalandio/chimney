@@ -31,13 +31,6 @@ trait PartiallyBuildIterable[Collection, Item] {
   def to[Collection2](collection: Collection, factory: Factory[Item, Collection2]): Collection2 =
     FactoryCompat.iteratorTo(iterator(collection), factory)
 
-  // FIXME (2.0.0 cleanup): this should have been widen but it slipped through our tests before the release
-  // $COVERAGE-OFF$this should have never been released in the first place
-  @deprecated
-  def narrow[Collection2 <: Collection]: PartiallyBuildIterable[Collection2, Item] =
-    this.asInstanceOf[PartiallyBuildIterable[Collection2, Item]]
-  // $COVERAGE-ON$
-
   /** Useful since this class is invariant. */
   def widen[Collection2 >: Collection]: PartiallyBuildIterable[Collection2, Item] =
     this.asInstanceOf[PartiallyBuildIterable[Collection2, Item]]

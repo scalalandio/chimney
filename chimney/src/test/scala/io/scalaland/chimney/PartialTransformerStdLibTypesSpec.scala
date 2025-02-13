@@ -1,6 +1,7 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.partial.syntax.*
 import io.scalaland.chimney.utils.OptionUtils.*
 
 import scala.annotation.unused
@@ -60,7 +61,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
   group("transform from Option-type into Option-type, using Partial Transformer for inner type transformation") {
 
     implicit val intPartialParser: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResultOrString("bad int"))
+      PartialTransformer(_.parseInt.orStringAsResult("bad int"))
 
     test("when Result is success") {
       val result = Option("123").transformIntoPartial[Option[Int]]
@@ -116,7 +117,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
   group("transform from non-Option-type into Option-type, using Partial Transformer for inner type transformation") {
 
     implicit val intPartialParser: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResultOrString("bad int"))
+      PartialTransformer(_.parseInt.orStringAsResult("bad int"))
 
     test("when Result is success") {
       val result = "123".transformIntoPartial[Option[Int]]
@@ -170,7 +171,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
   group("transform from Option-type into non-Option-type, using Partial Transformer for inner type transformation") {
 
     implicit val intPartialParser: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResultOrString("bad int"))
+      PartialTransformer(_.parseInt.orStringAsResult("bad int"))
 
     test("when option is non-empty and inner is success") {
       val result = Option("10").transformIntoPartial[Int]
@@ -240,7 +241,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
 
   test("transform from Either-type into Either-type, using Partial Transformer for inner types transformation") {
     implicit val intParserOpt: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResult)
+      PartialTransformer(_.parseInt.asResult)
 
     (Left("1"): Either[String, String]).transformIntoPartial[Either[Int, Int]].asOption ==> Some(Left(1))
     (Right("1"): Either[String, String]).transformIntoPartial[Either[Int, Int]].asOption ==> Some(Right(1))
@@ -353,7 +354,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
 
   test("transform Iterable-type to Iterable-type, using Partial Transformer for inner type transformation") {
     implicit val intParserOpt: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResult)
+      PartialTransformer(_.parseInt.asResult)
 
     List("123", "456").transformIntoPartial[List[Int]].asOption ==> Some(Vector(123, 456))
     Vector("123", "456").transformIntoPartial[Queue[Int]].asOption ==> Some(Queue(123, 456))
@@ -392,7 +393,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
 
   test("transform Array-type to Array-type, using Partial Transformer for inner type transformation") {
     implicit val intParserOpt: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResult)
+      PartialTransformer(_.parseInt.asResult)
 
     Array("123", "456").transformIntoPartial[Array[Int]].asOption.get ==> Array(123, 456)
     Array("abc", "456").transformIntoPartial[Array[Int]].asOption ==> None
@@ -415,7 +416,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
 
   test("transform between Array-type and Iterable-type, using Partial Transformer for inner type transformation") {
     implicit val intParserOpt: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResult)
+      PartialTransformer(_.parseInt.asResult)
 
     Set("123", "456").transformIntoPartial[Array[Int]].asOption.get.sorted ==> Array(123, 456)
     Set("123", "xyz").transformIntoPartial[Array[Int]].asOption ==> None
@@ -477,7 +478,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
 
   test("transform Map-type to Map-type, using Partial Transformer for inner type transformation") {
     implicit val intParserOpt: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResult)
+      PartialTransformer(_.parseInt.asResult)
 
     Map("1" -> "10", "2" -> "20").transformIntoPartial[Map[Int, Int]].asOption ==> Some(Map(1 -> 10, 2 -> 20))
     Map("1" -> "10", "2" -> "20").transformIntoPartial[Map[Int, String]].asOption ==> Some(
@@ -513,7 +514,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
 
   test("transform between Iterables and Maps, using Partial Transformer for inner type transformation") {
     implicit val intParserOpt: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResult)
+      PartialTransformer(_.parseInt.asResult)
 
     Seq("1" -> "10", "2" -> "20").transformIntoPartial[Map[Int, Int]].asOption ==> Some(Map(1 -> 10, 2 -> 20))
     ArrayBuffer("1" -> "10", "2" -> "20").transformIntoPartial[Map[String, Int]].asOption ==>
@@ -567,7 +568,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
 
   test("transform between Arrays and Maps, using Partial Transformer for inner type transformation") {
     implicit val intParserOpt: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResult)
+      PartialTransformer(_.parseInt.asResult)
 
     Array("1" -> "10", "2" -> "20").transformIntoPartial[Map[Int, Int]].asOption ==> Some(Map(1 -> 10, 2 -> 20))
     Array("1" -> "10", "2" -> "20").transformIntoPartial[Map[String, Int]].asOption ==> Some(

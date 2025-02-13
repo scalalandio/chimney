@@ -1,7 +1,5 @@
 package io.scalaland.chimney
 
-import scala.util.Try
-
 import scala.language.implicitConversions
 
 /** Main object to import in order to use Chimney's features
@@ -22,17 +20,6 @@ package object dsl {
     inlined.PatchingOps(obj)
 
   // export syntax.*
-
-  implicit def OptionPartialTransformerOps[A](option: Option[A]): syntax.OptionPartialTransformerOps[A] =
-    syntax.OptionPartialTransformerOps(option)
-
-  implicit def EitherStringPartialTransformerOps[A](
-      either: Either[String, A]
-  ): syntax.EitherStringPartialTransformerOps[A] =
-    syntax.EitherStringPartialTransformerOps(either)
-
-  implicit def TryPartialTransformerOps[A](`try`: Try[A]): syntax.TryPartialTransformerOps[A] =
-    syntax.TryPartialTransformerOps(`try`)
 
   implicit def TransformationMatchingPathOps[A](a: A): syntax.TransformationMatchingPathOps[A] =
     syntax.TransformationMatchingPathOps(a)

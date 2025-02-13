@@ -86,7 +86,7 @@ object PartialTransformerDefinitionMacros {
           '{
             WithRuntimeDataStore
               .update($td, $f)
-              .asInstanceOf[PartialTransformerDefinition[From, To, Computed[toPath, Overrides], Flags]]
+              .asInstanceOf[PartialTransformerDefinition[From, To, Computed[Path.Root, toPath, Overrides], Flags]]
         }
     }(selector)
 
@@ -111,7 +111,7 @@ object PartialTransformerDefinitionMacros {
             '{
               WithRuntimeDataStore
                 .update($td, $f)
-                .asInstanceOf[PartialTransformerDefinition[From, To, ComputedFrom[fromPath, toPath, Overrides], Flags]]
+                .asInstanceOf[PartialTransformerDefinition[From, To, Computed[fromPath, toPath, Overrides], Flags]]
           }
     }(selectorFrom, selectorTo)
 
@@ -136,7 +136,7 @@ object PartialTransformerDefinitionMacros {
               .asInstanceOf[PartialTransformerDefinition[
                 From,
                 To,
-                ComputedPartial[toPath, Overrides],
+                ComputedPartial[Path.Root, toPath, Overrides],
                 Flags
               ]]
         }
@@ -166,7 +166,7 @@ object PartialTransformerDefinitionMacros {
                 .asInstanceOf[PartialTransformerDefinition[
                   From,
                   To,
-                  ComputedPartialFrom[fromPath, toPath, Overrides],
+                  ComputedPartial[fromPath, toPath, Overrides],
                   Flags
                 ]]
           }
@@ -190,7 +190,7 @@ object PartialTransformerDefinitionMacros {
           (_: Type[toPath]) ?=>
             '{
               $td.asInstanceOf[
-                PartialTransformerDefinition[From, To, RenamedFrom[fromPath, toPath, Overrides], Flags]
+                PartialTransformerDefinition[From, To, Renamed[fromPath, toPath, Overrides], Flags]
               ]
           }
     }(selectorFrom, selectorTo)
@@ -229,7 +229,7 @@ object PartialTransformerDefinitionMacros {
         .asInstanceOf[PartialTransformerDefinition[
           From,
           To,
-          CaseComputed[Path.SourceMatching[Path.Root, Subtype], Overrides],
+          Computed[Path.SourceMatching[Path.Root, Subtype], Path.Root, Overrides],
           Flags
         ]]
     }
@@ -250,7 +250,7 @@ object PartialTransformerDefinitionMacros {
         .asInstanceOf[PartialTransformerDefinition[
           From,
           To,
-          CaseComputedPartial[Path.SourceMatching[Path.Root, Subtype], Overrides],
+          ComputedPartial[Path.SourceMatching[Path.Root, Subtype], Path.Root, Overrides],
           Flags
         ]]
     }
@@ -270,7 +270,7 @@ object PartialTransformerDefinitionMacros {
         .asInstanceOf[PartialTransformerDefinition[
           From,
           To,
-          RenamedTo[Path.SourceMatching[Path.Root, FromSubtype], Path.Matching[Path.Root, ToSubtype], Overrides],
+          Renamed[Path.SourceMatching[Path.Root, FromSubtype], Path.Matching[Path.Root, ToSubtype], Overrides],
           Flags
         ]]
     }

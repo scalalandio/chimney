@@ -2,6 +2,7 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
+import io.scalaland.chimney.partial.syntax.*
 import io.scalaland.chimney.utils.OptionUtils.*
 
 import scala.annotation.unused
@@ -113,7 +114,7 @@ class PartialTransformerEnumSpec extends ChimneySpec {
       Some(shapes3enums.Shape.Rectangle(shapes3enums.Point(0.0, 0.0), shapes3enums.Point(6.0, 4.0)))
 
     implicit val intParserOpt: PartialTransformer[String, Int] =
-      PartialTransformer(_.parseInt.toPartialResult)
+      PartialTransformer(_.parseInt.asResult)
     import numbers.*, ScalesEnumsPartialTransformer.shortToLongPartialInner
 
     (shortEnums.NumScale.Zero: shortEnums.NumScale[String, Nothing])

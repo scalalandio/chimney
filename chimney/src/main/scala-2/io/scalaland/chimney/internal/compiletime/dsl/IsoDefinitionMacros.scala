@@ -23,8 +23,8 @@ class IsoDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
           weakTypeTag[IsoDefinition[
             First,
             Second,
-            RenamedFrom[FirstPath, SecondPath, FirstOverrides],
-            RenamedFrom[SecondPath, FirstPath, SecondOverrides],
+            Renamed[FirstPath, SecondPath, FirstOverrides],
+            Renamed[SecondPath, FirstPath, SecondOverrides],
             Flags
           ]]
       }.applyFromSelectors(selectorFirst, selectorSecond)
@@ -43,12 +43,12 @@ class IsoDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
       weakTypeTag[IsoDefinition[
         First,
         Second,
-        RenamedTo[
+        Renamed[
           Path.SourceMatching[Path.Root, FirstSubtype],
           Path.Matching[Path.Root, SecondSubtype],
           FirstOverrides
         ],
-        RenamedTo[
+        Renamed[
           Path.SourceMatching[Path.Root, SecondSubtype],
           Path.Matching[Path.Root, FirstSubtype],
           SecondOverrides

@@ -318,10 +318,10 @@ object fixtures {
       import samples.validation.*
       PartialTransformer
         .define[Simple, SimpleOutput]
-        .withFieldComputedPartial(_.a, s => happy.validateA(s.a).toPartialResult)
-        .withFieldComputedPartial(_.b, s => happy.validateB(s.b).toPartialResult)
-        .withFieldComputedPartial(_.c, s => happy.validateC(s.c).toPartialResult)
-        .withFieldComputedPartial(_.d, s => happy.validateD(s.d).toPartialResult)
+        .withFieldComputedPartial(_.a, s => happy.validateA(s.a).asResult)
+        .withFieldComputedPartial(_.b, s => happy.validateB(s.b).asResult)
+        .withFieldComputedPartial(_.c, s => happy.validateC(s.c).asResult)
+        .withFieldComputedPartial(_.d, s => happy.validateD(s.d).asResult)
         .buildTransformer
     }
 
@@ -329,10 +329,10 @@ object fixtures {
       import samples.validation.*
       PartialTransformer
         .define[Simple, SimpleOutput]
-        .withFieldComputedPartial(_.a, s => unhappy.validateA(s.a).toPartialResult)
-        .withFieldComputedPartial(_.b, s => unhappy.validateB(s.b).toPartialResult)
-        .withFieldComputedPartial(_.c, s => unhappy.validateC(s.c).toPartialResult)
-        .withFieldComputedPartial(_.d, s => unhappy.validateD(s.d).toPartialResult)
+        .withFieldComputedPartial(_.a, s => unhappy.validateA(s.a).asResult)
+        .withFieldComputedPartial(_.b, s => unhappy.validateB(s.b).asResult)
+        .withFieldComputedPartial(_.c, s => unhappy.validateC(s.c).asResult)
+        .withFieldComputedPartial(_.d, s => unhappy.validateD(s.d).asResult)
         .buildTransformer
     }
 
@@ -340,28 +340,28 @@ object fixtures {
       import samples.validation.*
       PartialTransformer
         .define[Large, LargeOutput]
-        .withFieldComputedPartial(_.a, s => happy.squareInt(s.a).toPartialResult)
-        .withFieldComputedPartial(_.b, s => happy.squareInt(s.b).toPartialResult)
-        .withFieldComputedPartial(_.c, s => happy.squareInt(s.c).toPartialResult)
-        .withFieldComputedPartial(_.d, s => happy.squareInt(s.d).toPartialResult)
-        .withFieldComputedPartial(_.e, s => happy.squareInt(s.e).toPartialResult)
-        .withFieldComputedPartial(_.f, s => happy.squareInt(s.f).toPartialResult)
-        .withFieldComputedPartial(_.g, s => happy.squareInt(s.g).toPartialResult)
-        .withFieldComputedPartial(_.h, s => happy.squareInt(s.h).toPartialResult)
-        .withFieldComputedPartial(_.i, s => happy.squareInt(s.i).toPartialResult)
-        .withFieldComputedPartial(_.j, s => happy.squareInt(s.j).toPartialResult)
-        .withFieldComputedPartial(_.k, s => happy.squareInt(s.k).toPartialResult)
-        .withFieldComputedPartial(_.l, s => happy.squareInt(s.l).toPartialResult)
-        .withFieldComputedPartial(_.m, s => happy.squareInt(s.m).toPartialResult)
-        .withFieldComputedPartial(_.n, s => happy.squareInt(s.n).toPartialResult)
-        .withFieldComputedPartial(_.o, s => happy.squareInt(s.o).toPartialResult)
-        .withFieldComputedPartial(_.p, s => happy.squareInt(s.p).toPartialResult)
-        .withFieldComputedPartial(_.q, s => happy.squareInt(s.q).toPartialResult)
-        .withFieldComputedPartial(_.r, s => happy.squareInt(s.r).toPartialResult)
-        .withFieldComputedPartial(_.s, s => happy.squareInt(s.s).toPartialResult)
-        .withFieldComputedPartial(_.t, s => happy.squareInt(s.t).toPartialResult)
-        .withFieldComputedPartial(_.u, s => happy.squareInt(s.u).toPartialResult)
-        .withFieldComputedPartial(_.v, s => happy.squareInt(s.v).toPartialResult)
+        .withFieldComputedPartial(_.a, s => happy.squareInt(s.a).asResult)
+        .withFieldComputedPartial(_.b, s => happy.squareInt(s.b).asResult)
+        .withFieldComputedPartial(_.c, s => happy.squareInt(s.c).asResult)
+        .withFieldComputedPartial(_.d, s => happy.squareInt(s.d).asResult)
+        .withFieldComputedPartial(_.e, s => happy.squareInt(s.e).asResult)
+        .withFieldComputedPartial(_.f, s => happy.squareInt(s.f).asResult)
+        .withFieldComputedPartial(_.g, s => happy.squareInt(s.g).asResult)
+        .withFieldComputedPartial(_.h, s => happy.squareInt(s.h).asResult)
+        .withFieldComputedPartial(_.i, s => happy.squareInt(s.i).asResult)
+        .withFieldComputedPartial(_.j, s => happy.squareInt(s.j).asResult)
+        .withFieldComputedPartial(_.k, s => happy.squareInt(s.k).asResult)
+        .withFieldComputedPartial(_.l, s => happy.squareInt(s.l).asResult)
+        .withFieldComputedPartial(_.m, s => happy.squareInt(s.m).asResult)
+        .withFieldComputedPartial(_.n, s => happy.squareInt(s.n).asResult)
+        .withFieldComputedPartial(_.o, s => happy.squareInt(s.o).asResult)
+        .withFieldComputedPartial(_.p, s => happy.squareInt(s.p).asResult)
+        .withFieldComputedPartial(_.q, s => happy.squareInt(s.q).asResult)
+        .withFieldComputedPartial(_.r, s => happy.squareInt(s.r).asResult)
+        .withFieldComputedPartial(_.s, s => happy.squareInt(s.s).asResult)
+        .withFieldComputedPartial(_.t, s => happy.squareInt(s.t).asResult)
+        .withFieldComputedPartial(_.u, s => happy.squareInt(s.u).asResult)
+        .withFieldComputedPartial(_.v, s => happy.squareInt(s.v).asResult)
         .buildTransformer
     }
 
@@ -369,28 +369,28 @@ object fixtures {
       import samples.validation.*
       PartialTransformer
         .define[Large, LargeOutput]
-        .withFieldComputedPartial(_.a, s => unhappy.squareIntWhenOdd(s.a).toPartialResult)
-        .withFieldComputedPartial(_.b, s => unhappy.squareIntWhenOdd(s.b).toPartialResult)
-        .withFieldComputedPartial(_.c, s => unhappy.squareIntWhenOdd(s.c).toPartialResult)
-        .withFieldComputedPartial(_.d, s => unhappy.squareIntWhenOdd(s.d).toPartialResult)
-        .withFieldComputedPartial(_.e, s => unhappy.squareIntWhenOdd(s.e).toPartialResult)
-        .withFieldComputedPartial(_.f, s => unhappy.squareIntWhenOdd(s.f).toPartialResult)
-        .withFieldComputedPartial(_.g, s => unhappy.squareIntWhenOdd(s.g).toPartialResult)
-        .withFieldComputedPartial(_.h, s => unhappy.squareIntWhenOdd(s.h).toPartialResult)
-        .withFieldComputedPartial(_.i, s => unhappy.squareIntWhenOdd(s.i).toPartialResult)
-        .withFieldComputedPartial(_.j, s => unhappy.squareIntWhenOdd(s.j).toPartialResult)
-        .withFieldComputedPartial(_.k, s => unhappy.squareIntWhenOdd(s.k).toPartialResult)
-        .withFieldComputedPartial(_.l, s => unhappy.squareIntWhenOdd(s.l).toPartialResult)
-        .withFieldComputedPartial(_.m, s => unhappy.squareIntWhenOdd(s.m).toPartialResult)
-        .withFieldComputedPartial(_.n, s => unhappy.squareIntWhenOdd(s.n).toPartialResult)
-        .withFieldComputedPartial(_.o, s => unhappy.squareIntWhenOdd(s.o).toPartialResult)
-        .withFieldComputedPartial(_.p, s => unhappy.squareIntWhenOdd(s.p).toPartialResult)
-        .withFieldComputedPartial(_.q, s => unhappy.squareIntWhenOdd(s.q).toPartialResult)
-        .withFieldComputedPartial(_.r, s => unhappy.squareIntWhenOdd(s.r).toPartialResult)
-        .withFieldComputedPartial(_.s, s => unhappy.squareIntWhenOdd(s.s).toPartialResult)
-        .withFieldComputedPartial(_.t, s => unhappy.squareIntWhenOdd(s.t).toPartialResult)
-        .withFieldComputedPartial(_.u, s => unhappy.squareIntWhenOdd(s.u).toPartialResult)
-        .withFieldComputedPartial(_.v, s => unhappy.squareIntWhenOdd(s.v).toPartialResult)
+        .withFieldComputedPartial(_.a, s => unhappy.squareIntWhenOdd(s.a).asResult)
+        .withFieldComputedPartial(_.b, s => unhappy.squareIntWhenOdd(s.b).asResult)
+        .withFieldComputedPartial(_.c, s => unhappy.squareIntWhenOdd(s.c).asResult)
+        .withFieldComputedPartial(_.d, s => unhappy.squareIntWhenOdd(s.d).asResult)
+        .withFieldComputedPartial(_.e, s => unhappy.squareIntWhenOdd(s.e).asResult)
+        .withFieldComputedPartial(_.f, s => unhappy.squareIntWhenOdd(s.f).asResult)
+        .withFieldComputedPartial(_.g, s => unhappy.squareIntWhenOdd(s.g).asResult)
+        .withFieldComputedPartial(_.h, s => unhappy.squareIntWhenOdd(s.h).asResult)
+        .withFieldComputedPartial(_.i, s => unhappy.squareIntWhenOdd(s.i).asResult)
+        .withFieldComputedPartial(_.j, s => unhappy.squareIntWhenOdd(s.j).asResult)
+        .withFieldComputedPartial(_.k, s => unhappy.squareIntWhenOdd(s.k).asResult)
+        .withFieldComputedPartial(_.l, s => unhappy.squareIntWhenOdd(s.l).asResult)
+        .withFieldComputedPartial(_.m, s => unhappy.squareIntWhenOdd(s.m).asResult)
+        .withFieldComputedPartial(_.n, s => unhappy.squareIntWhenOdd(s.n).asResult)
+        .withFieldComputedPartial(_.o, s => unhappy.squareIntWhenOdd(s.o).asResult)
+        .withFieldComputedPartial(_.p, s => unhappy.squareIntWhenOdd(s.p).asResult)
+        .withFieldComputedPartial(_.q, s => unhappy.squareIntWhenOdd(s.q).asResult)
+        .withFieldComputedPartial(_.r, s => unhappy.squareIntWhenOdd(s.r).asResult)
+        .withFieldComputedPartial(_.s, s => unhappy.squareIntWhenOdd(s.s).asResult)
+        .withFieldComputedPartial(_.t, s => unhappy.squareIntWhenOdd(s.t).asResult)
+        .withFieldComputedPartial(_.u, s => unhappy.squareIntWhenOdd(s.u).asResult)
+        .withFieldComputedPartial(_.v, s => unhappy.squareIntWhenOdd(s.v).asResult)
         .buildTransformer
     }
   }

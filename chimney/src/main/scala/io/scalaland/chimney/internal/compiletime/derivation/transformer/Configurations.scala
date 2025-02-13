@@ -841,21 +841,7 @@ private[compiletime] trait Configurations { this: Derivation =>
           TargetPath(extractPath[ToPath]),
           TransformerOverride.ConstPartial(runtimeDataStore(runtimeDataIdx).as_??)
         )
-      case ChimneyType.TransformerOverrides.Computed(toPath, cfg) =>
-        import toPath.Underlying as ToPath, cfg.Underlying as Tail2
-        val targetPath = extractPath[ToPath]
-        extractTransformerConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addTransformerOverride(
-          TargetPath(targetPath),
-          TransformerOverride.Computed(Path.Root, targetPath, runtimeDataStore(runtimeDataIdx).as_??)
-        )
-      case ChimneyType.TransformerOverrides.ComputedPartial(toPath, cfg) =>
-        import toPath.Underlying as ToPath, cfg.Underlying as Tail2
-        val targetPath = extractPath[ToPath]
-        extractTransformerConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addTransformerOverride(
-          TargetPath(targetPath),
-          TransformerOverride.ComputedPartial(Path.Root, targetPath, runtimeDataStore(runtimeDataIdx).as_??)
-        )
-      case ChimneyType.TransformerOverrides.ComputedFrom(fromPath, toPath, cfg) =>
+      case ChimneyType.TransformerOverrides.Computed(fromPath, toPath, cfg) =>
         import fromPath.Underlying as FromPath, toPath.Underlying as ToPath, cfg.Underlying as Tail2
         val sourcePath = extractPath[FromPath]
         val targetPath = extractPath[ToPath]
@@ -864,7 +850,7 @@ private[compiletime] trait Configurations { this: Derivation =>
           targetPath,
           TransformerOverride.Computed(sourcePath, targetPath, runtimeDataStore(runtimeDataIdx).as_??)
         )
-      case ChimneyType.TransformerOverrides.ComputedPartialFrom(fromPath, toPath, cfg) =>
+      case ChimneyType.TransformerOverrides.ComputedPartial(fromPath, toPath, cfg) =>
         import fromPath.Underlying as FromPath, toPath.Underlying as ToPath, cfg.Underlying as Tail2
         val sourcePath = extractPath[FromPath]
         val targetPath = extractPath[ToPath]
@@ -872,20 +858,6 @@ private[compiletime] trait Configurations { this: Derivation =>
           sourcePath,
           targetPath,
           TransformerOverride.ComputedPartial(sourcePath, targetPath, runtimeDataStore(runtimeDataIdx).as_??)
-        )
-      case ChimneyType.TransformerOverrides.CaseComputed(fromPath, cfg) =>
-        import fromPath.Underlying as FromPath, cfg.Underlying as Tail2
-        val sourcePath = extractPath[FromPath]
-        extractTransformerConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addTransformerOverride(
-          SourcePath(sourcePath),
-          TransformerOverride.Computed(sourcePath, Path.Root, runtimeDataStore(runtimeDataIdx).as_??)
-        )
-      case ChimneyType.TransformerOverrides.CaseComputedPartial(fromPath, cfg) =>
-        import fromPath.Underlying as FromPath, cfg.Underlying as Tail2
-        val sourcePath = extractPath[FromPath]
-        extractTransformerConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addTransformerOverride(
-          SourcePath(sourcePath),
-          TransformerOverride.ComputedPartial(sourcePath, Path.Root, runtimeDataStore(runtimeDataIdx).as_??)
         )
       case ChimneyType.TransformerOverrides.Fallback(fallbackType, fromPath, cfg) =>
         import fallbackType.Underlying as FallbackType, fromPath.Underlying as FromPath, cfg.Underlying as Tail2
@@ -905,16 +877,7 @@ private[compiletime] trait Configurations { this: Derivation =>
           TargetPath(extractPath[ToPath]),
           TransformerOverride.ConstructorPartial(extractArgumentLists[Args], runtimeDataStore(runtimeDataIdx).as_??)
         )
-      case ChimneyType.TransformerOverrides.RenamedFrom(fromPath, toPath, cfg) =>
-        import fromPath.Underlying as FromPath, toPath.Underlying as ToPath, cfg.Underlying as Tail2
-        val sourcePath = extractPath[FromPath]
-        val targetPath = extractPath[ToPath]
-        extractTransformerConfig[Tail2](runtimeDataIdx, runtimeDataStore).addTransformerOverride(
-          sourcePath,
-          targetPath,
-          TransformerOverride.Renamed(sourcePath, targetPath)
-        )
-      case ChimneyType.TransformerOverrides.RenamedTo(fromPath, toPath, cfg) =>
+      case ChimneyType.TransformerOverrides.Renamed(fromPath, toPath, cfg) =>
         import fromPath.Underlying as FromPath, toPath.Underlying as ToPath, cfg.Underlying as Tail2
         val sourcePath = extractPath[FromPath]
         val targetPath = extractPath[ToPath]

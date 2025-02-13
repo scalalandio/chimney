@@ -1,6 +1,7 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.partial.syntax.*
 import io.scalaland.chimney.utils.OptionUtils.StringOps
 
 object PartialTransformerErrorPathSpec {
@@ -18,7 +19,7 @@ object PartialTransformerErrorPathSpec {
 class PartialTransformerErrorPathSpec extends ChimneySpec {
 
   implicit val intParserOpt: PartialTransformer[String, Int] =
-    PartialTransformer(_.parseInt.toPartialResult)
+    PartialTransformer(_.parseInt.asResult)
 
   import PartialTransformerErrorPathSpec.*
 
