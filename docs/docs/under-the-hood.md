@@ -199,8 +199,8 @@ Well. It appears that runtime values are the easiest to store in runtime. When w
 
     (`PartialTransformer` has its own `PartialTransformerInto`).
 
-This is unavoidable, after all we have to define all these `.withField*`, `.withCoproduct*`, `.enable*`, `.disable*` and
-`.transform` define on something. So this something happens to be a `TransformerInto` class - it exists at runtime, so
+This is unavoidable, after all we have to define all these `.withField*`, `.withSealedSubtype*`, `.enable*`, `.disable*`
+and `.transform` define on something. So this something happens to be a `TransformerInto` class - it exists at runtime, so
 it is a great candidate to pass around `From` value for future consumption. But `From` is a fixed type. What about
 all these constants and functions that we also need to carry around? Well, inside `TransformerInto` there is also
 another value, let's call it `RuntimeDataStore` which collects all these values as we chain methods. Upcasting them

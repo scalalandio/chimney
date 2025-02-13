@@ -49,7 +49,7 @@ If we do not want to enable the same flag(s) in several places, we can define sh
 !!! warning
 
     Since 0.8.0, Chimney assumes that you do NOT want to use the use implicit Transformer if you passed any `withField*`
-    or `withCoproduct*` customization - using an implicit would not make it possible to do so. However, setting any flag
+    or `withSealedSubtype*` customization - using an implicit would not make it possible to do so. However, setting any flag
     with `enable*` or `disable*` would not prevent using implicit. So you could have situation like:
     
     ```scala

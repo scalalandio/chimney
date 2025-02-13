@@ -296,16 +296,6 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withSealedSubtypeHandledImpl('this, 'f) }
 
-  /** Renamed to [[withSealedSubtypeHandled]].
-    *
-    * @since 0.1.2
-    */
-  @deprecated("Use .withSealedSubtypeHandled or .withEnumCaseHandled for more clarity", "1.0.0")
-  transparent inline def withCoproductInstance[Subtype](
-      inline f: Subtype => To
-  ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
-    ${ PartialTransformerIntoMacros.withSealedSubtypeHandledImpl('this, 'f) }
-
   /** Use `f` to calculate the unmatched subtype's partial.Result when mapping one sealed/enum into another.
     *
     * By default, if mapping one coproduct in `From` into another coproduct in `To` derivation expects that coproducts
@@ -341,16 +331,6 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
     * @since 1.0.0
     */
   transparent inline def withEnumCaseHandledPartial[Subtype](
-      inline f: Subtype => partial.Result[To]
-  ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
-    ${ PartialTransformerIntoMacros.withSealedSubtypeHandledPartialImpl('this, 'f) }
-
-  /** Renamed to [[withSealedSubtypeHandledPartial]].
-    *
-    * @since 0.7.0
-    */
-  @deprecated("Use .withSealedSubtypeHandledPartial or .withEnumCaseHandledPartial for more clarity", "1.0.0")
-  transparent inline def withCoproductInstancePartial[Subtype](
       inline f: Subtype => partial.Result[To]
   ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withSealedSubtypeHandledPartialImpl('this, 'f) }

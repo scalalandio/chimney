@@ -204,14 +204,6 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
   def withEnumCaseHandled[Subtype](f: Subtype => To): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerIntoMacros.withSealedSubtypeHandledImpl[From, To, Overrides, Flags, Subtype]
 
-  /** Renamed to [[withSealedSubtypeHandled]].
-    *
-    * @since 0.1.2
-    */
-  @deprecated("Use .withSealedSubtypeHandled or .withEnumCaseHandled for more clarity", "1.0.0")
-  def withCoproductInstance[Subtype](f: Subtype => To): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
-    macro TransformerIntoMacros.withSealedSubtypeHandledImpl[From, To, Overrides, Flags, Subtype]
-
   /** Use the `FromSubtype` in `From` as a source for the `ToSubtype` in `To`.
     *
     * @see

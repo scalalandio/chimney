@@ -289,16 +289,6 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerDefinitionMacros.withSealedSubtypeHandledImpl[From, To, Overrides, Flags, Subtype]
 
-  /** Renamed to [[withSealedSubtypeHandled]].
-    *
-    * @since 0.7.0
-    */
-  @deprecated("Use .withSealedSubtypeHandled or .withEnumCaseHandled for more clarity", "1.0.0")
-  def withCoproductInstance[Subtype](
-      f: Subtype => To
-  ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
-    macro PartialTransformerDefinitionMacros.withSealedSubtypeHandledImpl[From, To, Overrides, Flags, Subtype]
-
   /** Use `f` to calculate the unmatched subtype's partial.Result when mapping one sealed/enum into another.
     *
     * By default, if mapping one coproduct in `From` into another coproduct in `To` derivation expects that coproducts
@@ -334,16 +324,6 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @since 1.0.0
     */
   def withEnumCaseHandledPartial[Subtype](
-      f: Subtype => partial.Result[To]
-  ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
-    macro PartialTransformerDefinitionMacros.withSealedSubtypeHandledPartialImpl[From, To, Overrides, Flags, Subtype]
-
-  /** Renamed to [[withSealedSubtypeHandledPartial]].
-    *
-    * @since 0.7.0
-    */
-  @deprecated("Use .withSealedSubtypeHandledPartial or .withEnumCaseHandledPartial for more clarity", "1.0.0")
-  def withCoproductInstancePartial[Subtype](
       f: Subtype => partial.Result[To]
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerDefinitionMacros.withSealedSubtypeHandledPartialImpl[From, To, Overrides, Flags, Subtype]
