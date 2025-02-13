@@ -2,6 +2,7 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
+import io.scalaland.chimney.partial.syntax.*
 import io.scalaland.chimney.utils.OptionUtils.*
 
 import scala.annotation.unused
@@ -2979,10 +2980,10 @@ class PartialTransformerProductSpec extends ChimneySpec {
     implicit val personPartialTransformer: PartialTransformer[PersonForm, Person] =
       Transformer
         .definePartial[PersonForm, Person]
-        .withFieldComputedPartial(_.age, _.age.parseInt.toPartialResultOrString("bad age value"))
+        .withFieldComputedPartial(_.age, _.age.parseInt.orStringAsResult("bad age value"))
         .withFieldComputedPartial(
           _.height,
-          _.height.parseDouble.toPartialResultOrString("bad height value")
+          _.height.parseDouble.orStringAsResult("bad height value")
         )
         .buildTransformer
 
@@ -2992,7 +2993,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       val result = okTripForm
         .intoPartial[Trip]
-        .withFieldComputedPartial(_.id, _.tripId.parseInt.toPartialResultOrString("bad trip id"))
+        .withFieldComputedPartial(_.id, _.tripId.parseInt.orStringAsResult("bad trip id"))
         .transform
 
       result.asOption ==> Some(Trip(100, Vector(Person("John", 10, 140), Person("Caroline", 12, 155))))
@@ -3005,7 +3006,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       val result = badTripForm
         .intoPartial[Trip]
-        .withFieldComputedPartial(_.id, _.tripId.parseInt.toPartialResultOrString("bad trip id"))
+        .withFieldComputedPartial(_.id, _.tripId.parseInt.orStringAsResult("bad trip id"))
         .transform
 
       result.asOption ==> None

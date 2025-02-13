@@ -23,8 +23,8 @@ class CodecDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils
           weakTypeTag[CodecDefinition[
             Domain,
             Dto,
-            RenamedFrom[FromPath, ToPath, EncodeOverrides],
-            RenamedFrom[ToPath, FromPath, DecodeOverrides],
+            Renamed[FromPath, ToPath, EncodeOverrides],
+            Renamed[ToPath, FromPath, DecodeOverrides],
             Flags
           ]]
       }.applyFromSelectors(selectorDomain, selectorDto)
@@ -43,12 +43,12 @@ class CodecDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils
       weakTypeTag[CodecDefinition[
         Domain,
         Dto,
-        RenamedTo[
+        Renamed[
           Path.SourceMatching[Path.Root, DomainSubtype],
           Path.Matching[Path.Root, DtoSubtype],
           EncodeOverrides
         ],
-        RenamedTo[
+        Renamed[
           Path.SourceMatching[Path.Root, DtoSubtype],
           Path.Matching[Path.Root, DomainSubtype],
           DecodeOverrides

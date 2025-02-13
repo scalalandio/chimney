@@ -30,8 +30,8 @@ object CodecDefinitionMacros {
               $cd.asInstanceOf[CodecDefinition[
                 Domain,
                 Dto,
-                RenamedFrom[fromPath, toPath, EncodeOverrides],
-                RenamedFrom[toPath, fromPath, DecodeOverrides],
+                Renamed[fromPath, toPath, EncodeOverrides],
+                Renamed[toPath, fromPath, DecodeOverrides],
                 Flags
               ]]
           }
@@ -53,12 +53,12 @@ object CodecDefinitionMacros {
         .asInstanceOf[CodecDefinition[
           Domain,
           Dto,
-          RenamedTo[
+          Renamed[
             Path.SourceMatching[Path.Root, DomainSubtype],
             Path.Matching[Path.Root, DtoSubtype],
             EncodeOverrides
           ],
-          RenamedTo[
+          Renamed[
             Path.SourceMatching[Path.Root, DtoSubtype],
             Path.Matching[Path.Root, DomainSubtype],
             DecodeOverrides

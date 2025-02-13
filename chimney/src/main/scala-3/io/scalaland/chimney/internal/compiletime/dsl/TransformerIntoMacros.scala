@@ -58,7 +58,7 @@ object TransformerIntoMacros {
           '{
             WithRuntimeDataStore
               .update($ti, $f)
-              .asInstanceOf[TransformerInto[From, To, Computed[toPath, Overrides], Flags]]
+              .asInstanceOf[TransformerInto[From, To, Computed[Path.Root, toPath, Overrides], Flags]]
         }
     }(selector)
 
@@ -83,7 +83,7 @@ object TransformerIntoMacros {
             '{
               WithRuntimeDataStore
                 .update($ti, $f)
-                .asInstanceOf[TransformerInto[From, To, ComputedFrom[fromPath, toPath, Overrides], Flags]]
+                .asInstanceOf[TransformerInto[From, To, Computed[fromPath, toPath, Overrides], Flags]]
           }
     }(selectorFrom, selectorTo)
 
@@ -104,7 +104,7 @@ object TransformerIntoMacros {
         (_: Type[fromPath]) ?=>
           (_: Type[toPath]) ?=>
             '{
-              $ti.asInstanceOf[TransformerInto[From, To, RenamedFrom[fromPath, toPath, Overrides], Flags]]
+              $ti.asInstanceOf[TransformerInto[From, To, Renamed[fromPath, toPath, Overrides], Flags]]
           }
     }(selectorFrom, selectorTo)
 
@@ -142,7 +142,7 @@ object TransformerIntoMacros {
         .asInstanceOf[TransformerInto[
           From,
           To,
-          CaseComputed[Path.SourceMatching[Path.Root, Subtype], Overrides],
+          Computed[Path.SourceMatching[Path.Root, Subtype], Path.Root, Overrides],
           Flags
         ]]
     }
@@ -162,7 +162,7 @@ object TransformerIntoMacros {
         .asInstanceOf[TransformerInto[
           From,
           To,
-          RenamedTo[Path.SourceMatching[Path.Root, FromSubtype], Path.Matching[Path.Root, ToSubtype], Overrides],
+          Renamed[Path.SourceMatching[Path.Root, FromSubtype], Path.Matching[Path.Root, ToSubtype], Overrides],
           Flags
         ]]
     }

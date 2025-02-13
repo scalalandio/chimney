@@ -30,8 +30,8 @@ object IsoDefinitionMacros {
               $id.asInstanceOf[IsoDefinition[
                 First,
                 Second,
-                RenamedFrom[firstPath, secondPath, FirstOverrides],
-                RenamedFrom[secondPath, firstPath, SecondOverrides],
+                Renamed[firstPath, secondPath, FirstOverrides],
+                Renamed[secondPath, firstPath, SecondOverrides],
                 Flags
               ]]
           }
@@ -53,12 +53,12 @@ object IsoDefinitionMacros {
         .asInstanceOf[IsoDefinition[
           First,
           Second,
-          RenamedTo[
+          Renamed[
             Path.SourceMatching[Path.Root, FirstSubtype],
             Path.Matching[Path.Root, SecondSubtype],
             FirstOverrides
           ],
-          RenamedTo[
+          Renamed[
             Path.SourceMatching[Path.Root, SecondSubtype],
             Path.Matching[Path.Root, FirstSubtype],
             SecondOverrides

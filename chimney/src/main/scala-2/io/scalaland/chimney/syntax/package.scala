@@ -3,7 +3,6 @@ package io.scalaland.chimney
 import io.scalaland.chimney.internal.runtime.{IsCollection, IsEither, IsMap, IsOption}
 
 import scala.annotation.{compileTimeOnly, unused}
-import scala.util.Try
 
 /** Imports only extension methods for summoning and using Transformer, PartialTransformer or Patcher
   *
@@ -136,84 +135,6 @@ package object syntax {
       */
     final def patchUsing[Patch](patch: Patch)(implicit patcher: Patcher[A, Patch]): A =
       patcher.patch(obj, patch)
-  }
-
-  /** Lifts [[scala.Option]] into [[io.scalaland.chimney.partial.Result]].
-    *
-    * @tparam A
-    *   type of value inside Option
-    * @param option
-    *   value to convert
-    *
-    * @since 0.7.0
-    */
-  implicit class OptionPartialTransformerOps[A](private val option: Option[A]) extends AnyVal {
-
-    /** Converts Option to Result, using EmptyValue error if None.
-      *
-      * @return
-      *   successful result if [[scala.Some]], failed result with EmptyValue error if [[None]]
-      *
-      * @since 0.7.0
-      */
-    def toPartialResult: partial.Result[A] =
-      partial.Result.fromOption(option)
-
-    /** Converts Option to Result, using provided error message if None.
-      *
-      * @param ifEmpty
-      *   lazy error message for [[scala.None]]
-      * @return
-      *   successful result if [[scala.Some]], failed result with provided error message if [[scala.None]]
-      *
-      * @since 0.7.0
-      */
-    def toPartialResultOrString(ifEmpty: => String): partial.Result[A] =
-      partial.Result.fromOptionOrString(option, ifEmpty)
-  }
-
-  /** Lifts [[scala.Either]] into [[io.scalaland.chimney.partial.Result]].
-    *
-    * @tparam A
-    *   type of value inside Option
-    * @param either
-    *   value to convert
-    *
-    * @since 0.7.0
-    */
-  implicit final class EitherStringPartialTransformerOps[A](private val either: Either[String, A]) extends AnyVal {
-
-    /** Converts Either to Result, using an error message from Left as failed result.
-      *
-      * @return
-      *   successful result if [[scala.Right]], failed result with an error message if [[scala.Left]]
-      *
-      * @since 0.7.0
-      */
-    def toPartialResult: partial.Result[A] =
-      partial.Result.fromEitherString(either)
-  }
-
-  /** Lifts [[scala.util.Try]] into [[io.scalaland.chimney.partial.Result]].
-    *
-    * @tparam A
-    *   type of value inside Option
-    * @param `try`
-    *   value to convert
-    *
-    * @since 0.7.0
-    */
-  implicit final class TryPartialTransformerOps[A](private val `try`: Try[A]) extends AnyVal {
-
-    /** Converts Try to Result, using Throwable from Failure as failed result.
-      *
-      * @return
-      *   successful result if [[scala.util.Success]], failed result with Throwable if [[scala.util.Failure]]
-      *
-      * @since 0.7.0
-      */
-    def toPartialResult: partial.Result[A] =
-      partial.Result.fromTry(`try`)
   }
 
   // $COVERAGE-OFF$methods used only within macro-erased expressions

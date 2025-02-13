@@ -708,9 +708,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           //     }
           //   } else {
           //     var allerrors: Errors = null
-          //     allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res1 })
-          //     allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res2 })
-          //     allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res3 })
+          //     allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ res1 })
+          //     allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ res2 })
+          //     allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ res3 })
           //     ...
           //     if (allerrors == null) {
           //       ${ constructor } // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
@@ -775,9 +775,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   // Here, we're building:
                   // '{
                   //   var allerrors: Errors = null
-                  //   allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res1 })
-                  //   allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res2 })
-                  //   allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res3 })
+                  //   allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ res1 })
+                  //   allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ res2 })
+                  //   allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ res3 })
                   //   ...
                   //   if (allerrors == null) {
                   //     partial.Result.Value(${ constructor }) // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
@@ -795,7 +795,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                         partialsAsLazy.map { case (_, result) =>
                           import result.{Underlying, value as expr}
                           // Here, we're building:
-                          // '{ allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ resN }) }
+                          // '{ allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ resN }) }
                           setAllErrors(ChimneyExpr.PartialResult.Errors.mergeResultNullable(allerrors, expr))
                         },
                         // Here, we're building:

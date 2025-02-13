@@ -240,24 +240,12 @@ class PartialResultSpec extends ChimneySpec {
   test("fromEitherString converts Either to Result wrapping Left String as Error") {
     partial.Result.fromEitherString(Right(1)) ==> partial.Result.fromValue(1)
     partial.Result.fromEitherString(Left("foo")) ==> partial.Result.fromErrorString("foo")
-
-    test("with dsl") {
-      import io.scalaland.chimney.dsl.*
-      Right(1).toPartialResult ==> partial.Result.fromValue(1)
-      Left("foo").toPartialResult ==> partial.Result.fromErrorString("foo")
-    }
   }
 
   test("fromTry converts Try to Result wrapping Throwable as Error") {
     val exception = new NoSuchElementException()
     partial.Result.fromTry(Try(1)) ==> partial.Result.fromValue(1)
     partial.Result.fromTry(Try(throw exception)) ==> partial.Result.fromErrorThrowable(exception)
-
-    test("with dsl") {
-      import io.scalaland.chimney.dsl.*
-      Try(1).toPartialResult ==> partial.Result.fromValue(1)
-      Try(throw exception).toPartialResult ==> partial.Result.fromErrorThrowable(exception)
-    }
   }
 
   test("fromCatching converts thunk to Result caching Throwable as Error") {

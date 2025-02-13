@@ -6,5 +6,8 @@ import io.scalaland.chimney.partial.Result.Errors
 object ResultUtils {
 
   def mergeNullable[A](errorsNullable: Errors, result: Result[A]): Errors =
-    Result.Errors.__mergeResultNullable(errorsNullable, result)
+    result match {
+      case _: Result.Value[?]    => errorsNullable
+      case errors: Result.Errors => if (errorsNullable == null) errors else Result.Errors.merge(errorsNullable, errors)
+    }
 }

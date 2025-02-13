@@ -49,7 +49,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
     .asInstanceOfExpr(
       new ApplyFieldNameType {
         def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PartialTransformerDefinition[From, To, Computed[ToPath, Overrides], Flags]]
+          weakTypeTag[PartialTransformerDefinition[From, To, Computed[Path.Root, ToPath, Overrides], Flags]]
       }.applyFromSelector(selector)
     )
 
@@ -63,7 +63,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
     .asInstanceOfExpr(
       new ApplyFieldNameTypes {
         def apply[FromPath <: Path: WeakTypeTag, ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PartialTransformerDefinition[From, To, ComputedFrom[FromPath, ToPath, Overrides], Flags]]
+          weakTypeTag[PartialTransformerDefinition[From, To, Computed[FromPath, ToPath, Overrides], Flags]]
       }.applyFromSelectors(selectorFrom, selectorTo)
     )
 
@@ -77,7 +77,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
     .asInstanceOfExpr(
       new ApplyFieldNameType {
         def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PartialTransformerDefinition[From, To, ComputedPartial[ToPath, Overrides], Flags]]
+          weakTypeTag[PartialTransformerDefinition[From, To, ComputedPartial[Path.Root, ToPath, Overrides], Flags]]
       }.applyFromSelector(selector)
     )
 
@@ -91,7 +91,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
     .asInstanceOfExpr(
       new ApplyFieldNameTypes {
         def apply[FromPath <: Path: WeakTypeTag, ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PartialTransformerDefinition[From, To, ComputedPartialFrom[FromPath, ToPath, Overrides], Flags]]
+          weakTypeTag[PartialTransformerDefinition[From, To, ComputedPartial[FromPath, ToPath, Overrides], Flags]]
       }.applyFromSelectors(selectorFrom, selectorTo)
     )
 
@@ -104,7 +104,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
     .asInstanceOfExpr(
       new ApplyFieldNameTypes {
         def apply[FromPath <: Path: WeakTypeTag, ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PartialTransformerDefinition[From, To, RenamedFrom[FromPath, ToPath, Overrides], Flags]]
+          weakTypeTag[PartialTransformerDefinition[From, To, Renamed[FromPath, ToPath, Overrides], Flags]]
       }.applyFromSelectors(selectorFrom, selectorTo)
     )
 
@@ -133,7 +133,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       .asInstanceOfExpr[PartialTransformerDefinition[
         From,
         To,
-        CaseComputed[Path.SourceMatching[Path.Root, FixedSubtype], Overrides],
+        Computed[Path.SourceMatching[Path.Root, FixedSubtype], Path.Root, Overrides],
         Flags
       ]]
   }.applyJavaEnumFixFromClosureSignature[Subtype](f)
@@ -150,7 +150,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       .asInstanceOfExpr[PartialTransformerDefinition[
         From,
         To,
-        CaseComputedPartial[Path.SourceMatching[Path.Root, FixedSubtype], Overrides],
+        ComputedPartial[Path.SourceMatching[Path.Root, FixedSubtype], Path.Root, Overrides],
         Flags
       ]]
   }.applyJavaEnumFixFromClosureSignature[Subtype](f)
@@ -167,7 +167,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       weakTypeTag[PartialTransformerDefinition[
         From,
         To,
-        RenamedTo[Path.SourceMatching[Path.Root, FromSubtype], Path.Matching[Path.Root, ToSubtype], Overrides],
+        Renamed[Path.SourceMatching[Path.Root, FromSubtype], Path.Matching[Path.Root, ToSubtype], Overrides],
         Flags
       ]]
     )

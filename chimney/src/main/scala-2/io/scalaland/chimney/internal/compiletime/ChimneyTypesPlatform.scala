@@ -182,71 +182,35 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           }
       }
       object Computed extends ComputedModule {
-        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.Computed[ToPath, Tail]] =
-          weakTypeTag[runtime.TransformerOverrides.Computed[ToPath, Tail]]
-        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
-          A.asCtor[runtime.TransformerOverrides.Computed[?, ?]].map { A0 =>
-            fixJavaEnums(A0.param_<[runtime.Path](0)) -> A0.param_<[runtime.TransformerOverrides](1)
+        def apply[
+            FromPath <: runtime.Path: Type,
+            ToPath <: runtime.Path: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.Computed[FromPath, ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.Computed[FromPath, ToPath, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.Computed[?, ?, ?]].map { A0 =>
+            (
+              fixJavaEnums(A0.param_<[runtime.Path](0)),
+              fixJavaEnums(A0.param_<[runtime.Path](1)),
+              A0.param_<[runtime.TransformerOverrides](2)
+            )
           }
       }
       object ComputedPartial extends ComputedPartialModule {
-        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.ComputedPartial[ToPath, Tail]] =
-          weakTypeTag[runtime.TransformerOverrides.ComputedPartial[ToPath, Tail]]
-        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
-          A.asCtor[runtime.TransformerOverrides.ComputedPartial[?, ?]].map { A0 =>
-            fixJavaEnums(A0.param_<[runtime.Path](0)) -> A0.param_<[runtime.TransformerOverrides](1)
-          }
-      }
-      object ComputedFrom extends ComputedFromModule {
         def apply[
             FromPath <: runtime.Path: Type,
             ToPath <: runtime.Path: Type,
             Tail <: runtime.TransformerOverrides: Type
-        ]: Type[runtime.TransformerOverrides.ComputedFrom[FromPath, ToPath, Tail]] =
-          weakTypeTag[runtime.TransformerOverrides.ComputedFrom[FromPath, ToPath, Tail]]
+        ]: Type[runtime.TransformerOverrides.ComputedPartial[FromPath, ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.ComputedPartial[FromPath, ToPath, Tail]]
         def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
-          A.asCtor[runtime.TransformerOverrides.ComputedFrom[?, ?, ?]].map { A0 =>
+          A.asCtor[runtime.TransformerOverrides.ComputedPartial[?, ?, ?]].map { A0 =>
             (
               fixJavaEnums(A0.param_<[runtime.Path](0)),
               fixJavaEnums(A0.param_<[runtime.Path](1)),
               A0.param_<[runtime.TransformerOverrides](2)
             )
-          }
-      }
-      object ComputedPartialFrom extends ComputedPartialFromModule {
-        def apply[
-            FromPath <: runtime.Path: Type,
-            ToPath <: runtime.Path: Type,
-            Tail <: runtime.TransformerOverrides: Type
-        ]: Type[runtime.TransformerOverrides.ComputedPartialFrom[FromPath, ToPath, Tail]] =
-          weakTypeTag[runtime.TransformerOverrides.ComputedPartialFrom[FromPath, ToPath, Tail]]
-        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
-          A.asCtor[runtime.TransformerOverrides.ComputedPartialFrom[?, ?, ?]].map { A0 =>
-            (
-              fixJavaEnums(A0.param_<[runtime.Path](0)),
-              fixJavaEnums(A0.param_<[runtime.Path](1)),
-              A0.param_<[runtime.TransformerOverrides](2)
-            )
-          }
-      }
-      object CaseComputed extends CaseComputedModule {
-        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.CaseComputed[ToPath, Tail]] =
-          weakTypeTag[runtime.TransformerOverrides.CaseComputed[ToPath, Tail]]
-        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
-          A.asCtor[runtime.TransformerOverrides.CaseComputed[?, ?]].map { A0 =>
-            fixJavaEnums(A0.param_<[runtime.Path](0)) -> A0.param_<[runtime.TransformerOverrides](1)
-          }
-      }
-      object CaseComputedPartial extends CaseComputedPartialModule {
-        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.CaseComputedPartial[ToPath, Tail]] =
-          weakTypeTag[runtime.TransformerOverrides.CaseComputedPartial[ToPath, Tail]]
-        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
-          A.asCtor[runtime.TransformerOverrides.CaseComputedPartial[?, ?]].map { A0 =>
-            fixJavaEnums(A0.param_<[runtime.Path](0)) -> A0.param_<[runtime.TransformerOverrides](1)
           }
       }
       object Fallback extends FallbackModule {
@@ -301,31 +265,15 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             )
           }
       }
-      object RenamedFrom extends RenamedFromModule {
+      object Renamed extends RenamedModule {
         def apply[
             FromPath <: runtime.Path: Type,
             ToPath <: runtime.Path: Type,
             Tail <: runtime.TransformerOverrides: Type
-        ]: Type[runtime.TransformerOverrides.RenamedFrom[FromPath, ToPath, Tail]] =
-          weakTypeTag[runtime.TransformerOverrides.RenamedFrom[FromPath, ToPath, Tail]]
+        ]: Type[runtime.TransformerOverrides.Renamed[FromPath, ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.Renamed[FromPath, ToPath, Tail]]
         def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
-          A.asCtor[runtime.TransformerOverrides.RenamedFrom[?, ?, ?]].map { A0 =>
-            (
-              A0.param_<[runtime.Path](0),
-              fixJavaEnums(A0.param_<[runtime.Path](1)),
-              A0.param_<[runtime.TransformerOverrides](2)
-            )
-          }
-      }
-      object RenamedTo extends RenamedToModule {
-        def apply[
-            FromPath <: runtime.Path: Type,
-            ToPath <: runtime.Path: Type,
-            Tail <: runtime.TransformerOverrides: Type
-        ]: Type[runtime.TransformerOverrides.RenamedTo[FromPath, ToPath, Tail]] =
-          weakTypeTag[runtime.TransformerOverrides.RenamedTo[FromPath, ToPath, Tail]]
-        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
-          A.asCtor[runtime.TransformerOverrides.RenamedTo[?, ?, ?]].map { A0 =>
+          A.asCtor[runtime.TransformerOverrides.Renamed[?, ?, ?]].map { A0 =>
             (
               A0.param_<[runtime.Path](0),
               fixJavaEnums(A0.param_<[runtime.Path](1)),
