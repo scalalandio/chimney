@@ -32,9 +32,9 @@ If your company is using Chimney, please consider adding it to the list below:
  * [CompStak](https://compstak.com)
  * [Iterators](https://www.iteratorshq.com/)
  * [Medidata](https://medidata.com)
+ * [MOIA](https://www.moia.io/)
  * [Rudder.io](https://github.com/Normation/rudder)
  * [SwissBorg](https://swissborg.com/)
- * [MOIA](https://www.moia.io/)
 
 ## Contribution
 
