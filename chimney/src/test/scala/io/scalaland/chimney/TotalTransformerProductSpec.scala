@@ -1746,7 +1746,17 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
   group("transform between case classes and tuples") {
 
-    case class Foo(field1: Int, field2: Double, field3: String)
+    case class Foo(field1: Int, field2: Double, field3: String) {
+      val field4: Long = 10L
+    }
+    class Baz(val field1: Int, val field2: Double, val field3: String) {
+      val field4: Long = 10L
+      override def toString: String = s"Baz($field1, $field2, $field3)"
+      override def equals(that: Any): Boolean = that match {
+        case baz: Baz @unchecked => field1 == baz.field1 && field2 == baz.field2 && field3 == baz.field3
+        case _                   => false
+      }
+    }
 
     test("in simple case") {
       val expected = (0, 3.14, "pi")
@@ -1754,7 +1764,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
       Foo(0, 3.14, "pi")
         .transformInto[(Int, Double, String)] ==> expected
 
-      (0, 3.14, "pi").transformInto[Foo]
+      (0, 3.14, "pi").transformInto[Foo] ==> Foo(0, 3.14, "pi")
     }
 
     test("even recursively") {
@@ -1768,6 +1778,21 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
       ((100, 2.71, "e"), true).transformInto[Bar] ==>
         Bar(Foo(100, 2.71, "e"), baz = true)
+    }
+
+    test("ignoring body vals and non-ignoring argument vals") {
+      val expected = (0, 3.14, "pi")
+
+      new Baz(0, 3.14, "pi").transformInto[(Int, Double, String)] ==> expected
+
+      (0, 3.14, "pi").transformInto[Baz] ==> new Baz(0, 3.14, "pi")
+
+      compileErrors("""new Baz(0, 3.14, "pi").transformInto[(Int, Double, String, Long)]""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Baz to scala.Tuple4[scala.Int, scala.Double, java.lang.String, scala.Long]",
+        "scala.Tuple4[scala.Int, scala.Double, java.lang.String, scala.Long]",
+        "  source tuple io.scalaland.chimney.TotalTransformerProductSpec.Baz is of arity 3, while target type scala.Tuple4[scala.Int, scala.Double, java.lang.String, scala.Long] is of arity 4; source should be at least as big as target!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
     }
 
     test("handle tuple transformation errors") {

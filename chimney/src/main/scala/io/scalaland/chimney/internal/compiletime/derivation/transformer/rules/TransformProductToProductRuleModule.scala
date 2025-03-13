@@ -75,7 +75,6 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         filterAllowedFieldsByFlags(flags.at(TargetPath(Path(_.select(name)))))(getter)
       }
 
-      // FIXME (2.0.0 cleanup): use only ConstructorArgVals as source in position-based matching, unless enabled by flag
       val usePositionBasedMatching =
         Type[From].isTuple || Type[To].isTuple || ctx.config.filterCurrentOverridesForFallbacks.exists {
           case TransformerOverride.Fallback(runtimeData) => runtimeData.Underlying.isTuple
@@ -97,6 +96,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         }
         // tuples should use ONLY vals
         val valGetters = (fromGetters ++ fallbackGetters).filter { case fof =>
+          // ConstructorBodyVals in position-based matching could be enabled by a flag
           !fof.getter.value.isInherited && fof.getter.value.sourceType == Product.Getter.SourceType.ConstructorArgVal
         }
         parameters.view
@@ -259,9 +259,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     .sortBy(_._1)
                     .map(_._2)
                   DerivationResult.tupleArityMismatch(
-                    fromArity = arities.head,
+                    fromArity = arities.headOption.getOrElse(0),
                     toArity = parameters.size,
-                    fallbackArity = arities.tail
+                    fallbackArity = arities.drop(1)
                   )
                 } else {
                   lazy val availableGetters = fromExtractors.filter { case (fromName, _) =>
