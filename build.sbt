@@ -35,6 +35,7 @@ val versions = new {
   val idePlatform = VirtualAxis.jvm
 
   // Dependencies
+  val macroCommons = "1.7.3-20-g0f8f194-SNAPSHOT"
   val cats = "2.13.0"
   val kindProjector = "0.13.3"
   val munit = "1.1.0"
@@ -270,7 +271,7 @@ val publishSettings = Seq(
 val mimaSettings = Seq(
   mimaPreviousArtifacts := {
     val previousVersions = moduleName.value match {
-      case "chimney-macro-commons" | "chimney" | "chimney-cats" | "chimney-java-collections" | "chimney-protobufs" =>
+      case "chimney" | "chimney-cats" | "chimney-java-collections" | "chimney-protobufs" =>
         Set(
           "1.0.0-RC1",
           "1.0.0",
@@ -330,11 +331,11 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
 
 val publishLocalForTests = {
   val jvm = for {
-    module <- Vector("chimneyMacroCommons", "chimney", "chimneyCats", "chimneyProtobufs", "chimneyJavaCollections")
+    module <- Vector("chimney", "chimneyCats", "chimneyProtobufs", "chimneyJavaCollections")
     moduleVersion <- Vector(module, module + "3")
   } yield moduleVersion + "/publishLocal"
   val js = for {
-    module <- Vector("chimneyMacroCommons", "chimney").map(_ + "JS")
+    module <- Vector("chimney").map(_ + "JS")
     moduleVersion <- Vector(module)
   } yield moduleVersion + "/publishLocal"
   jvm ++ js
@@ -351,7 +352,6 @@ lazy val root = project
   .settings(settings)
   .settings(publishSettings)
   .settings(noPublishSettings)
-  .aggregate(chimneyMacroCommons.projectRefs *)
   .aggregate(chimney.projectRefs *)
   .aggregate(chimneyCats.projectRefs *)
   .aggregate(chimneyJavaCollections.projectRefs *)
@@ -376,7 +376,6 @@ lazy val root = project
          |When working with IntelliJ or Scala Metals, edit "val ideScala = ..." and "val idePlatform = ..." within "val versions" in build.sbt to control which Scala version you're currently working with.
          |
          |If you need to test library locally in a different project, use publish-local-for-tests or manually publishLocal:
-         | - chimney-macro-commons (obligatory)
          | - chimney
          | - cats/java-collections/protobufs integration (optional)
          |for the right Scala version and platform (see projects task).
@@ -417,22 +416,6 @@ lazy val root = project
     )
   )
 
-lazy val chimneyMacroCommons = projectMatrix
-  .in(file("chimney-macro-commons"))
-  .someVariations(versions.scalas, versions.platforms)((addScala213plusDir +: only1VersionInIDE) *)
-  .enablePlugins(GitVersioning, GitBranchPrompt)
-  .disablePlugins(WelcomePlugin, ProtocPlugin)
-  .settings(
-    moduleName := "chimney-macro-commons",
-    name := "chimney-macro-commons",
-    description := "Utilities for writing cross-platform macro logic"
-  )
-  .settings(settings *)
-  .settings(versionSchemeSettings *)
-  .settings(publishSettings *)
-  .settings(mimaSettings *)
-  .settings(dependencies *)
-
 lazy val chimney = projectMatrix
   .in(file("chimney"))
   .someVariations(versions.scalas, versions.platforms)((addScala213plusDir +: only1VersionInIDE) *)
@@ -457,10 +440,11 @@ lazy val chimney = projectMatrix
         case _            => Seq.empty
       }
     },
+    resolvers += "OSS Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
+    libraryDependencies += "io.scalaland" %%% "chimney-macro-commons" % versions.macroCommons,
     // Changes to macros should not cause any runtime problems
     mimaBinaryIssueFilters := Seq(ProblemFilters.exclude[Problem]("io.scalaland.chimney.internal.compiletime.*"))
   )
-  .dependsOn(chimneyMacroCommons)
 
 lazy val chimneyCats = projectMatrix
   .in(file("chimney-cats"))
