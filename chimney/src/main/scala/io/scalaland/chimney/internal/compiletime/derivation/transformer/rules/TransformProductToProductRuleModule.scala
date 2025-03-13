@@ -97,7 +97,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         }
         // tuples should use ONLY vals
         val valGetters = (fromGetters ++ fallbackGetters).filter { case fof =>
-          !fof.getter.value.isInherited && fof.getter.value.sourceType == Product.Getter.SourceType.ConstructorVal
+          !fof.getter.value.isInherited && fof.getter.value.sourceType == Product.Getter.SourceType.ConstructorArgVal
         }
         parameters.view
           .zip(valGetters)
@@ -318,7 +318,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             checkPolicy(
               fromExtractors.view
                 .collect {
-                  case (fromName, getter) if getter.value.sourceType == Product.Getter.SourceType.ConstructorVal =>
+                  case (fromName, getter)
+                      if getter.value.sourceType == Product.Getter.SourceType.ConstructorArgVal || getter.value.sourceType == Product.Getter.SourceType.ConstructorBodyVal =>
                     fromName
                 }
                 .to(SortedSet),
@@ -843,9 +844,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         fieldFlags: TransformerFlags
     ): Existential[Product.Getter[A, *]] => Boolean = getter => {
       val allowedSourceType = getter.value.sourceType match {
-        case Product.Getter.SourceType.ConstructorVal => true
-        case Product.Getter.SourceType.AccessorMethod => fieldFlags.methodAccessors
-        case Product.Getter.SourceType.JavaBeanGetter => fieldFlags.beanGetters
+        case Product.Getter.SourceType.ConstructorArgVal  => true
+        case Product.Getter.SourceType.ConstructorBodyVal => true
+        case Product.Getter.SourceType.AccessorMethod     => fieldFlags.methodAccessors
+        case Product.Getter.SourceType.JavaBeanGetter     => fieldFlags.beanGetters
       }
       val allowedInheritance = !getter.value.isInherited || fieldFlags.inheritedAccessors
       allowedSourceType && allowedInheritance
