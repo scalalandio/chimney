@@ -169,6 +169,7 @@ would follow to publish a new version of the library:
 1. Pre-release checks 
   - [ ] verify that all task in the milestone are finished (if a milestone for the release exists)
   - [ ] verify that all Scala Steward PRs are merged or manually replaced
+  - [ ] verify that chimney-macro-commons is **not** on RC version
   - [ ] wait for the `master` to build and pass all tests, ensure that they are all green
   - [ ] search `TODO`s in the code and verify that they are not problematic (no missing documentation links for instance)
   - [ ] verify that docs from the latest build are rendering correctly (on RTD or `cd docs && just serve`)
