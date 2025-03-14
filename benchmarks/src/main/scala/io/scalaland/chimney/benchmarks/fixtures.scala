@@ -1,7 +1,7 @@
 package io.scalaland.chimney.benchmarks
 
-import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.*
+import io.scalaland.chimney.partial.syntax.*
 
 object fixtures {
 

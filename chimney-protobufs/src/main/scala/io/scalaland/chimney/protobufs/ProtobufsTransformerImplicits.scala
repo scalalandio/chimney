@@ -71,6 +71,7 @@ private[protobufs] trait ProtobufsTransformerImplicitsLowPriorityImplicits1 { th
 
   // com.google.protobuf.ByteString
 
+  /** @since 2.0.0 */
   implicit val protobufByteStringIsTotallyBuildIterable: TotallyBuildIterable[com.google.protobuf.ByteString, Byte] =
     new TotallyBuildIterable[com.google.protobuf.ByteString, Byte] {
       def totalFactory: Factory[Byte, com.google.protobuf.ByteString] =
@@ -99,6 +100,7 @@ private[protobufs] trait ProtobufsTransformerImplicitsLowPriorityImplicits1 { th
 
   // com.google.protobuf.wrappers.BytesValue
 
+  /** @since 2.0.0 */
   implicit val protobufBytesValueIsTotallyBuildIterable
       : TotallyBuildIterable[com.google.protobuf.wrappers.BytesValue, Byte] =
     new TotallyBuildIterable[com.google.protobuf.wrappers.BytesValue, Byte] {
@@ -110,7 +112,7 @@ private[protobufs] trait ProtobufsTransformerImplicitsLowPriorityImplicits1 { th
               def clear(): Unit = impl.clear()
               def result(): com.google.protobuf.wrappers.BytesValue =
                 com.google.protobuf.wrappers.BytesValue.of(impl.result())
-              def addOne(elem: Byte): this.type = { impl.addOne(elem); this }
+              def addOne(elem: Byte): this.type = { impl += elem; this }
             }
         }
       def iterator(byteValue: com.google.protobuf.wrappers.BytesValue): Iterator[Byte] =
