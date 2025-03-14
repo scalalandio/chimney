@@ -35,7 +35,7 @@ val versions = new {
   val idePlatform = VirtualAxis.jvm
 
   // Dependencies
-  val macroCommons = "2.0.0-RC1"
+  val macroCommons = "2.0.0-RC1-2-g76ba3f6-SNAPSHOT"
   val cats = "2.13.0"
   val kindProjector = "0.13.3"
   val munit = "1.1.0"

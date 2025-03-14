@@ -862,6 +862,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       val src: Expr[FromOrFallback]
       val name: String
       val getter: Existential[Product.Getter[FromOrFallback, *]]
+
+      override def toString: String =
+        s"$name: ${Type.prettyPrint(getter.Underlying)} = ${Expr.prettyPrint(getter.value.get(src))} (sourceType = ${getter.value.sourceType}, isInherited = ${getter.value.isInherited})"
     }
     private object FromOrFallbackGetter {
       def apply[FromOrFallback0: Type](
