@@ -2,6 +2,7 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinition, TransformerDefinitionCommons}
 import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 
 /** Type class expressing total transformation between source type `From` and target type `To`.
   *
@@ -24,7 +25,7 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
   * @since 0.1.0
   */
 @FunctionalInterface
-trait Transformer[From, To] extends Transformer.AutoDerived[From, To] {
+trait Transformer[From, To] {
 
   /** Run transformation using provided value as a source.
     *
@@ -47,7 +48,7 @@ trait Transformer[From, To] extends Transformer.AutoDerived[From, To] {
   *
   * @since 0.2.0
   */
-object Transformer extends TransformerCompanionPlatform {
+object Transformer extends TransformerLowPriorityImplicits1 {
 
   /** Creates an empty [[io.scalaland.chimney.dsl.TransformerDefinition]] that you can customize to derive
     * [[io.scalaland.chimney.Transformer]].
@@ -101,13 +102,7 @@ object Transformer extends TransformerCompanionPlatform {
     *
     * @since 0.8.0
     */
-  @FunctionalInterface
-  trait AutoDerived[From, To] {
-    def transform(src: From): To
-  }
-
-  /** @since 0.8.0 */
-  object AutoDerived extends TransformerAutoDerivedCompanionPlatform
+  type AutoDerived[From, To] = Transformer[From, To]
 }
 // extended by TransformerCompanionPlatform
 private[chimney] trait TransformerLowPriorityImplicits1 extends TransformerLowPriorityImplicits2 {
@@ -140,7 +135,8 @@ private[chimney] trait TransformerLowPriorityImplicits2 extends TransformerLowPr
   implicit def transformerFromIsoSecond[First, Second](implicit iso: Iso[First, Second]): Transformer[Second, First] =
     iso.second
 }
-private[chimney] trait TransformerLowPriorityImplicits3 { this: Transformer.type =>
+private[chimney] trait TransformerLowPriorityImplicits3 extends TransformerLowPriorityImplicits4 {
+  this: Transformer.type =>
 
   /** Extracts [[io.scalaland.chimney.Transformer]] from existing [[io.scalaland.chimney.Codec.encode]].
     *
@@ -153,4 +149,22 @@ private[chimney] trait TransformerLowPriorityImplicits3 { this: Transformer.type
     */
   implicit def transformerFromCodecEncoder[Domain, Dto](implicit codec: Codec[Domain, Dto]): Transformer[Domain, Dto] =
     codec.encode
+}
+private[chimney] trait TransformerLowPriorityImplicits4 { this: Transformer.type =>
+
+  /** Provides [[io.scalaland.chimney.Transformer]] derived with the default settings.
+    *
+    * When transformation can't be derived, it results with compilation error.
+    *
+    * @tparam From
+    *   type of input value
+    * @tparam To
+    *   type of output value
+    * @return
+    *   [[io.scalaland.chimney.Transformer]] type class instance
+    *
+    * @since 0.8.0
+    */
+  implicit inline def derive[From, To]: Transformer[From, To] =
+    ${ TransformerMacros.deriveTotalTransformerWithDefaults[From, To] }
 }

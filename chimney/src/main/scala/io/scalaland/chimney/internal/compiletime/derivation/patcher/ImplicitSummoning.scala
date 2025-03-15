@@ -10,7 +10,8 @@ private[compiletime] trait ImplicitSummoning { this: Derivation =>
     if (ctx.config.isImplicitSummoningPreventedFor[Patch, A]) None
     else summonPatcherUnchecked[A, Patch]
 
-  final protected def summonPatcherUnchecked[A: Type, Patch: Type]
-      : Option[Expr[io.scalaland.chimney.Patcher[A, Patch]]] =
+  // Not final to override it on Scala 3 with summonIgnoring!
+
+  protected def summonPatcherUnchecked[A: Type, Patch: Type]: Option[Expr[io.scalaland.chimney.Patcher[A, Patch]]] =
     Expr.summonImplicit[io.scalaland.chimney.Patcher[A, Patch]]
 }

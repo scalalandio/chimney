@@ -11,6 +11,8 @@ object auto extends LowPriorityAutoInstances
 
 private[chimney] trait LowPriorityAutoInstances { this: auto.type =>
 
+  // TODO: consider removing them?
+
   /** Provides [[io.scalaland.chimney.Transformer]] derived with the default settings.
     *
     * This instance WILL be visible for recursive derivation (automatic, semiautomatic, inlined), which is how it

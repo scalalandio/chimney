@@ -4,6 +4,7 @@ import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
 import io.scalaland.chimney.internal.compiletime.dsl.PatcherUsingMacros
 import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, Path, WithRuntimeDataStore}
+import scala.annotation.nowarn
 
 /** Provides operations to customize [[io.scalaland.chimney.Patcher]] logic for specific object value and patch value.
   *
@@ -24,6 +25,7 @@ import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, Pa
   *
   * @since 0.4.0
   */
+@nowarn("msg=unused implicit parameter")
 final class PatcherUsing[A, Patch, Overrides <: PatcherOverrides, Flags <: PatcherFlags](
     val obj: A,
     val objPatch: Patch,
