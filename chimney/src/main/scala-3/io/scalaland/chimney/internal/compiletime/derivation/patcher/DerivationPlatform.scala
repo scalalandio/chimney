@@ -16,10 +16,19 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
 
   import quotes.reflect.*
 
-  private val Patcher_derive =
-    Symbol.classSymbol("io.scalaland.chimney.Patcher").companionModule.methodMember("derive")
-  private val ignoredPatcherImplicits =
-    Patcher_derive
+  private def makeIgnored(className: String)(methods: String*): Seq[Symbol] = {
+    val module = Symbol.classSymbol(className).companionModule
+    assert(!module.isNoSymbol)
+    methods.map { name =>
+      val method = module.methodMember(name).head
+      assert(!method.isNoSymbol && method.flags.is(Flags.Implicit))
+      method
+    }
+  }
+
+  private val ignoredPatcherImplicits = makeIgnored("io.scalaland.chimney.Patcher")(
+    "derive"
+  )
 
   override protected def summonPatcherUnchecked[A: Type, Patch: Type]
       : Option[Expr[io.scalaland.chimney.Patcher[A, Patch]]] =

@@ -3,8 +3,10 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
+import scala.annotation.nowarn
 import scala.annotation.unused
 
+@nowarn("msg=unused local definition")
 class IssuesSpec extends ChimneySpec {
 
   test("fix issue #19") {
