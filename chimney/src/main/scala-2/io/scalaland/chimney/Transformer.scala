@@ -52,6 +52,22 @@ trait Transformer[From, To] extends Transformer.AutoDerived[From, To] {
   */
 object Transformer extends TransformerLowPriorityImplicits1 {
 
+  /** Provides [[io.scalaland.chimney.Transformer]] derived with the default settings.
+    *
+    * When transformation can't be derived, it results with compilation error.
+    *
+    * @tparam From
+    *   type of input value
+    * @tparam To
+    *   type of output value
+    * @return
+    *   [[io.scalaland.chimney.Transformer]] type class instance
+    *
+    * @since 0.8.0
+    */
+  def derive[From, To]: Transformer[From, To] =
+    macro TransformerMacros.deriveTotalTransformerWithDefaults[From, To]
+
   /** Creates an empty [[io.scalaland.chimney.dsl.TransformerDefinition]] that you can customize to derive
     * [[io.scalaland.chimney.Transformer]].
     *

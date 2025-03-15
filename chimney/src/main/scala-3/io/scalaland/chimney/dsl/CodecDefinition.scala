@@ -4,6 +4,7 @@ import io.scalaland.chimney.Codec
 import io.scalaland.chimney.internal.compiletime.derivation.codec.CodecMacros
 import io.scalaland.chimney.internal.compiletime.dsl.CodecDefinitionMacros
 import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
+import scala.annotation.nowarn
 
 /** Allows customization of [[io.scalaland.chimney.Codec]] derivation.
   *
@@ -20,6 +21,7 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
   *
   * @since 1.2.0
   */
+@nowarn("msg=unused implicit parameter")
 final class CodecDefinition[
     Domain,
     Dto,

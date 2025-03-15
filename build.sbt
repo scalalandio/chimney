@@ -103,9 +103,9 @@ val settings = Seq(
           "-Wunused:implicits",
           "-Wunused:params",
           "-Wvalue-discard",
-          //"-Xfatal-warnings",
+          "-Xfatal-warnings",
           "-Xcheck-macros",
-          "-Ykind-projector:underscores"
+          "-Xkind-projector:underscores"
         )
       case Some((2, 13)) =>
         Seq(

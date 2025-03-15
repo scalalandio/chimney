@@ -4,6 +4,7 @@ import io.scalaland.chimney.Iso
 import io.scalaland.chimney.internal.compiletime.derivation.iso.IsoMacros
 import io.scalaland.chimney.internal.compiletime.dsl.IsoDefinitionMacros
 import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
+import scala.annotation.nowarn
 
 /** Allows customization of [[io.scalaland.chimney.Iso]] derivation.
   *
@@ -20,6 +21,7 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
   *
   * @since 1.2.0
   */
+@nowarn("msg=unused implicit parameter")
 final class IsoDefinition[
     First,
     Second,

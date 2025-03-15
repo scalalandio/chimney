@@ -8,6 +8,7 @@ import io.scalaland.chimney.internal.compiletime.fp.Implicits.*
 import io.scalaland.chimney.internal.compiletime.fp.Traverse
 import io.scalaland.chimney.partial
 
+import scala.annotation.unused
 import scala.collection.compat.*
 import scala.collection.immutable.{ListMap, SortedSet}
 
@@ -34,7 +35,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
     private object HasCustomConstructor {
       def unapply[A, From, To](
-          tpe: Type[A]
+          @unused tpe: Type[A]
       )(implicit ctx: TransformationContext[From, To]): Option[TransformerOverride.ForConstructor] =
         ctx.config.currentOverrideForConstructor
     }
