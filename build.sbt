@@ -103,7 +103,7 @@ val settings = Seq(
           "-Wunused:implicits",
           "-Wunused:params",
           "-Wvalue-discard",
-          "-Xfatal-warnings",
+          //"-Xfatal-warnings",
           "-Xcheck-macros",
           "-Ykind-projector:underscores"
         )

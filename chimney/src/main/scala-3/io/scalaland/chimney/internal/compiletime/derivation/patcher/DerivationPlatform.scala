@@ -14,6 +14,17 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     with rules.PatchProductWithProductRuleModule
     with rules.PatchNotMatchedRuleModule {
 
+  import quotes.reflect.*
+
+  private val Patcher_derive =
+    Symbol.classSymbol("io.scalaland.chimney.Patcher").companionModule.methodMember("derive")
+  private val ignoredPatcherImplicits =
+    Patcher_derive
+
+  override protected def summonPatcherUnchecked[A: Type, Patch: Type]
+      : Option[Expr[io.scalaland.chimney.Patcher[A, Patch]]] =
+    scala.quoted.Expr.summonIgnoring[io.scalaland.chimney.Patcher[A, Patch]](ignoredPatcherImplicits*)
+
   override protected val rulesAvailableForPlatform: List[Rule] = List(
     PatchImplicitRule,
     TransformImplicitRule,

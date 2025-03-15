@@ -18,11 +18,13 @@ private[compiletime] trait ImplicitSummoning { this: Derivation =>
     if (ctx.config.isImplicitSummoningPreventedFor[From, To]) None
     else summonPartialTransformerUnchecked[From, To]
 
-  final protected def summonTransformerUnchecked[From: Type, To: Type]
+  // Not final to override it on Scala 3 with summonIgnoring!
+
+  protected def summonTransformerUnchecked[From: Type, To: Type]
       : Option[Expr[io.scalaland.chimney.Transformer[From, To]]] =
     Expr.summonImplicit[io.scalaland.chimney.Transformer[From, To]]
 
-  final protected def summonPartialTransformerUnchecked[From: Type, To: Type]
+  protected def summonPartialTransformerUnchecked[From: Type, To: Type]
       : Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
     Expr.summonImplicit[io.scalaland.chimney.PartialTransformer[From, To]]
 
