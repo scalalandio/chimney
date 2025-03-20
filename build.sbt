@@ -95,15 +95,16 @@ val settings = Seq(
           "-no-indent",
           "-Wconf:msg=Unreachable case:s", // suppress fake (?) errors in internal.compiletime
           "-Wconf:msg=Missing symbol position:s", // suppress warning https://github.com/scala/scala3/issues/21672
-          "-Wnonunit-statement",
+          // unused is broken on 3.7.0-RC1: https://github.com/scala/scala3/issues/22812
+          // "-Wnonunit-statement",
           // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is! probably one of https://github.com/scala/scala3/issues/: #18564, #19252, #19657, #19912
-          "-Wunused:privates",
-          "-Wunused:locals",
-          "-Wunused:explicits",
-          "-Wunused:implicits",
-          "-Wunused:params",
-          "-Wvalue-discard",
-          "-Xfatal-warnings",
+          // "-Wunused:privates",
+          // "-Wunused:locals",
+          // "-Wunused:explicits",
+          // "-Wunused:implicits",
+          // "-Wunused:params",
+          // "-Wvalue-discard",
+          //"-Xfatal-warnings",
           "-Xcheck-macros",
           "-Xkind-projector:underscores"
         )

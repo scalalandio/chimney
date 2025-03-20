@@ -96,6 +96,6 @@ private[chimney] trait PatcherLowPriorityImplicits1 { this: Patcher.type =>
     *
     * @since 0.8.0
     */
-  implicit inline def derive[A, Patch]: Patcher[A, Patch] =
+  inline given derive[A, Patch]: Patcher[A, Patch] =
     ${ PatcherMacros.derivePatcherWithDefaults[A, Patch] }
 }

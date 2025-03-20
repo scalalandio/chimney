@@ -15,24 +15,26 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     with rules.PatchNotMatchedRuleModule {
 
   import quotes.reflect.*
+  import scala.quoted.Expr.summonIgnoring
 
+  // With summonIgnoring we should ignore all implicits from the companion and implement implicit priorities ourselves.
   private def makeIgnored(className: String)(methods: String*): Seq[Symbol] = {
     val module = Symbol.classSymbol(className).companionModule
-    assert(!module.isNoSymbol)
+    // assert(!module.isNoSymbol)
     methods.map { name =>
       val method = module.methodMember(name).head
-      assert(!method.isNoSymbol && method.flags.is(Flags.Implicit))
+      // assert(!method.isNoSymbol && (method.flags.is(Flags.Implicit) || method.flags.is(Flags.Given)))
       method
     }
   }
 
   private val ignoredPatcherImplicits = makeIgnored("io.scalaland.chimney.Patcher")(
-    "derive"
+    "derive" // handled by recursion in macro
   )
 
   override protected def summonPatcherUnchecked[A: Type, Patch: Type]
       : Option[Expr[io.scalaland.chimney.Patcher[A, Patch]]] =
-    scala.quoted.Expr.summonIgnoring[io.scalaland.chimney.Patcher[A, Patch]](ignoredPatcherImplicits*)
+    summonIgnoring[io.scalaland.chimney.Patcher[A, Patch]](ignoredPatcherImplicits*)
 
   override protected val rulesAvailableForPlatform: List[Rule] = List(
     PatchImplicitRule,

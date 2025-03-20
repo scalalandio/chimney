@@ -120,6 +120,22 @@ object PartialTransformer extends PartialTransformerLowPriorityImplicits1 {
         case why: Throwable => partial.Result.fromErrorThrowable(why)
       }
 
+  /** Lifts total transformer to partial transformer
+    *
+    * @tparam From
+    *   type of input value
+    * @tparam To
+    *   type of output value
+    * @param t
+    *   instance of total transformer
+    * @return
+    *   [[io.scalaland.chimney.PartialTransformer]] type class instance
+    *
+    * @since 0.7.0
+    */
+  def liftTotal[From, To](t: Transformer[From, To]): PartialTransformer[From, To] =
+    fromFunction[From, To](t.transform)
+
   /** Creates an empty [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] that you can customize to derive
     * [[io.scalaland.chimney.PartialTransformer]].
     *
@@ -168,12 +184,12 @@ private[chimney] trait PartialTransformerLowPriorityImplicits1 extends PartialTr
     *
     * @since 1.2.0
     */
-  implicit def partialTransformerFromCodecDecoder[Dto, Domain](implicit
+  given partialTransformerFromCodecDecoder[Dto, Domain](using
       codec: Codec[Domain, Dto]
   ): PartialTransformer[Dto, Domain] =
     codec.decode
 }
-private[chimney] trait PartialTransformerLowPriorityImplicits2 extends PartialTransformerLowPriorityImplicits3 {
+private[chimney] trait PartialTransformerLowPriorityImplicits2 {
   this: PartialTransformer.type =>
 
   /** Provides [[io.scalaland.chimney.PartialTransformer]] derived with the default settings.
@@ -189,25 +205,6 @@ private[chimney] trait PartialTransformerLowPriorityImplicits2 extends PartialTr
     *
     * @since 0.8.0
     */
-  implicit inline def derive[From, To]: PartialTransformer[From, To] =
+  inline given derive[From, To]: PartialTransformer[From, To] =
     ${ TransformerMacros.derivePartialTransformerWithDefaults[From, To] }
-}
-private[chimney] trait PartialTransformerLowPriorityImplicits3 {
-  this: PartialTransformer.type =>
-
-  /** Lifts total transformer to partial transformer
-    *
-    * @tparam From
-    *   type of input value
-    * @tparam To
-    *   type of output value
-    * @param t
-    *   instance of total transformer
-    * @return
-    *   [[io.scalaland.chimney.PartialTransformer]] type class instance
-    *
-    * @since 0.7.0
-    */
-  implicit def liftTotal[From, To](implicit t: Transformer[From, To]): PartialTransformer[From, To] =
-    fromFunction[From, To](t.transform)
 }

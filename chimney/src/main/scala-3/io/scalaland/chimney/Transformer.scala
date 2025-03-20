@@ -117,7 +117,7 @@ private[chimney] trait TransformerLowPriorityImplicits1 extends TransformerLowPr
     *
     * @since 1.2.0
     */
-  implicit def transformerFromIsoFirst[First, Second](implicit iso: Iso[First, Second]): Transformer[First, Second] =
+  given transformerFromIsoFirst[First, Second](using iso: Iso[First, Second]): Transformer[First, Second] =
     iso.first
 }
 private[chimney] trait TransformerLowPriorityImplicits2 extends TransformerLowPriorityImplicits3 {
@@ -132,7 +132,7 @@ private[chimney] trait TransformerLowPriorityImplicits2 extends TransformerLowPr
     *
     * @since 1.2.0
     */
-  implicit def transformerFromIsoSecond[First, Second](implicit iso: Iso[First, Second]): Transformer[Second, First] =
+  given transformerFromIsoSecond[First, Second](using iso: Iso[First, Second]): Transformer[Second, First] =
     iso.second
 }
 private[chimney] trait TransformerLowPriorityImplicits3 extends TransformerLowPriorityImplicits4 {
@@ -147,7 +147,7 @@ private[chimney] trait TransformerLowPriorityImplicits3 extends TransformerLowPr
     *
     * @since 1.2.0
     */
-  implicit def transformerFromCodecEncoder[Domain, Dto](implicit codec: Codec[Domain, Dto]): Transformer[Domain, Dto] =
+  given transformerFromCodecEncoder[Domain, Dto](using codec: Codec[Domain, Dto]): Transformer[Domain, Dto] =
     codec.encode
 }
 private[chimney] trait TransformerLowPriorityImplicits4 { this: Transformer.type =>
@@ -165,6 +165,6 @@ private[chimney] trait TransformerLowPriorityImplicits4 { this: Transformer.type
     *
     * @since 0.8.0
     */
-  implicit inline def derive[From, To]: Transformer[From, To] =
+  inline given derive[From, To]: Transformer[From, To] =
     ${ TransformerMacros.deriveTotalTransformerWithDefaults[From, To] }
 }

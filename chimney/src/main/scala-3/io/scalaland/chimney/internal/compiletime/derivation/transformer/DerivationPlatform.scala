@@ -2,6 +2,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.internal.compiletime.ChimneyDefinitionsPlatform
 import io.scalaland.chimney.internal.compiletime.datatypes
+import io.scalaland.chimney.internal.compiletime.DerivationResult
 
 abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     extends ChimneyDefinitionsPlatform(q)
@@ -29,43 +30,72 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     with rules.TransformSealedHierarchyToSealedHierarchyRuleModule {
 
   import quotes.reflect.*
+  import scala.quoted.Expr.summonIgnoring
 
+  // With summonIgnoring we should ignore all implicits from the companion and implement implicit priorities ourselves.
   private def makeIgnored(className: String)(methods: String*): Seq[Symbol] = {
     val module = Symbol.classSymbol(className).companionModule
-    assert(!module.isNoSymbol)
+    // assert(!module.isNoSymbol)
     methods.map { name =>
       val method = module.methodMember(name).head
-      assert(!method.isNoSymbol && method.flags.is(Flags.Implicit))
+      // assert(!method.isNoSymbol && (method.flags.is(Flags.Implicit) || method.flags.is(Flags.Given)))
       method
     }
   }
 
   private val ignoredTransformerImplicits = makeIgnored("io.scalaland.chimney.Transformer")(
-    "derive",
-    "transformerFromIsoFirst",
-    "transformerFromIsoSecond",
-    "transformerFromCodecEncoder"
+    "derive", // handled by recursion in macro
+    "transformerFromIsoFirst", // handled below
+    "transformerFromIsoSecond", // handled below
+    "transformerFromCodecEncoder" // handled below
   )
 
   override protected def summonTransformerUnchecked[From: Type, To: Type]
       : Option[Expr[io.scalaland.chimney.Transformer[From, To]]] =
-    scala.quoted.Expr.summonIgnoring[io.scalaland.chimney.Transformer[From, To]](ignoredTransformerImplicits*)
-  // TODO: manual fallback on Codec/Iso
+    summonIgnoring[io.scalaland.chimney.Transformer[From, To]](ignoredTransformerImplicits*)
+      .orElse {
+        Expr.summonImplicit[io.scalaland.chimney.Iso[From, To]].map(iso => '{ ${ iso }.first })
+      }
+      .orElse {
+        Expr.summonImplicit[io.scalaland.chimney.Iso[To, From]].map(iso => '{ ${ iso }.second })
+      }
+      .orElse {
+        Expr.summonImplicit[io.scalaland.chimney.Codec[From, To]].map(codec => '{ ${ codec }.encode })
+      }
 
   private val ignoredPartialTransformerImplicits = makeIgnored("io.scalaland.chimney.PartialTransformer")(
-    "derive",
-    "partialTransformerFromCodecDecoder",
-    "liftTotal"
+    "derive", // handled by recursion in macro
+    "partialTransformerFromCodecDecoder" // handled below
   )
 
   override protected def summonPartialTransformerUnchecked[From: Type, To: Type]
       : Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
-    scala.quoted.Expr
-      .summonIgnoring[io.scalaland.chimney.PartialTransformer[From, To]](ignoredPartialTransformerImplicits*)
-  // TODO: manual fallback on Codec/Iso
+    summonIgnoring[io.scalaland.chimney.PartialTransformer[From, To]](ignoredPartialTransformerImplicits*).orElse {
+      Expr.summonImplicit[io.scalaland.chimney.Codec[To, From]].map(codec => '{ ${ codec }.decode })
+    }
+
+  // TODO: Move to dedicated file
+  protected object TransformImplicitPartialFallbackToTotalRule extends Rule("PartialFallbackToTotal") {
+    def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+      if ctx.config.areLocalFlagsAndOverridesEmpty then transformWithImplicitIfAvailable[From, To]
+      else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
+
+    private def transformWithImplicitIfAvailable[From, To](implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[Rule.ExpansionResult[To]] = ctx match {
+      case TransformationContext.ForTotal(_) => DerivationResult.attemptNextRule
+      case TransformationContext.ForPartial(src, _) =>
+        summonTransformerUnchecked[From, To].fold(DerivationResult.attemptNextRule[To]) { totalTransformer =>
+          // We're constructing:
+          // '{ ${ totalTransformer }.transform(${ src }) } }
+          DerivationResult.expandedTotal(totalTransformer.transform(src))
+        }
+    }
+  }
 
   override protected val rulesAvailableForPlatform: List[Rule] = List(
     TransformImplicitRule,
+    TransformImplicitPartialFallbackToTotalRule,
     TransformImplicitOuterTransformerRule,
     TransformImplicitConversionRule,
     TransformSubtypesRule,

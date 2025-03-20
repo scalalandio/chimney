@@ -27,7 +27,7 @@ private[chimney] trait LowPriorityAutoInstances { this: auto.type =>
     *
     * @since 0.8.0
     */
-  implicit inline def deriveAutomaticTransformer[From, To]: Transformer[From, To] =
+  inline given deriveAutomaticTransformer[From, To]: Transformer[From, To] =
     ${ TransformerMacros.deriveTotalTransformerWithDefaults[From, To] }
 
   /** Provides [[io.scalaland.chimney.PartialTransformer]] derived with the default settings.
@@ -44,7 +44,7 @@ private[chimney] trait LowPriorityAutoInstances { this: auto.type =>
     *
     * @since 0.8.0
     */
-  implicit inline def deriveAutomaticPartialTransformer[From, To]: PartialTransformer[From, To] =
+  inline given deriveAutomaticPartialTransformer[From, To]: PartialTransformer[From, To] =
     ${ TransformerMacros.derivePartialTransformerWithDefaults[From, To] }
 
   /** Provides [[io.scalaland.chimney.Patcher]] derived with the default settings.
@@ -61,6 +61,6 @@ private[chimney] trait LowPriorityAutoInstances { this: auto.type =>
     *
     * @since 0.8.0
     */
-  implicit inline def deriveAutomaticPatcher[A, Patch]: Patcher[A, Patch] =
+  inline given deriveAutomaticPatcher[A, Patch]: Patcher[A, Patch] =
     ${ PatcherMacros.derivePatcherWithDefaults[A, Patch] }
 }

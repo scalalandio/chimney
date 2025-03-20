@@ -36,7 +36,7 @@ extension [From](source: From) {
     *   transformed value of target type `To`
     * @since 0.1.0
     */
-  transparent inline def transformInto[To](implicit transformer: Transformer[From, To]): To =
+  transparent inline def transformInto[To](using transformer: Transformer[From, To]): To =
     transformer.transform(source)
 }
 
@@ -68,7 +68,7 @@ extension [From](source: From) {
     *
     * @since 0.7.0
     */
-  transparent inline def transformIntoPartial[To](implicit
+  transparent inline def transformIntoPartial[To](using
       transformer: PartialTransformer[From, To]
   ): partial.Result[To] =
     transformIntoPartial(failFast = false)
@@ -92,7 +92,7 @@ extension [From](source: From) {
     *
     * @since 0.7.0
     */
-  transparent inline def transformIntoPartial[To](failFast: Boolean)(implicit
+  transparent inline def transformIntoPartial[To](failFast: Boolean)(using
       transformer: PartialTransformer[From, To]
   ): partial.Result[To] =
     transformer.transform(source, failFast)
@@ -128,7 +128,7 @@ extension [A](obj: A) {
     *
     * @since 0.4.0
     */
-  transparent inline def patchUsing[Patch](patch: Patch)(implicit patcher: Patcher[A, Patch]): A =
+  transparent inline def patchUsing[Patch](patch: Patch)(using patcher: Patcher[A, Patch]): A =
     patcher.patch(obj, patch)
 }
 
@@ -165,7 +165,7 @@ extension [A](@unused a: A) {
     *
     * @since 1.0.0
     */
-  inline def matchingSome[SV, S](implicit @unused ev: IsOption.Of[A, SV, S]): SV =
+  inline def matchingSome[SV, S](using @unused ev: IsOption.Of[A, SV, S]): SV =
     compiletime.error(".matchingSome should be only called within Chimney DSL")
 
   /** Allows paths like `_.either.matchingLeft.field` when selecting the target fields to override in Chimney DSL.
@@ -177,7 +177,7 @@ extension [A](@unused a: A) {
     *
     * @since 1.0.0
     */
-  inline def matchingLeft[LV, RV, L, R](implicit @unused ev: IsEither.Of[A, LV, RV, L, R]): LV =
+  inline def matchingLeft[LV, RV, L, R](using @unused ev: IsEither.Of[A, LV, RV, L, R]): LV =
     compiletime.error(".matchingLeft should be only called within Chimney DSL")
 
   /** Allows paths like `_.either.matchingRight.field` when selecting the target fields to override in Chimney DSL.
@@ -189,7 +189,7 @@ extension [A](@unused a: A) {
     *
     * @since 1.0.0
     */
-  inline def matchingRight[LV, RV, L, R](implicit @unused ev: IsEither.Of[A, LV, RV, L, R]): RV =
+  inline def matchingRight[LV, RV, L, R](using @unused ev: IsEither.Of[A, LV, RV, L, R]): RV =
     compiletime.error(".matchingRight should be only called within Chimney DSL")
 }
 
@@ -213,7 +213,7 @@ extension [C[_], I](@unused cc: C[I]) {
     *
     * @since 1.0.0
     */
-  inline def everyItem(implicit @unused ev: IsCollection.Of[C[I], I]): I =
+  inline def everyItem(using @unused ev: IsCollection.Of[C[I], I]): I =
     compiletime.error(".everyItem should be only called within Chimney DSL")
 }
 
@@ -239,7 +239,7 @@ extension [M[_, _], K, V](@unused cc: M[K, V]) {
     *
     * @since 1.0.0
     */
-  inline def everyMapKey(implicit @unused ev: IsMap.Of[M[K, V], K, V]): K =
+  inline def everyMapKey(using @unused ev: IsMap.Of[M[K, V], K, V]): K =
     compiletime.error(".everyMapKey should be only called within Chimney DSL")
 
   /** Allows paths like `_.map.everyMapValue.field` when selecting the target fields to override in Chimney DSL.
@@ -251,7 +251,7 @@ extension [M[_, _], K, V](@unused cc: M[K, V]) {
     *
     * @since 1.0.0
     */
-  inline def everyMapValue(implicit @unused ev: IsMap.Of[M[K, V], K, V]): V =
+  inline def everyMapValue(using @unused ev: IsMap.Of[M[K, V], K, V]): V =
     compiletime.error(".everyMapValue should be only called within Chimney DSL")
 }
 

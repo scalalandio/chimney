@@ -16,12 +16,10 @@ class PartialTransformerImplicitResolutionSpec extends ChimneySpec {
     result.asEither ==> Right("BatmanT")
     result.asErrorPathMessageStrings ==> Iterable.empty
 
-    /* Fix on Scala 3
     val result2 = UserName("Batman").transformIntoPartial[String]
     result2.asOption ==> Some("BatmanT")
     result2.asEither ==> Right("BatmanT")
     result2.asErrorPathMessageStrings ==> Iterable.empty
-     */
   }
 
   test("transform using implicit Partial Transformer for whole transformation when available") {
