@@ -24,7 +24,7 @@ ciRelease := {
 val versions = new {
   val scala212 = "2.12.20"
   val scala213 = "2.13.16"
-  val scala3 = "3.3.5"
+  val scala3 = "3.7.0-RC1"
 
   // Which versions should be cross-compiled for publishing
   val scalas = List(scala212, scala213, scala3)
@@ -35,7 +35,7 @@ val versions = new {
   val idePlatform = VirtualAxis.jvm
 
   // Dependencies
-  val macroCommons = "2.0.0-RC2"
+  val macroCommons = "2.0.0-RC3"
   val cats = "2.13.0"
   val kindProjector = "0.13.3"
   val munit = "1.1.0"
@@ -95,17 +95,18 @@ val settings = Seq(
           "-no-indent",
           "-Wconf:msg=Unreachable case:s", // suppress fake (?) errors in internal.compiletime
           "-Wconf:msg=Missing symbol position:s", // suppress warning https://github.com/scala/scala3/issues/21672
-          "-Wnonunit-statement",
+          // unused is broken on 3.7.0-RC1: https://github.com/scala/scala3/issues/22812
+          // "-Wnonunit-statement",
           // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is! probably one of https://github.com/scala/scala3/issues/: #18564, #19252, #19657, #19912
-          "-Wunused:privates",
-          "-Wunused:locals",
-          "-Wunused:explicits",
-          "-Wunused:implicits",
-          "-Wunused:params",
-          "-Wvalue-discard",
-          "-Xfatal-warnings",
+          // "-Wunused:privates",
+          // "-Wunused:locals",
+          // "-Wunused:explicits",
+          // "-Wunused:implicits",
+          // "-Wunused:params",
+          // "-Wvalue-discard",
+          //"-Xfatal-warnings",
           "-Xcheck-macros",
-          "-Ykind-projector:underscores"
+          "-Xkind-projector:underscores"
         )
       case Some((2, 13)) =>
         Seq(

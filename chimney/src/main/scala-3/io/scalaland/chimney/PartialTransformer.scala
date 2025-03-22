@@ -2,6 +2,7 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinitionCommons}
 import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 
 /** Type class expressing partial transformation between source type `From` and target type `To`, with the ability of
   * reporting path-annotated transformation error(s).
@@ -25,7 +26,7 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
   * @since 0.7.0
   */
 @FunctionalInterface
-trait PartialTransformer[From, To] extends PartialTransformer.AutoDerived[From, To] {
+trait PartialTransformer[From, To] {
 
   /** Run transformation using provided value as a source.
     *
@@ -75,7 +76,7 @@ trait PartialTransformer[From, To] extends PartialTransformer.AutoDerived[From, 
   *
   * @since 0.7.0
   */
-object PartialTransformer extends PartialTransformerCompanionPlatform {
+object PartialTransformer extends PartialTransformerLowPriorityImplicits1 {
 
   /** Construct ad-hoc instance of partial transformer from transforming function returning partial result.
     *
@@ -168,20 +169,11 @@ object PartialTransformer extends PartialTransformerCompanionPlatform {
     *
     * @since 0.8.0
     */
-  @FunctionalInterface
-  trait AutoDerived[From, To] {
-    def transform(src: From, failFast: Boolean): partial.Result[To]
-  }
-
-  /** @since 0.8.0 */
-  object AutoDerived extends PartialTransformerAutoDerivedCompanionPlatform {
-
-    implicit def liftTotal[From, To](implicit total: Transformer[From, To]): AutoDerived[From, To] =
-      (src: From, failFast: Boolean) => partial.Result.fromCatching(total.transform(src))
-  }
+  type AutoDerived[From, To] = Transformer[From, To]
 }
 // extended by PartialTransformerCompanionPlatform
-private[chimney] trait PartialTransformerLowPriorityImplicits1 { this: PartialTransformer.type =>
+private[chimney] trait PartialTransformerLowPriorityImplicits1 extends PartialTransformerLowPriorityImplicits2 {
+  this: PartialTransformer.type =>
 
   /** Extracts [[io.scalaland.chimney.PartialTransformer]] from existing [[io.scalaland.chimney.Codec.decode]].
     *
@@ -192,8 +184,27 @@ private[chimney] trait PartialTransformerLowPriorityImplicits1 { this: PartialTr
     *
     * @since 1.2.0
     */
-  implicit def partialTransformerFromCodecDecoder[Dto, Domain](implicit
+  given partialTransformerFromCodecDecoder[Dto, Domain](using
       codec: Codec[Domain, Dto]
   ): PartialTransformer[Dto, Domain] =
     codec.decode
+}
+private[chimney] trait PartialTransformerLowPriorityImplicits2 {
+  this: PartialTransformer.type =>
+
+  /** Provides [[io.scalaland.chimney.PartialTransformer]] derived with the default settings.
+    *
+    * When transformation can't be derived, it results with compilation error.
+    *
+    * @tparam From
+    *   type of input value
+    * @tparam To
+    *   type of output value
+    * @return
+    *   [[io.scalaland.chimney.PartialTransformer]] type class definition
+    *
+    * @since 0.8.0
+    */
+  inline given derive[From, To]: PartialTransformer[From, To] =
+    ${ TransformerMacros.derivePartialTransformerWithDefaults[From, To] }
 }

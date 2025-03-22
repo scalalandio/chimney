@@ -11,6 +11,7 @@ import io.scalaland.chimney.internal.runtime.{
   TransformerOverrides,
   WithRuntimeDataStore
 }
+import scala.annotation.nowarn
 
 import scala.quoted.*
 
@@ -27,6 +28,7 @@ import scala.quoted.*
   *
   * @since 0.4.0
   */
+@nowarn("msg=unused implicit parameter")
 final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, Flags <: TransformerFlags](
     val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
 ) extends TransformerFlagsDsl[
