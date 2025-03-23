@@ -2226,6 +2226,79 @@ However, if you are using the compiler's flags to report unused definitions when
 an error caused by [scala/bug#12895](https://github.com/scala/bug/issues/12895). This bug was fixed in Scala 2.13.14,
 if update is impossible the workaround would be to remove the unused definition reporting.
 
+### `Ambiguous givens` since Scala 3.7.0 and warnings since 3.6.0
+
+Due to [New Prioritization of Givens in Scala 3.7](https://www.scala-lang.org/2024/08/19/given-priority-change-3.7.html)
+pattern that [Chimney relies on since 0.8.0](cookbook.md#automatic-semiautomatic-and-inlined-derivation) to ensure good DX
+is broken when one tries to use semiautomatic derivation:
+
+!!! example
+
+    ```scala
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.Transformer
+
+    case class Foo()
+    case class Bar(a: Int)
+    object Bar {
+      given t: Transformer[Foo, Bar] = _ => Bar(0)
+    }
+
+    Foo().transformInto[Bar]
+    ```
+
+    would result in warning on 3.6.0+
+
+    ```
+    Given search preference for io.scalaland.chimney.Transformer.AutoDerived[Foo, Bar] between alternatives
+      (Bar.t : io.scalaland.chimney.Transformer[Foo, Bar])
+    and
+      (io.scalaland.chimney.Transformer.AutoDerived.deriveAutomatic :
+      [From, To]: io.scalaland.chimney.Transformer.AutoDerived[From, To])
+    will change in the future release.
+    ```
+
+    and error on 3.7.0+:
+
+    ```
+    Ambiguous given instances: both given instance t in object Bar and method deriveAutomatic in trait TransformerAutoDerivedCompanionPlatform match type io.scalaland.chimney.Transformer.AutoDerived[Foo, Bar] of parameter transformer of method transformInto in package io.scalaland.chimney.dsl
+    ```
+
+    that cannot be "simply" fixed with some backward compatible change in implicits or macros internals.
+
+This issue will be properly addressed in Chimney 2.0.0, which will be released for next Scala LTS
+(the fix involves using [macro feature available since 3.7.0](https://github.com/scala/scala3/discussions/21909)).
+
+In the meantime, there are 2 ways to work around it (that works for now):
+
+ * if instead of taking implicit as an argument to `def` extension method
+   it will be summoned with `summonInline`
+ * in general summoning it via macro always works - which is always the case
+   when we do `.into[Target].transform` instead of `.transformInto[Target]`
+
+!!! example
+
+    ```scala
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.Transformer
+
+    case class Foo()
+    case class Bar(a: Int)
+    object Bar {
+      given t: Transformer[Foo, Bar] = _ => Bar(0)
+    }
+
+    extension[From](value: From) {
+      inline def transformInto37Workaround[To]: To = {
+        import scala.compiletime._
+        summonInline[Transformer.AutoDerived[From, To]].transform(value)
+      }
+    }
+
+    Foo().transformInto37Workaround[Bar] // <-- implicit resolved with a summonIgnore
+    Foo().into[Bar].transform // <-- implicit resolved inside a macro
+    ```
+
 ### Debugging macros
 
 In some cases, it could be helpful to preview what is the expression generated
