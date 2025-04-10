@@ -24,7 +24,7 @@ ciRelease := {
 val versions = new {
   val scala212 = "2.12.20"
   val scala213 = "2.13.16"
-  val scala3 = "3.7.0-RC1"
+  val scala3 = "3.7.0-RC2"
 
   // Which versions should be cross-compiled for publishing
   val scalas = List(scala212, scala213, scala3)
