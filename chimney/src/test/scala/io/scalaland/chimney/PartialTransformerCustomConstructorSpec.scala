@@ -3,6 +3,9 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
+import scala.annotation.nowarn
+
+@nowarn("msg=unused import")
 class PartialTransformerCustomConstructorSpec extends ChimneySpec {
 
   group("setting .withConstructor(fn)") {

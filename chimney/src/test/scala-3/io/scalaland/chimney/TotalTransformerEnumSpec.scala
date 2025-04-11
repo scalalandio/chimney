@@ -3,8 +3,9 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
-import scala.annotation.unused
+import scala.annotation.{nowarn, unused}
 
+@nowarn("msg=unused import")
 class TotalTransformerEnumSpec extends ChimneySpec {
 
   test(

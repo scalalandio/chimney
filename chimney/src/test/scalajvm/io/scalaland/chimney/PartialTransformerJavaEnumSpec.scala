@@ -4,8 +4,9 @@ import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 import io.scalaland.chimney.javafixtures.*
 
-import scala.annotation.unused
+import scala.annotation.{nowarn, unused}
 
+@nowarn("msg=unused import")
 class PartialTransformerJavaEnumSpec extends ChimneySpec {
 
   test(

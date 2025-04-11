@@ -36,8 +36,8 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
       val toSubtypesExplicitlyUnmatched = ctx.config.filterCurrentUnusedSubtypes
 
       DerivationResult.log {
-        val fromSubs = fromElements.map(tpe => Type.prettyPrint(tpe.Underlying)).mkString(", ")
-        val toSubs = toElements.map(tpe => Type.prettyPrint(tpe.Underlying)).mkString(", ")
+        val fromSubs = fromElements.map(tpe => Type.prettyPrint(using tpe.Underlying)).mkString(", ")
+        val toSubs = toElements.map(tpe => Type.prettyPrint(using tpe.Underlying)).mkString(", ")
         s"Resolved ${Type.prettyPrint[From]} subtypes: ($fromSubs) and ${Type.prettyPrint[To]} subtypes ($toSubs)"
       } >> mapOverriddenElements[From, To].flatMap { overrideMappings =>
         Traverse[List]
@@ -295,7 +295,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
             .filterNot(tpe => toSubtypesUsedInMatch.exists(tpe2 => tpe.Underlying =:= tpe2.Underlying))
             .filterNot(tpe => toSubtypesUsedInOverrides.exists(tpe2 => tpe.Underlying =:= tpe2.Underlying))
             .filterNot(tpe => toSubtypesExplicitlyUnmatched.exists(tpe2 => tpe.Underlying =:= tpe2.Underlying))
-            .map(tpe => Type.prettyPrint(tpe.Underlying))
+            .map(tpe => Type.prettyPrint(using tpe.Underlying))
             .toList
           if (unmatchedToSubtypes.isEmpty) {
             DerivationResult.unit

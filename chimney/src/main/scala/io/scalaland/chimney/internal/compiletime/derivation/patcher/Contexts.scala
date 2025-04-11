@@ -35,8 +35,8 @@ private[compiletime] trait Contexts { this: Derivation =>
     }
 
     override def toString: String =
-      s"PatcherContext[A = ${Type.prettyPrint(A)}, Patch = ${Type
-          .prettyPrint(Patch)}](obj = ${Expr.prettyPrint(obj)}, patch = ${Expr.prettyPrint(patch)})($config)"
+      s"PatcherContext[A = ${Type.prettyPrint(using A)}, Patch = ${Type
+          .prettyPrint(using Patch)}](obj = ${Expr.prettyPrint(obj)}, patch = ${Expr.prettyPrint(patch)})($config)"
   }
   protected object PatcherContext {
 

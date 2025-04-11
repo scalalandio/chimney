@@ -1,6 +1,5 @@
 package io.scalaland.chimney.dsl
 
-import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
 import io.scalaland.chimney.internal.compiletime.dsl.PatcherUsingMacros
 import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, Path, WithRuntimeDataStore}
