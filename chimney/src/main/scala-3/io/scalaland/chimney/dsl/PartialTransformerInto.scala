@@ -1,7 +1,6 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
-import io.scalaland.chimney.internal.compiletime.dsl
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal.compiletime.dsl.PartialTransformerIntoMacros
 import io.scalaland.chimney.internal.runtime.{
@@ -11,6 +10,7 @@ import io.scalaland.chimney.internal.runtime.{
   TransformerOverrides,
   WithRuntimeDataStore
 }
+import scala.annotation.nowarn
 
 /** Provides DSL for configuring [[io.scalaland.chimney.PartialTransformer]]'s generation and using the result to
   * transform value at the same time
@@ -30,6 +30,7 @@ import io.scalaland.chimney.internal.runtime.{
   *
   * @since 0.7.0
   */
+@nowarn("msg=unused implicit parameter")
 final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, Flags <: TransformerFlags](
     val source: From,
     val td: PartialTransformerDefinition[From, To, Overrides, Flags]

@@ -1,10 +1,10 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.Patcher
-import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
 import io.scalaland.chimney.internal.compiletime.dsl.PatcherDefinitionMacros
 import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, Path, WithRuntimeDataStore}
+import scala.annotation.nowarn
 
 /** Allows customization of [[io.scalaland.chimney.Patcher]] derivation.
   *
@@ -19,6 +19,7 @@ import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, Pa
   *
   * @since 0.8.0
   */
+@nowarn("msg=unused implicit parameter")
 final class PatcherDefinition[A, Patch, Overrides <: PatcherOverrides, Flags <: PatcherFlags](
     val runtimeData: PatcherDefinitionCommons.RuntimeDataStore
 ) extends PatcherFlagsDsl[[Flags1 <: PatcherFlags] =>> PatcherDefinition[A, Patch, Overrides, Flags1], Flags]

@@ -2,6 +2,7 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.{PatcherDefinition, PatcherDefinitionCommons}
 import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides}
+import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
 
 /** Type class definition that wraps patching behavior.
   *
@@ -22,7 +23,7 @@ import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides}
   * @since 0.1.3
   */
 @FunctionalInterface
-trait Patcher[A, Patch] extends Patcher.AutoDerived[A, Patch] {
+trait Patcher[A, Patch] {
 
   /** Modifies a copy of one object using values from another object.
     *
@@ -45,7 +46,7 @@ trait Patcher[A, Patch] extends Patcher.AutoDerived[A, Patch] {
   *
   * @since 0.1.3
   */
-object Patcher extends PatcherCompanionPlatform {
+object Patcher extends PatcherLowPriorityImplicits1 {
 
   /** Creates an empty [[io.scalaland.chimney.dsl.PatcherDefinition]] that you can customize to derive
     * [[io.scalaland.chimney.Patcher]].
@@ -80,11 +81,21 @@ object Patcher extends PatcherCompanionPlatform {
     *
     * @since 0.8.0
     */
-  @FunctionalInterface
-  trait AutoDerived[A, Patch] {
-    def patch(obj: A, patch: Patch): A
-  }
+  type AutoDerived[A, Patch] = Patcher[A, Patch]
+}
+private[chimney] trait PatcherLowPriorityImplicits1 { this: Patcher.type =>
 
-  /** @since 0.8.0 */
-  object AutoDerived extends PatcherAutoDerivedCompanionPlatform
+  /** Provides [[io.scalaland.chimney.Patcher]] instance for arbitrary types.
+    *
+    * @tparam A
+    *   type of object to apply patch to
+    * @tparam Patch
+    *   type of patch object
+    * @return
+    *   [[io.scalaland.chimney.Patcher]] type class instance
+    *
+    * @since 0.8.0
+    */
+  inline given derive[A, Patch]: Patcher[A, Patch] =
+    ${ PatcherMacros.derivePatcherWithDefaults[A, Patch] }
 }

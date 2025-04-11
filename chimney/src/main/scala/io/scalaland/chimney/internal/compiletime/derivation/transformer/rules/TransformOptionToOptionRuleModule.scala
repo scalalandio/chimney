@@ -109,7 +109,7 @@ private[compiletime] trait TransformOptionToOptionRuleModule {
           case OptionalValue(fallback2) =>
             import fallback2.{Underlying as InnerFallback, value as optionalFallback}
             implicit val fallbackCtx: TransformationContext[Fallback, To] =
-              ctx.updateFromTo[Fallback, To](fallbackExpr, updateFallbacks = _ => Vector.empty)(Fallback, ctx.To)
+              ctx.updateFromTo[Fallback, To](fallbackExpr, updateFallbacks = _ => Vector.empty)(using Fallback, ctx.To)
             Some(mapOptions[Fallback, To, InnerFallback, InnerTo](optionalFallback, optionalTo))
           case _ => None
         }

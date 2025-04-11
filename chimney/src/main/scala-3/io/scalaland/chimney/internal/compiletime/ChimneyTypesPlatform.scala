@@ -10,8 +10,6 @@ import scala.quoted
 
 private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: ChimneyDefinitionsPlatform =>
 
-  import quotes.*, quotes.reflect.*
-
   object ChimneyType extends ChimneyTypeModule {
 
     def Transformer[From: Type, To: Type]: Type[Transformer[From, To]] = quoted.Type.of[Transformer[From, To]]

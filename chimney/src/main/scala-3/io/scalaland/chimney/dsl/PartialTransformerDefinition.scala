@@ -10,6 +10,7 @@ import io.scalaland.chimney.internal.runtime.{
   TransformerOverrides,
   WithRuntimeDataStore
 }
+import scala.annotation.nowarn
 
 /** Allows customization of [[io.scalaland.chimney.PartialTransformer]] derivation.
   *
@@ -24,6 +25,7 @@ import io.scalaland.chimney.internal.runtime.{
   *
   * @since 0.7.0
   */
+@nowarn("msg=unused implicit parameter")
 final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverrides, Flags <: TransformerFlags](
     val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
 ) extends TransformerFlagsDsl[

@@ -5,8 +5,9 @@ import io.scalaland.chimney.fixtures.*
 import io.scalaland.chimney.partial.syntax.*
 import io.scalaland.chimney.utils.OptionUtils.*
 
-import scala.annotation.unused
+import scala.annotation.{nowarn, unused}
 
+@nowarn("msg=unused import")
 class PartialTransformerEnumSpec extends ChimneySpec {
 
   test(

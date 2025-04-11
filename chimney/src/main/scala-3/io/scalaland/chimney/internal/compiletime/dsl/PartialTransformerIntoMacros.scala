@@ -1,8 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.PartialTransformer
 import io.scalaland.chimney.dsl.*
-import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
 import io.scalaland.chimney.internal.runtime.{
   ArgumentLists,

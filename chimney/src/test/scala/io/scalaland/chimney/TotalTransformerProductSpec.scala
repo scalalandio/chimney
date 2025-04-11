@@ -3,9 +3,10 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
-import scala.annotation.unused
+import scala.annotation.{nowarn, unused}
 import scala.collection.immutable.ListMap
 
+@nowarn("msg=unused import")
 class TotalTransformerProductSpec extends ChimneySpec {
 
   test("transformation should allow upcasting") {

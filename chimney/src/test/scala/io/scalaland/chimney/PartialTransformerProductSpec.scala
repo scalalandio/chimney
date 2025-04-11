@@ -5,9 +5,10 @@ import io.scalaland.chimney.fixtures.*
 import io.scalaland.chimney.partial.syntax.*
 import io.scalaland.chimney.utils.OptionUtils.*
 
-import scala.annotation.unused
+import scala.annotation.{nowarn, unused}
 import scala.collection.immutable.ListMap
 
+@nowarn("msg=unused import")
 class PartialTransformerProductSpec extends ChimneySpec {
 
   test("transform case classes with the same fields' number, names and types without modifiers") {

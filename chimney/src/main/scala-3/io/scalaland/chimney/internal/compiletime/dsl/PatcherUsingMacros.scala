@@ -1,9 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.Patcher
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.dsl.*
-import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
 import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
 import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, Path, WithRuntimeDataStore}
 import io.scalaland.chimney.internal.runtime.PatcherOverrides.*

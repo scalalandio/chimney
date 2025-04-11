@@ -113,7 +113,7 @@ private[compiletime] trait Contexts { this: Derivation =>
       ): B = forTotal(this)
 
       override def toString: String =
-        s"ForTotal[From = ${Type.prettyPrint(From)}, To = ${Type.prettyPrint(To)}](src = ${Expr.prettyPrint(src)})($config)"
+        s"ForTotal[From = ${Type.prettyPrint(using From)}, To = ${Type.prettyPrint(using To)}](src = ${Expr.prettyPrint(src)})($config)"
     }
 
     object ForTotal {
@@ -142,7 +142,7 @@ private[compiletime] trait Contexts { this: Derivation =>
     ) extends TransformationContext[From, To] {
 
       final type Target = partial.Result[To]
-      val Target = ChimneyType.PartialResult(To)
+      val Target = ChimneyType.PartialResult(using To)
 
       override def fold[B](
           forTotal: TransformationContext.ForTotal[From, To] => B
@@ -151,8 +151,8 @@ private[compiletime] trait Contexts { this: Derivation =>
       ): B = forPartial(this)
 
       override def toString: String =
-        s"ForPartial[From = ${Type.prettyPrint(From)}, To = ${Type
-            .prettyPrint(To)}](src = ${Expr.prettyPrint(src)}, failFast = ${Expr.prettyPrint(failFast)})($config)"
+        s"ForPartial[From = ${Type.prettyPrint(using From)}, To = ${Type
+            .prettyPrint(using To)}](src = ${Expr.prettyPrint(src)}, failFast = ${Expr.prettyPrint(failFast)})($config)"
     }
 
     object ForPartial {

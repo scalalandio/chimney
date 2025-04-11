@@ -1,12 +1,7 @@
 package io.scalaland.chimney.inlined
 
-import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 import io.scalaland.chimney.dsl.*
-import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, TransformerFlags, TransformerOverrides}
-import io.scalaland.chimney.partial
-
-import scala.util.Try
 
 /** Provides transformer operations on values of any type.
   *

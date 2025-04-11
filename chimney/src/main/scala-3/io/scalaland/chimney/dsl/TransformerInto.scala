@@ -1,6 +1,5 @@
 package io.scalaland.chimney.dsl
 
-import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.TransformerIntoMacros
 import io.scalaland.chimney.internal.runtime.{
@@ -10,6 +9,7 @@ import io.scalaland.chimney.internal.runtime.{
   TransformerOverrides,
   WithRuntimeDataStore
 }
+import scala.annotation.nowarn
 
 /** Provides DSL for configuring [[io.scalaland.chimney.Transformer]]'s generation and using the result to transform
   * value at the same time
@@ -29,6 +29,7 @@ import io.scalaland.chimney.internal.runtime.{
   *
   * @since 0.1.0
   */
+@nowarn("msg=unused implicit parameter")
 final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <: TransformerFlags](
     val source: From,
     val td: TransformerDefinition[From, To, Overrides, Flags]

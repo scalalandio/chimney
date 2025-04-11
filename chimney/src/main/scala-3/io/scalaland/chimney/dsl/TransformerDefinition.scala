@@ -1,7 +1,6 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.Transformer
-import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.*
 import io.scalaland.chimney.internal.runtime.{
@@ -11,6 +10,7 @@ import io.scalaland.chimney.internal.runtime.{
   TransformerOverrides,
   WithRuntimeDataStore
 }
+import scala.annotation.nowarn
 
 import scala.quoted.*
 
@@ -27,6 +27,7 @@ import scala.quoted.*
   *
   * @since 0.4.0
   */
+@nowarn("msg=unused implicit parameter")
 final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, Flags <: TransformerFlags](
     val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
 ) extends TransformerFlagsDsl[
