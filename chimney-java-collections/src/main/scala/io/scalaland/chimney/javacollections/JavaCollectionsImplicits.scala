@@ -199,12 +199,11 @@ trait JavaCollectionsImplicits {
   // java.util.Map
 
   /** @since 1.0.0 */
-  implicit def javaMapIsTotallyBuildMap[Key: Ordering, Value]: TotallyBuildMap[ju.Map[Key, Value], Key, Value] =
+  implicit def javaMapIsTotallyBuildMap[Key, Value]: TotallyBuildMap[ju.Map[Key, Value], Key, Value] =
     javaAbstractMapIsTotallyBuildMap[Key, Value].widen
 
   /** @since 1.0.0 */
-  implicit def javaAbstractMapIsTotallyBuildMap[Key: Ordering, Value]
-      : TotallyBuildMap[ju.AbstractMap[Key, Value], Key, Value] =
+  implicit def javaAbstractMapIsTotallyBuildMap[Key, Value]: TotallyBuildMap[ju.AbstractMap[Key, Value], Key, Value] =
     javaHashMapIsTotallyBuildMap[Key, Value].widen
 
   /** @since 1.0.0 */
