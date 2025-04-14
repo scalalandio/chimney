@@ -2299,6 +2299,9 @@ In the meantime, there are 2 ways to work around it (that works for now):
     Foo().into[Bar].transform // <-- implicit resolved inside a macro
     ```
 
+However, this is most likely an oversight, so we expect that this workaround will stop working
+in future versions of Scala 3.
+
 ### Debugging macros
 
 In some cases, it could be helpful to preview what is the expression generated
