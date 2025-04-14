@@ -747,8 +747,8 @@ are described in each type's section.
 
 !!! note "Chimney is not like other libs" 
 
-    If you are used to _automatic_ vs _semi-atuomatic_ derivation conventions from other libraries, like Circe, and you
-    had bad experience (long compilation times, poor performance) with the automatic derivation, please note that
+    If you are used to _automatic_ vs _semi-automatic_ derivation conventions from other libraries, like Circe, and you
+    had a bad experience (long compilation times, poor performance) with the automatic derivation, please note that
     Chimney derivation DOES NOT work the same way, so your experiences are unlikely to carry over to Chimney.
     
     Please, read the section below, as it will explain why replacing `import io.scalaland.chimney.dsl._` with
@@ -826,7 +826,7 @@ use these imports
 !!! example
 
     ```scala
-    import io.scalaland.chimney.auto._
+    import io.scalaland.chimney.auto._ // Not available on Chimney 2.+ with Scala 3, se below
     import io.scalaland.chimney.inlined._
     import io.scalaland.chimney.syntax._
     ```
@@ -946,6 +946,44 @@ an implicit or there is none.
 However, with `import io.scalaland.chimney.auto._` the same semantics as in other
 libraries is used: implicit def returns `Transformer`, so if derivation with defaults
 is possible it will always be triggered.
+
+!!! important
+
+    Scala 3.7.0 [changes the implicit resolution rules](https://www.scala-lang.org/2024/08/19/given-priority-change-3.7.html)
+    which [broke this pattern](https://github.com/scalalandio/chimney/discussions/592), but in return provided
+    [a way to opt-out of using a particular implicit in macro expansion](https://github.com/scala/scala3/discussions/21909).
+    That was the most important reason to start the work on Chimney 2.0.0, with the type class hierarchy modified from:
+
+    ```scala
+    trait TypeClass[A] extends TypeClass.AutoDerived[A]
+    object TypeClass {
+      trait AutoDerived[A]
+      object AutoDerived {
+        // summons TypeClass but NOT TypeClass.AutoDerived
+        inline given [A]: AutoDerived[A] = ...
+      } 
+    }
+    extension [A](value: A) def foo(using TypeClass.AutoDerived[A]) = ...
+    ```
+
+    to
+
+    ```scala
+    trait TypeClass[A]
+    object TypeClass {
+      inline given derived[A]: AutoDerived[A] =
+        ${ macroUsingSimmonIgnoring[A] }
+        // Inside it uses:
+        // Expr.summonIgnoring[TypeClass[A]](
+        //  Symbol.classSymbol("TypeClass").companionModule.methodMember("derived")*
+        // )
+        // instead of Expr.summon[TypeClass[A]]
+    }
+    extension [A](value: A) def foo(using TypeClass[A]) = ...
+    ```
+
+    For that reason `import io.scalaland.chimney.auto._` does not exists on Chimney 2.0.0 for Scala 3.
+
 
 The matter is even more complex with `PartialTransformer` s - they look for both implicit
 `Transformer` s as well as implicit `PartialTransformer` s (users can provide either or both).

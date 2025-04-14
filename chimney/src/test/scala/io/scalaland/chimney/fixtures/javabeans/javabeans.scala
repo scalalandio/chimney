@@ -105,8 +105,7 @@ class JavaBeanTargetNonUnitSetter {
   }
 
   def isFlag(): Boolean = flag
-  def setFlag(id: Boolean): JavaBeanTargetNonUnitSetter = {
-    val _ = id // TODO: fix on master and merge
+  def setFlag(flag: Boolean): JavaBeanTargetNonUnitSetter = {
     this.flag = flag
     this
   }
