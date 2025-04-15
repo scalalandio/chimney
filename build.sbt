@@ -95,6 +95,7 @@ val settings = Seq(
           "-no-indent",
           "-Wconf:msg=Unreachable case:s", // suppress fake (?) errors in internal.compiletime
           "-Wconf:msg=Missing symbol position:s", // suppress warning https://github.com/scala/scala3/issues/21672
+          "-Wconf:msg=deprecated since 1.8.0:s", // suppress deprecation warnings for methods that we replaced in 2.0.0 tests
           "-Wnonunit-statement",
           // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is! probably one of https://github.com/scala/scala3/issues/: #18564, #19252, #19657, #19912
           "-Wunused:privates",

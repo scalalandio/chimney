@@ -150,6 +150,7 @@ extension [A](option: Option[A]) {
     *
     * @since 0.7.0
     */
+  @deprecated("Use .asResult instead", "1.8.0")
   transparent inline def toPartialResult: partial.Result[A] =
     partial.Result.fromOption(option)
 
@@ -162,6 +163,7 @@ extension [A](option: Option[A]) {
     *
     * @since 0.7.0
     */
+  @deprecated("Use .orStringAsResult(ifEmpty) instead", "1.8.0")
   transparent inline def toPartialResultOrString(ifEmpty: => String): partial.Result[A] =
     partial.Result.fromOptionOrString(option, ifEmpty)
 }
@@ -184,6 +186,7 @@ extension [A](either: Either[String, A]) {
     *
     * @since 0.7.0
     */
+  @deprecated("Use .asResult instead", "1.8.0")
   transparent inline def toPartialResult: partial.Result[A] =
     partial.Result.fromEitherString(either)
 }
@@ -206,6 +209,7 @@ extension [A](`try`: Try[A]) {
     *
     * @since 0.7.0
     */
+  @deprecated("Use .asResult instead", "1.8.0")
   transparent inline def toPartialResult: partial.Result[A] =
     partial.Result.fromTry(`try`)
 }

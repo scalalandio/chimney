@@ -320,8 +320,7 @@ object Result {
     final def merge(errors1: Errors, errors2: Errors): Errors =
       apply(errors1.errors ++ errors2.errors)
 
-    // FIXME (2.0.0 cleanup): this could be completely removed/or renamed to something that does not start with __
-    /** Used internally by macro. Please don't use in your code. */
+    @deprecated("Used internally by macro and will be removed in 2.0.0. Please don't use in your code.", "1.8.0")
     final private[chimney] def __mergeResultNullable[A](errorsNullable: Errors, result: Result[A]): Errors =
       result match {
         case _: Value[?]    => errorsNullable
