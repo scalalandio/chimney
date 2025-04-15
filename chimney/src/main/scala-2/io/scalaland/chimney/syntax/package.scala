@@ -156,6 +156,7 @@ package object syntax {
       *
       * @since 0.7.0
       */
+    @deprecated("Use .asResult instead", "1.8.0")
     def toPartialResult: partial.Result[A] =
       partial.Result.fromOption(option)
 
@@ -168,6 +169,7 @@ package object syntax {
       *
       * @since 0.7.0
       */
+    @deprecated("Use .orStringAsResult(ifEmpty) instead", "1.8.0")
     def toPartialResultOrString(ifEmpty: => String): partial.Result[A] =
       partial.Result.fromOptionOrString(option, ifEmpty)
   }
@@ -190,6 +192,7 @@ package object syntax {
       *
       * @since 0.7.0
       */
+    @deprecated("Use .asResult instead", "1.8.0")
     def toPartialResult: partial.Result[A] =
       partial.Result.fromEitherString(either)
   }
@@ -212,6 +215,7 @@ package object syntax {
       *
       * @since 0.7.0
       */
+    @deprecated("Use .asResult instead", "1.8.0")
     def toPartialResult: partial.Result[A] =
       partial.Result.fromTry(`try`)
   }
