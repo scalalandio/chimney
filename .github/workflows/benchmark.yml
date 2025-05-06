@@ -27,7 +27,7 @@ jobs:
       # coursier parallel fetch is faster than cache download+upload on our custom runner machine
       #      - uses: coursier/cache-action@v6
 
-      - uses: coursier/setup-action@v1.3.0
+      - uses: coursier/setup-action@v1.3.9
         with:
           jvm: 'temurin:1.21.0.1' # TODO LB java version from matrix
           apps: sbt
