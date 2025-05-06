@@ -12,7 +12,7 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Download benchmark results from workflow artifacts
-        uses: actions/github-script@v6.3.3
+        uses: actions/github-script@v7.0.1
         id: download-results
         with:
           result-encoding: string
