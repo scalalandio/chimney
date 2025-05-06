@@ -24,7 +24,7 @@ ciRelease := {
 val versions = new {
   val scala212 = "2.12.20"
   val scala213 = "2.13.16"
-  val scala3 = "3.3.5"
+  val scala3 = "3.3.6"
 
   // Which versions should be cross-compiled for publishing
   val scalas = List(scala212, scala213, scala3)
@@ -35,7 +35,7 @@ val versions = new {
   val idePlatform = VirtualAxis.jvm
 
   // Dependencies
-  val macroCommons = "2.0.0-RC3"
+  val macroCommons = "2.0.0"
   val cats = "2.13.0"
   val kindProjector = "0.13.3"
   val munit = "1.1.1"
