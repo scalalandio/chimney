@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: coursier/setup-action@v1.3.0
+      - uses: coursier/setup-action@v1.3.9
         with:
           apps: scalafmt
       - name: Check code and docs formatting
@@ -34,7 +34,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: extractions/setup-just@v3
-      - uses: coursier/setup-action@v1.3.0
+      - uses: coursier/setup-action@v1.3.9
         with:
           apps: scala-cli sbt
       - name: Run snippets from documentation
@@ -58,7 +58,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: coursier/cache-action@v6
-      - uses: coursier/setup-action@v1.3.0
+      - uses: coursier/setup-action@v1.3.9
         with:
           jvm: ${{ matrix.jvm }}
           apps: sbt
