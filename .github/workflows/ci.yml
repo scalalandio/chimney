@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: extractions/setup-just@v2
+      - uses: extractions/setup-just@v3
       - uses: coursier/setup-action@v1.3.0
         with:
           apps: scala-cli sbt
