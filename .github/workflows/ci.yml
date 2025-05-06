@@ -64,6 +64,6 @@ jobs:
           apps: sbt
       - name: Clean, compile, test, generate coverage report, check MiMa
         run: sbt ci-${{ matrix.platform }}-${{ matrix.scala }}
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
