@@ -12,6 +12,7 @@ docs/__pycache__
 .metals
 project/metals.sbt
 # IDEs
+.cursor
 .idea
 .vscode
 # other
