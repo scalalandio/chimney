@@ -5,6 +5,7 @@ import io.scalaland.chimney.partial.Result.Errors
 
 object ResultUtils {
 
+  @scala.annotation.nowarn("msg=deprecated") // this method is rewritten in 2.0.0
   def mergeNullable[A](errorsNullable: Errors, result: Result[A]): Errors =
     result match {
       case _: Result.Value[?]    => errorsNullable
