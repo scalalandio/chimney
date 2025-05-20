@@ -150,7 +150,7 @@ You can check its name in:
  * **Sonatype Release / release-tag** GitHub Action [log](https://github.com/scalalandio/chimney/actions/workflows/release.yml)
  * newest commit will be available on https://chimney.readthedocs.io/ as the [latest version](https://chimney.readthedocs.io/en/latest/)
  * sbt after starting it for selected commit and checking which version will be printed by welcome prompt
- * you may need to add https://oss.sonatype.org/content/repositories/snapshots to the list of repositories
+ * you may need to add https://central.sonatype.com/repository/maven-snapshots to the list of repositories
 
 If you want to test changes that were not merged to `master` you can publish them you for yourself locally. For that
 open sbt and run `publishLocal` task for every artifact that you want to publish as a snapshot. Keep in mind that:
