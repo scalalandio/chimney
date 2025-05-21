@@ -89,17 +89,17 @@ The first 2 things you need are JVM and sbt installed. There are many ways to ma
 package managers) and we didn't impose any of them since, as a library, Chimney should work with any supported JDK,
 and sbt runner should fetch the right versions for the project on its own.
 
-Then you need to set up project in an IDE. We are using Intellij, and are using these two settings to control which
-version we are working on currently:
+Then you need to set up project in an IDE. We are using Intellij, and are using these two settings (`dev.properties`)
+to control which version we are working on currently:
 
-```scala
-val versions = new {
-  // ...
+```conf
+# Do not commit changes to this file!
+# Change it locally, reload build in IDE, and develop.
 
-  // Which version should be used in IntelliJ
-  val ideScala = scala213
-  val idePlatform = VirtualAxis.jvm
-}
+# Allowed: 2.12, 2.13, 3
+ide.scala = 2.13
+# Allowed: jvm, js, native
+ide.platform = jvm
 ```
 
 Since almost all the sources are shared between different platforms and Scala versions, this imports only 1 version

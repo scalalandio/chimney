@@ -3,6 +3,7 @@ project/project
 project/target
 target
 *.class
+dev.properties
 # Mdocs documentation
 docs/build
 docs/__pycache__
