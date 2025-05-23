@@ -16,12 +16,12 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     with rules.TransformSubtypesRuleModule
     with rules.TransformTypeConstraintRuleModule
     with rules.TransformToSingletonRuleModule
-    with rules.TransformOptionToOptionRuleModule
-    with rules.TransformPartialOptionToNonOptionRuleModule
-    with rules.TransformToOptionRuleModule
     with rules.TransformValueClassToValueClassRuleModule
     with rules.TransformValueClassToTypeRuleModule
     with rules.TransformTypeToValueClassRuleModule
+    with rules.TransformOptionToOptionRuleModule
+    with rules.TransformPartialOptionToNonOptionRuleModule
+    with rules.TransformToOptionRuleModule
     with rules.TransformEitherToEitherRuleModule
     with rules.TransformMapToMapRuleModule
     with rules.TransformIterableToIterableRuleModule
@@ -35,12 +35,12 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     TransformSubtypesRule,
     TransformTypeConstraintRule,
     TransformToSingletonRule,
-    TransformOptionToOptionRule,
-    TransformPartialOptionToNonOptionRule,
-    TransformToOptionRule,
     TransformValueClassToValueClassRule,
     TransformValueClassToTypeRule,
     TransformTypeToValueClassRule,
+    TransformOptionToOptionRule,
+    TransformPartialOptionToNonOptionRule,
+    TransformToOptionRule,
     TransformEitherToEitherRule,
     TransformMapToMapRule,
     TransformIterableToIterableRule,
