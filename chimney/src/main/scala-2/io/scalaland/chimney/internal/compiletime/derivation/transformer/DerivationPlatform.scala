@@ -15,12 +15,12 @@ trait DerivationPlatform
     with rules.TransformSubtypesRuleModule
     with rules.TransformTypeConstraintRuleModule
     with rules.TransformToSingletonRuleModule
-    with rules.TransformOptionToOptionRuleModule
-    with rules.TransformPartialOptionToNonOptionRuleModule
-    with rules.TransformToOptionRuleModule
     with rules.TransformValueClassToValueClassRuleModule
     with rules.TransformValueClassToTypeRuleModule
     with rules.TransformTypeToValueClassRuleModule
+    with rules.TransformOptionToOptionRuleModule
+    with rules.TransformPartialOptionToNonOptionRuleModule
+    with rules.TransformToOptionRuleModule
     with rules.TransformEitherToEitherRuleModule
     with rules.TransformMapToMapRuleModule
     with rules.TransformIterableToIterableRuleModule
@@ -34,12 +34,12 @@ trait DerivationPlatform
     TransformSubtypesRule,
     TransformTypeConstraintRule,
     TransformToSingletonRule,
-    TransformOptionToOptionRule,
-    TransformPartialOptionToNonOptionRule,
-    TransformToOptionRule,
     TransformValueClassToValueClassRule,
     TransformValueClassToTypeRule,
     TransformTypeToValueClassRule,
+    TransformOptionToOptionRule,
+    TransformToOptionRule,
+    TransformPartialOptionToNonOptionRule,
     TransformEitherToEitherRule,
     TransformMapToMapRule,
     TransformIterableToIterableRule,
