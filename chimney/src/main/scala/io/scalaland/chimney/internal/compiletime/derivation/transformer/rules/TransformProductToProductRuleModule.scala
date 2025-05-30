@@ -302,7 +302,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               }
               .logSuccess {
                 case `unmatchedSetter` => s"Setter `$toName` not resolved but ignoring setters is allowed"
-                case `nonUnitSetter` =>
+                case `nonUnitSetter`   =>
                   s"Setter `$toName` not resolved it has non-Unit return type and they are ignored"
                 case expr => s"Resolved `$toName` field value to ${expr.value.prettyPrint}"
               }
@@ -941,7 +941,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         ctx: TransformationContext[From, To]
     ): DerivationResult[Unit] =
       ctx.config.flags.unusedFieldPolicy match {
-        case None => DerivationResult.unit
+        case None                         => DerivationResult.unit
         case Some(FailOnIgnoredSourceVal) =>
           val fromNamesUsedInOverrides = ctx.sourceFieldsUsedByOverrides
           val unusedFromNames =

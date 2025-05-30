@@ -89,7 +89,7 @@ private[compiletime] trait ChimneyDefinitions extends Definitions with ChimneyTy
     while (patternIndex < patternLength || inputIndex < nameLength) {
       matchIndices(patternIndex) match {
         case -1 => // do nothing
-        case n =>
+        case n  =>
           matchStarts(n) = matchStarts(n) match {
             case -1 => inputIndex
             case s  => math.min(s, inputIndex)

@@ -27,7 +27,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
           }
 
           (ctx.config.flags.collectionFallbackMerge match {
-            case None => srcToResult
+            case None                            => srcToResult
             case Some(dsls.SourceAppendFallback) =>
               fallbackToResult
                 .foldLeft(srcToResult)(merge)
