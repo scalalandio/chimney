@@ -9,7 +9,7 @@ private[compiletime] trait PatchOptionWithNonOptionRuleModule { this: Derivation
 
     def expand[Patch, A](implicit ctx: TransformationContext[Patch, A]): DerivationResult[Rule.ExpansionResult[A]] =
       (Type[A], Type[Patch], ctx) match {
-        case (OptionalValue(_), _, _) => DerivationResult.attemptNextRule
+        case (OptionalValue(_), _, _)                      => DerivationResult.attemptNextRule
         case (_, OptionalValue(patchOption), Patched(obj)) =>
           import patchOption.Underlying as InnerPatch
           patchNonOptionWithOption[A, Patch, InnerPatch](obj, patchOption.value)

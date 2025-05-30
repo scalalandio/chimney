@@ -27,7 +27,7 @@ private[compiletime] trait TransformMapToMapRuleModule {
           }
 
           (ctx.config.flags.collectionFallbackMerge match {
-            case None => srcToResult
+            case None                            => srcToResult
             case Some(dsls.SourceAppendFallback) =>
               fallbackToResult
                 .foldLeft(srcToResult)(merge)
@@ -73,7 +73,7 @@ private[compiletime] trait TransformMapToMapRuleModule {
             result.toEither match {
               case Left(errors)                                        => Right(result >> DerivationResult.fail(errors))
               case Right(Rule.ExpansionResult.AttemptNextRule(reason)) => Left(reason)
-              case Right(Rule.ExpansionResult.Expanded(texpr)) =>
+              case Right(Rule.ExpansionResult.Expanded(texpr))         =>
                 Right(result >> DerivationResult.pure(texpr.asInstanceOf[TransformationExpr[To]]))
             }
         }
