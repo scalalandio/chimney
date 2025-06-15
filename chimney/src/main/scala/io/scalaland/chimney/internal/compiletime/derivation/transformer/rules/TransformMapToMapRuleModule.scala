@@ -67,7 +67,7 @@ private[compiletime] trait TransformMapToMapRuleModule {
               ) {
                 // Removes fallbacks, as are they are handled here (otherwise they would be appended/prepended twice)
                 TransformIterableToIterableRule.expand(
-                  ctx.updateFromTo(ctx.src, updateFallbacks = _ => Vector.empty)(ctx.From, ctx.To)
+                  ctx.updateFromTo(ctx.src, updateFallbacks = _ => Vector.empty)(using ctx.From, ctx.To)
                 )
               }
             result.toEither match {
@@ -113,7 +113,7 @@ private[compiletime] trait TransformMapToMapRuleModule {
         .map { case TransformerOverride.Fallback(fallback) =>
           import fallback.{Underlying as Fallback, value as fallbackExpr}
           implicit val iterableCtx: TransformationContext[Fallback, To] =
-            ctx.updateFromTo[Fallback, To](fallbackExpr, updateFallbacks = _ => Vector.empty)(Fallback, ctx.To)
+            ctx.updateFromTo[Fallback, To](fallbackExpr, updateFallbacks = _ => Vector.empty)(using Fallback, ctx.To)
           val x = mapMaps[Fallback, To]
           if (ctx.config.flags.displayMacrosLogging) {
             println(s"Fallbacks: ${ctx.config.filterCurrentOverridesForFallbacks}\nHandled as: $x\n")

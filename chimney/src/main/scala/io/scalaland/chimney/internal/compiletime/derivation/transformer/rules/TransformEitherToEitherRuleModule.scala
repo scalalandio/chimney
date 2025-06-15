@@ -63,7 +63,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
         .map { case TransformerOverride.Fallback(fallback) =>
           import fallback.{Underlying as Fallback, value as fallbackExpr}
           implicit val fallbackCtx: TransformationContext[Fallback, To] =
-            ctx.updateFromTo[Fallback, To](fallbackExpr, updateFallbacks = _ => Vector.empty)(Fallback, ctx.To)
+            ctx.updateFromTo[Fallback, To](fallbackExpr, updateFallbacks = _ => Vector.empty)(using Fallback, ctx.To)
           mapEithers[Fallback, To, ToL, ToR]
         }
         .collect { case Some(result) => result }

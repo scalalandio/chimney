@@ -88,7 +88,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
         .map { case TransformerOverride.Fallback(fallback) =>
           import fallback.{Underlying as Fallback, value as fallbackExpr}
           implicit val iterableCtx: TransformationContext[Fallback, To] =
-            ctx.updateFromTo[Fallback, To](fallbackExpr, updateFallbacks = _ => Vector.empty)(Fallback, ctx.To)
+            ctx.updateFromTo[Fallback, To](fallbackExpr, updateFallbacks = _ => Vector.empty)(using Fallback, ctx.To)
           mapCollections[Fallback, To]
         }
         .collect { case Right(value) => value }

@@ -127,13 +127,13 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       DerivationResult.log {
         val gettersStr = fromExtractors
           .map { case (k, v) =>
-            s"`$k`: ${Type.prettyPrint(v.Underlying)} (${v.value.sourceType}, ${if (!v.value.isInherited) "declared"
+            s"`$k`: ${Type.prettyPrint(using v.Underlying)} (${v.value.sourceType}, ${if (!v.value.isInherited) "declared"
               else "inherited"})"
           }
           .mkString(", ")
         val constructorStr = parameters
           .map { case (k, v) =>
-            s"`$k`: ${Type.prettyPrint(v.Underlying)} (${v.value.targetType}, default = ${v.value.defaultValue
+            s"`$k`: ${Type.prettyPrint(using v.Underlying)} (${v.value.targetType}, default = ${v.value.defaultValue
                 .map(a => Expr.prettyPrint(a))})"
           }
           .mkString(", ")
@@ -213,7 +213,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                       import fromOrFallback.{FromOrFallback, src as srcOrFallback, name as fromName, getter}
                       fromNamesUsedByExtractors += fromName
                       implicit val positionBasedCtx: TransformationContext[FromOrFallback, To] =
-                        ctx.updateFromTo[FromOrFallback, To](newSrc = srcOrFallback)(FromOrFallback, ctx.To)
+                        ctx.updateFromTo[FromOrFallback, To](newSrc = srcOrFallback)(using FromOrFallback, ctx.To)
                       useExtractor[FromOrFallback, To, CtorParam](ctorParam.value.targetType, fromName, toName, getter)
                   }
                 } else {
@@ -864,7 +864,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       val getter: Existential[Product.Getter[FromOrFallback, *]]
 
       override def toString: String =
-        s"$name: ${Type.prettyPrint(getter.Underlying)} = ${Expr.prettyPrint(getter.value.get(src))} (sourceType = ${getter.value.sourceType}, isInherited = ${getter.value.isInherited})"
+        s"$name: ${Type.prettyPrint(using getter.Underlying)} = ${Expr.prettyPrint(getter.value.get(src))} (sourceType = ${getter.value.sourceType}, isInherited = ${getter.value.isInherited})"
     }
     private object FromOrFallbackGetter {
       def apply[FromOrFallback0: Type](
