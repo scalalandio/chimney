@@ -20,34 +20,10 @@ class PatcherDslSeparationSpec extends ChimneySpec {
 
     test("should enable summoning declared instances") {
       implicit val patcher: Patcher[Foo, Bar] =
-        (foo: Foo, bar: Bar) => Foo(baz = "test3")
+        (_: Foo, _: Bar) => Foo(baz = "test3")
 
       Foo("test").patchUsing(Bar("test2")) ==> Foo("test3")
       Foo("test").using(Bar("test2")).patch ==> Foo("test3")
-    }
-  }
-
-  group("importing auto.*") {
-    import auto.*
-
-    case class Foo(baz: String)
-    case class Bar(baz: String)
-
-    test("should enable automatic derivation") {
-      implicitly[Patcher[Foo, Bar]].patch(Foo("test"), Bar("test2")) ==> Foo("test2")
-    }
-
-    test("should not enable inlined derivation") {
-      // format of missing method differ between 2 and 3 and we cannot rely on it
-      compileErrors("""Foo("test").using(Bar("test2")).patch""").arePresent()
-    }
-
-    test("should not enable summoning declared instances") {
-      @unused implicit val patcher: Patcher[Foo, Bar] =
-        Patcher.derive[Foo, Bar]
-
-      // format of missing method differ between 2 and 3 and we cannot rely on it
-      compileErrors("""Foo("test").patchUsing(Bar("test2"))""").arePresent()
     }
   }
 
@@ -80,11 +56,6 @@ class PatcherDslSeparationSpec extends ChimneySpec {
 
     case class Foo(baz: String)
     case class Bar(baz: String)
-
-    test("should not enable automatic derivation") {
-      // format of missing implicit differ between 2 and 3 and we cannot rely on it
-      compileErrors("""Foo("test").patchUsing(Bar("test2"))""").arePresent()
-    }
 
     test("should not enable inlined derivation") {
       // format of missing method differ between 2 and 3 and we cannot rely on it

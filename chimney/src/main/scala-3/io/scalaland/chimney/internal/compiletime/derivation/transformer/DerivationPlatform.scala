@@ -1,8 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
-import io.scalaland.chimney.internal.compiletime.ChimneyDefinitionsPlatform
-import io.scalaland.chimney.internal.compiletime.datatypes
-import io.scalaland.chimney.internal.compiletime.DerivationResult
+import io.scalaland.chimney.internal.compiletime.{datatypes, ChimneyDefinitionsPlatform}
 
 abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     extends ChimneyDefinitionsPlatform(q)
@@ -12,6 +10,7 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     with datatypes.SealedHierarchiesPlatform
     with datatypes.ValueClassesPlatform
     with rules.TransformImplicitRuleModule
+    with rules.TransformImplicitPartialFallbackToTotalRuleModule
     with rules.TransformImplicitOuterTransformerRuleModule
     with rules.TransformImplicitConversionRuleModule
     with rules.TransformSubtypesRuleModule
@@ -73,25 +72,6 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     summonIgnoring[io.scalaland.chimney.PartialTransformer[From, To]](ignoredPartialTransformerImplicits*).orElse {
       Expr.summonImplicit[io.scalaland.chimney.Codec[To, From]].map(codec => '{ ${ codec }.decode })
     }
-
-  // TODO: Move to dedicated file
-  protected object TransformImplicitPartialFallbackToTotalRule extends Rule("PartialFallbackToTotal") {
-    def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-      if ctx.config.areLocalFlagsAndOverridesEmpty then transformWithImplicitIfAvailable[From, To]
-      else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
-
-    private def transformWithImplicitIfAvailable[From, To](implicit
-        ctx: TransformationContext[From, To]
-    ): DerivationResult[Rule.ExpansionResult[To]] = ctx match {
-      case TransformationContext.ForTotal(_)        => DerivationResult.attemptNextRule
-      case TransformationContext.ForPartial(src, _) =>
-        summonTransformerUnchecked[From, To].fold(DerivationResult.attemptNextRule[To]) { totalTransformer =>
-          // We're constructing:
-          // '{ ${ totalTransformer }.transform(${ src }) } }
-          DerivationResult.expandedTotal(totalTransformer.transform(src))
-        }
-    }
-  }
 
   override protected val rulesAvailableForPlatform: List[Rule] = List(
     TransformImplicitRule,

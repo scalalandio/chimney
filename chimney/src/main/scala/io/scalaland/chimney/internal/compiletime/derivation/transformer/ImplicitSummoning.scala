@@ -21,12 +21,10 @@ private[compiletime] trait ImplicitSummoning { this: Derivation =>
   // Not final to override it on Scala 3 with summonIgnoring!
 
   protected def summonTransformerUnchecked[From: Type, To: Type]
-      : Option[Expr[io.scalaland.chimney.Transformer[From, To]]] =
-    Expr.summonImplicit[io.scalaland.chimney.Transformer[From, To]]
+      : Option[Expr[io.scalaland.chimney.Transformer[From, To]]]
 
   protected def summonPartialTransformerUnchecked[From: Type, To: Type]
-      : Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
-    Expr.summonImplicit[io.scalaland.chimney.PartialTransformer[From, To]]
+      : Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]]
 
   final protected def summonTotalOuterTransformer[From: Type, To: Type]: Option[TotalOuterTransformer[From, To]] = {
     val inferred = ChimneyType.TotalOuterTransformer.inferred[From, To]

@@ -29,32 +29,6 @@ class PartialTransformerDslSeparationSpec extends ChimneySpec {
     }
   }
 
-  group("importing auto.*") {
-    import auto.*
-
-    case class Foo(baz: String)
-    case class Bar(baz: String)
-
-    test("should enable automatic derivation") {
-      // requires implicit conflict resolution settings since it generates identity transformer using macros
-      implicit val cfg = TransformerConfiguration.default.enableImplicitConflictResolution(dsl.PreferTotalTransformer)
-      implicitly[PartialTransformer[Foo, Bar]].transform(Foo("test")).asOption.get ==> Bar("test")
-    }
-
-    test("should not enable inlined derivation") {
-      // format of missing method differ between 2 and 3 and we cannot rely on it
-      compileErrors("""Foo("test").intoPartial[Bar].transform""").arePresent()
-    }
-
-    test("should not enable summoning declared instances") {
-      @unused implicit val transformer: PartialTransformer[Foo, Bar] =
-        PartialTransformer.define[Foo, Bar].withFieldConst(_.baz, "test2").buildTransformer
-
-      // format of missing method differ between 2 and 3 and we cannot rely on it
-      compileErrors("""Foo("test").transformIntoPartial[Bar]""").arePresent()
-    }
-  }
-
   group("importing inlined.*") {
     import inlined.*
 
@@ -84,11 +58,6 @@ class PartialTransformerDslSeparationSpec extends ChimneySpec {
 
     case class Foo(baz: String)
     case class Bar(baz: String)
-
-    test("should not enable automatic derivation") {
-      // format of missing implicit differ between 2 and 3 and we cannot rely on it
-      compileErrors("""Foo("test").transformIntoPartial[Bar]""").arePresent()
-    }
 
     test("should not enable inlined derivation") {
       // format of missing method differ between 2 and 3 and we cannot rely on it

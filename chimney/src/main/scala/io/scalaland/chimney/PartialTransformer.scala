@@ -2,7 +2,6 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinitionCommons}
 import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
-import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 
 /** Type class expressing partial transformation between source type `From` and target type `To`, with the ability of
   * reporting path-annotated transformation error(s).
@@ -171,8 +170,7 @@ object PartialTransformer extends PartialTransformerLowPriorityImplicits1 {
     */
   type AutoDerived[From, To] = Transformer[From, To]
 }
-// extended by PartialTransformerCompanionPlatform
-private[chimney] trait PartialTransformerLowPriorityImplicits1 extends PartialTransformerLowPriorityImplicits2 {
+private[chimney] trait PartialTransformerLowPriorityImplicits1 extends PartialTransformerCompanionPlatform {
   this: PartialTransformer.type =>
 
   /** Extracts [[io.scalaland.chimney.PartialTransformer]] from existing [[io.scalaland.chimney.Codec.decode]].
@@ -184,27 +182,8 @@ private[chimney] trait PartialTransformerLowPriorityImplicits1 extends PartialTr
     *
     * @since 1.2.0
     */
-  given partialTransformerFromCodecDecoder[Dto, Domain](using
+  implicit def partialTransformerFromCodecDecoder[Dto, Domain](implicit
       codec: Codec[Domain, Dto]
   ): PartialTransformer[Dto, Domain] =
     codec.decode
-}
-private[chimney] trait PartialTransformerLowPriorityImplicits2 {
-  this: PartialTransformer.type =>
-
-  /** Provides [[io.scalaland.chimney.PartialTransformer]] derived with the default settings.
-    *
-    * When transformation can't be derived, it results with compilation error.
-    *
-    * @tparam From
-    *   type of input value
-    * @tparam To
-    *   type of output value
-    * @return
-    *   [[io.scalaland.chimney.PartialTransformer]] type class definition
-    *
-    * @since 0.8.0
-    */
-  inline given derive[From, To]: PartialTransformer[From, To] =
-    ${ TransformerMacros.derivePartialTransformerWithDefaults[From, To] }
 }
