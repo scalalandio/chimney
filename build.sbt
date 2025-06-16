@@ -18,12 +18,11 @@ credentials += Credentials(
 // Versions:
 
 val versions = new {
-  val scala212 = "2.12.20"
   val scala213 = "2.13.16"
-  val scala3 = "3.7.0"
+  val scala3 = "3.7.1"
 
   // Which versions should be cross-compiled for publishing
-  val scalas = List(scala212, scala213, scala3)
+  val scalas = List(scala213, scala3)
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Dependencies
@@ -31,7 +30,7 @@ val versions = new {
   val cats = "2.13.0"
   val kindProjector = "0.13.3"
   val munit = "1.1.1"
-  val scalaCollectionCompat = "2.13.0"
+  val scalaCollectionCompat = "2.13.0" // TODO: remove
   val scalaJavaCompat = "1.0.2"
   val scalaJavaTime = "2.6.0"
   val scalapbRuntime = scalapb.compiler.Version.scalapbVersion
@@ -51,7 +50,6 @@ val dev = new {
 
   // Which version should be used in IntelliJ
   val ideScala = props.getProperty("ide.scala") match {
-    case "2.12" => versions.scala212
     case "2.13" => versions.scala213
     case "3"    => versions.scala3
   }
@@ -88,6 +86,7 @@ val only1VersionInIDE =
         .Configure(_.settings(ideSkipProject := true, bspEnabled := false, scalafmtOnCompile := false))
     }
 
+// TODO: move to shared dir
 val addScala213plusDir =
   MatrixAction
     .ForScala(v => (v.value == versions.scala213) || v.isScala3)
@@ -118,13 +117,13 @@ val settings = Seq(
           "-no-indent",
           "-Wconf:msg=Unreachable case:s", // suppress fake (?) errors in internal.compiletime
           "-Wconf:msg=Missing symbol position:s", // suppress warning https://github.com/scala/scala3/issues/21672
-          "-Wconf:msg=Implicit parameters should be provided with a `using` clause:s", // we're not rewriting this, since we are still cross-compiling with 2.12 and 2.
-          "-Wconf:msg=The syntax `<function> _` is no longer supported:s", // we're not rewriting this, since we are still cross-compiling with 2.12 and 2.13
-          "-Wconf:msg=uninitialized.:s", // we're not rewriting this, since we are still cross-compiling with 2.12 and 2.13
+          "-Wconf:msg=Implicit parameters should be provided with a `using` clause:s", // we're not rewriting this, since we are still cross-compiling with 2.13
+          "-Wconf:msg=The syntax `<function> _` is no longer supported:s", // we're not rewriting this, since we are still cross-compiling with 2.13
+          "-Wconf:msg=uninitialized.:s", // we're not rewriting this, since we are still cross-compiling with 2.13
           "-Wnonunit-statement",
-          //"-Wunused:imports", // import x.Underlying as X is marked as unused even though it is! probably one of https://github.com/scala/scala3/issues/: #18564, #19252, #19657, #19912
+          // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is! probably one of https://github.com/scala/scala3/issues/: #18564, #19252, #19657, #19912
           "-Wunused:privates",
-          //"-Wunused:locals",
+          // "-Wunused:locals",
           "-Wunused:explicits",
           "-Wunused:implicits",
           "-Wunused:params",
@@ -144,7 +143,7 @@ val settings = Seq(
           "-explaintypes",
           "-feature",
           "-language:higherKinds",
-          "-Wconf:origin=scala.collection.compat.*:s", // type aliases without which 2.12 fail compilation but 2.13/3 doesn't need them
+          "-Wconf:origin=scala.collection.compat.*:s", // type aliases without which 2.12 fail compilation but 2.13/3 doesn't need them // TODO: remove this
           "-Wconf:cat=scala3-migration:s", // silence mainly issues with -Xsource:3 and private case class constructors
           "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s", // we want to be able to deprecate APIs and test them while they're deprecated
           "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
@@ -174,53 +173,6 @@ val settings = Seq(
           "-Ywarn-macros:after",
           "-Ytasty-reader"
         )
-      case Some((2, 12)) =>
-        Seq(
-          // format: off
-          "-encoding", "UTF-8",
-          "-target:jvm-1.8",
-          // format: on
-          "-unchecked",
-          "-deprecation",
-          "-explaintypes",
-          "-feature",
-          "-language:higherKinds",
-          "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s", // we want to be able to deprecate APIs and test them while they're deprecated
-          "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
-          "-Wconf:src=io/scalaland/chimney/cats/package.scala:s", // silence package object inheritance deprecation
-          "-Wconf:msg=discarding unmoored doc comment:s", // silence errors when scaladoc cannot comprehend nested vals
-          "-Wconf:msg=Could not find any member to link for:s", // since errors when scaladoc cannot link to stdlib types or nested types
-          "-Wconf:msg=Variable .+ undefined in comment for:s", // silence errors when there we're showing a buggy Expr in scaladoc comment
-          "-Xexperimental",
-          "-Xfatal-warnings",
-          "-Xfuture",
-          "-Xlint:adapted-args",
-          "-Xlint:by-name-right-associative",
-          "-Xlint:delayedinit-select",
-          "-Xlint:doc-detached",
-          "-Xlint:inaccessible",
-          "-Xlint:infer-any",
-          "-Xlint:nullary-override",
-          "-Xlint:nullary-unit",
-          "-Xlint:option-implicit",
-          "-Xlint:package-object-classes",
-          "-Xlint:poly-implicit-overload",
-          "-Xlint:private-shadow",
-          "-Xlint:stars-align",
-          "-Xlint:type-parameter-shadow",
-          "-Xlint:unsound-match",
-          "-Xsource:3",
-          "-Yno-adapted-args",
-          "-Ywarn-dead-code",
-          "-Ywarn-inaccessible",
-          "-Ywarn-infer-any",
-          "-Ywarn-numeric-widen",
-          "-Ywarn-unused:locals",
-          "-Ywarn-unused:imports",
-          "-Ywarn-macros:after",
-          "-Ywarn-nullary-override",
-          "-Ywarn-nullary-unit"
-        )
       case _ => Seq.empty
     }
   },
@@ -232,12 +184,6 @@ val settings = Seq(
     }
   },
   Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings"),
-  Test / compile / scalacOptions --= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 12)) => Seq("-Ywarn-unused:locals") // Scala 2.12 ignores @unused warns
-      case _             => Seq.empty
-    }
-  },
   coverageExcludedPackages := ".*DefCache.*" // DefCache is kind-a experimental utility
 )
 
@@ -306,7 +252,7 @@ val mimaSettings = Seq(
     }
     previousVersions.map(organization.value %% moduleName.value % _)
   },
-  mimaFailOnNoPrevious := false //true
+  mimaFailOnNoPrevious := false // true
 )
 
 val noPublishSettings =
@@ -314,7 +260,7 @@ val noPublishSettings =
 
 val ciCommand = (platform: String, scalaSuffix: String) => {
   val isJVM = platform == "JVM"
-  val isSandwichable = isJVM && scalaSuffix != "2_12"
+  val isSandwichable = isJVM
 
   val clean = Vector("clean")
   def withCoverage(tasks: String*): Vector[String] =
@@ -378,13 +324,12 @@ lazy val root = project
     name := "chimney-build",
     description := "Build setup for Chimney modules",
     logo :=
-      s"""Chimney ${(version).value} build for (${versions.scala212}, ${versions.scala213}, ${versions.scala3}) x (Scala JVM, Scala.js $scalaJSVersion, Scala Native $nativeVersion)
+      s"""Chimney ${(version).value} build for (${versions.scala213}, ${versions.scala3}) x (Scala JVM, Scala.js $scalaJSVersion, Scala Native $nativeVersion)
          |
          |This build uses sbt-projectmatrix with sbt-commandmatrix helper:
          | - Scala JVM adds no suffix to a project name seen in build.sbt
          | - Scala.js adds the "JS" suffix to a project name seen in build.sbt
          | - Scala Native adds the "Native" suffix to a project name seen in build.sbt
-         | - Scala 2.12 adds the suffix "2_12" to a project name seen in build.sbt
          | - Scala 2.13 adds no suffix to a project name seen in build.sbt
          | - Scala 3 adds the suffix "3" to a project name seen in build.sbt
          |
@@ -411,17 +356,12 @@ lazy val root = project
       sbtwelcome.UsefulTask("benchmarks/Jmh/run", "Run JMH benchmarks suite").alias("runBenchmarks"),
       sbtwelcome.UsefulTask(ciCommand("JVM", "3"), "CI pipeline for Scala 3 on JVM").alias("ci-jvm-3"),
       sbtwelcome.UsefulTask(ciCommand("JVM", ""), "CI pipeline for Scala 2.13 on JVM").alias("ci-jvm-2_13"),
-      sbtwelcome.UsefulTask(ciCommand("JVM", "2_12"), "CI pipeline for Scala 2.12 on JVM").alias("ci-jvm-2_12"),
       sbtwelcome.UsefulTask(ciCommand("JS", "3"), "CI pipeline for Scala 3 on Scala JS").alias("ci-js-3"),
       sbtwelcome.UsefulTask(ciCommand("JS", ""), "CI pipeline for Scala 2.13 on Scala JS").alias("ci-js-2_13"),
-      sbtwelcome.UsefulTask(ciCommand("JS", "2_12"), "CI pipeline for Scala 2.12 on Scala JS").alias("ci-js-2_12"),
       sbtwelcome.UsefulTask(ciCommand("Native", "3"), "CI pipeline for Scala 3 on Scala Native").alias("ci-native-3"),
       sbtwelcome
         .UsefulTask(ciCommand("Native", ""), "CI pipeline for Scala 2.13 on Scala Native")
         .alias("ci-native-2_13"),
-      sbtwelcome
-        .UsefulTask(ciCommand("Native", "2_12"), "CI pipeline for Scala 2.12 on Scala Native")
-        .alias("ci-native-2_12"),
       sbtwelcome
         .UsefulTask(
           publishLocalForTests,

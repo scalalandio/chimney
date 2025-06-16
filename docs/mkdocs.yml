@@ -93,7 +93,7 @@ extra:
   scala:
     2_12: "2.12.20"
     2_13: "2.13.16"
-    3:    "3.7.0"
+    3:    "3.7.1"
   libraries:
     cats:             "2.13.0"
     scala_automapper: "0.7.0"
