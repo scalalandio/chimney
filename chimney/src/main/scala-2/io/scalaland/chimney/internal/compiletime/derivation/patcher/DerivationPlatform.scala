@@ -18,7 +18,7 @@ private[compiletime] trait DerivationPlatform
 
   private def summonIgnoring[A: c.WeakTypeTag](ignored: Symbol*): Option[Expr[A]] = scala.util
     .Try {
-      // TODO: c..inferImplicitValueIgnoring
+      // TODO: c.inferImplicitValueIgnoring
       c.inferImplicitValue(weakTypeOf[A], silent = true, withMacrosDisabled = false)
     }
     .toOption
