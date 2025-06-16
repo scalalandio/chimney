@@ -257,8 +257,7 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
       "chimneyCats",
       "chimneyProtobufs",
       if (isJVM) "chimneyJavaCollections" else "",
-      if (isSandwichable) "chimneySandwichTests" else "",
-      "chimneyEngine"
+      if (isSandwichable) "chimneySandwichTests" else ""
     )
     if name.nonEmpty
   } yield s"$name${if (isJVM) "" else platform}$scalaSuffix"
@@ -302,7 +301,6 @@ lazy val root = project
   .aggregate(chimneyCats.projectRefs *)
   .aggregate(chimneyJavaCollections.projectRefs *)
   .aggregate(chimneyProtobufs.projectRefs *)
-  .aggregate(chimneyEngine.projectRefs *)
   .aggregate(chimneySandwichTests.projectRefs *)
   .settings(
     moduleName := "chimney-build",
@@ -469,27 +467,6 @@ lazy val chimneyProtobufs = projectMatrix
     libraryDependencies += "com.thesamet.scalapb" %% "scalapb-runtime" % versions.scalapbRuntime % ProtobufConfig
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
-
-lazy val chimneyEngine = projectMatrix
-  .in(file("chimney-engine"))
-  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
-  .enablePlugins(GitVersioning, GitBranchPrompt)
-  .disablePlugins(WelcomePlugin, ProtocPlugin)
-  .settings(
-    moduleName := "chimney-engine",
-    name := "chimney-engine",
-    description := "Chimney derivation engine exposed for reuse in other libraries"
-  )
-  .settings(settings *)
-  .settings(versionScheme := None) // macros internal API is NOT stable yet
-  .settings(publishSettings *)
-  // .settings(mimaSettings *) // we need to get some feedback before we stabilize this
-  .settings(
-    coverageExcludedPackages := "io.scalaland.chimney.internal.compiletime.*", // we're only checking if it compiles
-    mimaFailOnNoPrevious := false // this hasn't been published yet
-  )
-  .settings(dependencies *)
-  .dependsOn(chimney)
 
 lazy val chimneySandwichTestCases213 = projectMatrix
   .in(file("chimney-sandwich-test-cases-213"))
