@@ -4,7 +4,7 @@ import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.integrations
 import io.scalaland.chimney.partial
 
-import scala.collection.compat.Factory
+import scala.collection.Factory
 
 private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: ChimneyDefinitionsPlatform =>
 

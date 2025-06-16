@@ -96,7 +96,7 @@ to control which version we are working on currently:
 # Do not commit changes to this file!
 # Change it locally, reload build in IDE, and develop.
 
-# Allowed: 2.12, 2.13, 3
+# Allowed: 2.13, 3
 ide.scala = 2.13
 # Allowed: jvm, js, native
 ide.platform = jvm
@@ -158,8 +158,8 @@ open sbt and run `publishLocal` task for every artifact that you want to publish
  * `chimney-macro-commons` is required for `chimney` to work
  * `chimney-cats`, `chimney-java-collections` and `chimney-protobufs` rely on `chimney`
  * `chimneyMacroCommons`, `chimney`, `chimneyCats`, etc. are versions with Scala 2.13 on JVM
- * versions for Scala 2.12, Scala 3, Scala.js and Scala Native are NOT published by prepending `++` but by
-   using a different suffix (`2_12`, `3`, `JS`, `Native`, see `projects` task to get a full list of projects) 
+ * versions for Scala Scala 3, Scala.js and Scala Native are NOT published by prepending `++` but by
+   using a different suffix (`3`, `JS`, `Native`, see `projects` task to get a full list of projects) 
 
 ## Release checklist
 

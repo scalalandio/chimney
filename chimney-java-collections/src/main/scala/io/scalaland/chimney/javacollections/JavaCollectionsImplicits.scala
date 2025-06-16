@@ -3,7 +3,7 @@ package io.scalaland.chimney.javacollections
 import java.util as ju
 import io.scalaland.chimney.integrations.*
 
-import scala.collection.compat.Factory
+import scala.collection.Factory
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 import scala.reflect.{classTag, ClassTag}

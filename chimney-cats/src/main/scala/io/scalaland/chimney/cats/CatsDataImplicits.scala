@@ -1,15 +1,24 @@
 package io.scalaland.chimney.cats
 
 import cats.{~>, Order, Traverse}
-import cats.data.{Chain, NonEmptyChain, NonEmptyList, NonEmptyMap, NonEmptySeq, NonEmptySet, NonEmptyVector}
+import cats.data.{
+  Chain,
+  NonEmptyChain,
+  NonEmptyLazyList,
+  NonEmptyList,
+  NonEmptyMap,
+  NonEmptySeq,
+  NonEmptySet,
+  NonEmptyVector
+}
 import io.scalaland.chimney.integrations.*
 import io.scalaland.chimney.partial
 
-import scala.collection.compat.Factory
+import scala.collection.Factory
 import scala.collection.mutable
 
 /** @since 1.0.0 */
-trait CatsDataImplicits extends CatsDataImplicitsCompat {
+trait CatsDataImplicits extends CatsDataImplicitsLowPriority {
 
   /** @since 1.5.0 */
   implicit def catsTotalOuterTransformerFromTraverse[F[_]: Traverse, A, B]: TotalOuterTransformer[F[A], F[B], A, B] =
@@ -172,6 +181,23 @@ trait CatsDataImplicits extends CatsDataImplicitsCompat {
             }
         }
       def iterator(collection: NonEmptyVector[A]): Iterator[A] = collection.iterator
+    }
+
+  /** @since 1.0.0 */
+  implicit def catsNonEmptyLazyListIsPartiallyBuildIterable[A]: PartiallyBuildIterable[NonEmptyLazyList[A], A] =
+    new PartiallyBuildIterable[NonEmptyLazyList[A], A] {
+      def partialFactory: Factory[A, partial.Result[NonEmptyLazyList[A]]] =
+        new FactoryCompat[A, partial.Result[NonEmptyLazyList[A]]] {
+          def newBuilder: mutable.Builder[A, partial.Result[NonEmptyLazyList[A]]] =
+            new FactoryCompat.Builder[A, partial.Result[NonEmptyLazyList[A]]] {
+              private val impl = mutable.ListBuffer.empty[A]
+              def clear(): Unit = impl.clear()
+              def result(): partial.Result[NonEmptyLazyList[A]] =
+                partial.Result.fromOption(NonEmptyLazyList.fromSeq(impl.result()))
+              def addOne(elem: A): this.type = { impl += elem; this }
+            }
+        }
+      def iterator(collection: NonEmptyLazyList[A]): Iterator[A] = collection.iterator
     }
 }
 

@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.integra
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-import scala.collection.compat.Factory
+import scala.collection.Factory
 
 trait TotallyOrPartiallyBuildIterables { this: Derivation =>
 

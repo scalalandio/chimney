@@ -5,9 +5,7 @@ import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.integrations._
 // format: on
 
-// format: off
-import scala.collection.compat._
-// format: on
+import scala.collection.Factory
 import scala.collection.mutable
 
 /** @since 0.8.0 */

@@ -532,13 +532,8 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
     test("should allow targeting setter method returning non-Unit values") {
       val expected = new JavaBeanTargetNonUnitSetter
       expected.setId("test1")
-      // Scala 2.12 does not allow us to define 2 val _ = ... in the same scope :/
-      locally {
-        val _ = expected.setName("test2")
-      }
-      locally {
-        val _ = expected.setFlag(true)
-      }
+      val _ = expected.setName("test2")
+      val _ = expected.setFlag(true)
 
       CaseClassWithFlag("test1", "test2", flag = true)
         .into[JavaBeanTargetNonUnitSetter]
@@ -559,13 +554,8 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
     ) {
       val expected = new JavaBeanTargetNonUnitSetter
       expected.setId("test1")
-      // Scala 2.12 does not allow us to define 2 val _ = ... in the same scope :/
-      locally {
-        val _ = expected.setName("test2")
-      }
-      locally {
-        val _ = expected.setFlag(true)
-      }
+      val _ = expected.setName("test2")
+      val _ = expected.setFlag(true)
 
       CaseClassWithFlag("test1", "test2", flag = true)
         .into[JavaBeanTargetNonUnitSetter]

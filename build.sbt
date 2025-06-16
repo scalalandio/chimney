@@ -30,8 +30,6 @@ val versions = new {
   val cats = "2.13.0"
   val kindProjector = "0.13.3"
   val munit = "1.1.1"
-  val scalaCollectionCompat = "2.13.0" // TODO: remove
-  val scalaJavaCompat = "1.0.2"
   val scalaJavaTime = "2.6.0"
   val scalapbRuntime = scalapb.compiler.Version.scalapbVersion
 }
@@ -86,17 +84,6 @@ val only1VersionInIDE =
         .Configure(_.settings(ideSkipProject := true, bspEnabled := false, scalafmtOnCompile := false))
     }
 
-// TODO: move to shared dir
-val addScala213plusDir =
-  MatrixAction
-    .ForScala(v => (v.value == versions.scala213) || v.isScala3)
-    .Configure(
-      _.settings(
-        Compile / unmanagedSourceDirectories += sourceDirectory.value.toPath.resolve("main/scala-2.13+").toFile,
-        Test / unmanagedSourceDirectories += sourceDirectory.value.toPath.resolve("test/scala-2.13+").toFile
-      )
-    )
-
 val settings = Seq(
   git.useGitDescribe := true,
   git.uncommittedSignifier := None,
@@ -143,7 +130,6 @@ val settings = Seq(
           "-explaintypes",
           "-feature",
           "-language:higherKinds",
-          "-Wconf:origin=scala.collection.compat.*:s", // type aliases without which 2.12 fail compilation but 2.13/3 doesn't need them // TODO: remove this
           "-Wconf:cat=scala3-migration:s", // silence mainly issues with -Xsource:3 and private case class constructors
           "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s", // we want to be able to deprecate APIs and test them while they're deprecated
           "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
@@ -189,7 +175,6 @@ val settings = Seq(
 
 val dependencies = Seq(
   libraryDependencies ++= Seq(
-    "org.scala-lang.modules" %%% "scala-collection-compat" % versions.scalaCollectionCompat,
     "org.scalameta" %%% "munit" % versions.munit % Test
   ),
   libraryDependencies ++= {
@@ -373,7 +358,7 @@ lazy val root = project
 
 lazy val chimney = projectMatrix
   .in(file("chimney"))
-  .someVariations(versions.scalas, versions.platforms)((addScala213plusDir +: only1VersionInIDE) *)
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
@@ -403,7 +388,7 @@ lazy val chimney = projectMatrix
 
 lazy val chimneyCats = projectMatrix
   .in(file("chimney-cats"))
-  .someVariations(versions.scalas, versions.platforms)((addScala213plusDir +: only1VersionInIDE) *)
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
@@ -438,9 +423,7 @@ lazy val chimneyJavaCollections = projectMatrix
   .settings(publishSettings *)
   .settings(mimaSettings *)
   .settings(
-    Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*, io.scalaland.chimney.javacollections.*",
-    // Scala 2.12 doesn't have scala.jdk.StreamConverters and we use it in test of java.util.stream type class instances
-    libraryDependencies += "org.scala-lang.modules" %%% "scala-java8-compat" % versions.scalaJavaCompat % Test
+    Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*, io.scalaland.chimney.javacollections.*"
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 
@@ -489,7 +472,7 @@ lazy val chimneyProtobufs = projectMatrix
 
 lazy val chimneyEngine = projectMatrix
   .in(file("chimney-engine"))
-  .someVariations(versions.scalas, versions.platforms)((addScala213plusDir +: only1VersionInIDE) *)
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(

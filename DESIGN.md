@@ -154,7 +154,7 @@ prepends flags to the flag type representation.
 
 To understand abstractions in derivation macros some assertions need to be clarified:
 
-* code will be cross compiled for 2.12/2.13/3 (and for JVM, Scala.js and Scala Native)
+* code will be cross compiled for 2.13/3 (and for JVM, Scala.js and Scala Native)
 * each bugfix would have to be shared by all codebases
 * the logic between all Scala versions needs to stay as similar as possible unless there are some good non-accidental
   reasons to make behavior different

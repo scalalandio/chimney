@@ -4,7 +4,6 @@ import io.scalaland.chimney.dsl.PatcherDefinitionCommons
 import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.runtime
 
-import scala.collection.compat.*
 import scala.collection.immutable.{ListMap, ListSet}
 import io.scalaland.chimney.dsl.UnusedFieldPolicy
 import io.scalaland.chimney.dsl.UnmatchedSubtypePolicy

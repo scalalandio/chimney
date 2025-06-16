@@ -10,7 +10,7 @@ from the types, you need to provide it with a hint, but nothing more.
     and compile it by running a command in the file's folder:
 
     ```bash
-    # scala_version - e.g. {{ scala.2_12 }}, {{ scala.2_13 }} or {{ scala.3 }}
+    # scala_version - e.g. {{ scala.2_13 }} or {{ scala.3 }}
     # platform      - e.g. jvm, scala-js or scala-native
     scala-cli run --scala $scala_version --platform $platform .
     ```

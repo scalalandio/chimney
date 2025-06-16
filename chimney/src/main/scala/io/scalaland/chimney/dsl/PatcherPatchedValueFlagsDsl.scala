@@ -120,7 +120,7 @@ private[chimney] trait PatcherPatchedValueFlagsDsl[UpdateFlag[_ <: PatcherFlags]
 object PatcherPatchedValueFlagsDsl {
 
   // It's ugly but:
-  // - it works between 2.12/2.13/3
+  // - it works between 2.13/3
   // - it let us work around limitations of existential types that we have to use in return types fof whitebox macros on Scala 2
   // - it let us work around lack of existential types on Scala 3
 

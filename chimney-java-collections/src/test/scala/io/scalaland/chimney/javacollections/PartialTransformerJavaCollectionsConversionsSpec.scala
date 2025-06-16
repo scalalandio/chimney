@@ -5,10 +5,9 @@ import io.scalaland.chimney.{partial, ChimneySpec, PartialTransformer, Transform
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.JavaEnum
 
-import scala.collection.compat.*
 import scala.collection.immutable.{ListMap, ListSet, SortedMap}
 import scala.jdk.CollectionConverters.*
-import scala.compat.java8.StreamConverters.* // Scala 2.12 doesn't have scala.jdk.StreamConverters
+import scala.jdk.StreamConverters.*
 
 class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 

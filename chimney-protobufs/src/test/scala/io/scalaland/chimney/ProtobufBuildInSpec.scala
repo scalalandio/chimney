@@ -8,7 +8,7 @@ import io.scalaland.chimney.protobufs._
 import io.scalaland.chimney.examples.pb
 import io.scalaland.chimney.fixtures.wrappers
 
-import scala.collection.compat.immutable.ArraySeq
+import scala.collection.immutable.ArraySeq
 
 class ProtobufBuildInSpec extends ChimneySpec {
 

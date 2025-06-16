@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
-import scala.collection.compat.*
+import scala.collection.Factory
 import scala.util.control.NonFatal
 
 /** Representations of an ongoing computation.

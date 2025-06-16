@@ -83,7 +83,7 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     private def transformWithImplicitIfAvailable[From, To](implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[Rule.ExpansionResult[To]] = ctx match {
-      case TransformationContext.ForTotal(_) => DerivationResult.attemptNextRule
+      case TransformationContext.ForTotal(_)        => DerivationResult.attemptNextRule
       case TransformationContext.ForPartial(src, _) =>
         summonTransformerUnchecked[From, To].fold(DerivationResult.attemptNextRule[To]) { totalTransformer =>
           // We're constructing:

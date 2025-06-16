@@ -1,7 +1,7 @@
 package io.scalaland.chimney.partial
 
 import io.scalaland.chimney.internal.runtime.NonEmptyErrorsChain
-import scala.collection.compat.*
+import scala.collection.Factory
 import scala.util.{Failure, Success, Try}
 
 /** Data type representing either successfully computed value or non-empty collection of path-annotated errors.

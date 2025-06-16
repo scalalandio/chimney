@@ -2,7 +2,6 @@ package io.scalaland.chimney.internal.runtime
 
 import io.scalaland.chimney.partial
 
-import scala.collection.compat.*
 import scala.util.hashing.MurmurHash3
 
 /** Specialized chain-like data structure for efficient representation of path-annotated errors, guaranteed to be
@@ -70,8 +69,7 @@ sealed abstract class NonEmptyErrorsChain extends Iterable[partial.Error] {
   final override def hashCode(): Int =
     MurmurHash3.orderedHash(iterator)
 
-  @scala.annotation.nowarn // suppress deprecation - 2.12 does not have "className" and complains about "override"
-  override def stringPrefix: String = "NonEmptyErrorsChain"
+  override def className: String = "NonEmptyErrorsChain"
 }
 
 object NonEmptyErrorsChain {

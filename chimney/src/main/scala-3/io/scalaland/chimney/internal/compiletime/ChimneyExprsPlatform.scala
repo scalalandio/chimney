@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal.compiletime
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.{integrations, partial, PartialTransformer, Patcher, Transformer}
 
-import scala.collection.compat.Factory
+import scala.collection.Factory
 import scala.quoted
 
 private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: ChimneyDefinitionsPlatform =>

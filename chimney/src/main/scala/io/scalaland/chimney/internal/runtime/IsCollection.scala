@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal.runtime
 import io.scalaland.chimney.integrations.*
 
 import scala.annotation.{implicitNotFound, unused}
-import scala.collection.compat.Factory
+import scala.collection.Factory
 
 // $COVERAGE-OFF$evidence used only within macro-erased expressions
 
@@ -12,14 +12,14 @@ import scala.collection.compat.Factory
   * @since 1.0.0
   */
 @implicitNotFound(
-  "Expected collection (type extending scala.Iterable which has scala.collection.compat.Factory instance), got ${C}"
+  "Expected collection (type extending scala.Iterable which has scala.collection.Factory instance), got ${C}"
 )
 sealed trait IsCollection[C] {
   type Item
 }
 object IsCollection extends IsCollectionImplicits0 with IsCollectionImplicitCompat {
   @implicitNotFound(
-    "Expected collection (type extending scala.Iterable which has scala.collection.compat.Factory instance), got ${C}"
+    "Expected collection (type extending scala.Iterable which has scala.collection.Factory instance), got ${C}"
   )
   type Of[C, A] = IsCollection[C] { type Item = A }
 

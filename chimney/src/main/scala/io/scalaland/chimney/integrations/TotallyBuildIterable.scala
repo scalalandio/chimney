@@ -1,6 +1,6 @@
 package io.scalaland.chimney.integrations
 
-import scala.collection.compat.*
+import scala.collection.Factory
 
 /** Tells Chimney how to interact with `Collection` type to align its behavior with [[Seq]] of `Item`s.
   *

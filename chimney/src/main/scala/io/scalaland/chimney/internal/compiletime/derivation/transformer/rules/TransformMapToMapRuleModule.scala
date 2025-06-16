@@ -5,7 +5,7 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-import scala.collection.compat.Factory
+import scala.collection.Factory
 
 private[compiletime] trait TransformMapToMapRuleModule {
   this: Derivation & TransformIterableToIterableRuleModule & TransformProductToProductRuleModule =>

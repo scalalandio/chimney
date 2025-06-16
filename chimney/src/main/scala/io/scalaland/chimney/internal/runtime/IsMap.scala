@@ -12,7 +12,7 @@ import scala.annotation.{implicitNotFound, unused}
   * @since 1.0.0
   */
 @implicitNotFound(
-  "Expected map (type extending scala.collection.immutable.Map which has scala.collection.compat.Factory instance), got ${M}"
+  "Expected map (type extending scala.collection.immutable.Map which has scala.collection.Factory instance), got ${M}"
 )
 sealed trait IsMap[M] {
   type Key
@@ -20,7 +20,7 @@ sealed trait IsMap[M] {
 }
 object IsMap extends IsMapImplicits0 {
   @implicitNotFound(
-    "Expected map (type extending scala.collection.immutable.Map which has scala.collection.compat.Factory instance), got ${M}"
+    "Expected map (type extending scala.collection.immutable.Map which has scala.collection.Factory instance), got ${M}"
   )
   type Of[M, K, V] = IsMap[M] { type Key = K; type Value = V }
 
@@ -30,7 +30,7 @@ private[runtime] trait IsMapImplicits0 extends IsMapImplicits1 { this: IsMap.typ
 
   // build-in Chimney support for maps assumes that they are BOTH Map and have a Factory
   implicit def scalaMapIsMap[K, V, M <: Map[K, V]](implicit
-      @unused ev: scala.collection.compat.Factory[(K, V), M]
+      @unused ev: scala.collection.Factory[(K, V), M]
   ): IsMap.Of[M, K, V] = Impl.asInstanceOf[IsMap.Of[M, K, V]]
 }
 private[runtime] trait IsMapImplicits1 extends IsMapImplicits2 { this: IsMap.type =>

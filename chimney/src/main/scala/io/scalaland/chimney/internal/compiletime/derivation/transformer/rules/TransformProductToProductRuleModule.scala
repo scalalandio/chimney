@@ -9,7 +9,6 @@ import io.scalaland.chimney.internal.compiletime.fp.Traverse
 import io.scalaland.chimney.partial
 
 import scala.annotation.unused
-import scala.collection.compat.*
 import scala.collection.immutable.{ListMap, SortedSet}
 
 private[compiletime] trait TransformProductToProductRuleModule { this: Derivation =>

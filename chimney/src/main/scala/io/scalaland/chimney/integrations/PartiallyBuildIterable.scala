@@ -2,7 +2,7 @@ package io.scalaland.chimney.integrations
 
 import io.scalaland.chimney.partial
 
-import scala.collection.compat.*
+import scala.collection.Factory
 
 /** Tells Chimney how to interact with `Collection` type to align its behavior with e.g. NonEmpty* collections of
   * `Item`s.

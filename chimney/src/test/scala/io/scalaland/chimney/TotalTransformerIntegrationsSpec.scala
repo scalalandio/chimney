@@ -3,7 +3,7 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 
 import scala.annotation.unused
-import scala.collection.compat.*
+import scala.collection.Factory
 import scala.collection.immutable.SortedSet
 import scala.collection.mutable
 

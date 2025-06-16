@@ -220,9 +220,7 @@ private[chimney] trait DslMacroUtils {
             case Left(_)     => Right(List(params))
             case Right(tail) => Right(params :: tail)
           }
-        // Eta-expansion wrapper in Scala 2.12
-        case Block(Nil, term) => extractParams(term)
-        case _                => Left(invalidConstructor(t))
+        case _ => Left(invalidConstructor(t))
       }
 
       extractParams(t).map { params =>
@@ -326,23 +324,11 @@ private[chimney] trait DslMacroUtils {
 
     final def applyJavaEnumFixFromClosureSignature[Subtype: WeakTypeTag](f: Tree): Tree =
       if (weakTypeOf[Subtype].typeSymbol.isJavaEnum) {
-        val Subtype = weakTypeOf[Subtype]
         val Function(List(ValDef(_, _, lhs: TypeTree, _)), _) = f
         lhs.original match {
           // Java enum value in Scala 2.13
           case SingletonTypeTree(Literal(Constant(t: TermSymbol))) => apply(refineJavaEnum[Subtype](t))
-          // Java enum value in Scala 2.12
-          case SingletonTypeTree(Select(t, n)) if t.isTerm =>
-            val t = Subtype.companion.decls
-              .find(_.name == n)
-              .getOrElse(
-                c.abort(
-                  c.enclosingPosition,
-                  s"Can't find symbol `$n` among the declarations of `${Subtype.typeSymbol.fullName}`"
-                )
-              )
-            apply(refineJavaEnum[Subtype](t))
-          case _ => apply(weakTypeTag[Subtype])
+          case _                                                   => apply(weakTypeTag[Subtype])
         }
       } else apply(weakTypeTag[Subtype])
 

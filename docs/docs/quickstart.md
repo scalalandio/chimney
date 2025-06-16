@@ -1,8 +1,10 @@
 # Quick Start
 
-Chimney is supported for Scala **2.12**, **2.13**, **3.3+** on [**JVM**](https://www.scala-lang.org/),
+Chimney is supported for Scala **2.13**, **3.3+** on [**JVM**](https://www.scala-lang.org/),
 [**Scala.js**](https://www.scala-js.org/) and [**Scala Native**](https://scala-native.org/) with full feature parity
 between each version.
+
+(Scala **2.12** was supported for whole `1.x` line, and **2.11** on `0.5.x` line)
 
 The newest stable versions on each platform are:
 
@@ -32,8 +34,6 @@ libraryDependencies += "io.scalaland" %%% "chimney" % "{{ chimney_version() }}"
 or try it in [Scala CLI](https://scala-cli.virtuslab.org/):
 
 ```bash
-# Scala 2.12
-scala-cli repl --scala "{{ scala.2_12 }}" --dependency "io.scalaland::chimney::{{ chimney_version() }}"
 # Scala 2.13
 scala-cli repl --scala "{{ scala.2_13 }}" --dependency "io.scalaland::chimney::{{ chimney_version() }}"
 # Scala 3
