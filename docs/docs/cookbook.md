@@ -752,8 +752,8 @@ are described in each type's section.
     Chimney derivation DOES NOT work the same way, so your experiences are unlikely to carry over to Chimney.
     
     Please, read the section below, as it will explain why replacing `import io.scalaland.chimney.dsl._` with
-    `Transformer.derive` + `import io.scalaland.chimney.syntax._` + `import io.scalaland.chimney.auto._` might actually
-    *degrade* the performance, instead of improving it.
+    `Transformer.derive` + `import io.scalaland.chimney.syntax._` + `import io.scalaland.chimney.auto._` (the last one only available on 1.x line)
+    might actually *degrade* the performance, instead of improving it.
     
     In depth explanation why automatic derivation is slow (when it's slow!) and how Chimney avoided such slowdown can be
     found in [*Slow-Auto, Inconvenient-Semi: escaping false dichotomy with sanely-automatic derivation*](https://mateuszkubuszok.github.io/SlowAutoInconvenientSemi/)
@@ -826,7 +826,7 @@ use these imports
 !!! example
 
     ```scala
-    import io.scalaland.chimney.auto._ // Not available on Chimney 2.+ with Scala 3, se below
+    import io.scalaland.chimney.auto._ // Not available on Chimney 2.+, see below
     import io.scalaland.chimney.inlined._
     import io.scalaland.chimney.syntax._
     ```
@@ -983,6 +983,10 @@ is possible it will always be triggered.
     ```
 
     For that reason `import io.scalaland.chimney.auto._` does not exists on Chimney 2.0.0 for Scala 3.
+
+    And thanks to porting the solution from Scala 3.7.0 to 2.13.17, Scala 2.13 could have align the API
+    again - removing `import io.scalaland.chimney.auto._` as well in the process. (The other consequence
+    of that is dropping support for 2.12 on 2.x line).
 
 
 The matter is even more complex with `PartialTransformer` s - they look for both implicit
