@@ -14,6 +14,34 @@ private[compiletime] trait DerivationPlatform
     with rules.PatchProductWithProductRuleModule
     with rules.PatchNotMatchedRuleModule {
 
+  import c.universe.*
+
+  private def summonIgnoring[A: c.WeakTypeTag](ignored: Symbol*): Option[Expr[A]] = scala.util
+    .Try {
+      // TODO: c..inferImplicitValueIgnoring
+      c.inferImplicitValue(weakTypeOf[A], silent = true, withMacrosDisabled = false)
+    }
+    .toOption
+    .filterNot(_ == EmptyTree)
+    .map(tree => c.Expr[A](tree))
+
+  private def makeIgnored[A: c.WeakTypeTag](methods: String*): Seq[Symbol] = {
+    val module = weakTypeOf[A]
+    methods.map { name =>
+      val method = module.decl(TermName(name))
+      assert(method != NoSymbol && method.isMethod && method.isImplicit)
+      method
+    }
+  }
+
+  private val ignoredPatcherImplicits = makeIgnored[io.scalaland.chimney.Patcher.type](
+    "derive" // handled by recursion in macro
+  )
+
+  override protected def summonPatcherUnchecked[A: Type, Patch: Type]
+      : Option[Expr[io.scalaland.chimney.Patcher[A, Patch]]] =
+    summonIgnoring[io.scalaland.chimney.Patcher[A, Patch]](ignoredPatcherImplicits*)
+
   override protected val rulesAvailableForPlatform: List[Rule] = List(
     PatchImplicitRule,
     TransformImplicitRule,
