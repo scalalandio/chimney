@@ -4367,21 +4367,3 @@ For smaller/simpler/short-living libraries it might feel over-engineered.
 
  * Chimney's source code - since 0.8.0 Chimney has been build upon this architecture
  * [`chimney-macro-commons` template](https://github.com/scalalandio/chimney-macro-commons-template) - can be used as a GitHub template
-
-### `chimney-engine`
-
-This module exposes Chimney derivation engine to make it easier to use in one's own macros. It assumes that user would
-implement its macro the same way as Chimney does it, and with similar assumptions
-(see [Under the Hood](under-the-hood.md)).
-
-The only documentation is
-[the example code](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-engine/src/test/) which
-illustrates how one would start developing a macro basing on Chimney engine.
-
-!!! warning
-
-    This module exposes Chimney internal macros, their API can change to enable new feature development, so consider it
-    unstable and experimental!
- 
-    The module's version matches `chimney` version it was compiled against, but it should NOT be considered a semantic
-    version.
