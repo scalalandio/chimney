@@ -65,7 +65,7 @@ private[compiletime] trait TransformationRules { this: Derivation =>
     import TransformationExpr.{PartialExpr, TotalExpr}
 
     implicit private lazy val A: Type[A] = this match {
-      case TotalExpr(expr) => Expr.typeOf(expr)
+      case TotalExpr(expr)   => Expr.typeOf(expr)
       case PartialExpr(expr) =>
         val ChimneyType.PartialResult(a) = Expr.typeOf(expr): @unchecked
         a.Underlying.asInstanceOf[Type[A]]
@@ -77,7 +77,7 @@ private[compiletime] trait TransformationRules { this: Derivation =>
     }
 
     final def flatMap[B: Type](f: Expr[A] => TransformationExpr[B]): TransformationExpr[B] = this match {
-      case TotalExpr(expr) => f(expr)
+      case TotalExpr(expr)   => f(expr)
       case PartialExpr(expr) =>
         ExprPromise
           .promise[A](ExprPromise.NameGenerationStrategy.FromType)

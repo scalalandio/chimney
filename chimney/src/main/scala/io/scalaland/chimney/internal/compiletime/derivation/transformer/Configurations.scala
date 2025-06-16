@@ -171,10 +171,10 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     // $COVERAGE-OFF$It's testable in (Scala-CLI) snippets and not really in normal tests with coverage
     def global: TransformerFlags = XMacroSettings.foldLeft(TransformerFlags()) {
-      case (cfg, transformerFlag"InheritedAccessors=$value") => cfg.copy(inheritedAccessors = value.toBoolean)
-      case (cfg, transformerFlag"MethodAccessors=$value")    => cfg.copy(methodAccessors = value.toBoolean)
-      case (cfg, transformerFlag"DefaultValues=$value")      => cfg.copy(processDefaultValues = value.toBoolean)
-      case (cfg, transformerFlag"BeanSetters=$value")        => cfg.copy(beanSetters = value.toBoolean)
+      case (cfg, transformerFlag"InheritedAccessors=$value")         => cfg.copy(inheritedAccessors = value.toBoolean)
+      case (cfg, transformerFlag"MethodAccessors=$value")            => cfg.copy(methodAccessors = value.toBoolean)
+      case (cfg, transformerFlag"DefaultValues=$value")              => cfg.copy(processDefaultValues = value.toBoolean)
+      case (cfg, transformerFlag"BeanSetters=$value")                => cfg.copy(beanSetters = value.toBoolean)
       case (cfg, transformerFlag"BeanSettersIgnoreUnmatched=$value") =>
         cfg.copy(beanSettersIgnoreUnmatched = value.toBoolean)
       case (cfg, transformerFlag"NonUnitBeanSetters=$value")     => cfg.copy(nonUnitBeanSetters = value.toBoolean)
@@ -643,7 +643,7 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     private def extractArgumentList[Args <: runtime.ArgumentList: Type]: List[(String, ??)] =
       Type[Args] match {
-        case empty if empty =:= ChimneyType.ArgumentList.Empty => List.empty
+        case empty if empty =:= ChimneyType.ArgumentList.Empty  => List.empty
         case ChimneyType.ArgumentList.Argument(name, tpe, args) =>
           import name.Underlying as Name, args.Underlying as Args2
           (Type[Name].extractStringSingleton, tpe) :: extractArgumentList[Args2]
@@ -652,7 +652,7 @@ private[compiletime] trait Configurations { this: Derivation =>
     private def extractArgumentLists[Args <: runtime.ArgumentLists: Type]: List[ListMap[String, ??]] =
       Type[Args] match {
         case empty if empty =:= ChimneyType.ArgumentLists.Empty => List.empty
-        case ChimneyType.ArgumentLists.List(head, tail) =>
+        case ChimneyType.ArgumentLists.List(head, tail)         =>
           import head.Underlying as Head, tail.Underlying as Tail
           ListMap.from(extractArgumentList[Head]) :: extractArgumentLists[Tail]
       }
@@ -661,7 +661,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         defaultFlags: TransformerFlags
     ): TransformerFlags = Type[Flags] match {
       case default if default =:= ChimneyType.TransformerFlags.Default => defaultFlags
-      case ChimneyType.TransformerFlags.Enable(flag, flags) =>
+      case ChimneyType.TransformerFlags.Enable(flag, flags)            =>
         import flag.Underlying as Flag, flags.Underlying as Flags2
         Flag match {
           case ChimneyType.TransformerFlags.Flags.DefaultValueOfType(t) =>
@@ -800,7 +800,7 @@ private[compiletime] trait Configurations { this: Derivation =>
     @scala.annotation.tailrec
     private def wereLocalFlagsOverriden[Flags <: runtime.TransformerFlags: Type]: Boolean = Type[Flags] match {
       case default if default =:= ChimneyType.TransformerFlags.Default => false
-      case ChimneyType.TransformerFlags.Enable(flag, flags) =>
+      case ChimneyType.TransformerFlags.Enable(flag, flags)            =>
         import flag.Underlying as Flag, flags.Underlying as Flags2
         // ImplicitConversions and TypeConstraintEvidence are excluded from check, otherwise they would be impossible
         // to use with instance flags.
@@ -817,7 +817,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         runtimeDataStore: Expr[PatcherDefinitionCommons.RuntimeDataStore]
     ): TransformerConfiguration = Type[Tail] match {
       case empty if empty =:= ChimneyType.TransformerOverrides.Empty => TransformerConfiguration()
-      case ChimneyType.TransformerOverrides.Unused(fromPath, cfg) =>
+      case ChimneyType.TransformerOverrides.Unused(fromPath, cfg)    =>
         import fromPath.Underlying as FromPath, cfg.Underlying as Tail2
         extractTransformerConfig[Tail2](runtimeDataIdx, runtimeDataStore).addTransformerOverride(
           SourcePath(extractPath[FromPath]),

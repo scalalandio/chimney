@@ -89,17 +89,17 @@ The first 2 things you need are JVM and sbt installed. There are many ways to ma
 package managers) and we didn't impose any of them since, as a library, Chimney should work with any supported JDK,
 and sbt runner should fetch the right versions for the project on its own.
 
-Then you need to set up project in an IDE. We are using Intellij, and are using these two settings to control which
-version we are working on currently:
+Then you need to set up project in an IDE. We are using Intellij, and are using these two settings (`dev.properties`)
+to control which version we are working on currently:
 
-```scala
-val versions = new {
-  // ...
+```conf
+# Do not commit changes to this file!
+# Change it locally, reload build in IDE, and develop.
 
-  // Which version should be used in IntelliJ
-  val ideScala = scala213
-  val idePlatform = VirtualAxis.jvm
-}
+# Allowed: 2.12, 2.13, 3
+ide.scala = 2.13
+# Allowed: jvm, js, native
+ide.platform = jvm
 ```
 
 Since almost all the sources are shared between different platforms and Scala versions, this imports only 1 version
@@ -150,7 +150,7 @@ You can check its name in:
  * **Sonatype Release / release-tag** GitHub Action [log](https://github.com/scalalandio/chimney/actions/workflows/release.yml)
  * newest commit will be available on https://chimney.readthedocs.io/ as the [latest version](https://chimney.readthedocs.io/en/latest/)
  * sbt after starting it for selected commit and checking which version will be printed by welcome prompt
- * you may need to add https://oss.sonatype.org/content/repositories/snapshots to the list of repositories
+ * you may need to add https://central.sonatype.com/repository/maven-snapshots to the list of repositories
 
 If you want to test changes that were not merged to `master` you can publish them you for yourself locally. For that
 open sbt and run `publishLocal` task for every artifact that you want to publish as a snapshot. Keep in mind that:

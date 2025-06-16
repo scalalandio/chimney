@@ -245,3 +245,11 @@ object Issue683 {
   implicit def handleEmpty[To]: PartialTransformer[Proto.Empty.type, To] =
     (_: Proto.Empty.type, _: Boolean) => partial.Result.fromEmpty[To]
 }
+
+object Issue741 {
+  case class Item(id: String, data: String)
+  case class ItemOptional(entry: Option[Item])
+
+  case class GItem(id: String, data: String)
+  case class GItemOptional(entry: Option[GItem])
+}

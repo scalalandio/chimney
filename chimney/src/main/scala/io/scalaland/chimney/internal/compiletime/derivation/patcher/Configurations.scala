@@ -181,7 +181,7 @@ private[compiletime] trait Configurations { this: Derivation =>
     private def extractTransformerFlags[Flags <: runtime.PatcherFlags: Type](defaultFlags: PatcherFlags): PatcherFlags =
       Type[Flags] match {
         case default if default =:= ChimneyType.PatcherFlags.Default => defaultFlags
-        case ChimneyType.PatcherFlags.Enable(flag, flags) =>
+        case ChimneyType.PatcherFlags.Enable(flag, flags)            =>
           import flag.Underlying as Flag, flags.Underlying as Flags2
           extractTransformerFlags[Flags2](defaultFlags).setBoolFlag[Flag](value = true)
         case ChimneyType.PatcherFlags.Disable(flag, flags) =>
@@ -201,7 +201,7 @@ private[compiletime] trait Configurations { this: Derivation =>
     @scala.annotation.tailrec
     private def wereLocalFlagsOverriden[Flags <: runtime.PatcherFlags: Type]: Boolean = Type[Flags] match {
       case default if default =:= ChimneyType.PatcherFlags.Default => false
-      case ChimneyType.PatcherFlags.Enable(flag, flags) =>
+      case ChimneyType.PatcherFlags.Enable(flag, flags)            =>
         import flag.Underlying as Flag, flags.Underlying as Flags2
         // Whether or not we're logging macros should not affect the result of the derivation
         if (Flag =:= ChimneyType.PatcherFlags.Flags.MacrosLogging) wereLocalFlagsOverriden[Flags2]
@@ -215,7 +215,7 @@ private[compiletime] trait Configurations { this: Derivation =>
     ): PatcherConfiguration =
       Type[Tail] match {
         case empty if empty =:= ChimneyType.PatcherOverrides.Empty => PatcherConfiguration()
-        case ChimneyType.PatcherOverrides.Ignored(patchPath, cfg) =>
+        case ChimneyType.PatcherOverrides.Ignored(patchPath, cfg)  =>
           import patchPath.Underlying as PatchPath, cfg.Underlying as Tail2
           extractPatcherConfig[Tail2](runtimeDataIdx, runtimeDataStore).addPatcherOverride(
             SourcePath(extractPath[PatchPath]),

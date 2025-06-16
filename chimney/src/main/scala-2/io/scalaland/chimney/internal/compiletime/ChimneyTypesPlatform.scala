@@ -35,7 +35,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       def fixJavaEnums(path: ?<[runtime.Path]): ?<[runtime.Path] =
         path.Underlying match {
           case root if root =:= Path.Root => path
-          case Path.Select(init, name) =>
+          case Path.Select(init, name)    =>
             val fixedInit = fixJavaEnums(init)
             import name.Underlying as Name, fixedInit.Underlying as FixedInit
             Path.Select[FixedInit, Name].as_?<[runtime.Path]

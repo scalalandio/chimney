@@ -844,4 +844,74 @@ class IssuesSpec extends ChimneySpec {
       .transform
       .asOption ==> None
   }
+
+  group("fix issue #741") {
+    import Issue741.*
+
+    test("Wrapped Option[T] -> Option[A]") {
+      GItemOptional(Some(GItem("id", "xyz")))
+        .intoPartial[Option[Item]]
+        .enableNonAnyValWrappers
+        .transform
+        .asOption ==>
+        Some(Some(Item("id", "xyz")))
+
+      GItemOptional(None)
+        .intoPartial[Option[Item]]
+        .enableNonAnyValWrappers
+        .transform
+        .asOption ==>
+        Some(None)
+    }
+
+    test("Option[T] -> Wrapped Option[A]") {
+      Some(GItem("id", "xyz"))
+        .intoPartial[ItemOptional]
+        .enableNonAnyValWrappers
+        .transform
+        .asOption ==>
+        Some(ItemOptional(Some(Item("id", "xyz"))))
+
+      Option
+        .empty[GItem]
+        .intoPartial[ItemOptional]
+        .enableNonAnyValWrappers
+        .transform
+        .asOption ==>
+        Some(ItemOptional(None))
+    }
+
+    test("Wrapped Option[T] -> Wrapped Option[A]") {
+      GItemOptional(Some(GItem("id", "xyz")))
+        .intoPartial[ItemOptional]
+        .enableNonAnyValWrappers
+        .transform
+        .asOption ==>
+        Some(ItemOptional(Some(Item("id", "xyz"))))
+
+      GItemOptional(None)
+        .intoPartial[ItemOptional]
+        .enableNonAnyValWrappers
+        .transform
+        .asOption ==>
+        Some(ItemOptional(None))
+    }
+
+    test("Option[T] -> Option[A]") {
+      Some(GItem("id", "xyz"))
+        .intoPartial[Option[Item]]
+        .enableNonAnyValWrappers
+        .transform
+        .asOption ==>
+        Some(Some(Item("id", "xyz")))
+
+      Option
+        .empty[GItem]
+        .intoPartial[Option[Item]]
+        .enableNonAnyValWrappers
+        .transform
+        .asOption ==>
+        Some(None)
+    }
+  }
 }

@@ -170,7 +170,7 @@ sealed trait Result[+A] {
     */
   final def orElse[B >: A](result: => Result[B]): Result[B] = this match {
     case _: Result.Value[?] => this
-    case e: Result.Errors =>
+    case e: Result.Errors   =>
       result match {
         case r: Result.Value[?] => r
         case e2: Result.Errors  => Result.Errors.merge(e, e2)
@@ -668,7 +668,7 @@ object Result {
       while (it.hasNext)
         f(it.next()) match {
           case Value(value) => bs += value
-          case Errors(ee) =>
+          case Errors(ee)   =>
             if (allErrors == null) allErrors = ee
             else allErrors ++= ee
         }
