@@ -23,18 +23,16 @@ object IsoDefinitionMacros {
       selectorSecond: Expr[Second => U]
   )(using Quotes): Expr[IsoDefinition[First, Second, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyFieldNameTypes {
-      [firstPath <: Path, secondPath <: Path] =>
-        (_: Type[firstPath]) ?=>
-          (_: Type[secondPath]) ?=>
-            '{
-              $id.asInstanceOf[IsoDefinition[
-                First,
-                Second,
-                RenamedFrom[firstPath, secondPath, FirstOverrides],
-                RenamedFrom[secondPath, firstPath, SecondOverrides],
-                Flags
-              ]]
-          }
+      [firstPath <: Path, secondPath <: Path] => (_: Type[firstPath]) ?=> (_: Type[secondPath]) ?=>
+        '{
+          $id.asInstanceOf[IsoDefinition[
+            First,
+            Second,
+            RenamedFrom[firstPath, secondPath, FirstOverrides],
+            RenamedFrom[secondPath, firstPath, SecondOverrides],
+            Flags
+          ]]
+        }
     }(selectorFirst, selectorSecond)
 
   def withSealedSubtypeRenamedImpl[

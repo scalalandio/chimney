@@ -24,14 +24,12 @@ object PatcherDefinitionMacros {
       selectorObj: Expr[A => T],
       value: Expr[U]
   )(using Quotes): Expr[PatcherDefinition[A, Patch, ? <: PatcherOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType {
-      [objPath <: Path] =>
-        (_: Type[objPath]) ?=>
-          '{
-            WithRuntimeDataStore
-              .update($pd, $value)
-              .asInstanceOf[PatcherDefinition[A, Patch, Const[objPath, Overrides], Flags]]
-        }
+    DslMacroUtils().applyFieldNameType { [objPath <: Path] => (_: Type[objPath]) ?=>
+      '{
+        WithRuntimeDataStore
+          .update($pd, $value)
+          .asInstanceOf[PatcherDefinition[A, Patch, Const[objPath, Overrides], Flags]]
+      }
     }(selectorObj)
 
   def withFieldComputedImpl[
@@ -46,14 +44,12 @@ object PatcherDefinitionMacros {
       selectorObj: Expr[A => T],
       f: Expr[Patch => U]
   )(using Quotes): Expr[PatcherDefinition[A, Patch, ? <: PatcherOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType {
-      [objPath <: Path] =>
-        (_: Type[objPath]) ?=>
-          '{
-            WithRuntimeDataStore
-              .update($pd, $f)
-              .asInstanceOf[PatcherDefinition[A, Patch, Computed[Path.Root, objPath, Overrides], Flags]]
-        }
+    DslMacroUtils().applyFieldNameType { [objPath <: Path] => (_: Type[objPath]) ?=>
+      '{
+        WithRuntimeDataStore
+          .update($pd, $f)
+          .asInstanceOf[PatcherDefinition[A, Patch, Computed[Path.Root, objPath, Overrides], Flags]]
+      }
     }(selectorObj)
 
   def withFieldComputedFromImpl[
@@ -71,14 +67,12 @@ object PatcherDefinitionMacros {
       f: Expr[S => U]
   )(using Quotes): Expr[PatcherDefinition[A, Patch, ? <: PatcherOverrides, Flags]] =
     DslMacroUtils().applyFieldNameTypes {
-      [patchPath <: Path, objPath <: Path] =>
-        (_: Type[patchPath]) ?=>
-          (_: Type[objPath]) ?=>
-            '{
-              WithRuntimeDataStore
-                .update($pd, $f)
-                .asInstanceOf[PatcherDefinition[A, Patch, Computed[patchPath, objPath, Overrides], Flags]]
-          }
+      [patchPath <: Path, objPath <: Path] => (_: Type[patchPath]) ?=> (_: Type[objPath]) ?=>
+        '{
+          WithRuntimeDataStore
+            .update($pd, $f)
+            .asInstanceOf[PatcherDefinition[A, Patch, Computed[patchPath, objPath, Overrides], Flags]]
+        }
     }(selectorPatch, selectorObj)
 
   def withFieldIgnoredImpl[
@@ -91,12 +85,10 @@ object PatcherDefinitionMacros {
       pd: Expr[PatcherDefinition[A, Patch, Overrides, Flags]],
       selectorPatch: Expr[Patch => T]
   )(using Quotes): Expr[PatcherDefinition[A, Patch, ? <: PatcherOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType {
-      [patchPath <: Path] =>
-        (_: Type[patchPath]) ?=>
-          '{
-            $pd.asInstanceOf[PatcherDefinition[A, Patch, Ignored[patchPath, Overrides], Flags]]
-        }
+    DslMacroUtils().applyFieldNameType { [patchPath <: Path] => (_: Type[patchPath]) ?=>
+      '{
+        $pd.asInstanceOf[PatcherDefinition[A, Patch, Ignored[patchPath, Overrides], Flags]]
+      }
     }(selectorPatch)
 
   def withPatchedValueFlagImpl[
@@ -110,9 +102,7 @@ object PatcherDefinitionMacros {
       selectorObj: Expr[A => T]
   )(using Quotes): Expr[PatcherPatchedValueFlagsDsl.OfPatcherDefinition[A, Patch, Overrides, Flags, ? <: Path]] =
     DslMacroUtils()
-      .applyFieldNameType {
-        [objPath <: Path] =>
-          (_: Type[objPath]) ?=>
-            '{ PatcherPatchedValueFlagsDsl.OfPatcherDefinition[A, Patch, Overrides, Flags, objPath]($pd) }
+      .applyFieldNameType { [objPath <: Path] => (_: Type[objPath]) ?=>
+        '{ PatcherPatchedValueFlagsDsl.OfPatcherDefinition[A, Patch, Overrides, Flags, objPath]($pd) }
       }(selectorObj)
 }
