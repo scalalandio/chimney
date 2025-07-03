@@ -168,7 +168,7 @@ object PartialTransformer extends PartialTransformerLowPriorityImplicits1 {
     *
     * @since 0.8.0
     */
-  type AutoDerived[From, To] = Transformer[From, To]
+  type AutoDerived[From, To] = PartialTransformer[From, To]
 }
 private[chimney] trait PartialTransformerLowPriorityImplicits1 extends PartialTransformerCompanionPlatform {
   this: PartialTransformer.type =>

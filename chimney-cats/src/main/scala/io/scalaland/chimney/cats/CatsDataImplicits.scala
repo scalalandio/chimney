@@ -30,7 +30,7 @@ trait CatsDataImplicits extends CatsDataImplicitsLowPriority {
           src: F[A],
           failFast: Boolean,
           inner: A => partial.Result[B]
-      ): partial.Result[F[B]] = Traverse[F].traverseWithIndexM(src) { (a, idx) =>
+      ): partial.Result[F[B]] = Traverse[F].traverseWithIndexM[partial.Result, A, B](src) { (a, idx) =>
         inner(a).prependErrorPath(partial.PathElement.Index(idx))
       }
     }

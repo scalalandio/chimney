@@ -32,8 +32,7 @@ trait DerivationPlatform
 
   private def summonIgnoring[A: c.WeakTypeTag](ignored: Symbol*): Option[Expr[A]] = scala.util
     .Try {
-      // TODO: c.inferImplicitValueIgnoring
-      c.inferImplicitValue(weakTypeOf[A], silent = true, withMacrosDisabled = false)
+      c.inferImplicitValueIgnoring(weakTypeOf[A], silent = true, withMacrosDisabled = false)(ignored*)
     }
     .toOption
     .filterNot(_ == EmptyTree)
@@ -42,7 +41,7 @@ trait DerivationPlatform
   private def makeIgnored[A: c.WeakTypeTag](methods: String*): Seq[Symbol] = {
     val module = weakTypeOf[A]
     methods.map { name =>
-      val method = module.decl(TermName(name))
+      val method = module.member(TermName(name))
       assert(method != NoSymbol && method.isMethod && method.isImplicit)
       method
     }
