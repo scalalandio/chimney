@@ -107,8 +107,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           .toMap
       }
 
-      val verifyNoOverrideUnused = Traverse[List]
-        .parTraverse(
+      val verifyNoOverrideUnused: DerivationResult[List[Nothing]] = Traverse[List]
+        .parTraverse[DerivationResult, String, Nothing](
           filterCurrentOverridesForField(usedToName =>
             !parameters.keys.exists(toName => areFieldNamesMatching(usedToName, toName))
           ).keys.toList

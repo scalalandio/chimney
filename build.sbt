@@ -15,10 +15,13 @@ credentials += Credentials(
   sys.env.getOrElse("SONATYPE_PASSWORD", "")
 )
 
+// TODO: remove this once we have a release of Scala 2.13.17
+Global / resolvers += "scala-integration" at "https://scala-ci.typesafe.com/artifactory/scala-integration/"
+
 // Versions:
 
 val versions = new {
-  val scala213 = "2.13.16"
+  val scala213 = "2.13.17-bin-4814abf" // TODO: change to 2.13.17 once released
   val scala3 = "3.7.0"
 
   // Which versions should be cross-compiled for publishing
@@ -152,6 +155,7 @@ val settings = Seq(
           "-Xlint:stars-align",
           "-Xlint:type-parameter-shadow",
           "-Xsource:3",
+          "-Xsource-features:eta-expand-always",
           "-Ywarn-dead-code",
           "-Ywarn-numeric-widen",
           "-Ywarn-unused:locals",
@@ -169,8 +173,9 @@ val settings = Seq(
       case _ => Seq.empty
     }
   },
-  Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings"),
-  coverageExcludedPackages := ".*DefCache.*" // DefCache is kind-a experimental utility
+  Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
+  // TODO: restore this once we have a release of Scala 2.13.17
+  //coverageExcludedPackages := ".*DefCache.*" // DefCache is kind-a experimental utility
 )
 
 val dependencies = Seq(
@@ -181,8 +186,11 @@ val dependencies = Seq(
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, _)) =>
         Seq(
-          "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided,
-          compilerPlugin("org.typelevel" % "kind-projector" % versions.kindProjector cross CrossVersion.full)
+          // TODO: restore this once we have a release of Scala 2.13.17
+          // "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided,
+          //compilerPlugin("org.typelevel" % "kind-projector" % versions.kindProjector cross CrossVersion.full)
+          "org.scala-lang" % "scala-reflect" % "2.13.16" % Provided,
+          compilerPlugin("org.typelevel" % "kind-projector_2.13.16" % versions.kindProjector)
         )
       case _ => Seq.empty
     }
@@ -249,7 +257,9 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
 
   val clean = Vector("clean")
   def withCoverage(tasks: String*): Vector[String] =
-    "coverage" +: tasks.toVector :+ "coverageAggregate" :+ "coverageOff"
+    // TODO: restore this once we have a release of Scala 2.13.17
+    //"coverage" +: tasks.toVector :+ "coverageAggregate" :+ "coverageOff"
+    tasks.toVector
 
   val projects = for {
     name <- Vector(
@@ -265,7 +275,9 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
 
   val tasks = if (isJVM) {
     clean ++
-      withCoverage((tasksOf("compile") ++ tasksOf("test") ++ tasksOf("coverageReport")).toSeq *) ++
+      // TODO: restore this once we have a release of Scala 2.13.17
+      //withCoverage((tasksOf("compile") ++ tasksOf("test") ++ tasksOf("coverageReport")).toSeq *) ++
+      withCoverage((tasksOf("compile") ++ tasksOf("test")).toSeq *) ++
       Vector("benchmarks/compile") ++
       tasksOf("mimaReportBinaryIssues")
   } else {

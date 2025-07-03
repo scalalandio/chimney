@@ -2,7 +2,8 @@
 addSbtPlugin("com.github.sbt" % "sbt-git" % "2.1.0")
 // linters
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.4")
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.3.1")
+// TODO: restore this once we have a release of Scala 2.13.17
+//addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.3.1")
 // cross-compile
 addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.11.0")
 addSbtPlugin("com.indoorvivants" % "sbt-commandmatrix" % "0.0.5")

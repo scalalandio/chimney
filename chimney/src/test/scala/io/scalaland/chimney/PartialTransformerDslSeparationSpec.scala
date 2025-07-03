@@ -1,7 +1,5 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl.TransformerConfiguration
-
 import scala.annotation.unused
 
 class PartialTransformerDslSeparationSpec extends ChimneySpec {
