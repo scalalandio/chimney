@@ -282,7 +282,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                           availableMethodAccessors,
                           availableInheritedAccessors,
                           availableDefault = defaultValue.isDefined,
-                          availableNone = OptionalValue.unapply[CtorParam].isDefined
+                          availableNone = OptionalValue.parse[CtorParam].isDefined
                         )
                     case Product.Parameter.TargetType.SetterParameter(_) if fieldFlags.beanSettersIgnoreUnmatched =>
                       DerivationResult.pure(unmatchedSetter)
@@ -295,7 +295,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                           toName,
                           availableMethodAccessors,
                           availableInheritedAccessors,
-                          availableNone = OptionalValue.unapply[CtorParam].isDefined
+                          availableNone = OptionalValue.parse[CtorParam].isDefined
                         )
                   }
                 }
@@ -616,7 +616,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
       def useNone: Option[DerivationResult[Existential[TransformationExpr]]] =
         // OptionalValue handles both scala.Options as well as a support provided through integrations.OptionalValue.
-        OptionalValue.unapply[CtorParam].filter(_ => fieldFlags.optionDefaultsToNone).map { optional =>
+        OptionalValue.parse[CtorParam].filter(_ => fieldFlags.optionDefaultsToNone).map { optional =>
           // We're constructing:
           // '{ None }
           DerivationResult.existential[TransformationExpr, CtorParam](

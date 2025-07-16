@@ -55,11 +55,13 @@ private[compiletime] trait Contexts { this: Derivation =>
 
   protected object Patched {
 
-    def unapply[Patch, A](implicit ctx: TransformationContext[Patch, A]): Option[Expr[A]] =
+    def parse[Patch, A](implicit ctx: TransformationContext[Patch, A]): Option[Expr[A]] =
       ctx.config.filterCurrentOverridesForFallbacks.collectFirst {
         case TransformerOverride.Fallback(fallback) if fallback.Underlying =:= Type[A] =>
           fallback.value.asInstanceOf[Expr[A]]
       }
+
+    def unapply[Patch, A](ctx: TransformationContext[Patch, A]): Option[Expr[A]] = parse(using ctx)
   }
 
   // unpacks Types from Contexts

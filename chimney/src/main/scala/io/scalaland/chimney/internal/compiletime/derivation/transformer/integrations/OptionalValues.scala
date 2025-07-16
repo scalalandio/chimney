@@ -27,8 +27,11 @@ trait OptionalValues { this: Derivation =>
 
     private type Cached[A] = Option[Existential[OptionalValue[A, *]]]
     private val optionalCache = new Type.Cache[Cached]
-    def unapply[Optional](implicit Optional: Type[Optional]): Option[Existential[OptionalValue[Optional, *]]] =
+    def parse[Optional](implicit Optional: Type[Optional]): Option[Existential[OptionalValue[Optional, *]]] =
       optionalCache(Optional)(providedSupport[Optional].orElse(buildInOptionSupport[Optional]))
+    def unapply[Optional](Optional: Type[Optional]): Option[Existential[OptionalValue[Optional, *]]] = parse(using
+      Optional
+    )
 
     private def providedSupport[Optional: Type]: Option[Existential[OptionalValue[Optional, *]]] =
       summonOptionalValue[Optional].map { optionalValue =>
