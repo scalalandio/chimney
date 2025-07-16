@@ -23,18 +23,16 @@ object CodecDefinitionMacros {
       selectorDto: Expr[Dto => U]
   )(using Quotes): Expr[CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyFieldNameTypes {
-      [fromPath <: Path, toPath <: Path] =>
-        (_: Type[fromPath]) ?=>
-          (_: Type[toPath]) ?=>
-            '{
-              $cd.asInstanceOf[CodecDefinition[
-                Domain,
-                Dto,
-                Renamed[fromPath, toPath, EncodeOverrides],
-                Renamed[toPath, fromPath, DecodeOverrides],
-                Flags
-              ]]
-          }
+      [fromPath <: Path, toPath <: Path] => (_: Type[fromPath]) ?=> (_: Type[toPath]) ?=>
+        '{
+          $cd.asInstanceOf[CodecDefinition[
+            Domain,
+            Dto,
+            Renamed[fromPath, toPath, EncodeOverrides],
+            Renamed[toPath, fromPath, DecodeOverrides],
+            Flags
+          ]]
+        }
     }(selectorDomain, selectorDto)
 
   def withSealedSubtypeRenamedImpl[

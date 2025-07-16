@@ -28,14 +28,12 @@ object TransformerIntoMacros {
       selector: Expr[To => T],
       value: Expr[U]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType {
-      [toPath <: Path] =>
-        (_: Type[toPath]) ?=>
-          '{
-            WithRuntimeDataStore
-              .update($ti, $value)
-              .asInstanceOf[TransformerInto[From, To, Const[toPath, Overrides], Flags]]
-        }
+    DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
+      '{
+        WithRuntimeDataStore
+          .update($ti, $value)
+          .asInstanceOf[TransformerInto[From, To, Const[toPath, Overrides], Flags]]
+      }
     }(selector)
 
   def withFieldComputedImpl[
@@ -50,14 +48,12 @@ object TransformerIntoMacros {
       selector: Expr[To => T],
       f: Expr[From => U]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType {
-      [toPath <: Path] =>
-        (_: Type[toPath]) ?=>
-          '{
-            WithRuntimeDataStore
-              .update($ti, $f)
-              .asInstanceOf[TransformerInto[From, To, Computed[Path.Root, toPath, Overrides], Flags]]
-        }
+    DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
+      '{
+        WithRuntimeDataStore
+          .update($ti, $f)
+          .asInstanceOf[TransformerInto[From, To, Computed[Path.Root, toPath, Overrides], Flags]]
+      }
     }(selector)
 
   def withFieldComputedFromImpl[
@@ -75,14 +71,12 @@ object TransformerIntoMacros {
       f: Expr[S => U]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyFieldNameTypes {
-      [fromPath <: Path, toPath <: Path] =>
-        (_: Type[fromPath]) ?=>
-          (_: Type[toPath]) ?=>
-            '{
-              WithRuntimeDataStore
-                .update($ti, $f)
-                .asInstanceOf[TransformerInto[From, To, Computed[fromPath, toPath, Overrides], Flags]]
-          }
+      [fromPath <: Path, toPath <: Path] => (_: Type[fromPath]) ?=> (_: Type[toPath]) ?=>
+        '{
+          WithRuntimeDataStore
+            .update($ti, $f)
+            .asInstanceOf[TransformerInto[From, To, Computed[fromPath, toPath, Overrides], Flags]]
+        }
     }(selectorFrom, selectorTo)
 
   def withFieldRenamedImpl[
@@ -98,12 +92,10 @@ object TransformerIntoMacros {
       selectorTo: Expr[To => U]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyFieldNameTypes {
-      [fromPath <: Path, toPath <: Path] =>
-        (_: Type[fromPath]) ?=>
-          (_: Type[toPath]) ?=>
-            '{
-              $ti.asInstanceOf[TransformerInto[From, To, Renamed[fromPath, toPath, Overrides], Flags]]
-          }
+      [fromPath <: Path, toPath <: Path] => (_: Type[fromPath]) ?=> (_: Type[toPath]) ?=>
+        '{
+          $ti.asInstanceOf[TransformerInto[From, To, Renamed[fromPath, toPath, Overrides], Flags]]
+        }
     }(selectorFrom, selectorTo)
 
   def withFieldUnusedImpl[
@@ -116,12 +108,10 @@ object TransformerIntoMacros {
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
       selectorFrom: Expr[From => T]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType {
-      [fromPath <: Path] =>
-        (_: Type[fromPath]) ?=>
-          '{
-            $ti.asInstanceOf[TransformerInto[From, To, Unused[fromPath, Overrides], Flags]]
-        }
+    DslMacroUtils().applyFieldNameType { [fromPath <: Path] => (_: Type[fromPath]) ?=>
+      '{
+        $ti.asInstanceOf[TransformerInto[From, To, Unused[fromPath, Overrides], Flags]]
+      }
     }(selectorFrom)
 
   def withSealedSubtypeHandledImpl[
@@ -175,12 +165,10 @@ object TransformerIntoMacros {
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
       selectorTo: Expr[To => T]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType {
-      [toPath <: Path] =>
-        (_: Type[toPath]) ?=>
-          '{
-            ${ ti }.asInstanceOf[TransformerInto[From, To, Unmatched[toPath, Overrides], Flags]]
-        }
+    DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
+      '{
+        ${ ti }.asInstanceOf[TransformerInto[From, To, Unmatched[toPath, Overrides], Flags]]
+      }
     }(selectorTo)
 
   def withConstructorImpl[
@@ -193,14 +181,12 @@ object TransformerIntoMacros {
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
       f: Expr[Ctor]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyConstructorType {
-      [args <: ArgumentLists] =>
-        (_: Type[args]) ?=>
-          '{
-            WithRuntimeDataStore
-              .update($ti, $f)
-              .asInstanceOf[TransformerInto[From, To, Constructor[args, Path.Root, Overrides], Flags]]
-        }
+    DslMacroUtils().applyConstructorType { [args <: ArgumentLists] => (_: Type[args]) ?=>
+      '{
+        WithRuntimeDataStore
+          .update($ti, $f)
+          .asInstanceOf[TransformerInto[From, To, Constructor[args, Path.Root, Overrides], Flags]]
+      }
     }(f)
 
   def withFallbackImpl[
@@ -231,14 +217,12 @@ object TransformerIntoMacros {
       selectorFrom: Expr[From => T],
       fallback: Expr[FromFallback]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType {
-      [fromPath <: Path] =>
-        (_: Type[fromPath]) ?=>
-          '{
-            WithRuntimeDataStore
-              .update($ti, $fallback)
-              .asInstanceOf[TransformerInto[From, To, Fallback[FromFallback, fromPath, Overrides], Flags]]
-        }
+    DslMacroUtils().applyFieldNameType { [fromPath <: Path] => (_: Type[fromPath]) ?=>
+      '{
+        WithRuntimeDataStore
+          .update($ti, $fallback)
+          .asInstanceOf[TransformerInto[From, To, Fallback[FromFallback, fromPath, Overrides], Flags]]
+      }
     }(selectorFrom)
 
   def withConstructorToImpl[
@@ -253,18 +237,14 @@ object TransformerIntoMacros {
       selector: Expr[To => T],
       f: Expr[Ctor]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyConstructorType {
-      [args <: ArgumentLists] =>
-        (_: Type[args]) ?=>
-          DslMacroUtils().applyFieldNameType {
-            [toPath <: Path] =>
-              (_: Type[toPath]) ?=>
-                '{
-                  WithRuntimeDataStore
-                    .update($ti, $f)
-                    .asInstanceOf[TransformerInto[From, To, Constructor[args, toPath, Overrides], Flags]]
-              }
-          }(selector)
+    DslMacroUtils().applyConstructorType { [args <: ArgumentLists] => (_: Type[args]) ?=>
+      DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
+        '{
+          WithRuntimeDataStore
+            .update($ti, $f)
+            .asInstanceOf[TransformerInto[From, To, Constructor[args, toPath, Overrides], Flags]]
+        }
+      }(selector)
     }(f)
 
   def withSourceFlagImpl[
@@ -278,10 +258,8 @@ object TransformerIntoMacros {
       selectorFrom: Expr[From => T]
   )(using Quotes): Expr[TransformerSourceFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, ? <: Path]] =
     DslMacroUtils()
-      .applyFieldNameType {
-        [fromPath <: Path] =>
-          (_: Type[fromPath]) ?=>
-            '{ TransformerSourceFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, fromPath]($ti) }
+      .applyFieldNameType { [fromPath <: Path] => (_: Type[fromPath]) ?=>
+        '{ TransformerSourceFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, fromPath]($ti) }
       }(selectorFrom)
 
   def withTargetFlagImpl[
@@ -295,9 +273,7 @@ object TransformerIntoMacros {
       selectorTo: Expr[To => T]
   )(using Quotes): Expr[TransformerTargetFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, ? <: Path]] =
     DslMacroUtils()
-      .applyFieldNameType {
-        [toPath <: Path] =>
-          (_: Type[toPath]) ?=>
-            '{ TransformerTargetFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, toPath]($ti) }
+      .applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
+        '{ TransformerTargetFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, toPath]($ti) }
       }(selectorTo)
 }

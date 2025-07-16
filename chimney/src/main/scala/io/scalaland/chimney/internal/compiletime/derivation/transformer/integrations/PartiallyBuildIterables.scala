@@ -36,8 +36,9 @@ trait PartiallyBuildIterables { this: Derivation =>
 
     private type Cached[M] = Option[Existential[PartiallyBuildIterable[M, *]]]
     private val partiallyBulidIterableCache = new Type.Cache[Cached]
-    def unapply[M](implicit M: Type[M]): Option[Existential[PartiallyBuildIterable[M, *]]] =
+    def parse[M](implicit M: Type[M]): Option[Existential[PartiallyBuildIterable[M, *]]] =
       partiallyBulidIterableCache(M)(providedSupport[M])
+    def unapply[M](M: Type[M]): Option[Existential[PartiallyBuildIterable[M, *]]] = parse(using M)
 
     private def providedSupport[Collection: Type]: Option[Existential[PartiallyBuildIterable[Collection, *]]] =
       summonPartiallyBuildIterable[Collection].map { partiallyBuildIterable =>

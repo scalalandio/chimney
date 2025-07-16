@@ -24,12 +24,13 @@ trait TotallyOrPartiallyBuildIterables { this: Derivation =>
   }
   object TotallyOrPartiallyBuildIterable {
 
-    def unapply[M](implicit M: Type[M]): Option[Existential[TotallyOrPartiallyBuildIterable[M, *]]] =
+    def parse[M](implicit M: Type[M]): Option[Existential[TotallyOrPartiallyBuildIterable[M, *]]] =
       TotallyBuildIterable
-        .unapply[M]
+        .parse[M]
         .asInstanceOf[Option[Existential[TotallyOrPartiallyBuildIterable[M, *]]]]
         .orElse(
-          PartiallyBuildIterable.unapply[M].asInstanceOf[Option[Existential[TotallyOrPartiallyBuildIterable[M, *]]]]
+          PartiallyBuildIterable.parse[M].asInstanceOf[Option[Existential[TotallyOrPartiallyBuildIterable[M, *]]]]
         )
+    final def unapply[M](M: Type[M]): Option[Existential[TotallyOrPartiallyBuildIterable[M, *]]] = parse(using M)
   }
 }
