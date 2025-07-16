@@ -22,7 +22,7 @@ Global / resolvers += "scala-integration" at "https://scala-ci.typesafe.com/arti
 
 val versions = new {
   val scala213 = "2.13.17-bin-4814abf" // TODO: change to 2.13.17 once released
-  val scala3 = "3.7.0"
+  val scala3 = "3.7.2-RC1" // TODO: change to 3.7.2 once released
 
   // Which versions should be cross-compiled for publishing
   val scalas = List(scala213, scala3)
