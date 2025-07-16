@@ -27,7 +27,7 @@ val versions = new {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Dependencies
-  val macroCommons = "2.0.1"
+  val macroCommons = "2.0.1-1-g06a7426-SNAPSHOT"
   val cats = "2.13.0"
   val kindProjector = "0.13.3"
   val munit = "1.1.1"
@@ -59,12 +59,6 @@ val dev = new {
     case "jvm"    => VirtualAxis.jvm
     case "js"     => VirtualAxis.js
     case "native" => VirtualAxis.native
-  }
-
-  val logCrossQuotes = props.getProperty("log.cross-quotes") match {
-    case "true"  => true
-    case "false" => false
-    case _       => !isCI
   }
 }
 

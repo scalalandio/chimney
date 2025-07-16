@@ -363,8 +363,8 @@ private[compiletime] trait TransformMapToMapRuleModule {
     }
     private object TotallyOrPartiallyBuildMap {
 
-      def unapply[M](implicit M: Type[M]): Option[TotallyOrPartiallyBuildMap[M]] =
-        TotallyOrPartiallyBuildIterable.unapply[M].flatMap(it => it.value.asMap.map(it -> _)).map {
+      def parse[M](implicit M: Type[M]): Option[TotallyOrPartiallyBuildMap[M]] =
+        TotallyOrPartiallyBuildIterable.parse[M].flatMap(it => it.value.asMap.map(it -> _)).map {
           case (it, (key, value)) =>
             import it.Underlying as Inner, key.Underlying as Key0, value.Underlying as Value0
             new TotallyOrPartiallyBuildMap[M] {
@@ -392,6 +392,7 @@ private[compiletime] trait TransformMapToMapRuleModule {
               ): Expr[Collection2] = it.value.to(collection, factory.upcastToExprOf[Factory[Inner, Collection2]])
             }
         }
+      final def unapply[M](M: Type[M]): Option[TotallyOrPartiallyBuildMap[M]] = parse(using M)
     }
   }
 }
