@@ -59,6 +59,6 @@ trait CatsTotalTransformerImplicits {
   implicit final def catsContravariantForTransformer[Target]: Contravariant[Transformer[*, Target]] =
     new Contravariant[Transformer[*, Target]] {
       def contramap[A, B](fa: Transformer[A, Target])(f: B => A): Transformer[B, Target] =
-        b => fa.transform(f(b))
+        fa.contramap(f)
     }
 }
