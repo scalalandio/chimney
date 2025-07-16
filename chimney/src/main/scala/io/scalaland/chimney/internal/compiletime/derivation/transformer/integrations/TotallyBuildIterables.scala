@@ -37,8 +37,9 @@ trait TotallyBuildIterables { this: Derivation =>
 
     private type Cached[M] = Option[Existential[TotallyBuildIterable[M, *]]]
     private val totallyBulidIterableCache = new Type.Cache[Cached]
-    def unapply[M](implicit M: Type[M]): Option[Existential[TotallyBuildIterable[M, *]]] =
+    def parse[M](implicit M: Type[M]): Option[Existential[TotallyBuildIterable[M, *]]] =
       totallyBulidIterableCache(M)(providedSupport[M].orElse(buildInSupport[M]))
+    def unapply[M](M: Type[M]): Option[Existential[TotallyBuildIterable[M, *]]] = parse(using M)
 
     private def providedSupport[Collection: Type]: Option[Existential[TotallyBuildIterable[Collection, *]]] =
       summonTotallyBuildIterable[Collection].map { totallyBuildIterable =>
@@ -68,7 +69,7 @@ trait TotallyBuildIterables { this: Derivation =>
       }
 
     private def buildInSupport[M: Type]: Option[Existential[TotallyBuildIterable[M, *]]] =
-      IterableOrArray.unapply[M].map { found =>
+      IterableOrArray.parse[M].map { found =>
         import found.{Underlying as Item, value as iora}
         Existential[TotallyBuildIterable[M, *], Item](
           new TotallyBuildIterable[M, Item] {
