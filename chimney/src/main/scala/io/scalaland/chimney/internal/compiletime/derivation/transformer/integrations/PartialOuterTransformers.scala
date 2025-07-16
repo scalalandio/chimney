@@ -33,10 +33,12 @@ trait PartialOuterTransformers { this: Derivation =>
   protected object PartialOuterTransformer {
 
     private val implicitCache = new Type.Cache[Option]
-    def unapply[From, To](implicit from: Type[From], to: Type[To]): Option[PartialOuterTransformer[From, To]] =
+    def parse[From, To](implicit from: Type[From], to: Type[To]): Option[PartialOuterTransformer[From, To]] =
       implicitCache(
         Type[integrations.PartialOuterTransformer[From, To, From, To]]
           .asInstanceOf[Type[PartialOuterTransformer[From, To]]]
       )(summonPartialOuterTransformer[From, To])
+    def unapply[From, To](pair: (Type[From], Type[To])): Option[PartialOuterTransformer[From, To]] =
+      parse(using pair._1, pair._2)
   }
 }
