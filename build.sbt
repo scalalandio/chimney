@@ -22,7 +22,7 @@ Global / resolvers += "scala-integration" at "https://scala-ci.typesafe.com/arti
 
 val versions = new {
   val scala213 = "2.13.17-bin-4814abf" // TODO: change to 2.13.17 once released
-  val scala3 = "3.7.2-RC1" // TODO: change to 3.7.2 once released
+  val scala3 = "3.7.2-RC2" // TODO: change to 3.7.2 once released
 
   // Which versions should be cross-compiled for publishing
   val scalas = List(scala213, scala3)
@@ -114,7 +114,8 @@ val settings = Seq(
           "-Wvalue-discard",
           "-Xfatal-warnings",
           "-Xcheck-macros",
-          "-Xkind-projector:underscores"
+          "-Xkind-projector:underscores",
+          "Yimplicit-to-given"
         )
       case Some((2, 13)) =>
         Seq(
@@ -169,7 +170,7 @@ val settings = Seq(
   },
   Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
   // TODO: restore this once we have a release of Scala 2.13.17
-  //coverageExcludedPackages := ".*DefCache.*" // DefCache is kind-a experimental utility
+  // coverageExcludedPackages := ".*DefCache.*" // DefCache is kind-a experimental utility
 )
 
 val dependencies = Seq(
@@ -182,7 +183,7 @@ val dependencies = Seq(
         Seq(
           // TODO: restore this once we have a release of Scala 2.13.17
           // "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided,
-          //compilerPlugin("org.typelevel" % "kind-projector" % versions.kindProjector cross CrossVersion.full)
+          // compilerPlugin("org.typelevel" % "kind-projector" % versions.kindProjector cross CrossVersion.full)
           "org.scala-lang" % "scala-reflect" % "2.13.16" % Provided,
           compilerPlugin("org.typelevel" % "kind-projector_2.13.16" % versions.kindProjector)
         )
@@ -252,7 +253,7 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
   val clean = Vector("clean")
   def withCoverage(tasks: String*): Vector[String] =
     // TODO: restore this once we have a release of Scala 2.13.17
-    //"coverage" +: tasks.toVector :+ "coverageAggregate" :+ "coverageOff"
+    // "coverage" +: tasks.toVector :+ "coverageAggregate" :+ "coverageOff"
     tasks.toVector
 
   val projects = for {
@@ -270,7 +271,7 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
   val tasks = if (isJVM) {
     clean ++
       // TODO: restore this once we have a release of Scala 2.13.17
-      //withCoverage((tasksOf("compile") ++ tasksOf("test") ++ tasksOf("coverageReport")).toSeq *) ++
+      // withCoverage((tasksOf("compile") ++ tasksOf("test") ++ tasksOf("coverageReport")).toSeq *) ++
       withCoverage((tasksOf("compile") ++ tasksOf("test")).toSeq *) ++
       Vector("benchmarks/compile") ++
       tasksOf("mimaReportBinaryIssues")
@@ -362,7 +363,7 @@ lazy val root = project
 
 lazy val chimney = projectMatrix
   .in(file("chimney"))
-  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE *)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
@@ -392,7 +393,7 @@ lazy val chimney = projectMatrix
 
 lazy val chimneyCats = projectMatrix
   .in(file("chimney-cats"))
-  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE *)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
