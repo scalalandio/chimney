@@ -484,7 +484,7 @@ Before writing one, it's worth knowing that:
     import io.scalaland.chimney.partial
 
     // Here, we're providing Transformers with the ability to .map F[_]/.traverse F[_] into partial.Result,
-    // such impliclit allows us to use .everyItem in customizations of F[value] transformation.
+    // such implicit allows us to use .everyItem in customizations of F[value] transformation.
     implicit def outerTransformer[A, B]: integration.PartialOuterTransformer[F[A], F[B], A, B] =
       new integrations.PartialOuterTransformer[F[A], F[B], A, B] {
         /** Converts the outer type when the conversion of inner types turn out to be total. */

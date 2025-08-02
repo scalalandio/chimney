@@ -30,6 +30,15 @@ If you:
     - You can however avoid testing someone else's library if you use Chimney in place, in some service, and then test
       that service's behavior or if you create in your DTO model `def toDomain = this.transformInto[DomainModel]`.
       You can utilize code generation without making your application's type signatures depend on someone else's types. 
+  - want to use Chimney as vaildation library - remember that Chimney does the minimal amount of work to convert
+    the source value to the target type. If you want to take `String` and vaildate that it is non-empty `String`, but
+    still of `String` type - Chimney would not help you catch if you forgot to add validation (in the for of partial
+    mapping).
+    - Chimney would only help you find missing validations if you use
+      [the parse-not-validate](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/) approach: where
+      newtypes, refined types and smart constructors would force the path of least resistence to go through validation
+      functions. You can add some `withFieldComputedPartial` that handles `A => partial.Result[A]` as a validation,
+      but there is no way of discovering if such mapping is missing or incorrect, other than writing an actual test.
 
 ## Migration from 0.8.x to 1.0.0
 
@@ -125,8 +134,9 @@ Let's have a look at the type signatures of both Lifted and Partial Transformers
       def transform(src: From): F[To]
     }
 
+    import io.scalaland.chimney.partial
+
     // Partial Transformer
-    // partial comes from io.scalaland.chimney.partial
     trait PartialTransformer[From, To] {
       def transform(src: From, failFast: Boolean): partial.Result[To]
     }
