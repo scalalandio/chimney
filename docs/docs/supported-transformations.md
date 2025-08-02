@@ -3560,7 +3560,16 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
       * `foo.into[Bar].withFieldComputed(_.matching[Bar.Baz], foo => ...)` - provides an override on the **target**
         type's value
        
-     so these 2 pieces of code covers difference use cases.
+     so these 2 pieces of code covers difference use cases. However, there is also `withFieldComputedFrom`:
+
+      * `foo.into[Bar].withFieldComputedFrom(_.matching[Foo.Baz])(bar => bar, subtype => ...).transform` - would behave
+        exactly the same as the `withSealedSubtypeHandled` example
+      * `foo.into[Bar].withFieldComputedFrom(_.matching[Foo.Baz])(_.matching[Bar.Baz], subtype => ...).transform` - would
+        make the computing function even more strict (requiring `Foo.Baz => Bar.Baz` function)
+
+     Currently each `.withSubtypeOperation[Subtype](...)` method can be considered a convenient aliase to some
+     `.withFieldOperation(_.matching[Subtype])(...)` method. While the alias is no longer necessary, we keep them for
+     convenience, discoverability and backward compatibility.
 
 !!! warning
 
