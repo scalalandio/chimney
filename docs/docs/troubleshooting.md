@@ -40,6 +40,36 @@ If you:
       functions. You can add some `withFieldComputedPartial` that handles `A => partial.Result[A]` as a validation,
       but there is no way of discovering if such mapping is missing or incorrect, other than writing an actual test.
 
+## Migration from 1.x to 2.0.0
+
+Scala 2.12 support was dropped, so if you want to migrate to 2.x, we recommend migrating to 1.x before.
+
+Chimney 2.0.0 no longer requires distinction between:
+
+ - `Transformer` and `Transformer.AutoDerived`
+ - `PartialTransformer` and `PartialTransformer.AutoDerived`
+ - `Patcher` and `Patcher.AutoDerived`
+
+to make migration easier, `AutoDerived` still exist but as a type alias.
+
+Breaking changes in API:
+
+ - in core DSL:
+   - `.toPartialResult` extension method from `import io.scalaland.chimney.dsl._` was dropped since
+     `.asResult` from `import io.scalaland.chimney.partial.syntax._` supports this and other use cases
+   - `.toPartialResultOrString` got replaced by `.orStringAsResult`
+   - `.withCoproductInstance` and `.withCoproductInstancePartial` got removed, since `.withSealedSubtype...` and
+     `.withEnumCase...` better describe what they do
+ - in Protobuf integration module:
+   - `trait ProtobufTransformerImplicits` was renamed to `trait ProtobufsTransformerImplicits` to match the convention of
+     the rest of the codebase (shouldn't affect anyone who use just `import io.scalaland.chimney.protobufs._` but still
+     a breaking change)
+   - `javaMapIsTotallyBuildMap` and `javaAbstractMapIsTotallyBuildMap` from protobuf integration, no longer needs `Ordering[K]`
+   - `totalTransformerFromByteStringToByteCollection` and `totalTransformerFromByteCollectionToByteString` got replaced by
+     `protobufByteStringIsTotallyBuildIterable` for greater flexibility
+   - `totalTransformerFromBytesValueToByteCollection` and `totalTransformerFromByteCollectionToBytesValue` got replaced by
+     `protobufBytesValueIsTotallyBuildIterable` for greater flexibility
+   
 ## Migration from 0.8.x to 1.0.0
 
 As long as you did not:
@@ -2237,6 +2267,12 @@ an error caused by [scala/bug#12895](https://github.com/scala/bug/issues/12895).
 if update is impossible the workaround would be to remove the unused definition reporting.
 
 ### `Ambiguous givens` since Scala 3.7.0 and warnings since 3.6.0
+
+!!! tip
+
+    This issue was solved on Scala 2.0.0 line, so if you can, update Chimney to newest 2.x version.
+
+    The workaround below is only intended for people stuck on 1.x line.
 
 Due to [New Prioritization of Givens in Scala 3.7](https://www.scala-lang.org/2024/08/19/given-priority-change-3.7.html)
 pattern that [Chimney relies on since 0.8.0](cookbook.md#automatic-semiautomatic-and-inlined-derivation) to ensure good DX
