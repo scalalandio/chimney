@@ -2,9 +2,9 @@
 name: Bug report
 about: An existing functionality has doesn't behave as expected
 title: ''
+type: Bug
 labels: bug
 assignees: ''
-
 ---
 
 **Checklist**
@@ -12,8 +12,9 @@ assignees: ''
 - [ ] I read the documentation at https://chimney.readthedocs.io/ and checked that the functionality exists
 - [ ] I verified that the behavior for my use case doesn't match the documentation
 - [ ] I checked the https://github.com/scalalandio/chimney/issues and haven't found the issue reported
+  - [ ] I checked it is not one of the [known compiler issues](https://github.com/scalalandio/chimney/issues/532)
   - [ ] I checked the https://github.com/scala/bug/issues and haven't found the issue reported there - relevant for Scala 2 compiler crashes, since it might be a bug in the compiler
-  - [ ] I checked the https://github.com/lampepfl/dotty/issues and haven't found the issue reported there - relevant for Scala 3 compiler crashes, since it might be a bug in the compiler 
+  - [ ] I checked the https://github.com/lampepfl/dotty/issues and haven't found the issue reported there - relevant for Scala 3 compiler crashes, since it might be a bug in the compiler
 - [ ] I confirmed that the bug is not related to functionality that was deprecated: lifted transformers (`TransformerF`s) or `unsafeOption` flags
 - [ ] I believe that this is actual bug, rather than [a question how to use existing features](https://github.com/scalalandio/chimney/discussions)
 
@@ -39,6 +40,8 @@ import io.scalaland.chimney.dsl._
 
 // transformation example
 ```
+
+or [Scastie snippet](https://scastie.scala-lang.org/).
 
 ***If posting a snippet, test it first with `scala-cli run --server=false .`!***
 

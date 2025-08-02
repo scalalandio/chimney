@@ -5,7 +5,7 @@ the updated version of the patched value.
 
 ## Updating `case class`
 
-Currently, the only supported case is updating one `case class` with another: 
+The main supported case is updating one `case class` with another: 
 
 !!! example
 
