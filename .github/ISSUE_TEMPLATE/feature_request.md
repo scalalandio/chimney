@@ -2,9 +2,9 @@
 name: Feature request
 about: A new functionality that hasn't been proposed yet
 title: ''
+type: Feature
 labels: enhancement
 assignees: ''
-
 ---
 
 **Checklist**
@@ -13,6 +13,8 @@ assignees: ''
 - [ ] I checked the https://github.com/scalalandio/chimney/issues and haven't found the feature already requested reported
 - [ ] I confirmed that the request is not related to functionality that was deprecated: lifted transformers (`TransformerF`s) or `unsafeOption` flags
 - [ ] I believe that this is actual feature request, rather than [a question how to use existing features](https://github.com/scalalandio/chimney/discussions)
+- [ ] I am aware of [the maintainer's announcement](https://github.com/scalalandio/chimney/discussions/762) and I understand, that this might only be implemented
+      if someone from the community decide to own the feature and see it through
 
 **Describe the desired behavior**
 
