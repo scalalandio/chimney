@@ -15,7 +15,7 @@ jobs:
     if: github.event_name == 'push' || github.event.action != 'labeled' # run for 'opened', 'reopened' and 'synchronize'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - uses: coursier/setup-action@v1.3.9
@@ -30,7 +30,7 @@ jobs:
     if: github.event_name == 'push' || github.event.action != 'labeled' # run for 'opened', 'reopened' and 'synchronize'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - uses: extractions/setup-just@v3
@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - uses: coursier/cache-action@v6
