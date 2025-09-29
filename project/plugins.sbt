@@ -13,7 +13,7 @@ addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.3.1")
 // MiMa
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.4")
 // benchmarks
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.7")
+addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.8")
 // disabling projects in IDE
 addSbtPlugin("org.jetbrains" % "sbt-ide-settings" % "1.1.0")
 // testing protobufs
