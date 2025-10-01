@@ -29,7 +29,7 @@ val versions = new {
   // Dependencies
   val macroCommons = "2.0.2"
   val cats = "2.13.0"
-  val kindProjector = "0.13.3"
+  val kindProjector = "0.13.4"
   val munit = "1.2.0"
   val scalaCollectionCompat = "2.13.0"
   val scalaJavaCompat = "1.0.2"
