@@ -19,7 +19,7 @@ credentials += Credentials(
 
 val versions = new {
   val scala212 = "2.12.20"
-  val scala213 = "2.13.16"
+  val scala213 = "2.13.17"
   val scala3 = "3.3.6"
 
   // Which versions should be cross-compiled for publishing
@@ -29,7 +29,7 @@ val versions = new {
   // Dependencies
   val macroCommons = "2.0.2"
   val cats = "2.13.0"
-  val kindProjector = "0.13.3"
+  val kindProjector = "0.13.4"
   val munit = "1.2.0"
   val scalaCollectionCompat = "2.13.0"
   val scalaJavaCompat = "1.0.2"
@@ -159,6 +159,7 @@ val settings = Seq(
           "-Xlint:stars-align",
           "-Xlint:type-parameter-shadow",
           "-Xsource:3",
+          "-Xsource-features:eta-expand-always",
           "-Ywarn-dead-code",
           "-Ywarn-numeric-widen",
           "-Ywarn-unused:locals",
@@ -305,7 +306,10 @@ val mimaSettings = Seq(
           "1.7.0",
           "1.7.1",
           "1.7.2",
-          "1.7.3"
+          "1.7.3",
+          "1.8.0",
+          "1.8.1",
+          "1.8.2"
         )
       case _ => Set()
     }
