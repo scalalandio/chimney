@@ -108,14 +108,14 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       }
 
       val verifyNoOverrideUnused = Traverse[List]
-        .parTraverse(
+        .parTraverse[DerivationResult, String, Unit](
           filterCurrentOverridesForField(usedToName =>
             !parameters.keys.exists(toName => areFieldNamesMatching(usedToName, toName))
           ).keys.toList
         ) { fromName =>
           val tpeStr = Type.prettyPrint[To]
           val params = parameters.keys.map(n => s"`$n`").mkString(", ")
-          DerivationResult.assertionError(
+          DerivationResult.assertionError[Unit](
             s"""|Assumed that parameter/setter $fromName is a part of $tpeStr, but wasn't found
                 |available methods: $params""".stripMargin
           )
