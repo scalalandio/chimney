@@ -1,5 +1,5 @@
-//> using scala 3.3.5
-//> using dep com.kubuszok::scala-cli-md-spec:0.1.1
+//> using scala 3.3.6
+//> using dep com.kubuszok::scala-cli-md-spec:0.2.0
 //> using dep org.virtuslab::scala-yaml:0.3.1
 
 import com.kubuszok.scalaclimdspec.*
@@ -112,7 +112,7 @@ class ChimneyExtendedRunner(runner: Runner)(
   * }}}
   */
 @main def testChimneySnippets(args: String*): Unit = testSnippets(args.toArray) { cfg =>
-  new ChimneyExtendedRunner(new Runner.Default(cfg))(
+  ChimneyExtendedRunner(Runner.Default(cfg))(
     chimneyVersion = cfg
       .extra("chimney-version")
       .trim
