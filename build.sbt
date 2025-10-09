@@ -7,26 +7,22 @@ import sbtprotoc.ProtocPlugin.ProtobufConfig
 lazy val isCI = sys.env.get("CI").contains("true")
 ThisBuild / scalafmtOnCompile := !isCI
 
+// Used to publish snapshots to Maven Central.
 val mavenCentralSnapshots = "Maven Central Snapshots" at "https://central.sonatype.com/repository/maven-snapshots"
-credentials += Credentials(
-  "Maven Central Repository",
-  "central.sonatype.com",
-  sys.env.getOrElse("SONATYPE_USERNAME", ""),
-  sys.env.getOrElse("SONATYPE_PASSWORD", "")
-)
 
 // Versions:
 
 val versions = new {
+  // Versions we are publishing for.
   val scala212 = "2.12.20"
   val scala213 = "2.13.16"
   val scala3 = "3.3.6"
 
-  // Which versions should be cross-compiled for publishing
+  // Which versions should be cross-compiled for publishing.
   val scalas = List(scala212, scala213, scala3)
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
-  // Dependencies
+  // Dependencies.
   val macroCommons = "2.0.2"
   val cats = "2.13.0"
   val kindProjector = "0.13.4"
@@ -35,6 +31,23 @@ val versions = new {
   val scalaJavaCompat = "1.0.2"
   val scalaJavaTime = "2.6.0"
   val scalapbRuntime = scalapb.compiler.Version.scalapbVersion
+
+  // Explicitly handle Scala 2 and Scala 3 separately.
+  def fold2[A](scalaVersion: String)(for2: => Seq[A], for3: => Seq[A]): Seq[A] =
+    CrossVersion.partialVersion(scalaVersion) match {
+      case Some((2, _)) => for2
+      case Some((3, _)) => for3
+      case _            => sys.error(s"Unsupported Scala version: $scalaVersion")
+    }
+
+  // Explicitly handle Scala 2.12, 2.13 and Scala 3 separately.
+  def fold[A](scalaVersion: String)(for2_12: => Seq[A], for2_13: => Seq[A], for3: => Seq[A]): Seq[A] =
+    CrossVersion.partialVersion(scalaVersion) match {
+      case Some((2, 12)) => for2_12
+      case Some((2, 13)) => for2_13
+      case Some((3, _))  => for3
+      case _             => sys.error(s"Unsupported Scala version: $scalaVersion")
+    }
 }
 
 // Development settings:
@@ -60,6 +73,10 @@ val dev = new {
     case "js"     => VirtualAxis.js
     case "native" => VirtualAxis.native
   }
+
+  def isIdeScala(scalaVersion: String): Boolean =
+    CrossVersion.partialVersion(scalaVersion) == CrossVersion.partialVersion(ideScala)
+  def isIdePlatform(platform: VirtualAxis): Boolean = platform == idePlatform
 }
 
 // Common settings:
@@ -67,16 +84,18 @@ val dev = new {
 Global / excludeLintKeys += git.useGitDescribe
 Global / excludeLintKeys += ideSkipProject
 val only1VersionInIDE =
+  // For the platform we are working with, show only the project for the Scala version we are working with.
   MatrixAction
     .ForPlatform(dev.idePlatform)
     .Configure(
       _.settings(
-        ideSkipProject := (scalaVersion.value != dev.ideScala),
-        bspEnabled := (scalaVersion.value == dev.ideScala),
+        ideSkipProject := !dev.isIdeScala(scalaVersion.value),
+        bspEnabled := dev.isIdeScala(scalaVersion.value),
         scalafmtOnCompile := !isCI
       )
     ) +:
-    versions.platforms.filter(_ != dev.idePlatform).map { platform =>
+    // Do not show in IDE and BSP projects for the platform we are not working with.
+    versions.platforms.filterNot(dev.isIdePlatform).map { platform =>
       MatrixAction
         .ForPlatform(platform)
         .Configure(_.settings(ideSkipProject := true, bspEnabled := false, scalafmtOnCompile := false))
@@ -95,141 +114,131 @@ val addScala213plusDir =
 val settings = Seq(
   git.useGitDescribe := true,
   git.uncommittedSignifier := None,
-  scalacOptions ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((3, _)) =>
-        Seq(
-          // format: off
-          "-encoding", "UTF-8",
-          "-rewrite",
-          "-source", "3.3-migration",
-          // format: on
-          "-unchecked",
-          "-deprecation",
-          "-explain",
-          "-explain-types",
-          "-feature",
-          "-no-indent",
-          "-Wconf:msg=Unreachable case:s", // suppress fake (?) errors in internal.compiletime
-          "-Wconf:msg=Missing symbol position:s", // suppress warning https://github.com/scala/scala3/issues/21672
-          "-Wconf:msg=deprecated since 1.8.0:s", // suppress deprecation warnings for methods that we replaced in 2.0.0 tests
-          "-Wnonunit-statement",
-          // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is! probably one of https://github.com/scala/scala3/issues/: #18564, #19252, #19657, #19912
-          "-Wunused:privates",
-          "-Wunused:locals",
-          "-Wunused:explicits",
-          "-Wunused:implicits",
-          "-Wunused:params",
-          "-Wvalue-discard",
-          "-Xfatal-warnings",
-          "-Xcheck-macros",
-          "-Ykind-projector:underscores"
-        )
-      case Some((2, 13)) =>
-        Seq(
-          // format: off
-          "-encoding", "UTF-8",
-          "-release", "8",
-          // format: on
-          "-unchecked",
-          "-deprecation",
-          "-explaintypes",
-          "-feature",
-          "-language:higherKinds",
-          "-Wconf:origin=scala.collection.compat.*:s", // type aliases without which 2.12 fail compilation but 2.13/3 doesn't need them
-          "-Wconf:cat=scala3-migration:s", // silence mainly issues with -Xsource:3 and private case class constructors
-          "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s", // we want to be able to deprecate APIs and test them while they're deprecated
-          "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
-          "-Wconf:src=io/scalaland/chimney/cats/package.scala:s", // silence package object inheritance deprecation
-          "-Wconf:msg=discarding unmoored doc comment:s", // silence errors when scaladoc cannot comprehend nested vals
-          "-Wconf:msg=Could not find any member to link for:s", // since errors when scaladoc cannot link to stdlib types or nested types
-          "-Wconf:msg=Variable .+ undefined in comment for:s", // silence errors when there we're showing a buggy Expr in scaladoc comment
-          "-Wunused:patvars",
-          "-Xfatal-warnings",
-          "-Xlint:adapted-args",
-          "-Xlint:delayedinit-select",
-          "-Xlint:doc-detached",
-          "-Xlint:inaccessible",
-          "-Xlint:infer-any",
-          "-Xlint:nullary-unit",
-          "-Xlint:option-implicit",
-          "-Xlint:package-object-classes",
-          "-Xlint:poly-implicit-overload",
-          "-Xlint:private-shadow",
-          "-Xlint:stars-align",
-          "-Xlint:type-parameter-shadow",
-          "-Xsource:3",
-          "-Ywarn-dead-code",
-          "-Ywarn-numeric-widen",
-          "-Ywarn-unused:locals",
-          "-Ywarn-unused:imports",
-          "-Ywarn-macros:after",
-          "-Ytasty-reader"
-        )
-      case Some((2, 12)) =>
-        Seq(
-          // format: off
-          "-encoding", "UTF-8",
-          "-target:jvm-1.8",
-          // format: on
-          "-unchecked",
-          "-deprecation",
-          "-explaintypes",
-          "-feature",
-          "-language:higherKinds",
-          "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s", // we want to be able to deprecate APIs and test them while they're deprecated
-          "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
-          "-Wconf:src=io/scalaland/chimney/cats/package.scala:s", // silence package object inheritance deprecation
-          "-Wconf:msg=discarding unmoored doc comment:s", // silence errors when scaladoc cannot comprehend nested vals
-          "-Wconf:msg=Could not find any member to link for:s", // since errors when scaladoc cannot link to stdlib types or nested types
-          "-Wconf:msg=Variable .+ undefined in comment for:s", // silence errors when there we're showing a buggy Expr in scaladoc comment
-          "-Xexperimental",
-          "-Xfatal-warnings",
-          "-Xfuture",
-          "-Xlint:adapted-args",
-          "-Xlint:by-name-right-associative",
-          "-Xlint:delayedinit-select",
-          "-Xlint:doc-detached",
-          "-Xlint:inaccessible",
-          "-Xlint:infer-any",
-          "-Xlint:nullary-override",
-          "-Xlint:nullary-unit",
-          "-Xlint:option-implicit",
-          "-Xlint:package-object-classes",
-          "-Xlint:poly-implicit-overload",
-          "-Xlint:private-shadow",
-          "-Xlint:stars-align",
-          "-Xlint:type-parameter-shadow",
-          "-Xlint:unsound-match",
-          "-Xsource:3",
-          "-Yno-adapted-args",
-          "-Ywarn-dead-code",
-          "-Ywarn-inaccessible",
-          "-Ywarn-infer-any",
-          "-Ywarn-numeric-widen",
-          "-Ywarn-unused:locals",
-          "-Ywarn-unused:imports",
-          "-Ywarn-macros:after",
-          "-Ywarn-nullary-override",
-          "-Ywarn-nullary-unit"
-        )
-      case _ => Seq.empty
-    }
-  },
-  Compile / doc / scalacOptions ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((3, _)) =>
-        Seq("-Ygenerate-inkuire") // type-based search for Scala 3, this option cannot go into compile
-      case _ => Seq.empty
-    }
-  },
+  scalacOptions ++= versions.fold(scalaVersion.value)(
+    for3 = Seq(
+      // format: off
+      "-encoding", "UTF-8",
+      "-rewrite",
+      "-source", "3.3-migration",
+      // format: on
+      "-unchecked",
+      "-deprecation",
+      "-explain",
+      "-explain-types",
+      "-feature",
+      "-no-indent",
+      "-Wconf:msg=Unreachable case:s", // suppress fake (?) errors in internal.compiletime
+      "-Wconf:msg=Missing symbol position:s", // suppress warning https://github.com/scala/scala3/issues/21672
+      "-Wconf:msg=deprecated since 1.8.0:s", // suppress deprecation warnings for methods that we replaced in 2.0.0 tests
+      "-Wnonunit-statement",
+      // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is! probably one of https://github.com/scala/scala3/issues/: #18564, #19252, #19657, #19912
+      "-Wunused:privates",
+      "-Wunused:locals",
+      "-Wunused:explicits",
+      "-Wunused:implicits",
+      "-Wunused:params",
+      "-Wvalue-discard",
+      "-Xfatal-warnings",
+      "-Xcheck-macros",
+      "-Ykind-projector:underscores"
+    ),
+    for2_13 = Seq(
+      // format: off
+      "-encoding", "UTF-8",
+      "-release", "8",
+      // format: on
+      "-unchecked",
+      "-deprecation",
+      "-explaintypes",
+      "-feature",
+      "-language:higherKinds",
+      "-Wconf:origin=scala.collection.compat.*:s", // type aliases without which 2.12 fail compilation but 2.13/3 doesn't need them
+      "-Wconf:cat=scala3-migration:s", // silence mainly issues with -Xsource:3 and private case class constructors
+      "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s", // we want to be able to deprecate APIs and test them while they're deprecated
+      "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
+      "-Wconf:src=io/scalaland/chimney/cats/package.scala:s", // silence package object inheritance deprecation
+      "-Wconf:msg=discarding unmoored doc comment:s", // silence errors when scaladoc cannot comprehend nested vals
+      "-Wconf:msg=Could not find any member to link for:s", // since errors when scaladoc cannot link to stdlib types or nested types
+      "-Wconf:msg=Variable .+ undefined in comment for:s", // silence errors when there we're showing a buggy Expr in scaladoc comment
+      "-Wunused:patvars",
+      "-Xfatal-warnings",
+      "-Xlint:adapted-args",
+      "-Xlint:delayedinit-select",
+      "-Xlint:doc-detached",
+      "-Xlint:inaccessible",
+      "-Xlint:infer-any",
+      "-Xlint:nullary-unit",
+      "-Xlint:option-implicit",
+      "-Xlint:package-object-classes",
+      "-Xlint:poly-implicit-overload",
+      "-Xlint:private-shadow",
+      "-Xlint:stars-align",
+      "-Xlint:type-parameter-shadow",
+      "-Xsource:3",
+      "-Ywarn-dead-code",
+      "-Ywarn-numeric-widen",
+      "-Ywarn-unused:locals",
+      "-Ywarn-unused:imports",
+      "-Ywarn-macros:after",
+      "-Ytasty-reader"
+    ),
+    for2_12 = Seq(
+      // format: off
+      "-encoding", "UTF-8",
+      "-target:jvm-1.8",
+      // format: on
+      "-unchecked",
+      "-deprecation",
+      "-explaintypes",
+      "-feature",
+      "-language:higherKinds",
+      "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s", // we want to be able to deprecate APIs and test them while they're deprecated
+      "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
+      "-Wconf:src=io/scalaland/chimney/cats/package.scala:s", // silence package object inheritance deprecation
+      "-Wconf:msg=discarding unmoored doc comment:s", // silence errors when scaladoc cannot comprehend nested vals
+      "-Wconf:msg=Could not find any member to link for:s", // since errors when scaladoc cannot link to stdlib types or nested types
+      "-Wconf:msg=Variable .+ undefined in comment for:s", // silence errors when there we're showing a buggy Expr in scaladoc comment
+      "-Xexperimental",
+      "-Xfatal-warnings",
+      "-Xfuture",
+      "-Xlint:adapted-args",
+      "-Xlint:by-name-right-associative",
+      "-Xlint:delayedinit-select",
+      "-Xlint:doc-detached",
+      "-Xlint:inaccessible",
+      "-Xlint:infer-any",
+      "-Xlint:nullary-override",
+      "-Xlint:nullary-unit",
+      "-Xlint:option-implicit",
+      "-Xlint:package-object-classes",
+      "-Xlint:poly-implicit-overload",
+      "-Xlint:private-shadow",
+      "-Xlint:stars-align",
+      "-Xlint:type-parameter-shadow",
+      "-Xlint:unsound-match",
+      "-Xsource:3",
+      "-Yno-adapted-args",
+      "-Ywarn-dead-code",
+      "-Ywarn-inaccessible",
+      "-Ywarn-infer-any",
+      "-Ywarn-numeric-widen",
+      "-Ywarn-unused:locals",
+      "-Ywarn-unused:imports",
+      "-Ywarn-macros:after",
+      "-Ywarn-nullary-override",
+      "-Ywarn-nullary-unit"
+    )
+  ),
+  Compile / doc / scalacOptions ++= versions.fold2(scalaVersion.value)(
+    for3 = Seq("-Ygenerate-inkuire"), // type-based search for Scala 3, this option cannot go into compile
+    for2 = Seq.empty
+  ),
   Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings"),
-  Test / compile / scalacOptions --= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 12)) => Seq("-Ywarn-unused:locals") // Scala 2.12 ignores @unused warns
-      case _             => Seq.empty
-    }
-  },
+  Test / compile / scalacOptions --= versions.fold(scalaVersion.value)(
+    for2_12 = Seq("-Ywarn-unused:locals"), // Scala 2.12 ignores @unused warns
+    for2_13 = Seq.empty,
+    for3 = Seq.empty
+  ),
   coverageExcludedPackages := ".*DefCache.*" // DefCache is kind-a experimental utility
 )
 
@@ -238,16 +247,13 @@ val dependencies = Seq(
     "org.scala-lang.modules" %%% "scala-collection-compat" % versions.scalaCollectionCompat,
     "org.scalameta" %%% "munit" % versions.munit % Test
   ),
-  libraryDependencies ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, _)) =>
-        Seq(
-          "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided,
-          compilerPlugin("org.typelevel" % "kind-projector" % versions.kindProjector cross CrossVersion.full)
-        )
-      case _ => Seq.empty
-    }
-  }
+  libraryDependencies ++= versions.fold2(scalaVersion.value)(
+    for2 = Seq(
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided,
+      compilerPlugin("org.typelevel" % "kind-projector" % versions.kindProjector cross CrossVersion.full)
+    ),
+    for3 = Seq.empty
+  )
 )
 
 val versionSchemeSettings = Seq(versionScheme := Some("early-semver"))
@@ -305,7 +311,10 @@ val mimaSettings = Seq(
           "1.7.0",
           "1.7.1",
           "1.7.2",
-          "1.7.3"
+          "1.7.3",
+          "1.8.0",
+          "1.8.1",
+          "1.8.2"
         )
       case _ => Set()
     }
@@ -453,13 +462,10 @@ lazy val chimney = projectMatrix
   .settings(dependencies *)
   .settings(
     Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*",
-    Compile / doc / scalacOptions ++= {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((3, _)) => Seq("-skip-by-regex:io\\.scalaland\\.chimney\\.internal")
-        case Some((2, _)) => Seq("-skip-packages", "io.scalaland.chimney.internal")
-        case _            => Seq.empty
-      }
-    },
+    Compile / doc / scalacOptions ++= versions.fold2(scalaVersion.value)(
+      for3 = Seq("-skip-by-regex:io\\.scalaland\\.chimney\\.internal"),
+      for2 = Seq("-skip-packages", "io.scalaland.chimney.internal")
+    ),
     resolvers += mavenCentralSnapshots,
     libraryDependencies += "io.scalaland" %%% "chimney-macro-commons" % versions.macroCommons,
     // Changes to macros should not cause any runtime problems
@@ -536,13 +542,11 @@ lazy val chimneyProtobufs = projectMatrix
     scalacOptions := {
       // protobufs Compile contains only generated classes, and scalacOptions from settings:* breaks Scala 3 compilation
       val resetOptions = if (scalacOptions.value.contains("-scalajs")) Seq("-scalajs") else Seq.empty
-      val reAddNecessary = CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, 12)) =>
-          Seq(
-            "-language:higherKinds"
-          )
-        case _ => Seq.empty
-      }
+      val reAddNecessary = versions.fold(scalaVersion.value)(
+        for2_12 = Seq("-language:higherKinds"),
+        for2_13 = Seq.empty,
+        for3 = Seq.empty
+      )
       resetOptions ++ reAddNecessary
     },
     Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
