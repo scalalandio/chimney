@@ -2,6 +2,7 @@ import com.jsuereth.sbtpgp.PgpKeys.publishSigned
 import com.typesafe.tools.mima.core.{Problem, ProblemFilters}
 import commandmatrix.extra.*
 import sbtprotoc.ProtocPlugin.ProtobufConfig
+import scoverage.ScoverageKeys.coverageScalacPluginVersion
 
 // Used to configure the build so that it would format on compile during development but not on CI.
 lazy val isCI = sys.env.get("CI").contains("true")
@@ -241,6 +242,7 @@ val settings = Seq(
     for2_13 = Seq.empty,
     for3 = Seq.empty
   ),
+  coverageScalacPluginVersion := "2.4.0", // update, since sbt-scoverage was not updated
   coverageExcludedPackages := ".*DefCache.*" // DefCache is kind-a experimental utility
 )
 
