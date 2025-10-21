@@ -930,11 +930,20 @@ in the code - derivation for a field of a case class, or a subtype of a
 sealed hierarchy - will trigger a macro, which may or may not succeed
 and if it succeeds it will introduce an allocation.
 
-When using `import io.scalaland.chimney.dsl._` this is countered by the usage of
-a `Transformer.AutoDerived` as a supertype of `Transformer` - automatic
-derivation upcast `Transformer` and recursive construction of an expression requires
-a normal `Transformer` so automatic derivation is NOT triggered. Either the user provided
-an implicit or there is none.
+When using `import io.scalaland.chimney.dsl._` this is countered by:
+
+- (prior to 2.0.0) the usage of a `Transformer.AutoDerived` as a supertype of `Transformer`:
+
+    - automatic derivation upcasts `Transformer`,
+    - and recursive construction of an expression requires a normal `Transformer`   
+
+- (since 2.0.0, onward) the usage of implicit search that excludes some symbols:
+
+    - macro looks for implicits
+    - ignoring the implicits that triggers the macro itself
+
+As a result, the derivation macro is NOT triggered recursively. Either the user provided an implicit for some type
+or there is none and macro will handle recursion internally.
 
 !!! note
 
@@ -943,8 +952,11 @@ an implicit or there is none.
     `PartialTransformer`s are only needed to *override* the default behavior, and they are *not*
     needed for the handling of every intermediate value.
 
+    This also allows to replace a bunch of anonymous instances calling one another with a single
+    instance - limitting the number of allocations and improving performance.
+
 However, with `import io.scalaland.chimney.auto._` the same semantics as in other
-libraries is used: implicit def returns `Transformer`, so if derivation with defaults
+libraries is used: `implicit def` returns `Transformer`, so if derivation with defaults
 is possible it will always be triggered.
 
 !!! important
