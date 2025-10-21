@@ -92,8 +92,8 @@ extra:
       link: https://twitter.com/@scalaland
   scala:
     2_12: "2.12.20"
-    2_13: "2.13.16"
-    3:    "3.7.2"
+    2_13: "2.13.17"
+    3:    "3.7.3"
   libraries:
     cats:             "2.13.0"
     scala_automapper: "0.7.0"

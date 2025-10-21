@@ -667,7 +667,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @since 0.7.0
     */
   inline def buildTransformer[ImplicitScopeFlags <: TransformerFlags](using
-      tc: TransformerConfiguration[ImplicitScopeFlags]
+      @scala.annotation.unused tc: TransformerConfiguration[ImplicitScopeFlags]
   ): PartialTransformer[From, To] =
     ${ TransformerMacros.derivePartialTransformerWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags]('this) }
 

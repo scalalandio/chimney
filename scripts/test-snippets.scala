@@ -1,6 +1,6 @@
-//> using scala 3.3.5
-//> using dep com.kubuszok::scala-cli-md-spec:0.1.1
-//> using dep org.virtuslab::scala-yaml:0.3.0
+//> using scala 3.3.6
+//> using dep com.kubuszok::scala-cli-md-spec:0.2.0
+//> using dep org.virtuslab::scala-yaml:0.3.1
 
 import com.kubuszok.scalaclimdspec.*
 import java.io.File
@@ -45,7 +45,7 @@ class ChimneyExtendedRunner(runner: Runner)(
     mkDocsCfg: MkDocsConfig
 ) extends Runner {
 
-  private val defaultScalaVersion = "2.13.16"
+  private val defaultScalaVersion = "2.13.17"
 
   private val replacePatterns = (mkDocsCfg.extra + (raw"chimney_version\(\)" -> chimneyVersion)).map { case (k, v) =>
     (raw"\{\{\s*" + k + raw"\s*\}\}") -> v
@@ -112,7 +112,7 @@ class ChimneyExtendedRunner(runner: Runner)(
   * }}}
   */
 @main def testChimneySnippets(args: String*): Unit = testSnippets(args.toArray) { cfg =>
-  new ChimneyExtendedRunner(new Runner.Default(cfg))(
+  ChimneyExtendedRunner(Runner.Default(cfg))(
     chimneyVersion = cfg
       .extra("chimney-version")
       .trim

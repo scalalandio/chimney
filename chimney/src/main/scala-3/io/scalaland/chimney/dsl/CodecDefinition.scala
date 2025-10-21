@@ -111,7 +111,7 @@ final class CodecDefinition[
     * @since 1.2.0
     */
   inline def buildCodec[ImplicitScopeFlags <: TransformerFlags](using
-      tc: TransformerConfiguration[ImplicitScopeFlags]
+      @scala.annotation.unused tc: TransformerConfiguration[ImplicitScopeFlags]
   ): Codec[Domain, Dto] =
     ${
       CodecMacros.deriveCodecWithConfig[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags, ImplicitScopeFlags]('this)

@@ -2,18 +2,14 @@ import com.jsuereth.sbtpgp.PgpKeys.publishSigned
 import com.typesafe.tools.mima.core.{Problem, ProblemFilters}
 import commandmatrix.extra.*
 import sbtprotoc.ProtocPlugin.ProtobufConfig
+import scoverage.ScoverageKeys.coverageScalacPluginVersion
 
 // Used to configure the build so that it would format on compile during development but not on CI.
 lazy val isCI = sys.env.get("CI").contains("true")
 ThisBuild / scalafmtOnCompile := !isCI
 
+// Used to publish snapshots to Maven Central.
 val mavenCentralSnapshots = "Maven Central Snapshots" at "https://central.sonatype.com/repository/maven-snapshots"
-credentials += Credentials(
-  "Maven Central Repository",
-  "central.sonatype.com",
-  sys.env.getOrElse("SONATYPE_USERNAME", ""),
-  sys.env.getOrElse("SONATYPE_PASSWORD", "")
-)
 
 // TODO: remove this once we have a release of Scala 2.13.17
 Global / resolvers += "scala-integration" at "https://scala-ci.typesafe.com/artifactory/scala-integration/"
@@ -21,20 +17,32 @@ Global / resolvers += "scala-integration" at "https://scala-ci.typesafe.com/arti
 // Versions:
 
 val versions = new {
-  val scala213 = "2.13.17-bin-4814abf" // TODO: change to 2.13.17 once released
-  val scala3 = "3.7.2"
+  // Versions we are publishing for.
+  val scala213 = "2.13.17"
+  val scala3 = "3.7.3"
 
   // Which versions should be cross-compiled for publishing
   val scalas = List(scala213, scala3)
+
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
-  // Dependencies
+  // Dependencies.
   val macroCommons = "2.0.2"
   val cats = "2.13.0"
-  val kindProjector = "0.13.3"
-  val munit = "1.1.1"
+  val kindProjector = "0.13.4"
+  val munit = "1.2.1"
+  val scalaCollectionCompat = "2.14.0"
+  val scalaJavaCompat = "1.0.2"
   val scalaJavaTime = "2.6.0"
   val scalapbRuntime = scalapb.compiler.Version.scalapbVersion
+
+  // Explicitly handle Scala 2.13 and Scala 3 separately.
+  def fold[A](scalaVersion: String)(for2_13: => Seq[A], for3: => Seq[A]): Seq[A] =
+    CrossVersion.partialVersion(scalaVersion) match {
+      case Some((2, 13)) => for2_13
+      case Some((3, _)) => for3
+      case _            => Seq.empty // for sbt
+    }
 }
 
 // Development settings:
@@ -59,6 +67,10 @@ val dev = new {
     case "js"     => VirtualAxis.js
     case "native" => VirtualAxis.native
   }
+
+  def isIdeScala(scalaVersion: String): Boolean =
+    CrossVersion.partialVersion(scalaVersion) == CrossVersion.partialVersion(ideScala)
+  def isIdePlatform(platform: VirtualAxis): Boolean = platform == idePlatform
 }
 
 // Common settings:
@@ -66,16 +78,18 @@ val dev = new {
 Global / excludeLintKeys += git.useGitDescribe
 Global / excludeLintKeys += ideSkipProject
 val only1VersionInIDE =
+  // For the platform we are working with, show only the project for the Scala version we are working with.
   MatrixAction
     .ForPlatform(dev.idePlatform)
     .Configure(
       _.settings(
-        ideSkipProject := (scalaVersion.value != dev.ideScala),
-        bspEnabled := (scalaVersion.value == dev.ideScala),
+        ideSkipProject := !dev.isIdeScala(scalaVersion.value),
+        bspEnabled := dev.isIdeScala(scalaVersion.value),
         scalafmtOnCompile := !isCI
       )
     ) +:
-    versions.platforms.filter(_ != dev.idePlatform).map { platform =>
+    // Do not show in IDE and BSP projects for the platform we are not working with.
+    versions.platforms.filterNot(dev.isIdePlatform).map { platform =>
       MatrixAction
         .ForPlatform(platform)
         .Configure(_.settings(ideSkipProject := true, bspEnabled := false, scalafmtOnCompile := false))
@@ -84,112 +98,108 @@ val only1VersionInIDE =
 val settings = Seq(
   git.useGitDescribe := true,
   git.uncommittedSignifier := None,
-  scalacOptions ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((3, _)) =>
-        Seq(
-          // format: off
-          "-encoding", "UTF-8",
-          // "-rewrite", // in tests removes case classe used for error message testing
-          // "-source", "3.3-migration",
-          // format: on
-          "-unchecked",
-          "-deprecation",
-          "-explain",
-          "-explain-types",
-          "-feature",
-          "-no-indent",
-          "-Wconf:msg=Unreachable case:s", // suppress fake (?) errors in internal.compiletime
-          "-Wconf:msg=Missing symbol position:s", // suppress warning https://github.com/scala/scala3/issues/21672
-          "-Wconf:msg=Implicit parameters should be provided with a `using` clause:s", // we're not rewriting this, since we are still cross-compiling with 2.13
-          "-Wconf:msg=The syntax `<function> _` is no longer supported:s", // we're not rewriting this, since we are still cross-compiling with 2.13
-          "-Wconf:msg=uninitialized.:s", // we're not rewriting this, since we are still cross-compiling with 2.13
-          "-Wnonunit-statement",
-          // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is! probably one of https://github.com/scala/scala3/issues/: #18564, #19252, #19657, #19912
-          "-Wunused:privates",
-          // "-Wunused:locals",
-          "-Wunused:explicits",
-          "-Wunused:implicits",
-          "-Wunused:params",
-          "-Wvalue-discard",
-          "-Xfatal-warnings",
-          "-Xcheck-macros",
-          "-Xkind-projector:underscores",
-          "Yimplicit-to-given"
-        )
-      case Some((2, 13)) =>
-        Seq(
-          // format: off
-          "-encoding", "UTF-8",
-          "-release", "8",
-          // format: on
-          "-unchecked",
-          "-deprecation",
-          "-explaintypes",
-          "-feature",
-          "-language:higherKinds",
-          "-Wconf:cat=scala3-migration:s", // silence mainly issues with -Xsource:3 and private case class constructors
-          "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s", // we want to be able to deprecate APIs and test them while they're deprecated
-          "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
-          "-Wconf:src=io/scalaland/chimney/cats/package.scala:s", // silence package object inheritance deprecation
-          "-Wconf:msg=discarding unmoored doc comment:s", // silence errors when scaladoc cannot comprehend nested vals
-          "-Wconf:msg=Could not find any member to link for:s", // since errors when scaladoc cannot link to stdlib types or nested types
-          "-Wconf:msg=Variable .+ undefined in comment for:s", // silence errors when there we're showing a buggy Expr in scaladoc comment
-          "-Wunused:patvars",
-          "-Xfatal-warnings",
-          "-Xlint:adapted-args",
-          "-Xlint:delayedinit-select",
-          "-Xlint:doc-detached",
-          "-Xlint:inaccessible",
-          "-Xlint:infer-any",
-          "-Xlint:nullary-unit",
-          "-Xlint:option-implicit",
-          "-Xlint:package-object-classes",
-          "-Xlint:poly-implicit-overload",
-          "-Xlint:private-shadow",
-          "-Xlint:stars-align",
-          "-Xlint:type-parameter-shadow",
-          "-Xsource:3",
-          "-Xsource-features:eta-expand-always",
-          "-Ywarn-dead-code",
-          "-Ywarn-numeric-widen",
-          "-Ywarn-unused:locals",
-          "-Ywarn-unused:imports",
-          "-Ywarn-macros:after",
-          "-Ytasty-reader"
-        )
-      case _ => Seq.empty
-    }
-  },
-  Compile / doc / scalacOptions ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((3, _)) =>
-        Seq("-Ygenerate-inkuire") // type-based search for Scala 3, this option cannot go into compile
-      case _ => Seq.empty
-    }
-  },
-  Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
-  // TODO: restore this once we have a release of Scala 2.13.17
-  // coverageExcludedPackages := ".*DefCache.*" // DefCache is kind-a experimental utility
+  scalacOptions ++= versions.fold(scalaVersion.value)(
+    for3 = Seq(
+      // format: off
+      "-encoding", "UTF-8",
+      // "-rewrite", // in tests removes case classe used for error message testing
+      // "-source", "3.3-migration",
+      // format: on
+      "-unchecked",
+      "-deprecation",
+      "-explain",
+      "-explain-types",
+      "-feature",
+      "-no-indent",
+      "-Wconf:msg=Unreachable case:s", // suppress fake (?) errors in internal.compiletime
+      "-Wconf:msg=Missing symbol position:s", // suppress warning https://github.com/scala/scala3/issues/21672
+      "-Wconf:msg=Implicit parameters should be provided with a `using` clause:s", // we're not rewriting this, since we are still cross-compiling with 2.13
+      "-Wconf:msg=The syntax `<function> _` is no longer supported:s", // we're not rewriting this, since we are still cross-compiling with 2.13
+      "-Wconf:msg=uninitialized.:s", // we're not rewriting this, since we are still cross-compiling with 2.13
+      "-Wnonunit-statement",
+      // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is! probably one of https://github.com/scala/scala3/issues/: #18564, #19252, #19657, #19912
+      "-Wunused:privates",
+      // "-Wunused:locals",
+      "-Wunused:explicits",
+      "-Wunused:implicits",
+      "-Wunused:params",
+      "-Wvalue-discard",
+      "-Xfatal-warnings",
+      "-Xcheck-macros",
+      "-Xkind-projector:underscores",
+      "Yimplicit-to-given"
+    ),
+    for2_13 = Seq(
+      // format: off
+      "-encoding", "UTF-8",
+      "-release", "8",
+      // format: on
+      "-unchecked",
+      "-deprecation",
+      "-explaintypes",
+      "-feature",
+      "-language:higherKinds",
+      "-Wconf:origin=scala.collection.compat.*:s", // type aliases without which 2.12 fail compilation but 2.13/3 doesn't need them
+      "-Wconf:cat=scala3-migration:s", // silence mainly issues with -Xsource:3 and private case class constructors
+      "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s", // we want to be able to deprecate APIs and test them while they're deprecated
+      "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
+      "-Wconf:src=io/scalaland/chimney/cats/package.scala:s", // silence package object inheritance deprecation
+      "-Wconf:msg=discarding unmoored doc comment:s", // silence errors when scaladoc cannot comprehend nested vals
+      "-Wconf:msg=Could not find any member to link for:s", // since errors when scaladoc cannot link to stdlib types or nested types
+      "-Wconf:msg=Variable .+ undefined in comment for:s", // silence errors when there we're showing a buggy Expr in scaladoc comment
+      "-Wconf:msg=a type was inferred to be kind-polymorphic `Nothing` to conform to:s", // silence warn that appeared after updating to Scala 2.13.17
+      "-Wunused:patvars",
+      "-Xfatal-warnings",
+      "-Xlint:adapted-args",
+      "-Xlint:delayedinit-select",
+      "-Xlint:doc-detached",
+      "-Xlint:inaccessible",
+      "-Xlint:infer-any",
+      "-Xlint:nullary-unit",
+      "-Xlint:option-implicit",
+      "-Xlint:package-object-classes",
+      "-Xlint:poly-implicit-overload",
+      "-Xlint:private-shadow",
+      "-Xlint:stars-align",
+      "-Xlint:type-parameter-shadow",
+      "-Xsource:3",
+      "-Xsource-features:eta-expand-always", // silence warn that appears since 2.13.17
+      "-Ywarn-dead-code",
+      "-Ywarn-numeric-widen",
+      "-Ywarn-unused:locals",
+      "-Ywarn-unused:imports",
+      "-Ywarn-macros:after",
+      "-Ytasty-reader"
+    )
+  ),
+  Test / compile / scalacOptions ++= versions.fold(scalaVersion.value)(
+    for3 = Seq("-Wconf:msg=unused local definition:s"), // silence warn that appears since 3.3.7
+    for2_13 = Seq.empty
+  ),
+  Compile / doc / scalacOptions ++= versions.fold(scalaVersion.value)(
+    for3 = Seq("-Ygenerate-inkuire"), // type-based search for Scala 3, this option cannot go into compile
+    for2_13 = Seq.empty
+  ),
+  Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings"),
+  Test / compile / scalacOptions --= versions.fold(scalaVersion.value)(
+    for3 = Seq.empty,
+    for2_13 = Seq.empty
+  ),
+  coverageScalacPluginVersion := "2.4.0", // update, since sbt-scoverage was not updated
+  coverageExcludedPackages := ".*DefCache.*" // DefCache is kind-a experimental utility
 )
 
 val dependencies = Seq(
   libraryDependencies ++= Seq(
     "org.scalameta" %%% "munit" % versions.munit % Test
   ),
-  libraryDependencies ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, _)) =>
-        Seq(
-          // TODO: restore this once we have a release of Scala 2.13.17
-          // "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided,
-          // compilerPlugin("org.typelevel" % "kind-projector" % versions.kindProjector cross CrossVersion.full)
-          "org.scala-lang" % "scala-reflect" % "2.13.16" % Provided,
-          compilerPlugin("org.typelevel" % "kind-projector_2.13.16" % versions.kindProjector)
-        )
-      case _ => Seq.empty
-    }
-  }
+  libraryDependencies ++= versions.fold(scalaVersion.value)(
+    for3 = Seq.empty,
+    for2_13 = Seq(
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided,
+      compilerPlugin("org.typelevel" % "kind-projector" % versions.kindProjector cross CrossVersion.full)
+    )
+  )
 )
 
 val versionSchemeSettings = Seq(versionScheme := Some("early-semver"))
@@ -252,9 +262,7 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
 
   val clean = Vector("clean")
   def withCoverage(tasks: String*): Vector[String] =
-    // TODO: restore this once we have a release of Scala 2.13.17
-    // "coverage" +: tasks.toVector :+ "coverageAggregate" :+ "coverageOff"
-    tasks.toVector
+    "coverage" +: tasks.toVector :+ "coverageAggregate" :+ "coverageOff"
 
   val projects = for {
     name <- Vector(
@@ -270,9 +278,7 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
 
   val tasks = if (isJVM) {
     clean ++
-      // TODO: restore this once we have a release of Scala 2.13.17
-      // withCoverage((tasksOf("compile") ++ tasksOf("test") ++ tasksOf("coverageReport")).toSeq *) ++
-      withCoverage((tasksOf("compile") ++ tasksOf("test")).toSeq *) ++
+      withCoverage((tasksOf("compile") ++ tasksOf("test") ++ tasksOf("coverageReport")).toSeq *) ++
       Vector("benchmarks/compile") ++
       tasksOf("mimaReportBinaryIssues")
   } else {
@@ -378,13 +384,10 @@ lazy val chimney = projectMatrix
   .settings(dependencies *)
   .settings(
     Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*",
-    Compile / doc / scalacOptions ++= {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((3, _)) => Seq("-skip-by-regex:io\\.scalaland\\.chimney\\.internal")
-        case Some((2, _)) => Seq("-skip-packages", "io.scalaland.chimney.internal")
-        case _            => Seq.empty
-      }
-    },
+    Compile / doc / scalacOptions ++= versions.fold(scalaVersion.value)(
+      for3 = Seq("-skip-by-regex:io\\.scalaland\\.chimney\\.internal"),
+      for2_13 = Seq("-skip-packages", "io.scalaland.chimney.internal")
+    ),
     resolvers += mavenCentralSnapshots,
     libraryDependencies += "io.scalaland" %%% "chimney-macro-commons" % versions.macroCommons,
     // Changes to macros should not cause any runtime problems
@@ -458,15 +461,7 @@ lazy val chimneyProtobufs = projectMatrix
     Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*, io.scalaland.chimney.protobufs.*",
     scalacOptions := {
       // protobufs Compile contains only generated classes, and scalacOptions from settings:* breaks Scala 3 compilation
-      val resetOptions = if (scalacOptions.value.contains("-scalajs")) Seq("-scalajs") else Seq.empty
-      val reAddNecessary = CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, 12)) =>
-          Seq(
-            "-language:higherKinds"
-          )
-        case _ => Seq.empty
-      }
-      resetOptions ++ reAddNecessary
+      if (scalacOptions.value.contains("-scalajs")) Seq("-scalajs") else Seq.empty
     },
     Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
     Test / PB.protoSources += PB.externalSourcePath.value,

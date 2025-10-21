@@ -111,7 +111,7 @@ final class IsoDefinition[
     * @since 1.2.0
     */
   inline def buildIso[ImplicitScopeFlags <: TransformerFlags](using
-      tc: TransformerConfiguration[ImplicitScopeFlags]
+      @scala.annotation.unused tc: TransformerConfiguration[ImplicitScopeFlags]
   ): Iso[First, Second] =
     ${ IsoMacros.deriveIsoWithConfig[First, Second, FirstOverrides, SecondOverrides, Flags, ImplicitScopeFlags]('this) }
 }

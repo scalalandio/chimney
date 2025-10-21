@@ -152,7 +152,7 @@ final class PatcherUsing[A, Patch, Overrides <: PatcherOverrides, Flags <: Patch
     * @since 0.4.0
     */
   inline def patch[ImplicitScopeFlags <: PatcherFlags](using
-      tc: PatcherConfiguration[ImplicitScopeFlags]
+      @scala.annotation.unused tc: PatcherConfiguration[ImplicitScopeFlags]
   ): A =
     ${
       PatcherMacros.derivePatcherResultWithConfig[A, Patch, Overrides, Flags, ImplicitScopeFlags]('obj, 'objPatch, 'pd)
