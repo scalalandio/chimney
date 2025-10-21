@@ -82,8 +82,9 @@ Well, to make it work with automatic derivation, we would have to put `Transform
 We'll get to details later, but for now: in macros we  **never** want to summon implicits that
 **the user did not provide**, we **always** want to be able to summon implicit that **the user did provide**.
 If users are supposed to provide their instances with `implicit` `Transformer`s and automatic derivation would also
-provide an `implicit` `Transformer`, how we would distinct user's instances from automatic ones? The solution is to make
-them slightly different types:
+provide an `implicit` `Transformer`, how we would distinct user's instances from automatic ones?
+
+Prior to `2.0.0`, that solution was to make them slightly different types:
 
 !!! example
 
@@ -115,6 +116,10 @@ With such setup:
   - when needed, we could rule out automatic derivation just by summoning `Transformer` instead of
     `Transformer.AutoDerived` (which is done both in macros and in
     [`import io.scalaland.chimney.syntax._`](cookbook.md#automatic-semiautomatic-and-inlined-derivation))
+
+Since `2.0.0` we can utilise a native mechanism available [since 3.7.0](https://github.com/scala/scala3/pull/22417)
+and [backported to 2.13.17](https://github.com/scala/scala/pull/11068), that let us use just one `Transformer` type,
+one `PartialTransformer` type, one `Patcher` type, and keep all the benefits.
 
 ### How DSL summons `PartialTransformer` instance
 
