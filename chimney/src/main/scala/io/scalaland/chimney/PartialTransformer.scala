@@ -177,7 +177,7 @@ object PartialTransformer extends PartialTransformerCompanionPlatform {
   object AutoDerived extends PartialTransformerAutoDerivedCompanionPlatform {
 
     implicit def liftTotal[From, To](implicit total: Transformer[From, To]): AutoDerived[From, To] =
-      (src: From, failFast: Boolean) => partial.Result.fromCatching(total.transform(src))
+      (src: From, _: Boolean) => partial.Result.fromCatching(total.transform(src))
   }
 }
 // extended by PartialTransformerCompanionPlatform

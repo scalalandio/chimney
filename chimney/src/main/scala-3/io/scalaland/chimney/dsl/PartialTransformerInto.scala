@@ -673,7 +673,7 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
     * @since 0.7.0
     */
   inline def transform[ImplicitScopeFlags <: TransformerFlags](using
-      tc: TransformerConfiguration[ImplicitScopeFlags]
+      @scala.annotation.unused tc: TransformerConfiguration[ImplicitScopeFlags]
   ): partial.Result[To] =
     ${
       TransformerMacros.derivePartialTransformerResultWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags](
@@ -694,7 +694,7 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
     * @since 0.7.0
     */
   inline def transformFailFast[ImplicitScopeFlags <: TransformerFlags](using
-      tc: TransformerConfiguration[ImplicitScopeFlags]
+      @scala.annotation.unused tc: TransformerConfiguration[ImplicitScopeFlags]
   ): partial.Result[To] =
     ${
       TransformerMacros.derivePartialTransformerResultWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags](

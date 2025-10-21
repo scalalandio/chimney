@@ -57,7 +57,9 @@ sealed private[compiletime] trait DerivationResult[+A] {
 
   final def flatTap[B](f: A => DerivationResult[B]): DerivationResult[A] = flatMap(a => f(a).as(a))
 
-  final def tap[B](f: A => B): DerivationResult[A] = flatTap(a => pure(a))
+  final def tap[B](f: A => B): DerivationResult[A] = flatTap { a =>
+    val _ = f(a); pure(a)
+  }
 
   final def recoverWith[A1 >: A](f: DerivationErrors => DerivationResult[A1]): DerivationResult[A1] =
     transformWith[A1](pure)(f(_))

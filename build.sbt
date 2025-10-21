@@ -17,7 +17,7 @@ val versions = new {
   // Versions we are publishing for.
   val scala212 = "2.12.20"
   val scala213 = "2.13.17"
-  val scala3 = "3.3.6"
+  val scala3 = "3.3.7"
 
   // Which versions should be cross-compiled for publishing.
   val scalas = List(scala212, scala213, scala3)
@@ -131,6 +131,7 @@ val settings = Seq(
       "-Wconf:msg=Unreachable case:s", // suppress fake (?) errors in internal.compiletime
       "-Wconf:msg=Missing symbol position:s", // suppress warning https://github.com/scala/scala3/issues/21672
       "-Wconf:msg=deprecated since 1.8.0:s", // suppress deprecation warnings for methods that we replaced in 2.0.0 tests
+      "-Wconf:msg=unused private member:s", // silence errors like: [fromPath <: Path, toPath <: Path] <- unused private member
       "-Wnonunit-statement",
       // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is! probably one of https://github.com/scala/scala3/issues/: #18564, #19252, #19657, #19912
       "-Wunused:privates",
@@ -231,6 +232,11 @@ val settings = Seq(
       "-Ywarn-nullary-override",
       "-Ywarn-nullary-unit"
     )
+  ),
+  Test / compile / scalacOptions ++= versions.fold(scalaVersion.value)(
+    for3 = Seq("-Wconf:msg=unused local definition:s"), // silence warn that appears since 3.3.7
+    for2_13 = Seq.empty,
+    for2_12 = Seq.empty
   ),
   Compile / doc / scalacOptions ++= versions.fold2(scalaVersion.value)(
     for3 = Seq("-Ygenerate-inkuire"), // type-based search for Scala 3, this option cannot go into compile

@@ -80,7 +80,7 @@ trait CatsPartialTransformerImplicits {
           fa: PartialTransformer[Source, A]
       )(
           f: PartialTransformer[Source, A] => B
-      ): PartialTransformer[Source, B] = (src, _) => partial.Result.fromCatching(f(fa))
+      ): PartialTransformer[Source, B] = (_, _) => partial.Result.fromCatching(f(fa))
 
       override def empty[A]: PartialTransformer[Source, A] = (_, _) => partial.Result.fromEmpty[A]
 

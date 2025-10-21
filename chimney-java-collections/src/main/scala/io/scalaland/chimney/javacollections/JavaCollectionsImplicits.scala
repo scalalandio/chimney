@@ -3,6 +3,7 @@ package io.scalaland.chimney.javacollections
 import java.util as ju
 import io.scalaland.chimney.integrations.*
 
+import scala.annotation.nowarn
 import scala.collection.compat.Factory
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
@@ -203,6 +204,7 @@ trait JavaCollectionsImplicits {
     javaAbstractMapIsTotallyBuildMap[Key, Value].widen
 
   /** @since 1.0.0 */
+  @nowarn("msg=unused implicit parameter") // fixed on 2.0.0
   implicit def javaAbstractMapIsTotallyBuildMap[Key: Ordering, Value]
       : TotallyBuildMap[ju.AbstractMap[Key, Value], Key, Value] =
     javaHashMapIsTotallyBuildMap[Key, Value].widen

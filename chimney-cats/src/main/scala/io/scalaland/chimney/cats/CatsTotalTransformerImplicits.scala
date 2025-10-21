@@ -52,7 +52,7 @@ trait CatsTotalTransformerImplicits {
           fa: Transformer[Source, A]
       )(
           f: Transformer[Source, A] => B
-      ): Transformer[Source, B] = src => f(fa)
+      ): Transformer[Source, B] = _ => f(fa)
     }
 
   /** @since 1.0.0 */

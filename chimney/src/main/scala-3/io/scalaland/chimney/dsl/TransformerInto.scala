@@ -423,7 +423,7 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     * @since 0.1.0
     */
   inline def transform[ImplicitScopeFlags <: TransformerFlags](using
-      tc: TransformerConfiguration[ImplicitScopeFlags]
+      @scala.annotation.unused tc: TransformerConfiguration[ImplicitScopeFlags]
   ): To =
     ${
       TransformerMacros.deriveTotalTransformerResultWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags](
