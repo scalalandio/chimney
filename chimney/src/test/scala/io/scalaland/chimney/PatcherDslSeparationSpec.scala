@@ -20,7 +20,7 @@ class PatcherDslSeparationSpec extends ChimneySpec {
 
     test("should enable summoning declared instances") {
       implicit val patcher: Patcher[Foo, Bar] =
-        (foo: Foo, bar: Bar) => Foo(baz = "test3")
+        (_: Foo, _: Bar) => Foo(baz = "test3")
 
       Foo("test").patchUsing(Bar("test2")) ==> Foo("test3")
       Foo("test").using(Bar("test2")).patch ==> Foo("test3")

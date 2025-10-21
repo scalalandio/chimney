@@ -441,7 +441,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @since 0.4.0
     */
   inline def buildTransformer[ImplicitScopeFlags <: TransformerFlags](using
-      tc: TransformerConfiguration[ImplicitScopeFlags]
+      @scala.annotation.unused tc: TransformerConfiguration[ImplicitScopeFlags]
   ): Transformer[From, To] =
     ${ TransformerMacros.deriveTotalTransformerWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags]('this) }
 

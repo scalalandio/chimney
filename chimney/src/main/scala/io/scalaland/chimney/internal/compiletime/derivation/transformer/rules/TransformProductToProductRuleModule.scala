@@ -34,7 +34,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
     private object HasCustomConstructor {
       def unapply[A, From, To](
-          tpe: Type[A]
+          @scala.annotation.unused tpe: Type[A]
       )(implicit ctx: TransformationContext[From, To]): Option[TransformerOverride.ForConstructor] =
         ctx.config.currentOverrideForConstructor
     }
