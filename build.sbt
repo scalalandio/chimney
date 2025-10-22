@@ -185,7 +185,6 @@ val settings = Seq(
     for3 = Seq.empty,
     for2_13 = Seq.empty
   ),
-  coverageScalacPluginVersion := "2.4.0", // update, since sbt-scoverage was not updated
   coverageExcludedPackages := ".*DefCache.*" // DefCache is kind-a experimental utility
 )
 

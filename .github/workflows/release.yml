@@ -9,6 +9,8 @@ jobs:
   release-tag:
     runs-on: ubuntu-latest
 
+    name: ${{ startsWith(github.ref, 'refs/tags/') && 'Publish Tag as Release' || 'Publish Snapshot' }}
+
     steps:
       - uses: actions/checkout@v5
         with:

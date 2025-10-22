@@ -1,4 +1,4 @@
-name: CI build
+name: CI Build
 
 on:
   push:
@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event.action != 'labeled' # run for 'opened', 'reopened' and 'synchronize'
 
+    name: Check formatting
+
     steps:
       - uses: actions/checkout@v5
         with:
@@ -28,6 +30,8 @@ jobs:
 
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event.action != 'labeled' # run for 'opened', 'reopened' and 'synchronize'
+
+    name: Check Scala CLI snippets from documentation
 
     steps:
       - uses: actions/checkout@v5
@@ -45,6 +49,8 @@ jobs:
 
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event.action != 'labeled' # run for 'opened', 'reopened' and 'synchronize'
+
+    name: "Scala: ${{ matrix.scala == '2_12' && '2.12' || matrix.scala == '2_13' && '2.13' || '3' }} / Platform: ${{ matrix.platform }} / JVM: ${{ matrix.jvm }}"
 
     strategy:
       matrix:
