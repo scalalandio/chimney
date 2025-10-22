@@ -11,6 +11,8 @@ on:
 jobs:
   benchmark:
 
+    name: Run benchmarks
+
     runs-on: benchmarks
     concurrency: 'benchmark'
     if: >
