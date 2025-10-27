@@ -61,7 +61,7 @@ jobs:
           echo "${{ github.event_name }}" > ./results/event
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: benchmark-results
           path: results
