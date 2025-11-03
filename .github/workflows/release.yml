@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: coursier/cache-action@v6
+      - uses: coursier/cache-action@v7
       - name: Import GPG key for signing the release
         uses: crazy-max/ghaction-import-gpg@v6
         with:
