@@ -16,7 +16,7 @@ val mavenCentralSnapshots = "Maven Central Snapshots" at "https://central.sonaty
 val versions = new {
   // Versions we are publishing for.
   val scala212 = "2.12.20"
-  val scala213 = "2.13.17"
+  val scala213 = "2.13.18"
   val scala3 = "3.3.7"
 
   // Which versions should be cross-compiled for publishing.
@@ -162,7 +162,7 @@ val settings = Seq(
       "-Wconf:msg=discarding unmoored doc comment:s", // silence errors when scaladoc cannot comprehend nested vals
       "-Wconf:msg=Could not find any member to link for:s", // since errors when scaladoc cannot link to stdlib types or nested types
       "-Wconf:msg=Variable .+ undefined in comment for:s", // silence errors when there we're showing a buggy Expr in scaladoc comment
-      "-Wconf:msg=a type was inferred to be kind-polymorphic `Nothing` to conform to:s", // silence warn that appeared after updating to Scala 2.13.17
+      "-Wconf:msg=a type was inferred to be kind-polymorphic `Nothing` to conform to:s", // silence warn that appeared after updating to Scala 2.13.18
       "-Wunused:patvars",
       "-Xfatal-warnings",
       "-Xlint:adapted-args",
