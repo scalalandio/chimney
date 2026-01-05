@@ -21,7 +21,7 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
-      - uses: coursier/setup-action@v2.0.1
+      - uses: coursier/setup-action@v2.0.2
         with:
           jvm: 'temurin:1.8.0-392'
           apps: sbt
