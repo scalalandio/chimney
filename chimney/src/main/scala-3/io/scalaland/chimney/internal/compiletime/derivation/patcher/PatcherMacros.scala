@@ -19,7 +19,7 @@ final class PatcherMacros(q: Quotes) extends DerivationPlatform(q) with Gateway 
   ](
       pc: Expr[PatcherDefinition[A, Patch, Overrides, Flags]]
   ): Expr[Patcher[A, Patch]] =
-    derivePatcher[A, Patch, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ pc }.runtimeData })
+    derivePatcher[A, Patch, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{ $pc.runtimeData })
 
   def derivePatcherWithDefaults[
       A: Type,
@@ -80,6 +80,6 @@ object PatcherMacros {
     new PatcherMacros(q).derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](
       obj,
       patch,
-      '{ ${ pd }.runtimeData }
+      '{ $pd.runtimeData }
     )
 }

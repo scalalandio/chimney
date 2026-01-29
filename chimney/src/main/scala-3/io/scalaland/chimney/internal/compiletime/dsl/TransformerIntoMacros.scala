@@ -169,7 +169,7 @@ object TransformerIntoMacros {
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
       '{
-        ${ ti }.asInstanceOf[TransformerInto[From, To, Unmatched[toPath, Overrides], Flags]]
+        $ti.asInstanceOf[TransformerInto[From, To, Unmatched[toPath, Overrides], Flags]]
       }
     }(selectorTo)
 

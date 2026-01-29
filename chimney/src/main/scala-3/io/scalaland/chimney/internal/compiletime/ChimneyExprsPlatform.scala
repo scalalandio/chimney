@@ -17,14 +17,14 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
       def transform[From: Type, To: Type](
           transformer: Expr[io.scalaland.chimney.Transformer[From, To]],
           src: Expr[From]
-      ): Expr[To] = '{ ${ transformer }.transform(${ resetOwner(src) }) }
+      ): Expr[To] = '{ $transformer.transform(${ resetOwner(src) }) }
 
       def instance[From: Type, To: Type](toExpr: Expr[From] => Expr[To]): Expr[Transformer[From, To]] =
         '{
           new Transformer[From, To] {
             def transform(src: From): To = ${
               PrependDefinitionsTo
-                .prependVal[From](resetOwner('{ src }), ExprPromise.NameGenerationStrategy.FromType)
+                .prependVal[From](resetOwner('src), ExprPromise.NameGenerationStrategy.FromType)
                 .use(toExpr)
             }
           }
@@ -38,7 +38,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           src: Expr[From],
           failFast: Expr[Boolean]
       ): Expr[partial.Result[To]] =
-        '{ ${ transformer }.transform(${ resetOwner(src) }, ${ resetOwner(failFast) }) }
+        '{ $transformer.transform(${ resetOwner(src) }, ${ resetOwner(failFast) }) }
 
       def instance[From: Type, To: Type](
           toExpr: (Expr[From], Expr[Boolean]) => Expr[partial.Result[To]]
@@ -47,8 +47,8 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           new PartialTransformer[From, To] {
             def transform(src: From, failFast: Boolean): partial.Result[To] = ${
               PrependDefinitionsTo
-                .prependVal[From](resetOwner('{ src }), ExprPromise.NameGenerationStrategy.FromType)
-                .use(toExpr(_, resetOwner('{ failFast })))
+                .prependVal[From](resetOwner('src), ExprPromise.NameGenerationStrategy.FromType)
+                .use(toExpr(_, resetOwner('failFast)))
             }
           }
         }
@@ -57,10 +57,10 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
     object PartialResult extends PartialResultModule {
       object Value extends ValueModule {
         def apply[A: Type](value: Expr[A]): Expr[partial.Result.Value[A]] =
-          '{ partial.Result.Value[A](${ value }) }
+          '{ partial.Result.Value[A]($value) }
 
         def value[A: Type](valueExpr: Expr[partial.Result.Value[A]]): Expr[A] =
-          '{ ${ valueExpr }.value }
+          '{ $valueExpr.value }
       }
 
       object Errors extends ErrorsModule {
@@ -68,19 +68,19 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
             errors1: Expr[partial.Result.Errors],
             errors2: Expr[partial.Result.Errors]
         ): Expr[partial.Result.Errors] =
-          '{ partial.Result.Errors.merge(${ errors1 }, ${ errors2 }) }
+          '{ partial.Result.Errors.merge($errors1, $errors2) }
 
         def mergeResultNullable[A: Type](
             errorsNullable: Expr[partial.Result.Errors],
             result: Expr[partial.Result[A]]
         ): Expr[partial.Result.Errors] =
-          '{ io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable[A](${ errorsNullable }, ${ result }) }
+          '{ io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable[A]($errorsNullable, $result) }
       }
 
       def fromEmpty[A: Type]: Expr[partial.Result[A]] = '{ partial.Result.fromEmpty[A] }
 
       def fromFunction[A: Type, B: Type](f: Expr[A => B]): Expr[A => partial.Result[B]] =
-        '{ partial.Result.fromFunction[A, B](${ f }) }
+        '{ partial.Result.fromFunction[A, B]($f) }
 
       def traverse[M: Type, A: Type, B: Type](
           it: Expr[Iterator[A]],
@@ -89,9 +89,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           factory: Expr[Factory[B, M]]
       ): Expr[partial.Result[M]] =
         '{
-          partial.Result.traverse[M, A, B](${ resetOwner(it) }, ${ resetOwner(f) }, ${ resetOwner(failFast) })(${
-            factory
-          })
+          partial.Result.traverse[M, A, B](${ resetOwner(it) }, ${ resetOwner(f) }, ${ resetOwner(failFast) })($factory)
         }
 
       def sequence[M: Type, A: Type](
@@ -99,18 +97,18 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           failFast: Expr[Boolean],
           factory: Expr[Factory[A, M]]
       ): Expr[partial.Result[M]] =
-        '{ partial.Result.sequence[M, A](${ it }, ${ failFast })(${ factory }) }
+        '{ partial.Result.sequence[M, A]($it, $failFast)($factory) }
 
       def flatMap[A: Type, B: Type](pr: Expr[partial.Result[A]])(
           f: Expr[A => partial.Result[B]]
       ): Expr[partial.Result[B]] =
-        '{ ${ pr }.flatMap(${ f }) }
+        '{ $pr.flatMap($f) }
 
       def flatten[A: Type](pr: Expr[partial.Result[partial.Result[A]]]): Expr[partial.Result[A]] =
-        '{ ${ pr }.flatten[A] }
+        '{ $pr.flatten[A] }
 
       def map[A: Type, B: Type](pr: Expr[partial.Result[A]])(f: Expr[A => B]): Expr[partial.Result[B]] =
-        '{ ${ pr }.map(${ f }) }
+        '{ $pr.map($f) }
 
       def map2[A: Type, B: Type, C: Type](
           fa: Expr[partial.Result[A]],
@@ -138,32 +136,32 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           fa: Expr[partial.Result[A]],
           path: Expr[partial.PathElement]
       ): Expr[partial.Result[A]] =
-        '{ ${ fa }.prependErrorPath(${ path }) }
+        '{ $fa.prependErrorPath($path) }
 
       def unsealErrorPath[A: Type](
           fa: Expr[partial.Result[A]]
       ): Expr[partial.Result[A]] =
-        '{ ${ fa }.unsealErrorPath }
+        '{ $fa.unsealErrorPath }
     }
 
     object PathElement extends PathElementModule {
       def Accessor(targetName: Expr[String]): Expr[partial.PathElement.Accessor] =
-        '{ partial.PathElement.Accessor(${ targetName }) }
+        '{ partial.PathElement.Accessor($targetName) }
 
       def Index(index: Expr[Int]): Expr[partial.PathElement.Index] =
-        '{ partial.PathElement.Index(${ index }) }
+        '{ partial.PathElement.Index($index) }
 
       def MapKey(key: Expr[Any]): Expr[partial.PathElement.MapKey] =
-        '{ partial.PathElement.MapKey(${ key }) }
+        '{ partial.PathElement.MapKey($key) }
 
       def MapValue(key: Expr[Any]): Expr[partial.PathElement.MapValue] =
-        '{ partial.PathElement.MapValue(${ key }) }
+        '{ partial.PathElement.MapValue($key) }
 
       def Const(targetPath: Expr[String]): Expr[partial.PathElement.Const] =
-        '{ partial.PathElement.Const(${ targetPath }) }
+        '{ partial.PathElement.Const($targetPath) }
 
       def Computed(targetPath: Expr[String]): Expr[partial.PathElement.Computed] =
-        '{ partial.PathElement.Computed(${ targetPath }) }
+        '{ partial.PathElement.Computed($targetPath) }
     }
 
     object RuntimeDataStore extends RuntimeDataStoreModule {
@@ -175,7 +173,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
           index: Int
       ): Expr[Any] =
-        '{ ${ runtimeDataStore }.apply(${ quoted.Expr(index) }) }
+        '{ $runtimeDataStore.apply(${ quoted.Expr(index) }) }
     }
 
     object Patcher extends PatcherModule {
@@ -185,7 +183,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           obj: Expr[A],
           patch: Expr[Patch]
       ): Expr[A] = '{
-        ${ patcher }.patch(${ obj }, ${ patch })
+        $patcher.patch($obj, $patch)
       }
 
       def instance[A: Type, Patch: Type](
@@ -195,10 +193,10 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           new Patcher[A, Patch] {
             def patch(obj: A, patch: Patch): A = ${
               PrependDefinitionsTo
-                .prependVal[A](resetOwner('{ obj }), ExprPromise.NameGenerationStrategy.FromType)
+                .prependVal[A](resetOwner('obj), ExprPromise.NameGenerationStrategy.FromType)
                 .map2(
                   PrependDefinitionsTo
-                    .prependVal[Patch](resetOwner('{ patch }), ExprPromise.NameGenerationStrategy.FromType)
+                    .prependVal[Patch](resetOwner('patch), ExprPromise.NameGenerationStrategy.FromType)
                 )(
                   f
                 )
@@ -216,7 +214,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           failFast: Expr[Boolean],
           inner: Expr[InnerFrom => InnerTo]
       ): Expr[partial.Result[To]] =
-        '{ ${ partialOuterTransformer }.transformWithTotalInner(${ src }, ${ failFast }, ${ inner }) }
+        '{ $partialOuterTransformer.transformWithTotalInner($src, $failFast, $inner) }
 
       def transformWithPartialInner[From: Type, To: Type, InnerFrom: Type, InnerTo: Type](
           partialOuterTransformer: Expr[integrations.PartialOuterTransformer[From, To, InnerFrom, InnerTo]],
@@ -224,7 +222,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           failFast: Expr[Boolean],
           inner: Expr[InnerFrom => partial.Result[InnerTo]]
       ): Expr[partial.Result[To]] =
-        '{ ${ partialOuterTransformer }.transformWithPartialInner(${ src }, ${ failFast }, ${ inner }) }
+        '{ $partialOuterTransformer.transformWithPartialInner($src, $failFast, $inner) }
     }
 
     object TotalOuterTransformer extends TotalOuterTransformerModule {
@@ -233,7 +231,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           totalOuterTransformer: Expr[integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]],
           src: Expr[From],
           inner: Expr[InnerFrom => InnerTo]
-      ): Expr[To] = '{ ${ totalOuterTransformer }.transformWithTotalInner(${ src }, ${ inner }) }
+      ): Expr[To] = '{ $totalOuterTransformer.transformWithTotalInner($src, $inner) }
 
       def transformWithPartialInner[From: Type, To: Type, InnerFrom: Type, InnerTo: Type](
           totalOuterTransformer: Expr[integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]],
@@ -241,81 +239,81 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           failFast: Expr[Boolean],
           inner: Expr[InnerFrom => partial.Result[InnerTo]]
       ): Expr[partial.Result[To]] =
-        '{ ${ totalOuterTransformer }.transformWithPartialInner(${ src }, ${ failFast }, ${ inner }) }
+        '{ $totalOuterTransformer.transformWithPartialInner($src, $failFast, $inner) }
     }
 
     object DefaultValue extends DefaultValueModule {
 
       def provide[Value: Type](
           defaultValue: Expr[integrations.DefaultValue[Value]]
-      ): Expr[Value] = '{ ${ defaultValue }.provide() }
+      ): Expr[Value] = '{ $defaultValue.provide() }
     }
 
     object OptionalValue extends OptionalValueModule {
 
       def empty[Optional: Type, Value: Type](
           optionalValue: Expr[integrations.OptionalValue[Optional, Value]]
-      ): Expr[Optional] = '{ ${ optionalValue }.empty }
+      ): Expr[Optional] = '{ $optionalValue.empty }
 
       def of[Optional: Type, Value: Type](
           optionalValue: Expr[integrations.OptionalValue[Optional, Value]],
           value: Expr[Value]
-      ): Expr[Optional] = '{ ${ optionalValue }.of(${ value }) }
+      ): Expr[Optional] = '{ $optionalValue.of($value) }
 
       def fold[Optional: Type, Value: Type, A: Type](
           optionalValue: Expr[integrations.OptionalValue[Optional, Value]],
           optional: Expr[Optional],
           onNone: Expr[A],
           onSome: Expr[Value => A]
-      ): Expr[A] = '{ ${ optionalValue }.fold(${ optional }, ${ onNone }, ${ onSome }) }
+      ): Expr[A] = '{ $optionalValue.fold($optional, $onNone, $onSome) }
 
       def getOrElse[Optional: Type, Value: Type](
           optionalValue: Expr[integrations.OptionalValue[Optional, Value]],
           optional: Expr[Optional],
           onNone: Expr[Value]
-      ): Expr[Value] = '{ ${ optionalValue }.getOrElse(${ optional }, ${ onNone }) }
+      ): Expr[Value] = '{ $optionalValue.getOrElse($optional, $onNone) }
 
       def orElse[Optional: Type, Value: Type](
           optionalValue: Expr[integrations.OptionalValue[Optional, Value]],
           optional: Expr[Optional],
           optional2: Expr[Optional]
-      ): Expr[Optional] = '{ ${ optionalValue }.orElse(${ optional }, ${ optional2 }) }
+      ): Expr[Optional] = '{ $optionalValue.orElse($optional, $optional2) }
     }
 
     object PartiallyBuildIterable extends PartiallyBuildIterableModule {
 
       def partialFactory[Collection: Type, Item: Type](
           partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]]
-      ): Expr[Factory[Item, partial.Result[Collection]]] = '{ ${ partiallyBuildIterable }.partialFactory }
+      ): Expr[Factory[Item, partial.Result[Collection]]] = '{ $partiallyBuildIterable.partialFactory }
 
       def iterator[Collection: Type, Item: Type](
           partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]],
           collection: Expr[Collection]
-      ): Expr[Iterator[Item]] = '{ ${ partiallyBuildIterable }.iterator(${ collection }) }
+      ): Expr[Iterator[Item]] = '{ $partiallyBuildIterable.iterator($collection) }
 
       def to[Collection: Type, Item: Type, Collection2: Type](
           partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]],
           collection: Expr[Collection],
           factory: Expr[Factory[Item, Collection2]]
-      ): Expr[Collection2] = '{ ${ partiallyBuildIterable }.to(${ collection }, ${ factory }) }
+      ): Expr[Collection2] = '{ $partiallyBuildIterable.to($collection, $factory) }
     }
 
     object TotallyBuildIterable extends TotallyBuildIterableModule {
 
       def totalFactory[Collection: Type, Item: Type](
           totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]]
-      ): Expr[Factory[Item, Collection]] = '{ ${ totallyBuildIterable }.totalFactory }
+      ): Expr[Factory[Item, Collection]] = '{ $totallyBuildIterable.totalFactory }
 
       def iterator[Collection: Type, Item: Type](
           totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]],
           collection: Expr[Collection]
-      ): Expr[Iterator[Item]] = '{ ${ totallyBuildIterable }.iterator(${ collection }) }
+      ): Expr[Iterator[Item]] = '{ $totallyBuildIterable.iterator($collection) }
 
       def to[Collection: Type, Item: Type, Collection2: Type](
           totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]],
           collection: Expr[Collection],
           factory: Expr[Factory[Item, Collection2]]
-      ): Expr[Collection2] = '{ ${ totallyBuildIterable }.to(${ collection }, ${ factory }) }
+      ): Expr[Collection2] = '{ $totallyBuildIterable.to($collection, $factory) }
     }
   }
 }
