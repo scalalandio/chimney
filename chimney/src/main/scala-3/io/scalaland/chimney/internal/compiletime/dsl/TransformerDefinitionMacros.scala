@@ -114,7 +114,7 @@ object TransformerDefinitionMacros {
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyFieldNameType { [fromPath <: Path] => (_: Type[fromPath]) ?=>
       '{
-        ${ ti }.asInstanceOf[TransformerDefinition[From, To, Unused[fromPath, Overrides], Flags]]
+        $ti.asInstanceOf[TransformerDefinition[From, To, Unused[fromPath, Overrides], Flags]]
       }
     }(selectorFrom)
 
@@ -171,7 +171,7 @@ object TransformerDefinitionMacros {
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
       '{
-        ${ ti }.asInstanceOf[TransformerDefinition[From, To, Unmatched[toPath, Overrides], Flags]]
+        $ti.asInstanceOf[TransformerDefinition[From, To, Unmatched[toPath, Overrides], Flags]]
       }
     }(selectorTo)
 

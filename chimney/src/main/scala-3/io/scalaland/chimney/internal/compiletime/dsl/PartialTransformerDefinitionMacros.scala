@@ -193,7 +193,7 @@ object PartialTransformerDefinitionMacros {
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyFieldNameType { [fromPath <: Path] => (_: Type[fromPath]) ?=>
       '{
-        ${ ti }.asInstanceOf[PartialTransformerDefinition[From, To, Unused[fromPath, Overrides], Flags]]
+        $ti.asInstanceOf[PartialTransformerDefinition[From, To, Unused[fromPath, Overrides], Flags]]
       }
     }(selectorFrom)
 
@@ -271,7 +271,7 @@ object PartialTransformerDefinitionMacros {
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
       '{
-        ${ ti }.asInstanceOf[PartialTransformerDefinition[From, To, Unmatched[toPath, Overrides], Flags]]
+        $ti.asInstanceOf[PartialTransformerDefinition[From, To, Unmatched[toPath, Overrides], Flags]]
       }
     }(selectorTo)
 

@@ -26,10 +26,10 @@ abstract class MyTypeClassDerivationPlatform(q: scala.quoted.Quotes)
   protected object MyExprs extends MyExprsModule {
 
     def callMyTypeClass[From: Type, To: Type](tc: Expr[MyTypeClass[From, To]], from: Expr[From]): Expr[To] =
-      '{ ${ tc }.convert(${ from }) }
+      '{ $tc.convert($from) }
 
     def createTypeClass[From: Type, To: Type](body: Expr[From] => Expr[To]): Expr[MyTypeClass[From, To]] =
-      '{ new MyTypeClass[From, To] { def convert(from: From): To = ${ body('{ from }) } } }
+      '{ new MyTypeClass[From, To] { def convert(from: From): To = ${ body('from) } } }
   }
 
   final override protected val rulesAvailableForPlatform: List[Rule] = List(

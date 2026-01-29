@@ -178,7 +178,7 @@ object PartialTransformerIntoMacros {
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyFieldNameType { [fromPath <: Path] => (_: Type[fromPath]) ?=>
       '{
-        ${ ti }.asInstanceOf[PartialTransformerInto[From, To, Unused[fromPath, Overrides], Flags]]
+        $ti.asInstanceOf[PartialTransformerInto[From, To, Unused[fromPath, Overrides], Flags]]
       }
     }(selectorFrom)
 
@@ -256,7 +256,7 @@ object PartialTransformerIntoMacros {
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
       '{
-        ${ ti }.asInstanceOf[PartialTransformerInto[From, To, Unmatched[toPath, Overrides], Flags]]
+        $ti.asInstanceOf[PartialTransformerInto[From, To, Unmatched[toPath, Overrides], Flags]]
       }
     }(selectorTo)
 
