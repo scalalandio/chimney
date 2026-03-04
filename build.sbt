@@ -18,7 +18,7 @@ Global / resolvers += "scala-integration" at "https://scala-ci.typesafe.com/arti
 
 val versions = new {
   // Versions we are publishing for.
-  val scala213 = "2.13.17"
+  val scala213 = "2.13.18"
   val scala3 = "3.7.3"
 
   // Which versions should be cross-compiled for publishing
@@ -27,7 +27,7 @@ val versions = new {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Dependencies.
-  val macroCommons = "2.0.2"
+  val macroCommons = "f5eea983e83155fb245dac84a5a97efc38aeaf28-SNAPSHOT"
   val cats = "2.13.0"
   val kindProjector = "0.13.4"
   val munit = "1.2.1"
@@ -40,8 +40,8 @@ val versions = new {
   def fold[A](scalaVersion: String)(for2_13: => Seq[A], for3: => Seq[A]): Seq[A] =
     CrossVersion.partialVersion(scalaVersion) match {
       case Some((2, 13)) => for2_13
-      case Some((3, _)) => for3
-      case _            => Seq.empty // for sbt
+      case Some((3, _))  => for3
+      case _             => Seq.empty // for sbt
     }
 }
 
