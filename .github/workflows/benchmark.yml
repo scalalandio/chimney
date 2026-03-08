@@ -22,14 +22,14 @@ jobs:
     environment: 'benchmark'
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       # coursier parallel fetch is faster than cache download+upload on our custom runner machine
       #      - uses: coursier/cache-action@v6
 
-      - uses: coursier/setup-action@v1.3.9
+      - uses: coursier/setup-action@v2.0.3
         with:
           jvm: 'temurin:1.21.0.1' # TODO LB java version from matrix
           apps: sbt
@@ -61,7 +61,7 @@ jobs:
           echo "${{ github.event_name }}" > ./results/event
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-results
           path: results

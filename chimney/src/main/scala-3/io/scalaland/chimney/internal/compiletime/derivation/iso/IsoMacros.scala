@@ -54,12 +54,12 @@ final class IsoMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
       Iso[First, Second](
         first = ${
           deriveTotalTransformer[First, Second, FirstOverrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{
-            ${ id }.first.runtimeData
+            $id.first.runtimeData
           })
         },
         second = ${
           deriveTotalTransformer[Second, First, SecondOverrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{
-            ${ id }.second.runtimeData
+            $id.second.runtimeData
           })
         }
       )

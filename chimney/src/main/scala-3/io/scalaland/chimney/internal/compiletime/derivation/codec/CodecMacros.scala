@@ -54,12 +54,12 @@ final class CodecMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
       Codec[Domain, Dto](
         encode = ${
           deriveTotalTransformer[Domain, Dto, EncodeOverrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{
-            ${ cd }.encode.runtimeData
+            $cd.encode.runtimeData
           })
         },
         decode = ${
           derivePartialTransformer[Dto, Domain, DecodeOverrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{
-            ${ cd }.decode.runtimeData
+            $cd.decode.runtimeData
           })
         }
       )

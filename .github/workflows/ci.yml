@@ -17,10 +17,10 @@ jobs:
     name: Check formatting
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: coursier/setup-action@v1.3.9
+      - uses: coursier/setup-action@v2.0.3
         with:
           apps: scalafmt
       - name: Check code and docs formatting
@@ -34,11 +34,11 @@ jobs:
     name: Check Scala CLI snippets from documentation
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - uses: extractions/setup-just@v3
-      - uses: coursier/setup-action@v1.3.9
+      - uses: coursier/setup-action@v2.0.3
         with:
           apps: scala-cli sbt
       - name: Run snippets from documentation
@@ -60,11 +60,11 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: coursier/cache-action@v6
-      - uses: coursier/setup-action@v1.3.9
+      - uses: coursier/cache-action@v8
+      - uses: coursier/setup-action@v2.0.3
         with:
           jvm: ${{ matrix.jvm }}
           apps: sbt

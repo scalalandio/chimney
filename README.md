@@ -35,6 +35,7 @@ If your company is using Chimney, please consider adding it to the list below:
  * [MOIA](https://www.moia.io/)
  * [Rudder.io](https://github.com/Normation/rudder)
  * [SwissBorg](https://swissborg.com/)
+ * [Zalando](https://www.zalando.com/)
 
 ## Contribution
 

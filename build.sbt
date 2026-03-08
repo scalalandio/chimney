@@ -30,7 +30,7 @@ val versions = new {
   val macroCommons = "2.1.0"
   val cats = "2.13.0"
   val kindProjector = "0.13.4"
-  val munit = "1.2.1"
+  val munit = "1.2.4"
   val scalaCollectionCompat = "2.14.0"
   val scalaJavaCompat = "1.0.2"
   val scalaJavaTime = "2.6.0"
@@ -147,7 +147,7 @@ val settings = Seq(
       "-Wconf:msg=discarding unmoored doc comment:s", // silence errors when scaladoc cannot comprehend nested vals
       "-Wconf:msg=Could not find any member to link for:s", // since errors when scaladoc cannot link to stdlib types or nested types
       "-Wconf:msg=Variable .+ undefined in comment for:s", // silence errors when there we're showing a buggy Expr in scaladoc comment
-      "-Wconf:msg=a type was inferred to be kind-polymorphic `Nothing` to conform to:s", // silence warn that appeared after updating to Scala 2.13.17
+      "-Wconf:msg=a type was inferred to be kind-polymorphic `Nothing` to conform to:s", // silence warn that appeared after updating to Scala 2.13.18
       "-Wunused:patvars",
       "-Xfatal-warnings",
       "-Xlint:adapted-args",

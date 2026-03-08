@@ -20,7 +20,7 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
   ](
       td: Expr[TransformerDefinition[From, To, Overrides, Flags]]
   ): Expr[Transformer[From, To]] =
-    deriveTotalTransformer[From, To, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ td }.runtimeData })
+    deriveTotalTransformer[From, To, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{ $td.runtimeData })
 
   def deriveTotalTransformerWithDefaults[
       From: Type,
@@ -60,7 +60,7 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]]
   ): Expr[PartialTransformer[From, To]] =
     derivePartialTransformer[From, To, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{
-      ${ td }.runtimeData
+      $td.runtimeData
     })
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
@@ -112,7 +112,7 @@ object TransformerMacros {
   ](source: Expr[From], td: Expr[TransformerDefinition[From, To, Overrides, Flags]])(using quotes: Quotes): Expr[To] =
     new TransformerMacros(quotes).deriveTotalTransformationResult[From, To, Overrides, Flags, ImplicitScopeFlags](
       source,
-      '{ ${ td }.runtimeData }
+      '{ $td.runtimeData }
     )
 
   final def derivePartialTransformerWithDefaults[
@@ -144,6 +144,6 @@ object TransformerMacros {
     new TransformerMacros(quotes).derivePartialTransformationResult[From, To, Overrides, Flags, ImplicitScopeFlags](
       source,
       Expr(failFast),
-      '{ ${ td }.runtimeData }
+      '{ $td.runtimeData }
     )
 }
