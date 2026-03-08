@@ -27,7 +27,7 @@ val versions = new {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Dependencies.
-  val macroCommons = "f5eea983e83155fb245dac84a5a97efc38aeaf28-SNAPSHOT"
+  val macroCommons = "2.1.0"
   val cats = "2.13.0"
   val kindProjector = "0.13.4"
   val munit = "1.2.1"
