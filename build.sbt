@@ -24,7 +24,7 @@ val versions = new {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Dependencies.
-  val macroCommons = "2.0.2"
+  val macroCommons = "2.1.0"
   val cats = "2.13.0"
   val kindProjector = "0.13.4"
   val munit = "1.2.4"
@@ -47,7 +47,7 @@ val versions = new {
       case Some((2, 12)) => for2_12
       case Some((2, 13)) => for2_13
       case Some((3, _))  => for3
-      case _             => sys.error(s"Unsupported Scala version: $scalaVersion")
+      case _             => Seq.empty // for sbt
     }
 }
 
