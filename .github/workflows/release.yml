@@ -17,7 +17,7 @@ jobs:
           fetch-depth: 0
       - uses: coursier/cache-action@v8
       - name: Import GPG key for signing the release
-        uses: crazy-max/ghaction-import-gpg@v6
+        uses: crazy-max/ghaction-import-gpg@v7
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
