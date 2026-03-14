@@ -1,5 +1,5 @@
 //> using scala 3.3.7
-//> using dep com.kubuszok::scala-cli-md-spec:0.2.0
+//> using dep com.kubuszok::scala-cli-md-spec:0.2.1
 //> using dep org.virtuslab::scala-yaml:0.3.1
 
 import com.kubuszok.scalaclimdspec.*
