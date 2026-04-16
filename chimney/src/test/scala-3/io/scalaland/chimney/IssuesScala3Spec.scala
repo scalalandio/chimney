@@ -53,5 +53,25 @@ class IssuesScala3Spec extends ChimneySpec {
       )
     }
   }
+  group("fix issue #835 (enableInheritedAccessors for scala 3)") {
+
+    test("val") {
+
+      import io.scalaland.chimney.fixtures.Issue835.*
+
+      val e = new IdStatusEntity(0, "status")
+      val a = e.into[IdStatus].enableInheritedAccessors
+      a.transform ==> IdStatus(e.id, e.status)
+    }
+
+    test("getter") {
+
+      import io.scalaland.chimney.fixtures.Issue835.*
+
+      val e = new IdStatusGetter(0, "status")
+      val a = e.into[IdStatus].enableInheritedAccessors
+      a.transform ==> IdStatus(e.id, e.status)
+    }
+  }
 
 }
