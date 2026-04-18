@@ -49,6 +49,19 @@ object TransformedNamesComparison {
     def namesMatch(fromName: String, toName: String): Boolean = fromName.equalsIgnoreCase(toName)
   }
 
+  /** Matches Strings ignoring given prefix.
+    *
+    * usage: case object FooNamesComparison extends IgnorePrefixNamesComparison("Foo")
+    *
+    * motivation: https://buf.build/blog/totw-3-enum-names-need-prefixes
+    */
+  sealed abstract class IgnorePrefix(prefix: String) extends TransformedNamesComparison {
+    this: Singleton =>
+
+    def namesMatch(fromName: String, toName: String): Boolean =
+      fromName == prefix + toName
+  }
+
   type FieldDefault = BeanAware.type
   val FieldDefault: FieldDefault = BeanAware
 
