@@ -74,8 +74,7 @@ class IssuesScala3Spec extends ChimneySpec {
       import io.scalaland.chimney.fixtures.Issue835.*
 
       val e = new IdStatusGetter(0, "status")
-      val a = e.into[IdStatus].enableInheritedAccessors
-      a.transform ==> IdStatus(e.getId, e.status)
+      e.into[IdStatus].enableInheritedAccessors.enableBeanGetters.transform ==> IdStatus(e.getId, e.status)
     }
   }
 
