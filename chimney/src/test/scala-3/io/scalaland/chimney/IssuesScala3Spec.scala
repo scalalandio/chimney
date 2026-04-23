@@ -53,6 +53,11 @@ class IssuesScala3Spec extends ChimneySpec {
       )
     }
   }
+  test("fix issue #818 (deterministic case class to tuple field ordering)") {
+    case class Request(id: String, isPublic: Boolean)
+    Request("abc", true).transformInto[(String, Boolean)] ==> ("abc", true)
+  }
+
   group("fix issue #835 (enableInheritedAccessors for scala 3)") {
 
     test("val") {
