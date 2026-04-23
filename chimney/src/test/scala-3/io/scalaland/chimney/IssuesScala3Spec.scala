@@ -70,7 +70,7 @@ class IssuesScala3Spec extends ChimneySpec {
 
       val e = new IdStatusGetter(0, "status")
       val a = e.into[IdStatus].enableInheritedAccessors
-      a.transform ==> IdStatus(e.id, e.status)
+      a.transform ==> IdStatus(e.getId, e.status)
     }
   }
 
