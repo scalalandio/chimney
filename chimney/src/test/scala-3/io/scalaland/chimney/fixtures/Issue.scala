@@ -11,7 +11,7 @@ object Issue835 {
     def getId: Long = id
   }
 
-  class IdStatusGetter(id: Long, status: String) extends AbstractIdStatusEntity(id, status)
+  class IdStatusGetter(id: Long, status: String) extends AbstractIdStatusGetter(id, status)
 
   case class IdStatus(id: Long, status: String)
 
