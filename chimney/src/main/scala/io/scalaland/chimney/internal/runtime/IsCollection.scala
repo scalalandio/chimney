@@ -31,6 +31,10 @@ private[runtime] trait IsCollectionImplicits0 extends IsCollectionImplicits1 { t
   implicit def totalOuterTransformerIsCollection[To, InnerTo](implicit
       @unused ev: TotalOuterTransformer[?, To, ?, InnerTo]
   ): IsCollection.Of[To, InnerTo] = Impl.asInstanceOf[IsCollection.Of[To, InnerTo]]
+
+  implicit def totalOuterTransformerIsCollectionFrom[From, InnerFrom](implicit
+      @unused ev: TotalOuterTransformer[From, ?, InnerFrom, ?]
+  ): IsCollection.Of[From, InnerFrom] = Impl.asInstanceOf[IsCollection.Of[From, InnerFrom]]
 }
 private[runtime] trait IsCollectionImplicits1 extends IsCollectionImplicits2 { this: IsCollection.type =>
 
@@ -38,6 +42,10 @@ private[runtime] trait IsCollectionImplicits1 extends IsCollectionImplicits2 { t
   implicit def partialOuterTransformerIsCollection[To, InnerTo](implicit
       @unused ev: PartialOuterTransformer[?, To, ?, InnerTo]
   ): IsCollection.Of[To, InnerTo] = Impl.asInstanceOf[IsCollection.Of[To, InnerTo]]
+
+  implicit def partialOuterTransformerIsCollectionFrom[From, InnerFrom](implicit
+      @unused ev: PartialOuterTransformer[From, ?, InnerFrom, ?]
+  ): IsCollection.Of[From, InnerFrom] = Impl.asInstanceOf[IsCollection.Of[From, InnerFrom]]
 }
 private[runtime] trait IsCollectionImplicits2 extends IsCollectionImplicits3 { this: IsCollection.type =>
 
