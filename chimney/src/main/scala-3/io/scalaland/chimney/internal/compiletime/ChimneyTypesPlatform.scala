@@ -195,6 +195,37 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             case _ => scala.None
           }
       }
+      object ComputedPartialFailFast extends ComputedPartialFailFastModule {
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.ComputedPartialFailFast[ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.ComputedPartialFailFast[ToPath, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          tpe match {
+            case '[runtime.TransformerOverrides.ComputedPartialFailFast[toPath, cfg]] =>
+              Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
+            case _ => scala.None
+          }
+      }
+      object ComputedPartialFromFailFast extends ComputedPartialFromFailFastModule {
+        def apply[
+            FromPath <: runtime.Path: Type,
+            ToPath <: runtime.Path: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.ComputedPartialFromFailFast[FromPath, ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.ComputedPartialFromFailFast[FromPath, ToPath, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          tpe match {
+            case '[runtime.TransformerOverrides.ComputedPartialFromFailFast[fromPath, toPath, cfg]] =>
+              Some(
+                (
+                  Type[fromPath].as_?<[runtime.Path],
+                  Type[toPath].as_?<[runtime.Path],
+                  Type[cfg].as_?<[runtime.TransformerOverrides]
+                )
+              )
+            case _ => scala.None
+          }
+      }
       object CaseComputed extends CaseComputedModule {
         def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
             : Type[runtime.TransformerOverrides.CaseComputed[ToPath, Tail]] =
@@ -211,6 +242,16 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           quoted.Type.of[runtime.TransformerOverrides.CaseComputedPartial[ToPath, Tail]]
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
           case '[runtime.TransformerOverrides.CaseComputedPartial[toPath, cfg]] =>
+            Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
+          case _ => scala.None
+        }
+      }
+      object CaseComputedPartialFailFast extends CaseComputedPartialFailFastModule {
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.CaseComputedPartialFailFast[ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.CaseComputedPartialFailFast[ToPath, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
+          case '[runtime.TransformerOverrides.CaseComputedPartialFailFast[toPath, cfg]] =>
             Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
           case _ => scala.None
         }
@@ -266,6 +307,27 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             tpe: Type[A]
         ): Option[(?<[runtime.ArgumentLists], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
           case '[runtime.TransformerOverrides.ConstructorPartial[args, toPath, cfg]] =>
+            Some(
+              (
+                Type[args].as_?<[runtime.ArgumentLists],
+                Type[toPath].as_?<[runtime.Path],
+                Type[cfg].as_?<[runtime.TransformerOverrides]
+              )
+            )
+          case _ => scala.None
+        }
+      }
+      object ConstructorPartialFailFast extends ConstructorPartialFailFastModule {
+        def apply[
+            Args <: runtime.ArgumentLists: Type,
+            ToPath <: runtime.Path: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.ConstructorPartialFailFast[Args, ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.ConstructorPartialFailFast[Args, ToPath, Tail]]
+        def unapply[A](
+            tpe: Type[A]
+        ): Option[(?<[runtime.ArgumentLists], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
+          case '[runtime.TransformerOverrides.ConstructorPartialFailFast[args, toPath, cfg]] =>
             Some(
               (
                 Type[args].as_?<[runtime.ArgumentLists],

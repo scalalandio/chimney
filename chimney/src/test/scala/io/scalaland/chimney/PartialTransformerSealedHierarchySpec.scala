@@ -655,6 +655,41 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
     }
   }
 
+  group("setting .withSealedSubtypeHandledPartialFailFast[Subtype]((mapping, failFast))") {
+
+    test("should pass failFast=true when using transformFailFast") {
+      var receivedFailFast: Option[Boolean] = None
+
+      def blackIsFail(b: colors2.Black.type, failFast: Boolean): partial.Result[colors1.Color] = {
+        receivedFailFast = Some(failFast)
+        partial.Result.fromEmpty
+      }
+
+      (colors2.Black: colors2.Color)
+        .intoPartial[colors1.Color]
+        .withSealedSubtypeHandledPartialFailFast(blackIsFail)
+        .transformFailFast
+        .asOption ==> None
+      receivedFailFast ==> Some(true)
+    }
+
+    test("should pass failFast=false when using transform") {
+      var receivedFailFast: Option[Boolean] = None
+
+      def blackIsFail(b: colors2.Black.type, failFast: Boolean): partial.Result[colors1.Color] = {
+        receivedFailFast = Some(failFast)
+        partial.Result.fromEmpty
+      }
+
+      (colors2.Black: colors2.Color)
+        .intoPartial[colors1.Color]
+        .withSealedSubtypeHandledPartialFailFast(blackIsFail)
+        .transform
+        .asOption ==> None
+      receivedFailFast ==> Some(false)
+    }
+  }
+
   group("setting .withSealedSubtypeRenamed[FromSubtype, ToSubtype]") {
 
     import fixtures.renames.Subtypes.*

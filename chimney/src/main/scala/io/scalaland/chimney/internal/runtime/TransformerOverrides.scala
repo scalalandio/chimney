@@ -22,9 +22,18 @@ object TransformerOverrides {
   // Computes a value from an already extracted (e.g. matched) piece of (src: From)
   final class CaseComputed[ToPath <: Path, Tail <: Overrides] extends Overrides
   final class CaseComputedPartial[ToPath <: Path, Tail <: Overrides] extends Overrides
+  // Computes a partial value from a whole (src: From) with failFast flag
+  final class ComputedPartialFailFast[ToPath <: Path, Tail <: Overrides] extends Overrides
+  // Computes a partial value from an expr with failFast flag
+  final class ComputedPartialFromFailFast[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides
+  // Computes a partial value from an already extracted (e.g. matched) piece of (src: From) with failFast flag
+  final class CaseComputedPartialFailFast[ToPath <: Path, Tail <: Overrides] extends Overrides
   // Computes a value after all constructor arguments have been matched
   final class Constructor[Args <: ArgumentLists, ToPath <: Path, Tail <: Overrides] extends Overrides
   final class ConstructorPartial[Args <: ArgumentLists, ToPath <: Path, Tail <: Overrides] extends Overrides
+  // Computes a partial value after all constructor arguments have been matched, with failFast flag
+  final class ConstructorPartialFailFast[Args <: ArgumentLists, ToPath <: Path, Tail <: Overrides]
+      extends Overrides
   // FIXME (2.0.0 cleanup) - try merging RenameFrom with RenameTo
   // Computes a value using manually pointed value from (src: From)
   final class RenamedFrom[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides

@@ -95,6 +95,47 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
       }.applyFromSelectors(selectorFrom, selectorTo)
     )
 
+  def withFieldComputedPartialFailFastImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree = {
+    val FromTpe = weakTypeOf[From]
+    val curriedF = q"{ val fn = $f; (from: $FromTpe) => (failFast: _root_.scala.Boolean) => fn(from, failFast) }"
+    c.prefix.tree
+      .addOverride(curriedF)
+      .asInstanceOfExpr(
+        new ApplyFieldNameType {
+          def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+            weakTypeTag[PartialTransformerInto[From, To, ComputedPartialFailFast[ToPath, Overrides], Flags]]
+        }.applyFromSelector(selector)
+      )
+  }
+
+  def withFieldComputedPartialFromFailFastImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selectorFrom: Tree)(selectorTo: Tree, f: Tree)(@unused ev: Tree): Tree = {
+    val sTpe = f.tpe.dealias.typeArgs.head
+    val curriedF = q"{ val fn = $f; (s: $sTpe) => (failFast: _root_.scala.Boolean) => fn(s, failFast) }"
+    c.prefix.tree
+      .addOverride(curriedF)
+      .asInstanceOfExpr(
+        new ApplyFieldNameTypes {
+          def apply[FromPath <: Path: WeakTypeTag, ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+            weakTypeTag[PartialTransformerInto[
+              From,
+              To,
+              ComputedPartialFromFailFast[FromPath, ToPath, Overrides],
+              Flags
+            ]]
+        }.applyFromSelectors(selectorFrom, selectorTo)
+      )
+  }
+
   def withFieldRenamedImpl[
       From: WeakTypeTag,
       To: WeakTypeTag,
@@ -154,6 +195,27 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
         Flags
       ]]
   }.applyJavaEnumFixFromClosureSignature[Subtype](f)
+
+  def withSealedSubtypeHandledPartialFailFastImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag,
+      Subtype: WeakTypeTag
+  ](f: Tree): Tree = {
+    val SubtypeTpe = weakTypeOf[Subtype]
+    val curriedF = q"{ val fn = $f; (subtype: $SubtypeTpe) => (failFast: _root_.scala.Boolean) => fn(subtype, failFast) }"
+    new ApplyFixedCoproductType {
+      def apply[FixedSubtype: WeakTypeTag]: Tree = c.prefix.tree
+        .addOverride(curriedF)
+        .asInstanceOfExpr[PartialTransformerInto[
+          From,
+          To,
+          CaseComputedPartialFailFast[Path.SourceMatching[Path.Root, FixedSubtype], Overrides],
+          Flags
+        ]]
+    }.applyJavaEnumFixFromClosureSignature[Subtype](f)
+  }
 
   def withSealedSubtypeRenamedImpl[
       From: WeakTypeTag,
@@ -258,6 +320,33 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
         new ApplyFieldNameType {
           def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
             weakTypeTag[PartialTransformerInto[From, To, ConstructorPartial[Args, ToPath, Overrides], Flags]]
+        }.applyFromSelector(selector)
+      )
+  }.applyFromBody(f)
+
+  def withConstructorPartialFailFastImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
+    def apply[Args <: ArgumentLists: WeakTypeTag]: Tree = c.prefix.tree
+      .addOverride(f)
+      .asInstanceOfExpr[PartialTransformerInto[From, To, ConstructorPartialFailFast[Args, Path.Root, Overrides], Flags]]
+  }.applyFromBody(f)
+
+  def withConstructorPartialToFailFastImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selector: Tree)(f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
+    def apply[Args <: ArgumentLists: WeakTypeTag]: Tree = c.prefix.tree
+      .addOverride(f)
+      .asInstanceOfExpr(
+        new ApplyFieldNameType {
+          def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+            weakTypeTag[PartialTransformerInto[From, To, ConstructorPartialFailFast[Args, ToPath, Overrides], Flags]]
         }.applyFromSelector(selector)
       )
   }.applyFromBody(f)

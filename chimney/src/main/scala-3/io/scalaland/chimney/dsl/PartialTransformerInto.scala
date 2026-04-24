@@ -179,6 +179,35 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   )(using U <:< T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withFieldComputedPartialImpl('this, 'selector, 'f) }
 
+  /** Use the function `f` to compute a partial result for the field picked using the `selector`.
+    *
+    * The function receives a `Boolean` flag indicating whether the transformation is in fail-fast mode.
+    *
+    * By default, if `From` is missing a field and it's not provided with some `selector`, the compilation fails.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-computed-value]]
+    *   for more details
+    *
+    * @tparam T
+    *   type of target field
+    * @tparam U
+    *   type of computed value
+    * @param selector
+    *   target field in `To`, defined like `_.name`
+    * @param f
+    *   function used to compute value of the target field
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    *
+    * @since 1.7.0
+    */
+  transparent inline def withFieldComputedPartialFailFast[T, U](
+      inline selector: To => T,
+      inline f: (From, Boolean) => partial.Result[U]
+  )(using U <:< T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    ${ PartialTransformerIntoMacros.withFieldComputedPartialFailFastImpl('this, 'selector, 'f) }
+
   /** Use the function `f` to compute a partial result of the field picked using the `selectorTo` from a value extracted
     * with `selectorFrom` as an input.
     *
@@ -210,6 +239,40 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
       inline f: S => partial.Result[U]
   )(using U <:< T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withFieldComputedPartialFromImpl('this, 'selectorFrom, 'selectorTo, 'f) }
+
+  /** Use the function `f` to compute a partial result of the field picked using the `selectorTo` from a value extracted
+    * with `selectorFrom` as an input.
+    *
+    * The function receives a `Boolean` flag indicating whether the transformation is in fail-fast mode.
+    *
+    * By default, if `From` is missing a field and it's not provided with some `selector`, the compilation fails.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-computed-value]]
+    *   for more details
+    *
+    * @tparam S
+    *   * type of source field
+    * @tparam T
+    *   type of target field
+    * @tparam U
+    *   type of computed value
+    * @param selectorFrom
+    *   source field in `From`, defined like `_.name`
+    * @param selectorTo
+    *   target field in `To`, defined like `_.name`
+    * @param f
+    *   function used to compute value of the target field
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    *
+    * @since 1.7.0
+    */
+  transparent inline def withFieldComputedPartialFromFailFast[S, T, U](inline selectorFrom: From => S)(
+      inline selectorTo: To => T,
+      inline f: (S, Boolean) => partial.Result[U]
+  )(using U <:< T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    ${ PartialTransformerIntoMacros.withFieldComputedPartialFromFailFastImpl('this, 'selectorFrom, 'selectorTo, 'f) }
 
   /** Use the `selectorFrom` field in `From` to obtain the value of the `selectorTo` field in `To`.
     *
@@ -354,6 +417,48 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
       inline f: Subtype => partial.Result[To]
   ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withSealedSubtypeHandledPartialImpl('this, 'f) }
+
+  /** Use `f` to calculate the unmatched subtype's partial.Result when mapping one sealed/enum into another.
+    *
+    * The function receives a `Boolean` flag indicating whether the transformation is in fail-fast mode.
+    *
+    * By default, if mapping one coproduct in `From` into another coproduct in `To` derivation expects that coproducts
+    * to have matching names of its components, and for every component in `To` field's type there is matching component
+    * in `From` type. If some component is missing it fails compilation unless provided replacement with this operation.
+    *
+    * For convenience/readability [[withEnumCaseHandledPartialFailFast]] alias can be used (e.g. for Scala 3 enums or
+    * Java enums).
+    *
+    * It differs from `withFieldComputedPartialFailFast(_.matching[Subtype], (src, failFast) => ...)`, since
+    * `withSealedSubtypeHandledPartialFailFast` matches on a `From` subtype, while `.matching[Subtype]` matches on a
+    * `To` value's piece.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]]
+    *   for more details
+    *
+    * @tparam Subtype
+    *   type of sealed/enum instance
+    * @param f
+    *   function to calculate values of components that cannot be mapped automatically
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    *
+    * @since 1.7.0
+    */
+  transparent inline def withSealedSubtypeHandledPartialFailFast[Subtype](
+      inline f: (Subtype, Boolean) => partial.Result[To]
+  ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    ${ PartialTransformerIntoMacros.withSealedSubtypeHandledPartialFailFastImpl('this, 'f) }
+
+  /** Alias to [[withSealedSubtypeHandledPartialFailFast]].
+    *
+    * @since 1.7.0
+    */
+  transparent inline def withEnumCaseHandledPartialFailFast[Subtype](
+      inline f: (Subtype, Boolean) => partial.Result[To]
+  ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    ${ PartialTransformerIntoMacros.withSealedSubtypeHandledPartialFailFastImpl('this, 'f) }
 
   /** Use the `FromSubtype` in `From` as a source for the `ToSubtype` in `To`.
     *
@@ -570,6 +675,66 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
       inline f: Ctor
   )(using IsFunction.Of[Ctor, partial.Result[T]]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withConstructorPartialToImpl('this, 'selector, 'f) }
+
+  /** Use `f` instead of the primary constructor to parse into `partial.Result[To]` value.
+    *
+    * The resulting function receives a `Boolean` flag indicating whether the transformation is in fail-fast mode.
+    *
+    * Macro will read the names of Eta-expanded method's/lambda's parameters and try to match them with `From` getters.
+    *
+    * Values for each parameter can be provided the same way as if they were normal constructor's arguments.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#types-with-manually-provided-constructors]] for more
+    *   details
+    *
+    * @tparam Ctor
+    *   type of the Eta-expanded method/lambda which should return `Boolean => partial.Result[To]`
+    * @param f
+    *   method name or lambda which constructs `Boolean => partial.Result[To]`
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    *
+    * @since 1.7.0
+    */
+  transparent inline def withConstructorPartialFailFast[Ctor](
+      inline f: Ctor
+  )(using
+      IsFunction.Of[Ctor, Boolean => partial.Result[To]]
+  ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    ${ PartialTransformerIntoMacros.withConstructorPartialFailFastImpl('this, 'f) }
+
+  /** Use `f` instead of the primary constructor to parse into the value extracted from `To` using the `selector`.
+    *
+    * The resulting function receives a `Boolean` flag indicating whether the transformation is in fail-fast mode.
+    *
+    * Macro will read the names of Eta-expanded method's/lambda's parameters and try to match them with `From` getters.
+    *
+    * Values for each parameter can be provided the same way as if they were normal constructor's arguments.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#types-with-manually-provided-constructors]] for more
+    *   details
+    *
+    * @tparam T
+    *   type of the value which would be constructed with a custom constructor
+    * @tparam Ctor
+    *   type of the Eta-expanded method/lambda which should return `Boolean => partial.Result[T]`
+    * @param selector
+    *   target field in `To`, defined like `_.name`
+    * @param f
+    *   method name or lambda which constructs `Boolean => partial.Result[T]`
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    *
+    * @since 1.7.0
+    */
+  transparent inline def withConstructorPartialToFailFast[T, Ctor](inline selector: To => T)(
+      inline f: Ctor
+  )(using
+      IsFunction.Of[Ctor, Boolean => partial.Result[T]]
+  ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    ${ PartialTransformerIntoMacros.withConstructorPartialToFailFastImpl('this, 'selector, 'f) }
 
   /** Use `f` instead of the primary constructor to parse into `Either[String, To]` value.
     *

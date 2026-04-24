@@ -48,7 +48,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         case TransformerOverride.Constructor(args, runtimeData) =>
           val Product.Constructor(parameters, constructor) = mkCtor[To](args)(runtimeData)
           mapOverridesAndExtractorsToConstructorArguments[From, To, To](fromExtractors, parameters, constructor)
-        case TransformerOverride.ConstructorPartial(args, runtimeData) =>
+        case TransformerOverride.ConstructorPartial(args, runtimeData, failFastAware) if !failFastAware =>
           val Product.Constructor(params, ctor) = mkCtor[partial.Result[To]](args)(runtimeData)
           mapOverridesAndExtractorsToConstructorArguments[From, To, partial.Result[To]](fromExtractors, params, ctor)
             .map {
@@ -61,6 +61,32 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 Rule.ExpansionResult.Expanded(flattenTransformationExpr)
               case Rule.ExpansionResult.AttemptNextRule(reason) => Rule.ExpansionResult.AttemptNextRule(reason)
             }
+        case TransformerOverride.ConstructorPartial(args, runtimeData, _ /* failFastAware = true */ ) =>
+          val Product.Constructor(params, ctor) =
+            mkCtor[Boolean => partial.Result[To]](args)(runtimeData)
+          mapOverridesAndExtractorsToConstructorArguments[From, To, Boolean => partial.Result[To]](
+            fromExtractors,
+            params,
+            ctor
+          ).map {
+            case Rule.ExpansionResult.Expanded(transformationExpr) =>
+              val failFastExpr = ctx match {
+                case TransformationContext.ForPartial(_, failFast) => failFast
+                case _                                             => Expr.Boolean(false)
+              }
+              // no idea why it doesn't figure that out on its own in Scala 2 (GADT skolem)
+              val appliedExpr =
+                transformationExpr.asInstanceOf[TransformationExpr[Boolean => partial.Result[To]]] match {
+                  case TransformationExpr.TotalExpr(expr) =>
+                    TransformationExpr.PartialExpr(expr.apply(failFastExpr))
+                  case TransformationExpr.PartialExpr(expr) =>
+                    TransformationExpr.PartialExpr(expr.map(Expr.Function1.instance { (fn: Expr[Boolean => partial.Result[To]]) =>
+                      fn.apply(failFastExpr)
+                    }).flatten)
+                }
+              Rule.ExpansionResult.Expanded(appliedExpr)
+            case Rule.ExpansionResult.AttemptNextRule(reason) => Rule.ExpansionResult.AttemptNextRule(reason)
+          }
       }
     }
 
@@ -178,7 +204,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                           s".withFieldConstPartial(_.$anotherToName, ...)"
                         case TransformerOverride.Computed(_, _, _) =>
                           s".withFieldComputed(_.$anotherToName, ...)"
-                        case TransformerOverride.ComputedPartial(_, _, _) =>
+                        case TransformerOverride.ComputedPartial(_, _, _, _) =>
                           s".withFieldComputedPartial(_.$anotherToName, ...)"
                         case TransformerOverride.Renamed(sourcePath, _) =>
                           s".withFieldRenamed($sourcePath, _.$anotherToName})"
@@ -403,23 +429,25 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               )
           }
         }
-      case TransformerOverride.ComputedPartial(sourcePath, _, runtimeData) =>
+      case TransformerOverride.ComputedPartial(sourcePath, _, runtimeData, failFastAware) =>
         extractSrcByPath(FromOperation.ComputedPartial, sourcePath, toName).map { extractedSrc =>
           import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
-          // We're constructing:
-          // '{
-          //   ${ runtimeDataStore }(idx)
-          //     .asInstanceOf[$ExtractedSrc => partial.Result[$CtorParam]](${ extractedSrcExpr })
-          //     // prepend sourcePath
-          //     .prependErrorPath(PathElement.Computed("_.toName"))
-          // }
+          val partialResult = if (failFastAware) {
+            val failFastExpr = ctx match {
+              case TransformationContext.ForPartial(_, failFast) => failFast
+              case _                                             => Expr.Boolean(false)
+            }
+            runtimeData
+              .asInstanceOfExpr[ExtractedSrc => Boolean => partial.Result[CtorParam]]
+              .apply(extractedSrcExpr)
+              .apply(failFastExpr)
+          } else {
+            runtimeData
+              .asInstanceOfExpr[ExtractedSrc => partial.Result[CtorParam]]
+              .apply(extractedSrcExpr)
+          }
           TransformationExpr.fromPartial(
-            prependWholeErrorPath(
-              runtimeData
-                .asInstanceOfExpr[ExtractedSrc => partial.Result[CtorParam]]
-                .apply(extractedSrcExpr),
-              sourcePath
-            )
+            prependWholeErrorPath(partialResult, sourcePath)
               .prependErrorPath(
                 ChimneyExpr.PathElement
                   .Computed(Expr.String(s"${ctx.currentTgt}.$toName"))

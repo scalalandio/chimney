@@ -231,6 +231,31 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             )
           }
       }
+      object ComputedPartialFailFast extends ComputedPartialFailFastModule {
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.ComputedPartialFailFast[ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.ComputedPartialFailFast[ToPath, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.ComputedPartialFailFast[?, ?]].map { A0 =>
+            fixJavaEnums(A0.param_<[runtime.Path](0)) -> A0.param_<[runtime.TransformerOverrides](1)
+          }
+      }
+      object ComputedPartialFromFailFast extends ComputedPartialFromFailFastModule {
+        def apply[
+            FromPath <: runtime.Path: Type,
+            ToPath <: runtime.Path: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.ComputedPartialFromFailFast[FromPath, ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.ComputedPartialFromFailFast[FromPath, ToPath, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.ComputedPartialFromFailFast[?, ?, ?]].map { A0 =>
+            (
+              fixJavaEnums(A0.param_<[runtime.Path](0)),
+              fixJavaEnums(A0.param_<[runtime.Path](1)),
+              A0.param_<[runtime.TransformerOverrides](2)
+            )
+          }
+      }
       object CaseComputed extends CaseComputedModule {
         def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
             : Type[runtime.TransformerOverrides.CaseComputed[ToPath, Tail]] =
@@ -246,6 +271,15 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           weakTypeTag[runtime.TransformerOverrides.CaseComputedPartial[ToPath, Tail]]
         def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
           A.asCtor[runtime.TransformerOverrides.CaseComputedPartial[?, ?]].map { A0 =>
+            fixJavaEnums(A0.param_<[runtime.Path](0)) -> A0.param_<[runtime.TransformerOverrides](1)
+          }
+      }
+      object CaseComputedPartialFailFast extends CaseComputedPartialFailFastModule {
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.CaseComputedPartialFailFast[ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.CaseComputedPartialFailFast[ToPath, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.CaseComputedPartialFailFast[?, ?]].map { A0 =>
             fixJavaEnums(A0.param_<[runtime.Path](0)) -> A0.param_<[runtime.TransformerOverrides](1)
           }
       }
@@ -294,6 +328,24 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             A: Type[A]
         ): Option[(?<[runtime.ArgumentLists], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
           A.asCtor[runtime.TransformerOverrides.ConstructorPartial[?, ?, ?]].map { A0 =>
+            (
+              A0.param_<[runtime.ArgumentLists](0),
+              fixJavaEnums(A0.param_<[runtime.Path](1)),
+              A0.param_<[runtime.TransformerOverrides](2)
+            )
+          }
+      }
+      object ConstructorPartialFailFast extends ConstructorPartialFailFastModule {
+        def apply[
+            Args <: runtime.ArgumentLists: Type,
+            ToPath <: runtime.Path: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.ConstructorPartialFailFast[Args, ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.ConstructorPartialFailFast[Args, ToPath, Tail]]
+        def unapply[A](
+            A: Type[A]
+        ): Option[(?<[runtime.ArgumentLists], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.ConstructorPartialFailFast[?, ?, ?]].map { A0 =>
             (
               A0.param_<[runtime.ArgumentLists](0),
               fixJavaEnums(A0.param_<[runtime.Path](1)),
