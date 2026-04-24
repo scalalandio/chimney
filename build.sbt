@@ -234,7 +234,10 @@ val settings = Seq(
     )
   ),
   Test / compile / scalacOptions ++= versions.fold(scalaVersion.value)(
-    for3 = Seq("-Wconf:msg=unused local definition:s"), // silence warn that appears since 3.3.7
+    for3 = Seq(
+      "-Wconf:msg=unused local definition:s", // silence warn that appears since 3.3.7
+      "-Wconf:msg=with as a type operator has been deprecated:s" // silence deprecation of `with` in Scala 3.4+
+    ),
     for2_13 = Seq.empty,
     for2_12 = Seq.empty
   ),

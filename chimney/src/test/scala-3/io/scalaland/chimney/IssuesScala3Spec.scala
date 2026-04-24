@@ -58,6 +58,23 @@ class IssuesScala3Spec extends ChimneySpec {
     Request("abc", true).transformInto[(String, Boolean)] ==> ("abc", true)
   }
 
+  group("fix issue #857 (inline def reuse with enableDefaultValues)") {
+
+    test("generic inline transformer with enableDefaultValues should work") {
+      import io.scalaland.chimney.fixtures.Issue857.*
+
+      val userHydrator: EntityHydrator[CreateUser, User] = EntityHydrator.make[CreateUser, User]
+      userHydrator.touch(CreateUser("joe shmoe")) ==> User(13, "joe shmoe")
+    }
+
+    test("generic inline transformer with enableDefaultValues and default values should work") {
+      import io.scalaland.chimney.fixtures.Issue857.*
+
+      val messageHydrator: EntityHydrator[CreateMessage, Message] = EntityHydrator.make[CreateMessage, Message]
+      messageHydrator.touch(CreateMessage("awesome message")) ==> Message(13, "awesome message", None)
+    }
+  }
+
   group("fix issue #835 (enableInheritedAccessors for scala 3)") {
 
     test("val") {
