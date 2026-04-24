@@ -86,6 +86,20 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
     result2.asErrorPathMessageStrings ==> Iterable.empty
   }
 
+  test("transform using PartialOuterTransformer with .everyItem on source path (issue #832)") {
+    import OuterTransformers.partialNonEmptyToSorted
+    import fixtures.products.Renames.*
+
+    implicit val userPlStdOrdering: Ordering[UserPLStd] = Ordering[Int].on[UserPLStd](_.id)
+
+    val result = NonEmptyWrapper(User(1, "Kuba", Some(28)), User(2, "Artur", None))
+      .intoPartial[SortedWrapper[UserPLStd]]
+      .withFieldRenamed(_.everyItem.name, _.everyItem.imie)
+      .withFieldRenamed(_.everyItem.age, _.everyItem.wiek)
+      .transform
+    result.asOption ==> Some(SortedWrapper(UserPLStd(1, "Kuba", Some(28)), UserPLStd(2, "Artur", None)))
+  }
+
   test("transform using PartialOuterTransformer resolving total-partial-conflict") {
     import OuterTransformers.*
 
