@@ -1298,6 +1298,90 @@ class PartialTransformerProductSpec extends ChimneySpec {
     }
   }
 
+  group("setting .withFieldComputedPartialFailFast(_.field, (source, failFast) => value)") {
+
+    test("should pass failFast=true when using transformFailFast") {
+      import products.{Foo, Bar}
+
+      var receivedFailFast: Option[Boolean] = None
+
+      val result = Bar(3, (3.14, 3.14))
+        .intoPartial[Foo]
+        .withFieldComputedPartialFailFast(
+          _.y,
+          (bar, failFast) => {
+            receivedFailFast = Some(failFast)
+            partial.Result.fromValue(bar.x.toString)
+          }
+        )
+        .transformFailFast
+      result.asOption ==> Some(Foo(3, "3", (3.14, 3.14)))
+      receivedFailFast ==> Some(true)
+    }
+
+    test("should pass failFast=false when using transform") {
+      import products.{Foo, Bar}
+
+      var receivedFailFast: Option[Boolean] = None
+
+      val result = Bar(3, (3.14, 3.14))
+        .intoPartial[Foo]
+        .withFieldComputedPartialFailFast(
+          _.y,
+          (bar, failFast) => {
+            receivedFailFast = Some(failFast)
+            partial.Result.fromValue(bar.x.toString)
+          }
+        )
+        .transform
+      result.asOption ==> Some(Foo(3, "3", (3.14, 3.14)))
+      receivedFailFast ==> Some(false)
+    }
+
+    test("should work with PartialTransformer.define") {
+      import products.{Foo, Bar}
+
+      var receivedFailFast: Option[Boolean] = None
+
+      val transformer = PartialTransformer
+        .define[Bar, Foo]
+        .withFieldComputedPartialFailFast(
+          _.y,
+          (bar, failFast) => {
+            receivedFailFast = Some(failFast)
+            partial.Result.fromValue(bar.x.toString)
+          }
+        )
+        .buildTransformer
+
+      val result = transformer.transform(Bar(3, (3.14, 3.14)), failFast = true)
+      result.asOption ==> Some(Foo(3, "3", (3.14, 3.14)))
+      receivedFailFast ==> Some(true)
+    }
+  }
+
+  group("setting .withFieldComputedPartialFromFailFast(_.from)(_.to, (source, failFast) => value)") {
+
+    test("should pass failFast correctly") {
+      import products.{Foo, Bar}
+
+      var receivedFailFast: Option[Boolean] = None
+
+      val result = Bar(3, (3.14, 3.14))
+        .intoPartial[Foo]
+        .withFieldComputedPartialFromFailFast(_.x)(
+          _.y,
+          (x, failFast) => {
+            receivedFailFast = Some(failFast)
+            partial.Result.fromValue(x.toString)
+          }
+        )
+        .transformFailFast
+      result.asOption ==> Some(Foo(3, "3", (3.14, 3.14)))
+      receivedFailFast ==> Some(true)
+    }
+  }
+
   group("""setting .withFieldRenamed(_.from, _.to)""") {
 
     test("should not be enabled by default") {

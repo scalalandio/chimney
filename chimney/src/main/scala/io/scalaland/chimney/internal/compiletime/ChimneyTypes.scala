@@ -146,6 +146,23 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             runtime.TransformerOverrides.ComputedPartialFrom
           ] { this: ComputedPartialFrom.type => }
 
+      val ComputedPartialFailFast: ComputedPartialFailFastModule
+      trait ComputedPartialFailFastModule
+          extends Type.Ctor2UpperBounded[
+            runtime.Path,
+            runtime.TransformerOverrides,
+            runtime.TransformerOverrides.ComputedPartialFailFast
+          ] { this: ComputedPartialFailFast.type => }
+
+      val ComputedPartialFromFailFast: ComputedPartialFromFailFastModule
+      trait ComputedPartialFromFailFastModule
+          extends Type.Ctor3UpperBounded[
+            runtime.Path,
+            runtime.Path,
+            runtime.TransformerOverrides,
+            runtime.TransformerOverrides.ComputedPartialFromFailFast
+          ] { this: ComputedPartialFromFailFast.type => }
+
       val CaseComputed: CaseComputedModule
       trait CaseComputedModule
           extends Type.Ctor2UpperBounded[
@@ -161,6 +178,14 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             runtime.TransformerOverrides,
             runtime.TransformerOverrides.CaseComputedPartial
           ] { this: CaseComputedPartial.type => }
+
+      val CaseComputedPartialFailFast: CaseComputedPartialFailFastModule
+      trait CaseComputedPartialFailFastModule
+          extends Type.Ctor2UpperBounded[
+            runtime.Path,
+            runtime.TransformerOverrides,
+            runtime.TransformerOverrides.CaseComputedPartialFailFast
+          ] { this: CaseComputedPartialFailFast.type => }
 
       val Fallback: FallbackModule
       trait FallbackModule
@@ -188,6 +213,15 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             runtime.TransformerOverrides,
             runtime.TransformerOverrides.ConstructorPartial
           ] { this: ConstructorPartial.type => }
+
+      val ConstructorPartialFailFast: ConstructorPartialFailFastModule
+      trait ConstructorPartialFailFastModule
+          extends Type.Ctor3UpperBounded[
+            runtime.ArgumentLists,
+            runtime.Path,
+            runtime.TransformerOverrides,
+            runtime.TransformerOverrides.ConstructorPartialFailFast
+          ] { this: ConstructorPartialFailFast.type => }
 
       val RenamedFrom: RenamedFromModule
       trait RenamedFromModule
