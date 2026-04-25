@@ -200,7 +200,7 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   transparent inline def withFieldComputedPartialFailFast[T, U](
       inline selector: To => T,
@@ -266,7 +266,7 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   transparent inline def withFieldComputedPartialFromFailFast[S, T, U](inline selectorFrom: From => S)(
       inline selectorTo: To => T,
@@ -444,7 +444,7 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   transparent inline def withSealedSubtypeHandledPartialFailFast[Subtype](
       inline f: (Subtype, Boolean) => partial.Result[To]
@@ -453,7 +453,7 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
 
   /** Alias to [[withSealedSubtypeHandledPartialFailFast]].
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   transparent inline def withEnumCaseHandledPartialFailFast[Subtype](
       inline f: (Subtype, Boolean) => partial.Result[To]
@@ -695,7 +695,7 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   transparent inline def withConstructorPartialFailFast[Ctor](
       inline f: Ctor
@@ -727,7 +727,7 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   transparent inline def withConstructorPartialToFailFast[T, Ctor](inline selector: To => T)(
       inline f: Ctor

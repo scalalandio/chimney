@@ -74,10 +74,10 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
           Type[SomeFrom] <:< Type[From]
         }
         .filter {
-          case (_, TransformerOverride.Unused)                            => true
-          case (_, TransformerOverride.Computed(_, targetPath, _))        => targetPath == ctx.currentTgt
+          case (_, TransformerOverride.Unused)                               => true
+          case (_, TransformerOverride.Computed(_, targetPath, _))           => targetPath == ctx.currentTgt
           case (_, TransformerOverride.ComputedPartial(_, targetPath, _, _)) => targetPath == ctx.currentTgt
-          case (_, TransformerOverride.Renamed(_, targetPath))            =>
+          case (_, TransformerOverride.Renamed(_, targetPath))               =>
             targetPath.drop(ctx.currentTgt) match {
               case Some(Path.AtSubtype(someTo, Path.Root)) => someTo.Underlying <:< Type[To]
               case _                                       => false

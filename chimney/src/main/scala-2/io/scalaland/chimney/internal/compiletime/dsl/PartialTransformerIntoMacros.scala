@@ -204,7 +204,8 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
       Subtype: WeakTypeTag
   ](f: Tree): Tree = {
     val SubtypeTpe = weakTypeOf[Subtype]
-    val curriedF = q"{ val fn = $f; (subtype: $SubtypeTpe) => (failFast: _root_.scala.Boolean) => fn(subtype, failFast) }"
+    val curriedF =
+      q"{ val fn = $f; (subtype: $SubtypeTpe) => (failFast: _root_.scala.Boolean) => fn(subtype, failFast) }"
     new ApplyFixedCoproductType {
       def apply[FixedSubtype: WeakTypeTag]: Tree = c.prefix.tree
         .addOverride(curriedF)

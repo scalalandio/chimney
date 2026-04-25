@@ -193,7 +193,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def withFieldComputedPartialFailFast[T, U](
       selector: To => T,
@@ -259,7 +259,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def withFieldComputedPartialFromFailFast[S, T, U](selectorFrom: From => S)(
       selectorTo: To => T,
@@ -437,7 +437,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def withSealedSubtypeHandledPartialFailFast[Subtype](
       f: (Subtype, Boolean) => partial.Result[To]
@@ -447,7 +447,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
 
   /** Alias to [[withSealedSubtypeHandledPartialFailFast]].
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def withEnumCaseHandledPartialFailFast[Subtype](
       f: (Subtype, Boolean) => partial.Result[To]
@@ -688,7 +688,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def withConstructorPartialFailFast[Ctor](
       f: Ctor
@@ -720,7 +720,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def withConstructorPartialToFailFast[T, Ctor](selector: To => T)(
       f: Ctor
