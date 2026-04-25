@@ -826,6 +826,13 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   ): TransformerTargetFlagsDsl.OfPartialTransformerInto[From, To, Overrides, Flags, ? <: Path] =
     macro PartialTransformerIntoMacros.withTargetFlagImpl[From, To, Overrides, Flags]
 
+  /** Scope overrides to apply to all derivations matching `[FromMatch, ToMatch]`.
+    *
+    * @since 1.7.0
+    */
+  def forAll[FromMatch, ToMatch]: PartialTransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch] =
+    new PartialTransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch](source, td)
+
   /** Apply configured partial transformation in-place.
     *
     * It runs macro that tries to derive instance of `PartialTransformer[From, To]` and immediately apply it to captured

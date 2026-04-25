@@ -398,6 +398,13 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
   ): TransformerTargetFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, ? <: Path] =
     macro TransformerIntoMacros.withTargetFlagImpl[From, To, Overrides, Flags]
 
+  /** Scope overrides to apply to all derivations matching `[FromMatch, ToMatch]`.
+    *
+    * @since 1.7.0
+    */
+  def forAll[FromMatch, ToMatch]: TransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch] =
+    new TransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch](source, td)
+
   /** Apply configured transformation in-place.
     *
     * It runs macro that tries to derive instance of `Transformer[From, To]` and immediately apply it to captured

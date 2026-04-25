@@ -422,6 +422,13 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     *
     * @since 0.1.0
     */
+  /** Scope overrides to apply to all derivations matching `[FromMatch, ToMatch]`.
+    *
+    * @since 1.7.0
+    */
+  def forAll[FromMatch, ToMatch]: TransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch] =
+    new TransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch](source, td)
+
   inline def transform[ImplicitScopeFlags <: TransformerFlags](using
       @scala.annotation.unused tc: TransformerConfiguration[ImplicitScopeFlags]
   ): To =

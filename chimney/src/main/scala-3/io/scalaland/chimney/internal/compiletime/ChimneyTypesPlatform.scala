@@ -378,6 +378,21 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             case _ => scala.None
           }
       }
+      object ForAll extends ForAllModule {
+        def unapply[A](tpe: Type[A]): Option[(??, ??, ?<[runtime.TransformerOverrides], ?<[runtime.TransformerOverrides])] =
+          tpe match {
+            case '[runtime.TransformerOverrides.ForAll[fromMatch, toMatch, inner, tail]] =>
+              Some(
+                (
+                  Type[fromMatch].as_??,
+                  Type[toMatch].as_??,
+                  Type[inner].as_?<[runtime.TransformerOverrides],
+                  Type[tail].as_?<[runtime.TransformerOverrides]
+                )
+              )
+            case _ => scala.None
+          }
+      }
     }
 
     object TransformerFlags extends TransformerFlagsModule {

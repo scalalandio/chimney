@@ -36,21 +36,29 @@ private[compiletime] trait Contexts { this: Derivation =>
         updateFallbacks: TransformerOverride.ForFallback => Vector[TransformerOverride.ForFallback] = Vector(_)
     ): TransformationContext[NewFrom, NewTo] =
       fold[TransformationContext[NewFrom, NewTo]] { (ctx: TransformationContext.ForTotal[From, To]) =>
+        val newSrcPath = ctx.srcJournal.last._1.concat(followFrom)
+        val newTgtPath = ctx.tgtJournal.last.concat(followTo)
         TransformationContext.ForTotal[NewFrom, NewTo](src = newSrc)(
           From = Type[NewFrom],
           To = Type[NewTo],
-          srcJournal = ctx.srcJournal :+ (ctx.srcJournal.last._1.concat(followFrom) -> newSrc.as_??),
-          tgtJournal = ctx.tgtJournal :+ ctx.tgtJournal.last.concat(followTo),
-          config = ctx.config.prepareForRecursiveCall(followFrom, followTo, updateFallbacks)(ctx),
+          srcJournal = ctx.srcJournal :+ (newSrcPath -> newSrc.as_??),
+          tgtJournal = ctx.tgtJournal :+ newTgtPath,
+          config = ctx.config
+            .injectForAllOverrides[NewFrom, NewTo](followFrom, followTo, newSrcPath, newTgtPath)
+            .prepareForRecursiveCall(followFrom, followTo, updateFallbacks)(ctx),
           ctx.derivationStartedAt
         )
       } { (ctx: TransformationContext.ForPartial[From, To]) =>
+        val newSrcPath = ctx.srcJournal.last._1.concat(followFrom)
+        val newTgtPath = ctx.tgtJournal.last.concat(followTo)
         TransformationContext.ForPartial[NewFrom, NewTo](src = newSrc, failFast = ctx.failFast)(
           From = Type[NewFrom],
           To = Type[NewTo],
-          srcJournal = ctx.srcJournal :+ (ctx.srcJournal.last._1.concat(followFrom) -> newSrc.as_??),
-          tgtJournal = ctx.tgtJournal :+ ctx.tgtJournal.last.concat(followTo),
-          config = ctx.config.prepareForRecursiveCall(followFrom, followTo, updateFallbacks)(ctx),
+          srcJournal = ctx.srcJournal :+ (newSrcPath -> newSrc.as_??),
+          tgtJournal = ctx.tgtJournal :+ newTgtPath,
+          config = ctx.config
+            .injectForAllOverrides[NewFrom, NewTo](followFrom, followTo, newSrcPath, newTgtPath)
+            .prepareForRecursiveCall(followFrom, followTo, updateFallbacks)(ctx),
           ctx.derivationStartedAt
         )
       }

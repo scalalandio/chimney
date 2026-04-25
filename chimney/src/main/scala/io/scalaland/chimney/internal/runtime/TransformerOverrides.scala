@@ -40,4 +40,6 @@ object TransformerOverrides {
   final class RenamedTo[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides
   // Fallback value allowing merging several sources
   final class Fallback[FromFallback, ToPath <: Path, Tail <: Overrides] extends Overrides
+  // Scoped overrides that apply to all matching [FromMatch, ToMatch] derivations
+  final class ForAll[FromMatch, ToMatch, Inner <: Overrides, Tail <: Overrides] extends Overrides
 }

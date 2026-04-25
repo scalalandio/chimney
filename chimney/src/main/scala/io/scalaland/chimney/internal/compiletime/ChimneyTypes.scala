@@ -240,6 +240,11 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             runtime.TransformerOverrides,
             runtime.TransformerOverrides.RenamedTo
           ] { this: RenamedTo.type => }
+
+      val ForAll: ForAllModule
+      trait ForAllModule { this: ForAll.type =>
+        def unapply[A](tpe: Type[A]): Option[(??, ??, ?<[runtime.TransformerOverrides], ?<[runtime.TransformerOverrides])]
+      }
     }
 
     val TransformerFlags: TransformerFlagsModule

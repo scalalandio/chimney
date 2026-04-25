@@ -415,6 +415,23 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
   ): TransformerTargetFlagsDsl.OfTransformerDefinition[From, To, Overrides, Flags, ? <: Path] =
     macro TransformerDefinitionMacros.withTargetFlagImpl[From, To, Overrides, Flags]
 
+  /** Scope overrides to apply to all derivations matching `[FromMatch, ToMatch]`.
+    *
+    * When chimney recursively derives transformations for nested types, any `forAll`-scoped overrides whose
+    * `FromMatch` and `ToMatch` are supertypes of the current derivation pair will be injected.
+    *
+    * @tparam FromMatch
+    *   source type to match (subtypes of this will also match)
+    * @tparam ToMatch
+    *   target type to match (subtypes of this will also match)
+    * @return
+    *   scoped builder that provides override methods which apply to all matching derivations
+    *
+    * @since 1.7.0
+    */
+  def forAll[FromMatch, ToMatch]: TransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch] =
+    new TransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch](runtimeData)
+
   /** Build Transformer using current configuration.
     *
     * It runs macro that tries to derive instance of `Transformer[From, To]`. When transformation can't be derived, it
