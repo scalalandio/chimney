@@ -32,8 +32,7 @@ object TransformerOverrides {
   final class Constructor[Args <: ArgumentLists, ToPath <: Path, Tail <: Overrides] extends Overrides
   final class ConstructorPartial[Args <: ArgumentLists, ToPath <: Path, Tail <: Overrides] extends Overrides
   // Computes a partial value after all constructor arguments have been matched, with failFast flag
-  final class ConstructorPartialFailFast[Args <: ArgumentLists, ToPath <: Path, Tail <: Overrides]
-      extends Overrides
+  final class ConstructorPartialFailFast[Args <: ArgumentLists, ToPath <: Path, Tail <: Overrides] extends Overrides
   // FIXME (2.0.0 cleanup) - try merging RenameFrom with RenameTo
   // Computes a value using manually pointed value from (src: From)
   final class RenamedFrom[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides

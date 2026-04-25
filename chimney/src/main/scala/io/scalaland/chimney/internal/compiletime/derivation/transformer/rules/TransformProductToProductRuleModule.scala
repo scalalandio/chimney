@@ -80,9 +80,13 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   case TransformationExpr.TotalExpr(expr) =>
                     TransformationExpr.PartialExpr(expr.apply(failFastExpr))
                   case TransformationExpr.PartialExpr(expr) =>
-                    TransformationExpr.PartialExpr(expr.map(Expr.Function1.instance { (fn: Expr[Boolean => partial.Result[To]]) =>
-                      fn.apply(failFastExpr)
-                    }).flatten)
+                    TransformationExpr.PartialExpr(
+                      expr
+                        .map(Expr.Function1.instance { (fn: Expr[Boolean => partial.Result[To]]) =>
+                          fn.apply(failFastExpr)
+                        })
+                        .flatten
+                    )
                 }
               Rule.ExpansionResult.Expanded(appliedExpr)
             case Rule.ExpansionResult.AttemptNextRule(reason) => Rule.ExpansionResult.AttemptNextRule(reason)
@@ -432,6 +436,14 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       case TransformerOverride.ComputedPartial(sourcePath, _, runtimeData, failFastAware) =>
         extractSrcByPath(FromOperation.ComputedPartial, sourcePath, toName).map { extractedSrc =>
           import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
+          // We're constructing:
+          // '{
+          //   ${ runtimeDataStore }(idx)
+          //     .asInstanceOf[$ExtractedSrc => partial.Result[$CtorParam]](${ extractedSrcExpr })
+          //     // prepend sourcePath
+          //     .prependErrorPath(PathElement.Computed("_.toName"))
+          // }
+          // (or the failFastAware variant with an extra Boolean => ... curried call)
           val partialResult = if (failFastAware) {
             val failFastExpr = ctx match {
               case TransformationContext.ForPartial(_, failFast) => failFast
