@@ -2394,6 +2394,67 @@ We are also able to compute values in nested structure:
     // Right(value = NestedBar(bar = Bar(a = "value", b = 1248, c = 2496L)))
     ```
 
+#### Fail-fast-aware partial computations
+
+When using `.withFieldComputedPartial`, the provided function does not know whether the caller used `.transform` (which
+collects all errors) or `.transformFailFast` (which stops at the first error). In some cases the computation itself could
+benefit from this knowledge - for example, to skip expensive validations when fail-fast mode is already active, or to
+eagerly accumulate additional diagnostics when all errors are collected.
+
+`.withFieldComputedPartialFailFast` passes the `failFast` flag as an additional `Boolean` parameter to the function. The
+flag is `true` when `.transformFailFast` is used and `false` when `.transform` is used.
+`.withFieldComputedPartialFromFailFast` provides the same capability for computations that extract a value from the
+source first.
+
+!!! example
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.partial
+
+    case class Foo(a: String, b: Int)
+    case class Bar(a: String, b: Int, c: Long)
+
+    // With transformFailFast, failFast is true:
+    pprint.pprintln(
+      Foo("value", 10)
+        .intoPartial[Bar]
+        .withFieldComputedPartialFailFast(_.c, (foo, failFast) =>
+          if (failFast) partial.Result.fromValue(foo.b.toLong) // skip extra work in fail-fast mode
+          else partial.Result.fromValue(foo.b.toLong * 2)      // do full computation otherwise
+        )
+        .transformFailFast
+        .asEither
+        .left
+        .map(_.asErrorPathMessages)
+    )
+    // expected output:
+    // Right(value = Bar(a = "value", b = 10, c = 10L))
+
+    // With transform, failFast is false:
+    pprint.pprintln(
+      Foo("value", 10)
+        .intoPartial[Bar]
+        .withFieldComputedPartialFailFast(_.c, (foo, failFast) =>
+          if (failFast) partial.Result.fromValue(foo.b.toLong)
+          else partial.Result.fromValue(foo.b.toLong * 2)
+        )
+        .transform
+        .asEither
+        .left
+        .map(_.asErrorPathMessages)
+    )
+    // expected output:
+    // Right(value = Bar(a = "value", b = 10, c = 20L))
+    ```
+
+Similarly, `.withSealedSubtypeHandledPartialFailFast` passes the `failFast` flag when handling sealed subtypes, and
+`.withConstructorPartialFailFast` passes it when wiring an entire constructor (as a curried `Boolean => partial.Result[To]`
+argument).
+
 ### Customizing field name matching
 
 Be default names are matched in a Java-Bean-aware way - `fieldName` would be considered a match for another `fieldName`
