@@ -385,6 +385,17 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             )
           }
       }
+      object ForAll extends ForAllModule {
+        def unapply[A](A: Type[A]): Option[(??, ??, ?<[runtime.TransformerOverrides], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.ForAll[?, ?, ?, ?]].map { A0 =>
+            (
+              A0.param(0),
+              A0.param(1),
+              A0.param_<[runtime.TransformerOverrides](2),
+              A0.param_<[runtime.TransformerOverrides](3)
+            )
+          }
+      }
     }
 
     object TransformerFlags extends TransformerFlagsModule {
