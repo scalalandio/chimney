@@ -27,9 +27,19 @@ object PartialTransformerIntoForAllMacros {
     DslMacroUtils().applyFieldNameTypes {
       [fromPath <: Path, toPath <: Path] => (_: Type[fromPath]) ?=> (_: Type[toPath]) ?=>
         '{
-          new PartialTransformerInto[From, To, ForAll[FromMatch, ToMatch, RenamedFrom[fromPath, toPath, Empty], Overrides], Flags](
+          new PartialTransformerInto[
+            From,
+            To,
+            ForAll[FromMatch, ToMatch, RenamedFrom[fromPath, toPath, Empty], Overrides],
+            Flags
+          ](
             $ti.source,
-            $ti.td.asInstanceOf[PartialTransformerDefinition[From, To, ForAll[FromMatch, ToMatch, RenamedFrom[fromPath, toPath, Empty], Overrides], Flags]]
+            $ti.td.asInstanceOf[PartialTransformerDefinition[
+              From,
+              To,
+              ForAll[FromMatch, ToMatch, RenamedFrom[fromPath, toPath, Empty], Overrides],
+              Flags
+            ]]
           )
         }
     }(selectorFrom, selectorTo)
@@ -52,7 +62,12 @@ object PartialTransformerIntoForAllMacros {
       '{
         val updatedTd = WithRuntimeDataStore
           .update($ti.td, $value)
-          .asInstanceOf[PartialTransformerDefinition[From, To, ForAll[FromMatch, ToMatch, Const[toPath, Empty], Overrides], Flags]]
+          .asInstanceOf[PartialTransformerDefinition[
+            From,
+            To,
+            ForAll[FromMatch, ToMatch, Const[toPath, Empty], Overrides],
+            Flags
+          ]]
         new PartialTransformerInto[From, To, ForAll[FromMatch, ToMatch, Const[toPath, Empty], Overrides], Flags](
           $ti.source,
           updatedTd
@@ -78,7 +93,12 @@ object PartialTransformerIntoForAllMacros {
       '{
         val updatedTd = WithRuntimeDataStore
           .update($ti.td, $f)
-          .asInstanceOf[PartialTransformerDefinition[From, To, ForAll[FromMatch, ToMatch, Computed[toPath, Empty], Overrides], Flags]]
+          .asInstanceOf[PartialTransformerDefinition[
+            From,
+            To,
+            ForAll[FromMatch, ToMatch, Computed[toPath, Empty], Overrides],
+            Flags
+          ]]
         new PartialTransformerInto[From, To, ForAll[FromMatch, ToMatch, Computed[toPath, Empty], Overrides], Flags](
           $ti.source,
           updatedTd
@@ -104,8 +124,18 @@ object PartialTransformerIntoForAllMacros {
       '{
         val updatedTd = WithRuntimeDataStore
           .update($ti.td, $f)
-          .asInstanceOf[PartialTransformerDefinition[From, To, ForAll[FromMatch, ToMatch, ComputedPartial[toPath, Empty], Overrides], Flags]]
-        new PartialTransformerInto[From, To, ForAll[FromMatch, ToMatch, ComputedPartial[toPath, Empty], Overrides], Flags](
+          .asInstanceOf[PartialTransformerDefinition[
+            From,
+            To,
+            ForAll[FromMatch, ToMatch, ComputedPartial[toPath, Empty], Overrides],
+            Flags
+          ]]
+        new PartialTransformerInto[
+          From,
+          To,
+          ForAll[FromMatch, ToMatch, ComputedPartial[toPath, Empty], Overrides],
+          Flags
+        ](
           $ti.source,
           updatedTd
         )

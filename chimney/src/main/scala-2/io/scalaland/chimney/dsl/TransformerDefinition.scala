@@ -427,7 +427,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @return
     *   scoped builder that provides override methods which apply to all matching derivations
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def forAll[FromMatch, ToMatch]: TransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch] =
     new TransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch](runtimeData)

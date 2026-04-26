@@ -5,19 +5,26 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
 
 import scala.language.experimental.macros
 
-/** Scoped builder for defining overrides that apply to all matching `[FromMatch, ToMatch]` derivations,
-  * used with `.into[To]` syntax.
+/** Scoped builder for defining overrides that apply to all matching `[FromMatch, ToMatch]` derivations, used with
+  * `.into[To]` syntax.
   *
-  * @since 1.7.0
+  * @since 1.10.0
   */
-final class TransformerIntoForAll[From, To, Overrides <: TransformerOverrides, Flags <: TransformerFlags, FromMatch, ToMatch](
+final class TransformerIntoForAll[
+    From,
+    To,
+    Overrides <: TransformerOverrides,
+    Flags <: TransformerFlags,
+    FromMatch,
+    ToMatch
+](
     val source: From,
     val td: TransformerDefinition[From, To, Overrides, Flags]
 ) extends WithRuntimeDataStore {
 
   /** Use the `selectorFrom` field in `FromMatch` to obtain the value of the `selectorTo` field in `ToMatch`.
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def withFieldRenamed[T, U](
       selectorFrom: FromMatch => T,
@@ -27,7 +34,7 @@ final class TransformerIntoForAll[From, To, Overrides <: TransformerOverrides, F
 
   /** Use the `value` provided here for the field picked using `selector`.
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def withFieldConst[T, U](
       selector: ToMatch => T,
@@ -37,7 +44,7 @@ final class TransformerIntoForAll[From, To, Overrides <: TransformerOverrides, F
 
   /** Use the function `f` to compute the value of the field picked using `selector`.
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def withFieldComputed[T, U](
       selector: ToMatch => T,

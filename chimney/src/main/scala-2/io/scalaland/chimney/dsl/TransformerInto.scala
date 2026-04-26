@@ -400,7 +400,7 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
 
   /** Scope overrides to apply to all derivations matching `[FromMatch, ToMatch]`.
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def forAll[FromMatch, ToMatch]: TransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch] =
     new TransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch](source, td)

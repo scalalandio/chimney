@@ -829,7 +829,7 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
 
   /** Scope overrides to apply to all derivations matching `[FromMatch, ToMatch]`.
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def forAll[FromMatch, ToMatch]: PartialTransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch] =
     new PartialTransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch](source, td)
