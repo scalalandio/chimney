@@ -836,7 +836,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @return
     *   scoped builder that provides override methods which apply to all matching derivations
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def forAll[FromMatch, ToMatch]
       : PartialTransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch] =

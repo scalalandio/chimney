@@ -26,9 +26,19 @@ object TransformerIntoForAllMacros {
     DslMacroUtils().applyFieldNameTypes {
       [fromPath <: Path, toPath <: Path] => (_: Type[fromPath]) ?=> (_: Type[toPath]) ?=>
         '{
-          new TransformerInto[From, To, ForAll[FromMatch, ToMatch, RenamedFrom[fromPath, toPath, Empty], Overrides], Flags](
+          new TransformerInto[
+            From,
+            To,
+            ForAll[FromMatch, ToMatch, RenamedFrom[fromPath, toPath, Empty], Overrides],
+            Flags
+          ](
             $ti.source,
-            $ti.td.asInstanceOf[TransformerDefinition[From, To, ForAll[FromMatch, ToMatch, RenamedFrom[fromPath, toPath, Empty], Overrides], Flags]]
+            $ti.td.asInstanceOf[TransformerDefinition[
+              From,
+              To,
+              ForAll[FromMatch, ToMatch, RenamedFrom[fromPath, toPath, Empty], Overrides],
+              Flags
+            ]]
           )
         }
     }(selectorFrom, selectorTo)
@@ -51,7 +61,12 @@ object TransformerIntoForAllMacros {
       '{
         val updatedTd = WithRuntimeDataStore
           .update($ti.td, $value)
-          .asInstanceOf[TransformerDefinition[From, To, ForAll[FromMatch, ToMatch, Const[toPath, Empty], Overrides], Flags]]
+          .asInstanceOf[TransformerDefinition[
+            From,
+            To,
+            ForAll[FromMatch, ToMatch, Const[toPath, Empty], Overrides],
+            Flags
+          ]]
         new TransformerInto[From, To, ForAll[FromMatch, ToMatch, Const[toPath, Empty], Overrides], Flags](
           $ti.source,
           updatedTd
@@ -77,7 +92,12 @@ object TransformerIntoForAllMacros {
       '{
         val updatedTd = WithRuntimeDataStore
           .update($ti.td, $f)
-          .asInstanceOf[TransformerDefinition[From, To, ForAll[FromMatch, ToMatch, Computed[toPath, Empty], Overrides], Flags]]
+          .asInstanceOf[TransformerDefinition[
+            From,
+            To,
+            ForAll[FromMatch, ToMatch, Computed[toPath, Empty], Overrides],
+            Flags
+          ]]
         new TransformerInto[From, To, ForAll[FromMatch, ToMatch, Computed[toPath, Empty], Overrides], Flags](
           $ti.source,
           updatedTd

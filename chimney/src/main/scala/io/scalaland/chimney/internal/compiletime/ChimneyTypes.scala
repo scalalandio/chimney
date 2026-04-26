@@ -243,7 +243,9 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
 
       val ForAll: ForAllModule
       trait ForAllModule { this: ForAll.type =>
-        def unapply[A](tpe: Type[A]): Option[(??, ??, ?<[runtime.TransformerOverrides], ?<[runtime.TransformerOverrides])]
+        def unapply[A](
+            tpe: Type[A]
+        ): Option[(??, ??, ?<[runtime.TransformerOverrides], ?<[runtime.TransformerOverrides])]
       }
     }
 

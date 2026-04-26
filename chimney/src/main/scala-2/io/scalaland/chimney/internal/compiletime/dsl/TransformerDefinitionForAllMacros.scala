@@ -26,9 +26,9 @@ class TransformerDefinitionForAllMacros(val c: whitebox.Context) extends utils.D
           ${weakTypeOf[FromMatch]},
           ${weakTypeOf[ToMatch]},
           ${new ApplyFieldNameTypes {
-      def apply[FromPath <: Path: WeakTypeTag, ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-        weakTypeTag[RenamedFrom[FromPath, ToPath, Empty]]
-    }.applyFromSelectors(selectorFrom, selectorTo)},
+        def apply[FromPath <: Path: WeakTypeTag, ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[RenamedFrom[FromPath, ToPath, Empty]]
+      }.applyFromSelectors(selectorFrom, selectorTo)},
           ${weakTypeOf[Overrides]}
         ],
         ${weakTypeOf[Flags]}
@@ -51,9 +51,9 @@ class TransformerDefinitionForAllMacros(val c: whitebox.Context) extends utils.D
           ${weakTypeOf[FromMatch]},
           ${weakTypeOf[ToMatch]},
           ${new ApplyFieldNameType {
-      def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-        weakTypeTag[Const[ToPath, Empty]]
-    }.applyFromSelector(selector)},
+        def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[Const[ToPath, Empty]]
+      }.applyFromSelector(selector)},
           ${weakTypeOf[Overrides]}
         ],
         ${weakTypeOf[Flags]}
@@ -76,9 +76,9 @@ class TransformerDefinitionForAllMacros(val c: whitebox.Context) extends utils.D
           ${weakTypeOf[FromMatch]},
           ${weakTypeOf[ToMatch]},
           ${new ApplyFieldNameType {
-      def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-        weakTypeTag[Computed[ToPath, Empty]]
-    }.applyFromSelector(selector)},
+        def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[Computed[ToPath, Empty]]
+      }.applyFromSelector(selector)},
           ${weakTypeOf[Overrides]}
         ],
         ${weakTypeOf[Flags]}
@@ -101,9 +101,9 @@ class TransformerDefinitionForAllMacros(val c: whitebox.Context) extends utils.D
           ${weakTypeOf[FromMatch]},
           ${weakTypeOf[ToMatch]},
           ${new ApplyFieldNameType {
-      def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-        weakTypeTag[ComputedPartial[ToPath, Empty]]
-    }.applyFromSelector(selector)},
+        def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[ComputedPartial[ToPath, Empty]]
+      }.applyFromSelector(selector)},
           ${weakTypeOf[Overrides]}
         ],
         ${weakTypeOf[Flags]}

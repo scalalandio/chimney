@@ -21,15 +21,22 @@ import scala.language.experimental.macros
   * @tparam ToMatch
   *   target type to match in recursive derivations
   *
-  * @since 1.7.0
+  * @since 1.10.0
   */
-final class TransformerDefinitionForAll[From, To, Overrides <: TransformerOverrides, Flags <: TransformerFlags, FromMatch, ToMatch](
+final class TransformerDefinitionForAll[
+    From,
+    To,
+    Overrides <: TransformerOverrides,
+    Flags <: TransformerFlags,
+    FromMatch,
+    ToMatch
+](
     val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
 ) extends WithRuntimeDataStore {
 
   /** Use the `selectorFrom` field in `FromMatch` to obtain the value of the `selectorTo` field in `ToMatch`.
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def withFieldRenamed[T, U](
       selectorFrom: FromMatch => T,
@@ -39,7 +46,7 @@ final class TransformerDefinitionForAll[From, To, Overrides <: TransformerOverri
 
   /** Use the `value` provided here for the field picked using `selector`.
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def withFieldConst[T, U](
       selector: ToMatch => T,
@@ -49,7 +56,7 @@ final class TransformerDefinitionForAll[From, To, Overrides <: TransformerOverri
 
   /** Use the function `f` to compute the value of the field picked using `selector`.
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def withFieldComputed[T, U](
       selector: ToMatch => T,
@@ -59,7 +66,7 @@ final class TransformerDefinitionForAll[From, To, Overrides <: TransformerOverri
 
   /** Use the function `f` to compute the partial result for the field picked using `selector`.
     *
-    * @since 1.7.0
+    * @since 1.10.0
     */
   def withFieldComputedPartial[T, U](
       selector: ToMatch => T,
