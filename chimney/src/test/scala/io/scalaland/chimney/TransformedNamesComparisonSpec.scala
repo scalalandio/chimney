@@ -94,6 +94,7 @@ class TransformedNamesComparisonSpec extends ChimneySpec {
     }
 
     test("should match conversion") {
+      namesMatches("some_Field", "someField") ==> true
       namesMatches("some_field", "someField") ==> true
       namesMatches("some_field_123", "someField123") ==> true
       namesMatches("some__field", "someField") ==> true
@@ -102,7 +103,9 @@ class TransformedNamesComparisonSpec extends ChimneySpec {
     }
 
     test("should not match conversion") {
+      TransformedNamesComparison.CamelSnakeCaseEquality.namesMatch("_", "__") ==> false
       TransformedNamesComparison.CamelSnakeCaseEquality.namesMatch("somefield", "some_field") ==> false
+      TransformedNamesComparison.CamelSnakeCaseEquality.namesMatch("some_field", "some_Field") ==> false
       TransformedNamesComparison.CamelSnakeCaseEquality.namesMatch("someField", "somefield") ==> false
     }
 

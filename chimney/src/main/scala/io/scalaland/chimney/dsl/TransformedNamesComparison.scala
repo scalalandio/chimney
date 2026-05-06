@@ -51,11 +51,11 @@ object TransformedNamesComparison {
 
   case object CamelSnakeCaseEquality extends TransformedNamesComparison {
 
-    private def snakeToCamel(snake: String): String =
+    private def snakeToCamel(snake: String): (String, Boolean) =
       snake.split('_') match {
-        case Array(part) => part
+        case Array(part) => (part, false)
         case parts       =>
-          parts
+          val camel = parts
             .filter(_.nonEmpty) // Remove empty parts from consecutive underscores
             .zipWithIndex
             .map { case (part, idx) =>
@@ -63,12 +63,16 @@ object TransformedNamesComparison {
               else part.toLowerCase.capitalize
             }
             .mkString
+          (camel, true)
       }
 
     def namesMatch(fromName: String, toName: String): Boolean = {
-      val from = snakeToCamel(fromName)
-      val to = snakeToCamel(toName)
-      from == to
+      val (from, fromWasCamelCase) = snakeToCamel(fromName)
+      val (to, toWasCamelCase) = snakeToCamel(toName)
+      if (fromWasCamelCase == toWasCamelCase)
+        fromName == toName
+      else
+        from == to
     }
   }
 
