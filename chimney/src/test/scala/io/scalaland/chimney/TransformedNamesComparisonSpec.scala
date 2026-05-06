@@ -79,4 +79,32 @@ class TransformedNamesComparisonSpec extends ChimneySpec {
       TransformedNamesComparison.CaseInsensitiveEquality.namesMatch("SOME_FIELD", "someField") ==> false
     }
   }
+
+  group("TransformedNamesComparison.CamelSnakeCaseEquality") {
+
+    def namesMatches(from: String, to: String): Boolean =
+      TransformedNamesComparison.CamelSnakeCaseEquality.namesMatch(
+        from,
+        to
+      ) && TransformedNamesComparison.CamelSnakeCaseEquality.namesMatch(to, from)
+
+    test("should match identical names") {
+      TransformedNamesComparison.CamelSnakeCaseEquality.namesMatch("_", "_") ==> true
+      TransformedNamesComparison.CamelSnakeCaseEquality.namesMatch("someField", "someField") ==> true
+    }
+
+    test("should match conversion") {
+      namesMatches("some_field", "someField") ==> true
+      namesMatches("some_field_123", "someField123") ==> true
+      namesMatches("some__field", "someField") ==> true
+      namesMatches("_some__field", "someField") ==> true
+      namesMatches("SOME_FIELD", "someField") ==> true
+    }
+
+    test("should not match conversion") {
+      TransformedNamesComparison.CamelSnakeCaseEquality.namesMatch("somefield", "some_field") ==> false
+      TransformedNamesComparison.CamelSnakeCaseEquality.namesMatch("someField", "somefield") ==> false
+    }
+
+  }
 }
