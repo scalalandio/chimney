@@ -8,7 +8,7 @@ If we do not want to enable the same flag(s) in several places, we can define sh
 
 !!! example
 
-    Scala 2
+Scala 2
 
     ```scala
     //> using scala {{ scala.2_13 }}
@@ -20,7 +20,7 @@ If we do not want to enable the same flag(s) in several places, we can define sh
     implicit val patcherCfg = PatcherConfiguration.default.ignoreNoneInPatch.enableMacrosLogging
     ```  
 
-    Scala 3
+Scala 3
 
     ```scala
     //> using scala {{ scala.3 }}
@@ -1327,7 +1327,7 @@ collection), then you can:
 
 !!! example "Converting from Cats collections"
 
-   ```scala
+    ```scala
     //> using dep org.typelevel::cats-core::{{ libraries.cats }}
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
@@ -1403,7 +1403,7 @@ collection), then you can:
 
 !!! example "Converting between Cats collections of the same type"
 
-   ```scala
+    ```scala
     //> using dep org.typelevel::cats-core::{{ libraries.cats }}
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
@@ -1435,7 +1435,7 @@ collection), then you can:
 
 !!! example "Converting using implicit ~> (FunctionK)"
 
-   ```scala
+    ```scala
     //> using dep org.typelevel::cats-core::{{ libraries.cats }}
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
