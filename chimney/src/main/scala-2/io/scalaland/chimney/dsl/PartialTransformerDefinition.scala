@@ -826,8 +826,8 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
 
   /** Scope overrides to apply to all derivations matching `[FromMatch, ToMatch]`.
     *
-    * When chimney recursively derives transformations for nested types, any `forAll`-scoped overrides whose
-    * `FromMatch` and `ToMatch` are supertypes of the current derivation pair will be injected.
+    * When chimney recursively derives transformations for nested types, any `forAll`-scoped overrides whose `FromMatch`
+    * and `ToMatch` are supertypes of the current derivation pair will be injected.
     *
     * @tparam FromMatch
     *   source type to match (subtypes of this will also match)
@@ -838,8 +838,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     *
     * @since 1.10.0
     */
-  def forAll[FromMatch, ToMatch]
-      : PartialTransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch] =
+  def forAll[FromMatch, ToMatch]: PartialTransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch] =
     new PartialTransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch](runtimeData)
 
   /** Build Partial Transformer using current configuration.
