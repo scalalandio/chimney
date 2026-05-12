@@ -379,7 +379,9 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           }
       }
       object ForAll extends ForAllModule {
-        def unapply[A](tpe: Type[A]): Option[(??, ??, ?<[runtime.TransformerOverrides], ?<[runtime.TransformerOverrides])] =
+        def unapply[A](
+            tpe: Type[A]
+        ): Option[(??, ??, ?<[runtime.TransformerOverrides], ?<[runtime.TransformerOverrides])] =
           tpe match {
             case '[runtime.TransformerOverrides.ForAll[fromMatch, toMatch, inner, tail]] =>
               Some(

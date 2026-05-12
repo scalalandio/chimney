@@ -105,8 +105,16 @@ object TransformerMacros {
     (overridesType, flagsType) match {
       case ('[o], '[f]) =>
         new TransformerMacros(quotes)
-          .deriveTotalTransformerWithConfig[From, To, o & runtime.TransformerOverrides, f & runtime.TransformerFlags, ImplicitScopeFlags](
-            td.asInstanceOf[Expr[TransformerDefinition[From, To, o & runtime.TransformerOverrides, f & runtime.TransformerFlags]]]
+          .deriveTotalTransformerWithConfig[
+            From,
+            To,
+            o & runtime.TransformerOverrides,
+            f & runtime.TransformerFlags,
+            ImplicitScopeFlags
+          ](
+            td.asInstanceOf[Expr[
+              TransformerDefinition[From, To, o & runtime.TransformerOverrides, f & runtime.TransformerFlags]
+            ]]
           )
     }
   }
@@ -121,8 +129,16 @@ object TransformerMacros {
     val (overridesType, flagsType) = resolveOverridesAndFlagsTypes(td)
     (overridesType, flagsType) match {
       case ('[o], '[f]) =>
-        val typedTd = td.asInstanceOf[Expr[TransformerDefinition[From, To, o & runtime.TransformerOverrides, f & runtime.TransformerFlags]]]
-        new TransformerMacros(quotes).deriveTotalTransformationResult[From, To, o & runtime.TransformerOverrides, f & runtime.TransformerFlags, ImplicitScopeFlags](
+        val typedTd = td.asInstanceOf[Expr[
+          TransformerDefinition[From, To, o & runtime.TransformerOverrides, f & runtime.TransformerFlags]
+        ]]
+        new TransformerMacros(quotes).deriveTotalTransformationResult[
+          From,
+          To,
+          o & runtime.TransformerOverrides,
+          f & runtime.TransformerFlags,
+          ImplicitScopeFlags
+        ](
           source,
           '{ $typedTd.runtimeData }
         )
@@ -148,8 +164,16 @@ object TransformerMacros {
     (overridesType, flagsType) match {
       case ('[o], '[f]) =>
         new TransformerMacros(quotes)
-          .derivePartialTransformerWithConfig[From, To, o & runtime.TransformerOverrides, f & runtime.TransformerFlags, ImplicitScopeFlags](
-            td.asInstanceOf[Expr[PartialTransformerDefinition[From, To, o & runtime.TransformerOverrides, f & runtime.TransformerFlags]]]
+          .derivePartialTransformerWithConfig[
+            From,
+            To,
+            o & runtime.TransformerOverrides,
+            f & runtime.TransformerFlags,
+            ImplicitScopeFlags
+          ](
+            td.asInstanceOf[Expr[
+              PartialTransformerDefinition[From, To, o & runtime.TransformerOverrides, f & runtime.TransformerFlags]
+            ]]
           )
     }
   }
@@ -166,8 +190,16 @@ object TransformerMacros {
     val (overridesType, flagsType) = resolveOverridesAndFlagsTypes(td)
     (overridesType, flagsType) match {
       case ('[o], '[f]) =>
-        val typedTd = td.asInstanceOf[Expr[PartialTransformerDefinition[From, To, o & runtime.TransformerOverrides, f & runtime.TransformerFlags]]]
-        new TransformerMacros(quotes).derivePartialTransformationResult[From, To, o & runtime.TransformerOverrides, f & runtime.TransformerFlags, ImplicitScopeFlags](
+        val typedTd = td.asInstanceOf[Expr[
+          PartialTransformerDefinition[From, To, o & runtime.TransformerOverrides, f & runtime.TransformerFlags]
+        ]]
+        new TransformerMacros(quotes).derivePartialTransformationResult[
+          From,
+          To,
+          o & runtime.TransformerOverrides,
+          f & runtime.TransformerFlags,
+          ImplicitScopeFlags
+        ](
           source,
           Expr(failFast),
           '{ $typedTd.runtimeData }
@@ -184,7 +216,7 @@ object TransformerMacros {
 
     def extractAllArgs(tpe: TypeRepr): Option[(Type[?], Type[?])] = {
       val args = tpe.dealias.typeArgs
-      if (args.length >= 4) {
+      if args.length >= 4 then {
         // Both Overrides (index 2) and Flags (index 3) must be concrete (not TypeBounds/wildcards)
         (args(2), args(3)) match {
           case (_: TypeBounds, _) | (_, _: TypeBounds) => None
@@ -210,29 +242,34 @@ object TransformerMacros {
         val flagsFromBaseType: Option[Type[?]] = widened.baseClasses.iterator
           .filter(cls => cls == tdClassSym || cls == ptdClassSym)
           .map(cls => widened.baseType(cls).typeArgs)
-          .collectFirst { case args if args.length >= 4 && !args(3).match { case TypeBounds(_, _) => true; case _ => false } =>
-            args(3).asType
+          .collectFirst {
+            case args if args.length >= 4 && !args(3).match { case TypeBounds(_, _) => true; case _ => false } =>
+              args(3).asType
           }
 
         // Get Overrides from the val definition's RHS tree
         val overridesFromTree: Option[Type[?]] = {
           val inner = term match { case Inlined(_, _, i) => i; case t => t }
           val sym = inner.symbol
-          if (sym.isValDef) {
+          if sym.isValDef then {
             sym.tree match {
               case ValDef(_, _, Some(rhs)) =>
                 def findOverrides(t: Tree): Option[Type[?]] = t match {
                   case Select(qualifier, _) =>
                     val qTpe = qualifier.asInstanceOf[Term].tpe.widen.dealias
                     val args = qTpe.typeArgs
-                    if (args.length >= 4 && !args(2).match { case TypeBounds(_, _) => true; case _ => false }) Some(args(2).asType)
+                    if args.length >= 4 && !args(2).match { case TypeBounds(_, _) => true; case _ => false } then Some(
+                      args(2).asType
+                    )
                     else findOverrides(qualifier)
                   case Inlined(_, _, inner) => findOverrides(inner)
                   case Block(_, expr)       => findOverrides(expr)
-                  case TypeApply(inner, _) =>
+                  case TypeApply(inner, _)  =>
                     val tTpe = t.asInstanceOf[Term].tpe.widen.dealias
                     val args = tTpe.typeArgs
-                    if (args.length >= 4 && !args(2).match { case TypeBounds(_, _) => true; case _ => false }) Some(args(2).asType)
+                    if args.length >= 4 && !args(2).match { case TypeBounds(_, _) => true; case _ => false } then Some(
+                      args(2).asType
+                    )
                     else findOverrides(inner)
                   case _ => None
                 }

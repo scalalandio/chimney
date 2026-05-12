@@ -417,8 +417,8 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
 
   /** Scope overrides to apply to all derivations matching `[FromMatch, ToMatch]`.
     *
-    * When chimney recursively derives transformations for nested types, any `forAll`-scoped overrides whose
-    * `FromMatch` and `ToMatch` are supertypes of the current derivation pair will be injected.
+    * When chimney recursively derives transformations for nested types, any `forAll`-scoped overrides whose `FromMatch`
+    * and `ToMatch` are supertypes of the current derivation pair will be injected.
     *
     * @tparam FromMatch
     *   source type to match (subtypes of this will also match)
