@@ -52,6 +52,32 @@ class TransformerIntoForAllMacros(val c: whitebox.Context) extends utils.DslMacr
       def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
         weakTypeTag[ForAll[FromMatch, ToMatch, Const[ToPath, Empty], Overrides]]
     }.applyFromSelector(selector)
+    withFieldImpl(value, overridesType)
+  }
+
+  def withFieldComputedImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag,
+      FromMatch: WeakTypeTag,
+      ToMatch: WeakTypeTag
+  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree = {
+    val overridesType = new ApplyFieldNameType {
+      def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+        weakTypeTag[ForAll[FromMatch, ToMatch, Computed[ToPath, Empty], Overrides]]
+    }.applyFromSelector(selector)
+    withFieldImpl(f, overridesType)
+  }
+
+  private def withFieldImpl[
+      ToMatch: WeakTypeTag,
+      FromMatch: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      To: WeakTypeTag,
+      From: WeakTypeTag
+  ](value: Tree, overridesType: WeakTypeTag[?]) =
     q"""
       {
         val updatedTd = _root_.io.scalaland.chimney.internal.runtime.WithRuntimeDataStore
@@ -73,40 +99,4 @@ class TransformerIntoForAllMacros(val c: whitebox.Context) extends utils.DslMacr
         )
       }
     """
-  }
-
-  def withFieldComputedImpl[
-      From: WeakTypeTag,
-      To: WeakTypeTag,
-      Overrides <: TransformerOverrides: WeakTypeTag,
-      Flags <: TransformerFlags: WeakTypeTag,
-      FromMatch: WeakTypeTag,
-      ToMatch: WeakTypeTag
-  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree = {
-    val overridesType = new ApplyFieldNameType {
-      def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-        weakTypeTag[ForAll[FromMatch, ToMatch, Computed[ToPath, Empty], Overrides]]
-    }.applyFromSelector(selector)
-    q"""
-      {
-        val updatedTd = _root_.io.scalaland.chimney.internal.runtime.WithRuntimeDataStore
-          .update(${c.prefix}.td, $f)
-          .asInstanceOf[_root_.io.scalaland.chimney.dsl.TransformerDefinition[
-            ${weakTypeOf[From]},
-            ${weakTypeOf[To]},
-            $overridesType,
-            ${weakTypeOf[Flags]}
-          ]]
-        new _root_.io.scalaland.chimney.dsl.TransformerInto[
-          ${weakTypeOf[From]},
-          ${weakTypeOf[To]},
-          $overridesType,
-          ${weakTypeOf[Flags]}
-        ](
-          ${c.prefix}.source,
-          updatedTd
-        )
-      }
-    """
-  }
 }
