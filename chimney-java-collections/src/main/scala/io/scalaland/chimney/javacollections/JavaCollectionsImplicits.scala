@@ -29,12 +29,13 @@ trait JavaCollectionsImplicits {
   implicit def javaIteratorIsTotallyBuildIterable[Item]: TotallyBuildIterable[ju.Iterator[Item], Item] =
     new TotallyBuildIterable[ju.Iterator[Item], Item] {
       def totalFactory: Factory[Item, ju.Iterator[Item]] = new FactoryCompat[Item, ju.Iterator[Item]] {
-        def newBuilder: mutable.Builder[Item, ju.Iterator[Item]] = new FactoryCompat.Builder[Item, ju.Iterator[Item]] {
-          private val impl = new ju.ArrayList[Item]()
-          def clear(): Unit = impl.clear()
-          def result(): ju.Iterator[Item] = impl.iterator()
-          def addOne(elem: Item): this.type = { impl.add(elem); this }
-        }
+        def newBuilder: mutable.Builder[Item, ju.Iterator[Item]] =
+          new FactoryCompatJavaCollectionBuilder[Item, ju.Iterator[Item], Item, ju.Collection[Item]](
+            new ju.ArrayList[Item]()
+          ) {
+            def result(): ju.Iterator[Item] = impl.iterator()
+            def addOne(elem: Item): this.type = { impl.add(elem); this }
+          }
       }
       def iterator(collection: ju.Iterator[Item]): Iterator[Item] = collection.asScala
     }
@@ -46,12 +47,12 @@ trait JavaCollectionsImplicits {
     new TotallyBuildIterable[ju.Enumeration[Item], Item] {
       def totalFactory: Factory[Item, ju.Enumeration[Item]] = new FactoryCompat[Item, ju.Enumeration[Item]] {
         def newBuilder: mutable.Builder[Item, ju.Enumeration[Item]] =
-          new FactoryCompat.Builder[Item, ju.Enumeration[Item]] {
-            private val impl = new ju.ArrayList[Item]()
-            def clear(): Unit = impl.clear()
+          new FactoryCompatJavaCollectionBuilder[Item, ju.Enumeration[Item], Item, ju.Collection[Item]](
+            new ju.ArrayList[Item]()
+          ) {
             def result(): ju.Enumeration[Item] = new ju.Enumeration[Item] {
               private val it = impl.iterator()
-              def hasMoreElements: Boolean = it.hasNext()
+              def hasMoreElements: Boolean = it.hasNext
               def nextElement(): Item = it.next()
             }
             override def addOne(elem: Item): this.type = { impl.add(elem); this }
@@ -253,9 +254,9 @@ trait JavaCollectionsImplicits {
     new TotallyBuildIterable[ju.stream.Stream[Item], Item] {
       def totalFactory: Factory[Item, ju.stream.Stream[Item]] = new FactoryCompat[Item, ju.stream.Stream[Item]] {
         def newBuilder: mutable.Builder[Item, ju.stream.Stream[Item]] =
-          new FactoryCompat.Builder[Item, ju.stream.Stream[Item]] {
-            private var impl = ju.stream.Stream.builder[Item]()
-            def clear(): Unit = impl = ju.stream.Stream.builder[Item]()
+          new FactoryCompatVarBuilder[Item, ju.stream.Stream[Item], ju.stream.Stream.Builder[Item]](
+            ju.stream.Stream.builder[Item]
+          ) {
             def result(): ju.stream.Stream[Item] = impl.build()
             def addOne(elem: Item): this.type = { impl.add(elem); this }
           }
@@ -268,9 +269,9 @@ trait JavaCollectionsImplicits {
     new TotallyBuildIterable[ju.stream.IntStream, Int] {
       def totalFactory: Factory[Int, ju.stream.IntStream] = new FactoryCompat[Int, ju.stream.IntStream] {
         def newBuilder: mutable.Builder[Int, ju.stream.IntStream] =
-          new FactoryCompat.Builder[Int, ju.stream.IntStream] {
-            private var impl = ju.stream.IntStream.builder()
-            def clear(): Unit = impl = ju.stream.IntStream.builder()
+          new FactoryCompatVarBuilder[Int, ju.stream.IntStream, ju.stream.IntStream.Builder](
+            ju.stream.IntStream.builder
+          ) {
             def result(): ju.stream.IntStream = impl.build()
             def addOne(elem: Int): this.type = { impl.add(elem); this }
           }
@@ -284,9 +285,9 @@ trait JavaCollectionsImplicits {
     new TotallyBuildIterable[ju.stream.LongStream, Long] {
       def totalFactory: Factory[Long, ju.stream.LongStream] = new FactoryCompat[Long, ju.stream.LongStream] {
         def newBuilder: mutable.Builder[Long, ju.stream.LongStream] =
-          new FactoryCompat.Builder[Long, ju.stream.LongStream] {
-            private var impl = ju.stream.LongStream.builder()
-            def clear(): Unit = impl = ju.stream.LongStream.builder()
+          new FactoryCompatVarBuilder[Long, ju.stream.LongStream, ju.stream.LongStream.Builder](
+            ju.stream.LongStream.builder
+          ) {
             def result(): ju.stream.LongStream = impl.build()
             def addOne(elem: Long): this.type = { impl.add(elem); this }
           }
@@ -300,9 +301,10 @@ trait JavaCollectionsImplicits {
     new TotallyBuildIterable[ju.stream.DoubleStream, Double] {
       def totalFactory: Factory[Double, ju.stream.DoubleStream] = new FactoryCompat[Double, ju.stream.DoubleStream] {
         def newBuilder: mutable.Builder[Double, ju.stream.DoubleStream] =
-          new FactoryCompat.Builder[Double, ju.stream.DoubleStream] {
-            private var impl = ju.stream.DoubleStream.builder()
-            def clear(): Unit = impl = ju.stream.DoubleStream.builder()
+          new FactoryCompatVarBuilder[Double, ju.stream.DoubleStream, ju.stream.DoubleStream.Builder](
+            ju.stream.DoubleStream.builder
+          ) {
+
             def result(): ju.stream.DoubleStream = impl.build()
             def addOne(elem: Double): this.type = { impl.add(elem); this }
           }
@@ -319,9 +321,7 @@ trait JavaCollectionsImplicits {
     new TotallyBuildIterable[CC, Item] {
       def totalFactory: Factory[Item, CC] = new FactoryCompat[Item, CC] {
         def newBuilder: mutable.Builder[Item, CC] =
-          new FactoryCompat.Builder[Item, CC] {
-            private val impl = empty
-            def clear(): Unit = impl.clear()
+          new FactoryCompatJavaCollectionBuilder[Item, CC, Item, CC](empty) {
             def result(): CC = impl
             def addOne(elem: Item): this.type = { impl.add(elem); this }
           }

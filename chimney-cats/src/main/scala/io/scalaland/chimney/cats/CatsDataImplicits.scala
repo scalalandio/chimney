@@ -7,6 +7,7 @@ import io.scalaland.chimney.partial
 
 import scala.collection.compat.Factory
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 /** @since 1.0.0 */
 trait CatsDataImplicits extends CatsDataImplicitsCompat {
@@ -63,12 +64,11 @@ trait CatsDataImplicits extends CatsDataImplicitsCompat {
   implicit def catsChainIsTotallyBuildIterable[A]: TotallyBuildIterable[Chain[A], A] =
     new TotallyBuildIterable[Chain[A], A] {
       def totalFactory: Factory[A, Chain[A]] = new FactoryCompat[A, Chain[A]] {
-        def newBuilder: mutable.Builder[A, Chain[A]] = new FactoryCompat.Builder[A, Chain[A]] {
-          private var impl = Chain.empty[A]
-          def clear(): Unit = impl = Chain.empty[A]
-          def result(): Chain[A] = impl
-          def addOne(elem: A): this.type = { impl = impl.append(elem); this }
-        }
+        def newBuilder: mutable.Builder[A, Chain[A]] =
+          new FactoryCompatVarBuilder[A, Chain[A], Chain[A]](() => Chain.empty[A]) {
+            def result(): Chain[A] = impl
+            def addOne(elem: A): this.type = { impl = impl.append(elem); this }
+          }
       }
       def iterator(collection: Chain[A]): Iterator[A] = collection.iterator
     }
@@ -79,9 +79,7 @@ trait CatsDataImplicits extends CatsDataImplicitsCompat {
       def partialFactory: Factory[A, partial.Result[NonEmptyChain[A]]] =
         new FactoryCompat[A, partial.Result[NonEmptyChain[A]]] {
           def newBuilder: mutable.Builder[A, partial.Result[NonEmptyChain[A]]] =
-            new FactoryCompat.Builder[A, partial.Result[NonEmptyChain[A]]] {
-              private var impl = Chain.empty[A]
-              def clear(): Unit = impl = Chain.empty[A]
+            new FactoryCompatVarBuilder[A, partial.Result[NonEmptyChain[A]], Chain[A]](() => Chain.empty[A]) {
               def result(): partial.Result[NonEmptyChain[A]] = partial.Result.fromOption(NonEmptyChain.fromChain(impl))
               def addOne(elem: A): this.type = { impl = impl.append(elem); this }
             }
@@ -95,9 +93,9 @@ trait CatsDataImplicits extends CatsDataImplicitsCompat {
       def partialFactory: Factory[A, partial.Result[NonEmptyList[A]]] =
         new FactoryCompat[A, partial.Result[NonEmptyList[A]]] {
           def newBuilder: mutable.Builder[A, partial.Result[NonEmptyList[A]]] =
-            new FactoryCompat.Builder[A, partial.Result[NonEmptyList[A]]] {
-              private val impl = List.newBuilder[A]
-              def clear(): Unit = impl.clear()
+            new FactoryCompatBuilder[A, partial.Result[NonEmptyList[A]], mutable.Builder[A, List[A]]](
+              List.newBuilder[A]
+            ) {
               def result(): partial.Result[NonEmptyList[A]] =
                 partial.Result.fromOption(NonEmptyList.fromList(impl.result()))
               def addOne(elem: A): this.type = { impl += elem; this }
@@ -112,9 +110,11 @@ trait CatsDataImplicits extends CatsDataImplicitsCompat {
       def partialFactory: Factory[(K, V), partial.Result[NonEmptyMap[K, V]]] =
         new FactoryCompat[(K, V), partial.Result[NonEmptyMap[K, V]]] {
           def newBuilder: mutable.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] =
-            new FactoryCompat.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] {
-              private val impl = scala.collection.immutable.SortedMap.newBuilder[K, V]
-              def clear(): Unit = impl.clear()
+            new FactoryCompatBuilder[
+              (K, V),
+              partial.Result[NonEmptyMap[K, V]],
+              mutable.Builder[(K, V), scala.collection.immutable.SortedMap[K, V]]
+            ](scala.collection.immutable.SortedMap.newBuilder[K, V]) {
               def result(): partial.Result[NonEmptyMap[K, V]] =
                 partial.Result.fromOption(NonEmptyMap.fromMap(impl.result()))
               def addOne(elem: (K, V)): this.type = { impl += elem; this }
@@ -129,9 +129,9 @@ trait CatsDataImplicits extends CatsDataImplicitsCompat {
       def partialFactory: Factory[A, partial.Result[NonEmptySeq[A]]] =
         new FactoryCompat[A, partial.Result[NonEmptySeq[A]]] {
           def newBuilder: mutable.Builder[A, partial.Result[NonEmptySeq[A]]] =
-            new FactoryCompat.Builder[A, partial.Result[NonEmptySeq[A]]] {
-              private val impl = mutable.ListBuffer.empty[A]
-              def clear(): Unit = impl.clear()
+            new FactoryCompatBuilder[A, partial.Result[NonEmptySeq[A]], ListBuffer[A]](
+              mutable.ListBuffer.empty[A]
+            ) {
               def result(): partial.Result[NonEmptySeq[A]] =
                 partial.Result.fromOption(NonEmptySeq.fromSeq(impl.result()))
               def addOne(elem: A): this.type = { impl += elem; this }
@@ -146,9 +146,11 @@ trait CatsDataImplicits extends CatsDataImplicitsCompat {
       def partialFactory: Factory[A, partial.Result[NonEmptySet[A]]] =
         new FactoryCompat[A, partial.Result[NonEmptySet[A]]] {
           def newBuilder: mutable.Builder[A, partial.Result[NonEmptySet[A]]] =
-            new FactoryCompat.Builder[A, partial.Result[NonEmptySet[A]]] {
-              private val impl = scala.collection.immutable.SortedSet.newBuilder[A]
-              def clear(): Unit = impl.clear()
+            new FactoryCompatBuilder[
+              A,
+              partial.Result[NonEmptySet[A]],
+              mutable.Builder[A, scala.collection.immutable.SortedSet[A]]
+            ](scala.collection.immutable.SortedSet.newBuilder[A]) {
               def result(): partial.Result[NonEmptySet[A]] =
                 partial.Result.fromOption(NonEmptySet.fromSet(impl.result()))
               def addOne(elem: A): this.type = { impl += elem; this }
@@ -163,9 +165,9 @@ trait CatsDataImplicits extends CatsDataImplicitsCompat {
       def partialFactory: Factory[A, partial.Result[NonEmptyVector[A]]] =
         new FactoryCompat[A, partial.Result[NonEmptyVector[A]]] {
           def newBuilder: mutable.Builder[A, partial.Result[NonEmptyVector[A]]] =
-            new FactoryCompat.Builder[A, partial.Result[NonEmptyVector[A]]] {
-              private val impl = Vector.newBuilder[A]
-              def clear(): Unit = impl.clear()
+            new FactoryCompatBuilder[A, partial.Result[NonEmptyVector[A]], mutable.Builder[A, Vector[A]]](
+              Vector.newBuilder[A]
+            ) {
               def result(): partial.Result[NonEmptyVector[A]] =
                 partial.Result.fromOption(NonEmptyVector.fromVector(impl.result()))
               def addOne(elem: A): this.type = { impl += elem; this }
