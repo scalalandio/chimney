@@ -191,6 +191,8 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
       input.transformIntoPartial[ju.Map[Int, Int]].asOption.get.asScala ==> outputUnstable
       input.transformIntoPartial[ju.AbstractMap[Int, Int]].asOption.get.asScala ==> outputUnstable
+      input.transformIntoPartial[ju.WeakHashMap[Int, Int]].asOption.get.asScala ==> outputUnstable
+      input.transformIntoPartial[ju.IdentityHashMap[Int, Int]].asOption.get.asScala ==> outputUnstable
       input.transformIntoPartial[ju.SortedMap[Int, Int]].asOption.get.asScala.toList ==> outputSorted
       input.transformIntoPartial[ju.NavigableMap[Int, Int]].asOption.get.asScala.toList ==> outputSorted
       input.transformIntoPartial[ju.HashMap[Int, Int]].asOption.get.asScala ==> outputUnstable
