@@ -16,9 +16,9 @@ private[cats] trait CatsDataImplicitsCompat extends CatsDataImplicitsLowPriority
       def partialFactory: Factory[A, partial.Result[NonEmptyLazyList[A]]] =
         new FactoryCompat[A, partial.Result[NonEmptyLazyList[A]]] {
           def newBuilder: mutable.Builder[A, partial.Result[NonEmptyLazyList[A]]] =
-            new FactoryCompat.Builder[A, partial.Result[NonEmptyLazyList[A]]] {
-              private val impl = mutable.ListBuffer.empty[A]
-              def clear(): Unit = impl.clear()
+            new FactoryCompatBuilder[A, partial.Result[NonEmptyLazyList[A]], mutable.ListBuffer[A]](
+              mutable.ListBuffer.empty[A]
+            ) {
               def result(): partial.Result[NonEmptyLazyList[A]] =
                 partial.Result.fromOption(NonEmptyLazyList.fromSeq(impl.result()))
               def addOne(elem: A): this.type = { impl += elem; this }

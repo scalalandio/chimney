@@ -6225,8 +6225,10 @@ Arguments taken by both `.enableCustomFieldNameComparison` and `.enableCustomSub
     
  - `TransformedNamesComparison.CaseInsensitiveEquality` - 2 names are considered equal if `equalsIgnoreCase` returns
   `true`
+ - `TransformedNamesComparison.CamelSnakeCaseEquality` - 2 names are considered equal if they are identical `String`s OR if they are
+   identical after you convert them from snake to camel case (e.g. `snake_case` -> `snakeCase`, `camelCase` -> `camelCase`)
 
-However, these 3 do not exhaust all possible comparisons and you might need to provide one yourself. 
+However, these 4 do not exhaust all possible comparisons, and you might need to provide one yourself. 
 
 !!! warning
 

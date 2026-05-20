@@ -5,6 +5,7 @@ import io.scalaland.chimney.{PartialTransformer, Transformer}
 import io.scalaland.chimney.internal.runtime
 import io.scalaland.chimney.partial
 
+import scala.annotation.tailrec
 import scala.quoted.{Expr, Quotes, Type}
 
 final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
@@ -252,25 +253,28 @@ object TransformerMacros {
           val inner = term match { case Inlined(_, _, i) => i; case t => t }
           val sym = inner.symbol
           if sym.isValDef then {
-            sym.tree match {
+            val tree = sym.tree
+            tree match {
               case ValDef(_, _, Some(rhs)) =>
+                def findOverridesTerm(tree: Tree, qualifier: Term) = {
+                  val qTpe = tree.asInstanceOf[Term].tpe.widen.dealias
+                  val args = qTpe.typeArgs
+                  if args.length >= 4 && !args(2).match {
+                    case TypeBounds(_, _) => true;
+                    case _                => false
+                  } then Some(
+                    args(2).asType
+                  )
+                  else findOverrides(qualifier)
+                }
+                @tailrec
                 def findOverrides(t: Tree): Option[Type[?]] = t match {
                   case Select(qualifier, _) =>
-                    val qTpe = qualifier.asInstanceOf[Term].tpe.widen.dealias
-                    val args = qTpe.typeArgs
-                    if args.length >= 4 && !args(2).match { case TypeBounds(_, _) => true; case _ => false } then Some(
-                      args(2).asType
-                    )
-                    else findOverrides(qualifier)
+                    findOverridesTerm(qualifier, qualifier)
                   case Inlined(_, _, inner) => findOverrides(inner)
                   case Block(_, expr)       => findOverrides(expr)
                   case TypeApply(inner, _)  =>
-                    val tTpe = t.asInstanceOf[Term].tpe.widen.dealias
-                    val args = tTpe.typeArgs
-                    if args.length >= 4 && !args(2).match { case TypeBounds(_, _) => true; case _ => false } then Some(
-                      args(2).asType
-                    )
-                    else findOverrides(inner)
+                    findOverridesTerm(t, inner)
                   case _ => None
                 }
                 findOverrides(rhs)

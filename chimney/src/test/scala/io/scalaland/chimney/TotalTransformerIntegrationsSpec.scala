@@ -4,7 +4,7 @@ import io.scalaland.chimney.dsl.*
 
 import scala.annotation.unused
 import scala.collection.compat.*
-import scala.collection.immutable.SortedSet
+import scala.collection.immutable.{SortedSet, Vector}
 import scala.collection.mutable
 
 class TotalTransformerIntegrationsSpec extends ChimneySpec {
@@ -357,14 +357,11 @@ object TotalTransformerIntegrationsSpec {
       def totalFactory: Factory[A, CustomCollection[A]] = new FactoryCompat[A, CustomCollection[A]] {
 
         override def newBuilder: mutable.Builder[A, CustomCollection[A]] =
-          new FactoryCompat.Builder[A, CustomCollection[A]] {
-            private val implBuilder = Vector.newBuilder[A]
+          new FactoryCompatBuilder[A, CustomCollection[A], mutable.Builder[A, Vector[A]]](Vector.newBuilder[A]) {
+            clear()
+            override def result(): CustomCollection[A] = CustomCollection.from(impl.result())
 
-            override def clear(): Unit = implBuilder.clear()
-
-            override def result(): CustomCollection[A] = CustomCollection.from(implBuilder.result())
-
-            override def addOne(elem: A): this.type = { implBuilder += elem; this }
+            override def addOne(elem: A): this.type = { impl += elem; this }
           }
       }
 
@@ -395,15 +392,14 @@ object TotalTransformerIntegrationsSpec {
         new FactoryCompat[A, partial.Result[NonEmptyCollection[A]]] {
 
           override def newBuilder: mutable.Builder[A, partial.Result[NonEmptyCollection[A]]] =
-            new FactoryCompat.Builder[A, partial.Result[NonEmptyCollection[A]]] {
-              private val implBuilder = Vector.newBuilder[A]
-
-              override def clear(): Unit = implBuilder.clear()
+            new FactoryCompatBuilder[A, partial.Result[NonEmptyCollection[A]], mutable.Builder[A, Vector[A]]](
+              Vector.newBuilder[A]
+            ) {
 
               override def result(): partial.Result[NonEmptyCollection[A]] =
-                partial.Result.fromOption(NonEmptyCollection.from(implBuilder.result()))
+                partial.Result.fromOption(NonEmptyCollection.from(impl.result()))
 
-              override def addOne(elem: A): this.type = { implBuilder += elem; this }
+              override def addOne(elem: A): this.type = { impl += elem; this }
             }
         }
 
@@ -435,14 +431,13 @@ object TotalTransformerIntegrationsSpec {
       def totalFactory: Factory[(K, V), CustomMap[K, V]] = new FactoryCompat[(K, V), CustomMap[K, V]] {
 
         override def newBuilder: mutable.Builder[(K, V), CustomMap[K, V]] =
-          new FactoryCompat.Builder[(K, V), CustomMap[K, V]] {
-            private val implBuilder = Vector.newBuilder[(K, V)]
+          new FactoryCompatBuilder[(K, V), CustomMap[K, V], mutable.Builder[(K, V), Vector[(K, V)]]](
+            Vector.newBuilder[(K, V)]
+          ) {
 
-            override def clear(): Unit = implBuilder.clear()
+            override def result(): CustomMap[K, V] = CustomMap.from(impl.result())
 
-            override def result(): CustomMap[K, V] = CustomMap.from(implBuilder.result())
-
-            override def addOne(elem: (K, V)): this.type = { implBuilder += elem; this }
+            override def addOne(elem: (K, V)): this.type = { impl += elem; this }
           }
       }
 
@@ -473,15 +468,14 @@ object TotalTransformerIntegrationsSpec {
         new FactoryCompat[(K, V), partial.Result[NonEmptyMap[K, V]]] {
 
           override def newBuilder: mutable.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] =
-            new FactoryCompat.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] {
-              private val implBuilder = Vector.newBuilder[(K, V)]
-
-              override def clear(): Unit = implBuilder.clear()
+            new FactoryCompatBuilder[(K, V), partial.Result[NonEmptyMap[K, V]], mutable.Builder[(K, V), Vector[
+              (K, V)
+            ]]](Vector.newBuilder[(K, V)]) {
 
               override def result(): partial.Result[NonEmptyMap[K, V]] =
-                partial.Result.fromOption(NonEmptyMap.from(implBuilder.result()))
+                partial.Result.fromOption(NonEmptyMap.from(impl.result()))
 
-              override def addOne(elem: (K, V)): this.type = { implBuilder += elem; this }
+              override def addOne(elem: (K, V)): this.type = { impl += elem; this }
             }
         }
 
