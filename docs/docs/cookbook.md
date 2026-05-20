@@ -233,9 +233,9 @@ Similarly `Patcher` has `.withPatchedValueFlag(pathFromPatchedValue)`:
 
 ## Checking for unused source fields/unmatched target subtypes
 
-While most of the time Chimney is picked for generating mapping between 2 data types wit as little hassle as possible,
+While most of the time Chimney is picked for generating mapping between 2 data types with as little hassle as possible,
 some people use type mapping tools to express mapping as a declarative description of the transformation. As a Part of
-that requirement is making it explicit, that some field in the source value was dropped, or that matching between 2
+that requirement is making it explicit that some field in the source value was dropped, or that matching between 2
 `sealed` hierarchies didn't use one target subtype.
 
 These can be enabled with `UnusedFieldPolicy`:
@@ -302,7 +302,7 @@ These can be enabled with `UnusedFieldPolicy`:
 
 and `UnmatchedSubtypePolicy`:
 
-!!! example "Subptype has to be explicitly ignored to compile"
+!!! example "Subtype has to be explicitly ignored to compile"
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
@@ -500,7 +500,7 @@ Since Chimney 1.6.0 we are able to [scope the flag to a particular field](#const
 
 If the particular flag we want to use in limited scope is `.enableDefaultValues`, we might also consider
 [`.enableDefaultValueOfType[A]`](supported-transformations.md#allowing-fallback-to-the-constructors-default-values)
-available since Chimney 1.2.0 (but scoped flag would work as well!).
+available since Chimney 1.2.0 (but a scoped flag would work as well!).
 
 !!! example "Enabling default values only for 1 type"
 
@@ -664,7 +664,7 @@ Many users are not aware that Chimney can transform one Scala collection into an
     // List(Bar(a = 10))
     ```
 
-even though transforming all values of a collection (and even the type of a collection!) was supported since Chimney 0.2.0:
+even though transforming all values of a collection (and even the type of collection!) was supported since Chimney 0.2.0:
 
 !!! example
 
