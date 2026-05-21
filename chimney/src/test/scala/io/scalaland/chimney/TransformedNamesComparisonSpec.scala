@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl.TransformedNamesComparison
+import io.scalaland.chimney.dsl.{CamelSnakeCaseEquality, TransformedNamesComparison}
 
 class TransformedNamesComparisonSpec extends ChimneySpec {
 
@@ -78,5 +78,36 @@ class TransformedNamesComparisonSpec extends ChimneySpec {
       TransformedNamesComparison.CaseInsensitiveEquality.namesMatch("someField", "SOME_FIELD") ==> false
       TransformedNamesComparison.CaseInsensitiveEquality.namesMatch("SOME_FIELD", "someField") ==> false
     }
+  }
+
+  group("TransformedNamesComparison.CamelSnakeCaseEquality") {
+
+    def namesMatches(from: String, to: String): Boolean =
+      CamelSnakeCaseEquality.namesMatch(
+        from,
+        to
+      ) && CamelSnakeCaseEquality.namesMatch(to, from)
+
+    test("should match identical names") {
+      CamelSnakeCaseEquality.namesMatch("_", "_") ==> true
+      CamelSnakeCaseEquality.namesMatch("someField", "someField") ==> true
+    }
+
+    test("should match conversion") {
+      namesMatches("some_Field", "someField") ==> true
+      namesMatches("some_field", "someField") ==> true
+      namesMatches("some_field_123", "someField123") ==> true
+      namesMatches("some__field", "someField") ==> true
+      namesMatches("_some__field", "someField") ==> true
+      namesMatches("SOME_FIELD", "someField") ==> true
+    }
+
+    test("should not match conversion") {
+      CamelSnakeCaseEquality.namesMatch("_", "__") ==> false
+      CamelSnakeCaseEquality.namesMatch("somefield", "some_field") ==> false
+      CamelSnakeCaseEquality.namesMatch("some_field", "some_Field") ==> false
+      CamelSnakeCaseEquality.namesMatch("someField", "somefield") ==> false
+    }
+
   }
 }

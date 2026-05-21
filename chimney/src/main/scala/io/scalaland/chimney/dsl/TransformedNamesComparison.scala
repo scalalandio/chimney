@@ -1,6 +1,6 @@
 package io.scalaland.chimney.dsl
 
-/** Provides a way of customizing how fields/subtypes shoud get matched betwen source value and target value.
+/** Provides a way of customizing how fields/subtypes should get matched between source value and target value.
   *
   * @see
   *   [[https://chimney.readthedocs.io/supported-transformations/#defining-custom-name-matching-predicate]] for more
@@ -54,4 +54,31 @@ object TransformedNamesComparison {
 
   type SubtypeDefault = StrictEquality.type
   val SubtypeDefault: SubtypeDefault = StrictEquality
+}
+
+case object CamelSnakeCaseEquality extends TransformedNamesComparison {
+
+  private def snakeToCamel(snake: String): (String, Boolean) =
+    snake.split('_') match {
+      case Array(part) => (part, false)
+      case parts       =>
+        val camel = parts
+          .filter(_.nonEmpty) // Remove empty parts from consecutive underscores
+          .zipWithIndex
+          .map { case (part, idx) =>
+            if (idx == 0) part.toLowerCase
+            else part.toLowerCase.capitalize
+          }
+          .mkString
+        (camel, true)
+    }
+
+  def namesMatch(fromName: String, toName: String): Boolean = {
+    val (from, fromWasCamelCase) = snakeToCamel(fromName)
+    val (to, toWasCamelCase) = snakeToCamel(toName)
+    if (fromWasCamelCase == toWasCamelCase)
+      fromName == toName
+    else
+      from == to
+  }
 }
