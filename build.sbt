@@ -30,7 +30,7 @@ val versions = new {
   val munit = "1.3.3"
   val scalaCollectionCompat = "2.14.0"
   val scalaJavaCompat = "1.0.2"
-  val scalaJavaTime = "2.6.0"
+  val scalaJavaTime = "2.7.0"
   val scalapbRuntime = scalapb.compiler.Version.scalapbVersion
 
   // Explicitly handle Scala 2 and Scala 3 separately.
