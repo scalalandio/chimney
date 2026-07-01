@@ -53,13 +53,13 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
       : Option[Expr[io.scalaland.chimney.Transformer[From, To]]] =
     summonIgnoring[io.scalaland.chimney.Transformer[From, To]](ignoredTransformerImplicits*)
       .orElse {
-        Expr.summonImplicit[io.scalaland.chimney.Iso[From, To]].map(iso => '{ ${ iso }.first })
+        Expr.summonImplicit[io.scalaland.chimney.Iso[From, To]].map(iso => '{ $iso.first })
       }
       .orElse {
-        Expr.summonImplicit[io.scalaland.chimney.Iso[To, From]].map(iso => '{ ${ iso }.second })
+        Expr.summonImplicit[io.scalaland.chimney.Iso[To, From]].map(iso => '{ $iso.second })
       }
       .orElse {
-        Expr.summonImplicit[io.scalaland.chimney.Codec[From, To]].map(codec => '{ ${ codec }.encode })
+        Expr.summonImplicit[io.scalaland.chimney.Codec[From, To]].map(codec => '{ $codec.encode })
       }
 
   private val ignoredPartialTransformerImplicits = makeIgnored("io.scalaland.chimney.PartialTransformer")(
@@ -70,7 +70,7 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
   override protected def summonPartialTransformerUnchecked[From: Type, To: Type]
       : Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
     summonIgnoring[io.scalaland.chimney.PartialTransformer[From, To]](ignoredPartialTransformerImplicits*).orElse {
-      Expr.summonImplicit[io.scalaland.chimney.Codec[To, From]].map(codec => '{ ${ codec }.decode })
+      Expr.summonImplicit[io.scalaland.chimney.Codec[To, From]].map(codec => '{ $codec.decode })
     }
 
   override protected val rulesAvailableForPlatform: List[Rule] = List(
