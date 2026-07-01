@@ -7,9 +7,9 @@ import io.scalaland.chimney.internal.compiletime2.ChimneyDefinitions
   *
   * IMPORTANT RENAME: macro-commons named its view `Enum[A]`, but Hearth's cake already defines
   * `hearth.typed.Classes#Enum` (class + companion) - mixing both into one cake would be a "inherits conflicting
-  * members" error. The macro-commons view is therefore exposed as [[SealedEnum]] here, and ported rules have to
-  * rename `Enum` -> `SealedEnum` (a mechanical sed; `Enum.Element` -> `SealedEnum.Element`,
-  * `Enum.Elements` -> `SealedEnum.Elements`).
+  * members" error. The macro-commons view is therefore exposed as [[SealedEnum]] here, and ported rules have to rename
+  * `Enum` -> `SealedEnum` (a mechanical sed; `Enum.Element` -> `SealedEnum.Element`, `Enum.Elements` ->
+  * `SealedEnum.Elements`).
   *
   * Semantic judgment calls (macro-commons semantics preserved unless noted):
   *   - like macro-commons, `parse` matches only sealed types (incl. Scala 3 enums) and Java enums - Hearth's extra

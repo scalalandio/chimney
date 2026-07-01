@@ -10,26 +10,26 @@ import scala.collection.immutable.ListMap
   * The `Product`/`ProductType` API shape is preserved 1:1 with macro-commons so that rule code can be ported
   * mechanically. Semantic judgment calls (macro-commons semantics preserved unless noted):
   *   - predicates (`isPOJO`/`isCaseClass`/...) are re-implemented on Hearth primitives following the macro-commons
-  *     Scala 3 platform formulas (macro-commons' own Scala 2/3 platforms diverged slightly - e.g. Scala 2 `isPOJO`
-  *     also excluded `isJavaEnum` symbols - we follow the Scala 3 shape as canonical),
+  *     Scala 3 platform formulas (macro-commons' own Scala 2/3 platforms diverged slightly - e.g. Scala 2 `isPOJO` also
+  *     excluded `isJavaEnum` symbols - we follow the Scala 3 shape as canonical),
   *   - Hearth's `Type[A].methods` already merges class+companion members, dedups val/def duplicates and sorts:
-  *     constructor arguments first (by constructor position), then declared members (by position), then the rest
-  *     (by name) - which matches macro-commons' argVals ++ bodyVals ++ accessors intent; we re-partition so that
-  *     body vals come before plain accessor defs like in macro-commons,
+  *     constructor arguments first (by constructor position), then declared members (by position), then the rest (by
+  *     name) - which matches macro-commons' argVals ++ bodyVals ++ accessors intent; we re-partition so that body vals
+  *     come before plain accessor defs like in macro-commons,
   *   - `Getter.get`/`Constructor.constructor` are built with Hearth's `Method` builder chain
   *     (`OnInstance`/`ApplyValues`/`Result.build()`) instead of hand-written per-platform trees,
   *   - `exprAsInstanceOfMethod` (powers `.withConstructor` DSL) is implemented by building `FunctionN[...] => ...`
-  *     types with the untyped API, casting the expr to them (runtime `.asInstanceOf`) and applying the `apply`
-  *     methods via the `Method` chain (arguments re-keyed positionally to `v1..vN`),
+  *     types with the untyped API, casting the expr to them (runtime `.asInstanceOf`) and applying the `apply` methods
+  *     via the `Method` chain (arguments re-keyed positionally to `v1..vN`),
   *   - named tuples (Scala 3.7+): construction goes through Hearth's `NamedTuple` view; extraction uses
   *     `productElement(idx)` + cast for ALL arities where macro-commons used `_N` selection below 23 fields
   *     (semantically identical, slightly less direct bytecode). TODO(hearth-migration): validate with Scala 3.7 tests
   *     once rules are ported.
   *   - `ProductTypeOps`/`SealedHierarchyOps` implicit classes are NOT ported: Hearth's built-in `TypeMethods` already
   *     provides `tpe.isCaseClass`/`tpe.isCaseObject`/`tpe.isJavaBean`/`tpe.isSealed` (with slightly different, Hearth
-  *     semantics) and a second implicit class with the same member names would make call sites ambiguous. Ported
-  *     rules should call `ProductType.isX(tpe)` explicitly when macro-commons semantics matter (no shared-code rule
-  *     uses the ops syntax today - verified by grep).
+  *     semantics) and a second implicit class with the same member names would make call sites ambiguous. Ported rules
+  *     should call `ProductType.isX(tpe)` explicitly when macro-commons semantics matter (no shared-code rule uses the
+  *     ops syntax today - verified by grep).
   */
 private[compiletime2] trait ProductTypes { this: ChimneyDefinitions & hearth.MacroCommons =>
 
@@ -119,8 +119,10 @@ private[compiletime2] trait ProductTypes { this: ChimneyDefinitions & hearth.Mac
     private[datatypes] lazy val AnyType: Type[Any] = Type.of[Any]
     private lazy val StringType: Type[String] = Type.of[String]
     private lazy val BooleanType: Type[Boolean] = Type.of[Boolean]
-    // Wildcards inside cross-quotes `Type.of` are only safe in members without type parameters (Hearth 0.4.0 bug,
-    // see MacroCommonsCompat.reapplyLeadingTypeArgsCompat) - this lazy val has none, so it is fine.
+    // Wildcards inside cross-quotes `Type.of` are only safe in members without type parameters (Cross-Quotes'
+    // best-effort implicit-Type resolution is a documented limitation, see
+    // https://scala-hearth.readthedocs.io/en/stable/cross-quotes/#limitations and
+    // MacroCommonsCompat.reapplyLeadingTypeArgsCompat) - this lazy val has none, so it is fine.
     private lazy val JavaLangEnumType: Type[java.lang.Enum[?]] = Type.of[java.lang.Enum[?]]
 
     /** macro-commons `Type.platformSpecific.publicPrimaryOrOnlyPublicConstructor` counterpart. */
@@ -134,9 +136,9 @@ private[compiletime2] trait ProductTypes { this: ChimneyDefinitions & hearth.Mac
 
     /** Runs a Hearth `Method` builder chain to completion, providing the instance (if needed) and the arguments.
       *
-      * `arguments` are passed to every `ApplyValues` step - each step selects the parameters it needs by name.
-      * A `NeedsTypes` step is unexpected (Hearth resolves class type parameters against the - applied - instance
-      * type when listing methods/constructors), so it is reported as an error.
+      * `arguments` are passed to every `ApplyValues` step - each step selects the parameters it needs by name. A
+      * `NeedsTypes` step is unexpected (Hearth resolves class type parameters against the - applied - instance type
+      * when listing methods/constructors), so it is reported as an error.
       */
     private[datatypes] def invokeMethodChain(
         initial: Method
@@ -430,7 +432,9 @@ private[compiletime2] trait ProductTypes { this: ChimneyDefinitions & hearth.Mac
         }
         .getOrElse {
           // $COVERAGE-OFF$should never happen unless we messed up
-          assertionFailed(s"Expected that ${Type.prettyPrint[A]}'s constructor parameter `$name` would have default value")
+          assertionFailed(
+            s"Expected that ${Type.prettyPrint[A]}'s constructor parameter `$name` would have default value"
+          )
           // $COVERAGE-ON$
         }
 
@@ -483,13 +487,15 @@ private[compiletime2] trait ProductTypes { this: ChimneyDefinitions & hearth.Mac
 
     private def applyFunctionExpr(fn: ExistentialExpr, arguments: List[ExistentialExpr]): ExistentialExpr = {
       import fn.{Underlying as Fn, value as fnExpr}
-      val applyMethod = (Type[Fn].methods: List[Method]).collectFirst {
-        case oi: Method.OnInstance if oi.name == "apply" && oi.isNAry(arguments.size) => (oi: Method)
-      }.getOrElse {
-        // $COVERAGE-OFF$should never happen unless we messed up
-        assertionFailed(s"Expected ${Type.prettyPrint[Fn]} to have an apply method of arity ${arguments.size}")
-        // $COVERAGE-ON$
-      }
+      val applyMethod = (Type[Fn].methods: List[Method])
+        .collectFirst {
+          case oi: Method.OnInstance if oi.name == "apply" && oi.isNAry(arguments.size) => (oi: Method)
+        }
+        .getOrElse {
+          // $COVERAGE-OFF$should never happen unless we messed up
+          assertionFailed(s"Expected ${Type.prettyPrint[Fn]} to have an apply method of arity ${arguments.size}")
+          // $COVERAGE-ON$
+        }
       val paramNames = applyMethod.totalParameters.flatten.map(_._1)
       invokeMethodChain(applyMethod)(Some(UntypedExpr.fromTyped(fnExpr)), paramNames.zip(arguments).toMap).fold(
         error =>
@@ -728,7 +734,8 @@ private[compiletime2] trait ProductTypes { this: ChimneyDefinitions & hearth.Mac
             // $COVERAGE-OFF$should never happen unless we messed up
             assertionFailed(
               s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $param of type ${Type
-                  .prettyPrint[param.Underlying]}, instead got ${Expr.prettyPrint(argument.value)} ${Type.prettyPrint(using argument.Underlying)}"
+                  .prettyPrint[param.Underlying]}, instead got ${Expr.prettyPrint(argument.value)} ${Type
+                  .prettyPrint(using argument.Underlying)}"
             )
             // $COVERAGE-ON$
           }

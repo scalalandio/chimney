@@ -10,6 +10,7 @@ package io.scalaland.chimney.internal.compiletime2
   */
 private[compiletime2] trait ChimneyDefinitions
     extends MacroCommonsCompat
+    with ResultSyntax
     with ChimneyTypes
     with ChimneyExprs
     with datatypes.ProductTypes

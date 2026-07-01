@@ -4,9 +4,9 @@ package io.scalaland.chimney.internal.compiletime2.datatypes
   * `IsEither`, `IsValueType`, `CtorLikes`) exactly once per macro-bundle instance.
   *
   * `IsCollection.unapply` & co. return nothing until `Environment.loadStandardExtensions()` has been called, but the
-  * call must not be repeated within one expansion (redundant `ServiceLoader` scans + "already loaded" info logs -
-  * see the hearth-standard-extensions pattern). The `var` lives on this trait, which is mixed exactly once into the
-  * final macro-bundle class, making the guard per-expansion.
+  * call must not be repeated within one expansion (redundant `ServiceLoader` scans + "already loaded" info logs - see
+  * the hearth-standard-extensions pattern). The `var` lives on this trait, which is mixed exactly once into the final
+  * macro-bundle class, making the guard per-expansion.
   *
   * The datatypes adapters themselves deliberately do NOT depend on standard extensions (see their ScalaDocs) - this
   * hook exists for the Gateway/rules layer (e.g. `IsOption`/`IsEither` based rewrites). It is effect-free on purpose

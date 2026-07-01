@@ -1,0 +1,19 @@
+package io.scalaland.chimney.internal.compiletime2
+
+import hearth.fp.data.NonEmptyVector
+
+/** Non-empty collection of derivation errors.
+  *
+  * Hearth-based port of `io.scalaland.chimney.internal.compiletime.DerivationErrors`. The old dedicated
+  * `case class DerivationErrors(head, tail)` container is REPLACED by MIO's `MErrors` (`NonEmptyVector[Throwable]`,
+  * aliased as `DerivationErrors` in the package object) so that errors flow through MIO natively:
+  *   - construction keeps the old shape: `DerivationErrors(error, errors*)`,
+  *   - `++` comes from `NonEmptyVector` itself (same aggregation order as the old implementation),
+  *   - `prettyPrint`/`asVector` are provided by [[DerivationErrorsOps]] in the package object (non-`DerivationError`
+  *     throwables are classified via [[DerivationError.fromThrowable]] at rendering time).
+  */
+private[compiletime2] object DerivationErrors {
+
+  def apply(error: DerivationError, errors: DerivationError*): DerivationErrors =
+    NonEmptyVector[Throwable](error, errors.toVector)
+}

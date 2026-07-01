@@ -10,17 +10,17 @@ import io.scalaland.chimney.internal.compiletime2.ChimneyDefinitions
   *     matches ANY single-public-field class with a matching constructor, so a custom provider would have been needed
   *     anyway,
   *   - `IsValueType` does not expose `fieldName` (used by the rules for `Path` bookkeeping),
-  *   - `IsValueType` would additionally match Scala 3 opaque types, which macro-commons did NOT treat as value
-  *     classes - that would silently change rule behavior,
+  *   - `IsValueType` would additionally match Scala 3 opaque types, which macro-commons did NOT treat as value classes -
+  *     that would silently change rule behavior,
   *   - it requires standard extensions to be loaded, which the plain-value datatypes layer should not depend on.
   * TODO(hearth-migration): reconsider exposing Hearth's `IsValueType` (opaque types, smart constructors) as a new
   * feature after the flip.
   *
   * Semantic judgment call: macro-commons' platforms disagreed on how the getter was found (Scala 3: first public
-  * declaration; Scala 2: first public val accessor) and then required its name to match the constructor argument.
-  * Here the getter is looked up directly by the constructor argument's name (public + nullary), which matches the
-  * documented contract ("expose a getter of the same name and type as constructor's argument") and both platforms'
-  * behavior for actual wrapper classes.
+  * declaration; Scala 2: first public val accessor) and then required its name to match the constructor argument. Here
+  * the getter is looked up directly by the constructor argument's name (public + nullary), which matches the documented
+  * contract ("expose a getter of the same name and type as constructor's argument") and both platforms' behavior for
+  * actual wrapper classes.
   */
 private[compiletime2] trait ValueClasses { this: ChimneyDefinitions & hearth.MacroCommons =>
 

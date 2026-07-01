@@ -1,0 +1,28 @@
+package io.scalaland.chimney.internal.compiletime2
+
+/** Patcher-specific error related to derivation logic.
+  *
+  * Hearth-based port of `io.scalaland.chimney.internal.compiletime.PatcherDerivationError` - 1:1 copy (all case
+  * classes, fields and `printErrors` rendering preserved byte-identical).
+  */
+sealed trait PatcherDerivationError extends Product with Serializable
+
+final case class NotSupportedPatcherDerivation(objTypeName: String, patchTypeName: String)
+    extends PatcherDerivationError
+
+final case class PatchFieldNotFoundInTargetObj(patchFieldName: String, objTypeName: String)
+    extends PatcherDerivationError
+
+object PatcherDerivationError {
+
+  def printErrors(errors: Seq[PatcherDerivationError]): String =
+    errors
+      .map {
+        case NotSupportedPatcherDerivation(objTypeName, patchTypeName) =>
+          s"Patcher derivation not supported for $objTypeName with patch type $patchTypeName"
+        case PatchFieldNotFoundInTargetObj(patchFieldName, objTypeName) =>
+          s"Field named '$patchFieldName' not found in target patching type $objTypeName!"
+      }
+      .map(_ + "\n")
+      .mkString("\n")
+}

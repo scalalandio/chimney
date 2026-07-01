@@ -21,11 +21,11 @@ import scala.collection.compat.Factory
   *
   * Other judgment calls:
   *   - `map` for `Array`/`IArray` returns an `Iterator[B]` expression where macro-commons returned `Array[B]`/
-  *     `IArray[B]` - building an Array requires summoning `ClassTag[B]` inside the emitted code; `map` is not called
-  *     by any Chimney rule (verified by grep - only `factory`/`iterator`/`to` are used via
+  *     `IArray[B]` - building an Array requires summoning `ClassTag[B]` inside the emitted code; `map` is not called by
+  *     any Chimney rule (verified by grep - only `factory`/`iterator`/`to` are used via
   *     `TotallyOrPartiallyBuildIterable`), the member exists purely for API-shape parity,
-  *   - `IArray` support is written in shared code (Scala 2 sees `Type.isIArray == false`): the generated code casts
-  *     to `Array[Inner]` (valid: `IArray` is `Array` at runtime) and the factory adapts a summoned
+  *   - `IArray` support is written in shared code (Scala 2 sees `Type.isIArray == false`): the generated code casts to
+  *     `Array[Inner]` (valid: `IArray` is `Array` at runtime) and the factory adapts a summoned
   *     `Factory[Inner, Array[Inner]]` instead of using chimney's Scala 3-only `FactoryCompat.iarrayFactory`.
   */
 private[compiletime2] trait IterableOrArrays { this: ChimneyDefinitions & hearth.MacroCommons =>
@@ -87,8 +87,10 @@ private[compiletime2] trait IterableOrArrays { this: ChimneyDefinitions & hearth
       })
     final def unapply[M](M: Type[M]): Option[Existential[IterableOrArray[M, *]]] = parse(using M)
 
-    // Kept in a separate method (regular type parameters) - cross-quotes `Type.of` referencing existential-imported
-    // types directly inside `parse` trips the plugin's workaround-method generation.
+    // Kept in a separate method (regular type parameters): cross-quotes `Type.of` resolves implicit `Type`s only
+    // best-effort, and for existential-imported types the reliable form is "a def with type bounds" - a documented,
+    // non-fixable Cross-Quotes limitation (https://scala-hearth.readthedocs.io/en/stable/cross-quotes/#limitations,
+    // points 1 and 4), NOT a Hearth bug.
     private def tuple2TypeOf[K: Type, V: Type]: ?? = Type.of[(K, V)].as_??
 
     @scala.annotation.nowarn("msg=is never used")

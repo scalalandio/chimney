@@ -35,6 +35,34 @@ private[compiletime2] trait MacroCommonsCompat { this: hearth.MacroCommons =>
     def asInstanceOfExpr[B](implicit A: Type[A], B: Type[B]): Expr[B] = castToExpr[A, B](expr)
   }
 
+  /** macro-commons `Results#reportError(errors: String): Nothing` counterpart (Hearth spells it
+    * `Environment.reportErrorAndAbort`).
+    */
+  protected def reportError(errors: String): Nothing = Environment.reportErrorAndAbort(errors)
+
+  /** macro-commons `Definitions#XMacroSettings` counterpart (Hearth exposes it on `Environment`). */
+  protected def XMacroSettings: List[String] = Environment.XMacroSettings
+
+  /** macro-commons `TypeStringOps#extractStringSingleton` counterpart (same assertion on non-literal types). */
+  implicit final protected class CompatTypeStringOps[S <: String](private val S: Type[S]) {
+
+    def extractStringSingleton: String =
+      Type.StringCodec.fromType(S).map(_.value).getOrElse {
+        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
+        assertionFailed(s"Invalid string literal type: ${Type.prettyPrint(using S)}")
+        // $COVERAGE-ON$
+      }
+  }
+
+  /** macro-commons `Type.extractObjectSingleton[M]: Option[M]` counterpart.
+    *
+    * Hearth's `Type.ModuleCodec` is the same classloader-probing implementation (both descend from the same code), but
+    * its type parameter is bounded by `Singleton`, which chimney's call sites (`M <: TransformedNamesComparison`) do
+    * not satisfy - hence the cast through `Nothing` (the codec's implementation is a single erased object).
+    */
+  protected def extractObjectSingletonOf[M: Type]: Option[M] =
+    Type.ModuleCodec[Nothing].asInstanceOf[TypeCodec[M]].fromType(Type[M]).map(_.value)
+
   /** macro-commons `Expr.summonImplicit[A]: Option[Expr[A]]` counterpart.
     *
     * TODO(hearth-migration): during the rules port consider switching call sites to Hearth's
