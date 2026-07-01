@@ -116,7 +116,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
           case Ident(out) if in == out =>
             Right(new ExistentialPath {
               type Underlying = runtime.Path.Root
-              val Underlying: Type[runtime.Path.Root] = Type.of[runtime.Path.Root]
+              val Underlying: Type[runtime.Path.Root] = scala.quoted.Type.of[runtime.Path.Root]
             })
           // matches `_ => something unrelated` - not allowed
           case i: Ident => Left(ignoringInputNotAllowed(i, t))
@@ -128,7 +128,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
               new ExistentialPath {
                 type Underlying = runtime.Path.Select[Init, FieldName]
                 val Underlying: Type[runtime.Path.Select[Init, FieldName]] =
-                  Type.of[runtime.Path.Select[Init, FieldName]]
+                  scala.quoted.Type.of[runtime.Path.Select[Init, FieldName]]
               }
             }
           // matches `.matching[Subtype]`
@@ -139,7 +139,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
               new ExistentialPath {
                 type Underlying = runtime.Path.Matching[Init, Subtype]
                 val Underlying: Type[runtime.Path.Matching[Init, Subtype]] =
-                  Type.of[runtime.Path.Matching[Init, Subtype]]
+                  scala.quoted.Type.of[runtime.Path.Matching[Init, Subtype]]
               }
             }
           // matches `.matchingSome` == `.matching[Some[A]].value`
@@ -153,7 +153,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
               new ExistentialPath {
                 type Underlying = runtime.Path.Select[runtime.Path.Matching[Init, SomeA], Value]
                 val Underlying: Type[runtime.Path.Select[runtime.Path.Matching[Init, SomeA], Value]] =
-                  Type.of[runtime.Path.Select[runtime.Path.Matching[Init, SomeA], Value]]
+                  scala.quoted.Type.of[runtime.Path.Select[runtime.Path.Matching[Init, SomeA], Value]]
               }
             }
           // matches `.matchingLeft` == `.matching[Left[L, R]].value`
@@ -167,7 +167,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
               new ExistentialPath {
                 type Underlying = runtime.Path.Select[runtime.Path.Matching[Init, Left], Value]
                 val Underlying: Type[runtime.Path.Select[runtime.Path.Matching[Init, Left], Value]] =
-                  Type.of[runtime.Path.Select[runtime.Path.Matching[Init, Left], Value]]
+                  scala.quoted.Type.of[runtime.Path.Select[runtime.Path.Matching[Init, Left], Value]]
               }
             }
           // matches `.matchingRight` == `.matching[Right[L, R]].value`
@@ -181,7 +181,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
               new ExistentialPath {
                 type Underlying = runtime.Path.Select[runtime.Path.Matching[Init, Right], Value]
                 val Underlying: Type[runtime.Path.Select[runtime.Path.Matching[Init, Right], Value]] =
-                  Type.of[runtime.Path.Select[runtime.Path.Matching[Init, Right], Value]]
+                  scala.quoted.Type.of[runtime.Path.Select[runtime.Path.Matching[Init, Right], Value]]
               }
             }
           // matches `.everyItem`
@@ -190,7 +190,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
               import init.Underlying as Init
               new ExistentialPath {
                 type Underlying = runtime.Path.EveryItem[Init]
-                val Underlying: Type[runtime.Path.EveryItem[Init]] = Type.of[runtime.Path.EveryItem[Init]]
+                val Underlying: Type[runtime.Path.EveryItem[Init]] = scala.quoted.Type.of[runtime.Path.EveryItem[Init]]
               }
             }
           // matches `.everyMapKey`
@@ -199,7 +199,8 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
               import init.Underlying as Init
               new ExistentialPath {
                 type Underlying = runtime.Path.EveryMapKey[Init]
-                val Underlying: Type[runtime.Path.EveryMapKey[Init]] = Type.of[runtime.Path.EveryMapKey[Init]]
+                val Underlying: Type[runtime.Path.EveryMapKey[Init]] =
+                  scala.quoted.Type.of[runtime.Path.EveryMapKey[Init]]
               }
             }
           // matches `.everyMapValue`
@@ -208,7 +209,8 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
               import init.Underlying as Init
               new ExistentialPath {
                 type Underlying = runtime.Path.EveryMapValue[Init]
-                val Underlying: Type[runtime.Path.EveryMapValue[Init]] = Type.of[runtime.Path.EveryMapValue[Init]]
+                val Underlying: Type[runtime.Path.EveryMapValue[Init]] =
+                  scala.quoted.Type.of[runtime.Path.EveryMapValue[Init]]
               }
             }
           // matches `someFunctionName` - not allowed
@@ -271,11 +273,11 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
     private def paramsToType(paramsLists: List[List[ValDef]]): Type[runtime.ArgumentLists] =
       paramsLists
         .map { paramList =>
-          paramList.foldRight[Type[? <: runtime.ArgumentList]](Type.of[runtime.ArgumentList.Empty])(
+          paramList.foldRight[Type[? <: runtime.ArgumentList]](scala.quoted.Type.of[runtime.ArgumentList.Empty])(
             constructArgumentListType
           )
         }
-        .foldRight[Type[? <: runtime.ArgumentLists]](Type.of[runtime.ArgumentLists.Empty])(
+        .foldRight[Type[? <: runtime.ArgumentLists]](scala.quoted.Type.of[runtime.ArgumentLists.Empty])(
           constructArgumentListsType
         )
         .asInstanceOf[Type[runtime.ArgumentLists]]
@@ -287,7 +289,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
       object ApplyParams {
         def apply[Head <: runtime.ArgumentList: Type, Tail <: runtime.ArgumentLists: Type]
             : Type[runtime.ArgumentLists.List[Head, Tail]] =
-          Type.of[runtime.ArgumentLists.List[Head, Tail]]
+          scala.quoted.Type.of[runtime.ArgumentLists.List[Head, Tail]]
       }
 
       ApplyParams(using head, tail)
@@ -302,7 +304,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
       object ApplyParam {
         def apply[ParamName <: String: Type, ParamType: Type, Args <: runtime.ArgumentList: Type]
             : Type[runtime.ArgumentList.Argument[ParamName, ParamType, Args]] =
-          Type.of[runtime.ArgumentList.Argument[ParamName, ParamType, Args]]
+          scala.quoted.Type.of[runtime.ArgumentList.Argument[ParamName, ParamType, Args]]
       }
 
       ApplyParam(using

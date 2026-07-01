@@ -27,7 +27,8 @@ val versions = new {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Dependencies.
-  val macroCommons = "2.1.0"
+  val macroCommons = "2.1.0" // TODO(hearth-migration): remove once the engine is fully ported to Hearth
+  val hearth = "0.4.0"
   val cats = "2.13.0"
   val kindProjector = "0.13.4"
   val munit = "1.2.4"
@@ -388,7 +389,13 @@ lazy val chimney = projectMatrix
       for2_13 = Seq("-skip-packages", "io.scalaland.chimney.internal")
     ),
     resolvers += mavenCentralSnapshots,
-    libraryDependencies += "io.scalaland" %%% "chimney-macro-commons" % versions.macroCommons,
+    libraryDependencies += "io.scalaland" %%% "chimney-macro-commons" % versions.macroCommons, // TODO(hearth-migration): remove
+    libraryDependencies += "com.kubuszok" %%% "hearth" % versions.hearth,
+    // Cross-quotes: on Scala 2 they are macros (part of hearth), on Scala 3 they are a compiler plugin.
+    libraryDependencies ++= versions.fold(scalaVersion.value)(
+      for2_13 = Seq.empty,
+      for3 = Seq(compilerPlugin("com.kubuszok" %% "hearth-cross-quotes" % versions.hearth))
+    ),
     // Changes to macros should not cause any runtime problems
     mimaBinaryIssueFilters := Seq(ProblemFilters.exclude[Problem]("io.scalaland.chimney.internal.compiletime.*"))
   )
