@@ -2,8 +2,8 @@ package io.scalaland.chimney.internal.compiletime2.derivation.transformer
 
 import io.scalaland.chimney.partial
 
-/** Hearth-based port of `io.scalaland.chimney.internal.compiletime.derivation.transformer.Contexts` - 1:1 copy,
-  * only the pretty-printing goes through Hearth (`Type.prettyPrint`/`Expr.prettyPrint` have the same names).
+/** Hearth-based port of `io.scalaland.chimney.internal.compiletime.derivation.transformer.Contexts` - 1:1 copy, only
+  * the pretty-printing goes through Hearth (`Type.prettyPrint`/`Expr.prettyPrint` have the same names).
   */
 private[compiletime2] trait Contexts { this: Derivation & hearth.MacroCommons =>
 

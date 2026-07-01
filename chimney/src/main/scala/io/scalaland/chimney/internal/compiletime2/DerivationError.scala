@@ -13,7 +13,8 @@ package io.scalaland.chimney.internal.compiletime2
 sealed abstract class DerivationError(message: String) extends Exception(message, null, false, false)
 object DerivationError {
 
-  final case class MacroException(exception: Throwable) extends DerivationError(s"macro expansion thrown exception!: $exception")
+  final case class MacroException(exception: Throwable)
+      extends DerivationError(s"macro expansion thrown exception!: $exception")
   final case class NotYetImplemented(what: String)
       extends DerivationError(s"derivation failed because functionality $what is not yet implemented!")
   final case class TransformerError(transformerDerivationError: TransformerDerivationError)

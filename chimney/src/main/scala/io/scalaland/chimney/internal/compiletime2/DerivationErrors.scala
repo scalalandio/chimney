@@ -16,4 +16,10 @@ private[compiletime2] object DerivationErrors {
 
   def apply(error: DerivationError, errors: DerivationError*): DerivationErrors =
     NonEmptyVector[Throwable](error, errors.toVector)
+
+  /** Keeps the old `case DerivationErrors(head, tail)` patterns working on `MErrors` (`NonEmptyVector[Throwable]`,
+    * which is a `(head, tail)` case class itself) - used e.g. by `TransformProductToProductRule.useOverrideIfPresentOr`
+    * to detect a single specific error.
+    */
+  def unapply(errors: DerivationErrors): Some[(Throwable, Vector[Throwable])] = Some((errors.head, errors.tail))
 }

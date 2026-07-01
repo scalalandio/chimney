@@ -8,9 +8,9 @@ import io.scalaland.chimney.partial
 /** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformationRules`.
   *
   * Chimney's OWN rule engine is preserved (NOT replaced by Hearth's `Rules`/`Rule.Applicability` combinator): the
-  * `ExpansionResult.AttemptNextRule(reason)` accumulation, logging and error semantics are kept exactly as before,
-  * just running on MIO. (Hearth's `Rules` is close - Matched/Yielded mirror Expanded/AttemptNextRule - but it returns
-  * the accumulated yield-reasons instead of logging them one-by-one and has no `TransformationExpr` awareness, so
+  * `ExpansionResult.AttemptNextRule(reason)` accumulation, logging and error semantics are kept exactly as before, just
+  * running on MIO. (Hearth's `Rules` is close - Matched/Yielded mirror Expanded/AttemptNextRule - but it returns the
+  * accumulated yield-reasons instead of logging them one-by-one and has no `TransformationExpr` awareness, so
   * delegating would change the logs that tests assert on.)
   *
   * Differences vs the old version:
@@ -18,8 +18,8 @@ import io.scalaland.chimney.partial
   *     (`Expr.Function1.instance`/`fulfilAsLambda` counterparts),
   *   - the old `TransformationExprPromiseOps` (ops over `ExprPromise[From, TransformationExpr[To]]`) becomes
   *     [[TransformationExprBuilderOps]] (ops over `LambdaBuilder[From, TransformationExpr[To]]`, where `From` is now
-  *     the lambda shape, e.g. `A => *`) - method names preserved (`foldTransformationExpr`, `exprPartition`,
-  *     `isTotal`, `isPartial`, `ensureTotal`, `ensurePartial`),
+  *     the lambda shape, e.g. `A => *`) - method names preserved (`foldTransformationExpr`, `exprPartition`, `isTotal`,
+  *     `isPartial`, `ensureTotal`, `ensurePartial`),
   *   - `.log(msg)` becomes `.logInfo(msg)` (see the package object).
   */
 private[compiletime2] trait TransformationRules { this: Derivation & hearth.MacroCommons =>

@@ -5,8 +5,8 @@ import io.scalaland.chimney.partial
 
 import scala.collection.Factory
 
-/** Hearth-based port of `...compiletime.derivation.transformer.integrations.PartiallyBuildIterables` - 1:1 copy
-  * (`new Type.Cache[Cached]` becomes `new TypeCache[Cached]`).
+/** Hearth-based port of `...compiletime.derivation.transformer.integrations.PartiallyBuildIterables` - 1:1 copy (`new
+  * Type.Cache[Cached]` becomes `new TypeCache[Cached]`).
   */
 trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons =>
 

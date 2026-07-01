@@ -35,6 +35,20 @@ private[compiletime2] trait MacroCommonsCompat { this: hearth.MacroCommons =>
     def asInstanceOfExpr[B](implicit A: Type[A], B: Type[B]): Expr[B] = castToExpr[A, B](expr)
   }
 
+  /** macro-commons `ExistentialExprOps.asInstanceOfExpr[B]`/`.upcastToExprOf[B]` counterpart (ops on `Expr_??`). */
+  implicit final protected class CompatExistentialExprOps(private val expr: Expr_??) {
+
+    def asInstanceOfExpr[B: Type]: Expr[B] = {
+      import expr.{Underlying as A, value as valueExpr}
+      castToExpr[A, B](valueExpr)
+    }
+
+    def upcastToExprOf[B: Type]: Expr[B] = {
+      import expr.{Underlying as A, value as valueExpr}
+      valueExpr.upcast[B]
+    }
+  }
+
   /** macro-commons `Results#reportError(errors: String): Nothing` counterpart (Hearth spells it
     * `Environment.reportErrorAndAbort`).
     */

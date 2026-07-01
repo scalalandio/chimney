@@ -19,21 +19,21 @@ import scala.util.control.NonFatal
   *     (`fail(e1 ++ e2)`); `MIO.firstOf` is the same fold as the old `firstOf`,
   *   - `parMap2`/`parTraverse`/`parSequence`: both run the second branch even if the first failed and aggregate the
   *     errors; MIO additionally forks/joins `MLocal` state between the "parallel" branches,
-  *   - exception catching: MIO catches `NonFatal` in every combinator (old code did it in `transformWith`); caught
-  *     raw `Throwable`s are classified as [[DerivationError.MacroException]] at RENDERING time
+  *   - exception catching: MIO catches `NonFatal` in every combinator (old code did it in `transformWith`); caught raw
+  *     `Throwable`s are classified as [[DerivationError.MacroException]] at RENDERING time
   *     ([[DerivationError.fromThrowable]]) instead of at catch time,
   *   - fatal errors (e.g. `StackOverflowError`): old code smuggled them through `FatalError`+`catchFatalErrors`; with
-  *     MIO they simply propagate out of `unsafe.runSync` - TODO(hearth-migration): the Gateway port must wrap
-  *     `runSync` in a `try`/`catch` to keep the "increase -Xss" message (`DerivationError.printErrors` still renders
-  *     it once given `MacroException(e: StackOverflowError)`),
+  *     MIO they simply propagate out of `unsafe.runSync` - TODO(hearth-migration): the Gateway port must wrap `runSync`
+  *     in a `try`/`catch` to keep the "increase -Xss" message (`DerivationError.printErrors` still renders it once
+  *     given `MacroException(e: StackOverflowError)`),
   *   - logging: the old journal becomes Hearth's [[hearth.fp.effect.Log]]; old `State.macroLogging` becomes
   *     [[DerivationResult.macroLogging]] (an [[hearth.fp.effect.MLocal]]) - TODO(hearth-migration): Gateway must READ
   *     it inside the MIO program (e.g. `result.attempt.tuple(DerivationResult.macroLogging.get)`) because the final
   *     `MState`'s local-value accessor is `private[effect]` in Hearth; the log dump itself renders from
   *     `state.logs.render.fromInfo(...)` after `runSync`,
-  *   - `direct`: mapped onto MIO's `DirectStyle` (`MIO.scoped`); the old monomorphic `Await[A]` is now an alias for
-  *     the polymorphic `DirectStyle.RunSafe[MIO]` (the extra type parameter of `direct[A, B]` is kept so existing
-  *     call sites with explicit type applications compile unchanged),
+  *   - `direct`: mapped onto MIO's `DirectStyle` (`MIO.scoped`); the old monomorphic `Await[A]` is now an alias for the
+  *     polymorphic `DirectStyle.RunSafe[MIO]` (the extra type parameter of `direct[A, B]` is kept so existing call
+  *     sites with explicit type applications compile unchanged),
   *   - the old `fp.ParallelTraverse[DerivationResult]` instance is NOT ported: Hearth ships `Parallel[MIO]`
   *     (`MIO.ParallelForMio`), which is what collection `traverse`/`parTraverse` syntax needs.
   */
@@ -101,8 +101,8 @@ private[compiletime2] object DerivationResult {
   def namedScope[A](name: String)(ra: => DerivationResult[A]): DerivationResult[A] =
     Log.namedScope(name)(ra)
 
-  /** Old `DerivationResult.State.MacroLogging` - "the macro-logging flag was enabled, dump the log journal at the
-    * end of the derivation (in Gateway)".
+  /** Old `DerivationResult.State.MacroLogging` - "the macro-logging flag was enabled, dump the log journal at the end
+    * of the derivation (in Gateway)".
     */
   final case class MacroLogging(derivationStartedAt: java.time.Instant)
 

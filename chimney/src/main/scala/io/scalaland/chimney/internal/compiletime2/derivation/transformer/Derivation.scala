@@ -7,7 +7,36 @@ import io.scalaland.chimney.internal.compiletime2.{ChimneyDefinitions, Derivatio
   * Differences vs the old version:
   *   - the `datatypes.*` traits are NOT mixed in here anymore - [[ChimneyDefinitions]] already includes them (they
   *     became part of the compiletime2 foundation),
+  *   - the rule modules are mixed in HERE instead of in the per-platform `DerivationPlatform`s (they are shared code
+  *     now; the old platform division only existed for quasiquotes-vs-quotes implementations),
   *   - the self-type mirrors [[ChimneyDefinitions]]'s (the cake is completed by the platform bridges).
+  *
+  * TODO(hearth-migration): once ALL rules are ported (TransformMapToMapRule, TransformIterableToIterableRule, the full
+  * TransformProductToProductRule and TransformSealedHierarchyToSealedHierarchyRule are still missing), define
+  * `rulesAvailableForPlatform` here (it is shared now; both old platforms listed the same rules) as:
+  * {{{
+  * override protected val rulesAvailableForPlatform: List[Rule] = List(
+  *   TransformImplicitRule,
+  *   TransformImplicitPartialFallbackToTotalRule,
+  *   TransformImplicitOuterTransformerRule,
+  *   TransformImplicitConversionRule,
+  *   TransformSubtypesRule,
+  *   TransformTypeConstraintRule,
+  *   TransformToSingletonRule,
+  *   TransformValueClassToValueClassRule,
+  *   TransformValueClassToTypeRule,
+  *   TransformTypeToValueClassRule,
+  *   TransformOptionToOptionRule,
+  *   TransformPartialOptionToNonOptionRule, // NB: the old Scala 2 platform ordered TransformToOptionRule BEFORE
+  *   TransformToOptionRule,                 // this one; their conditions are disjoint (target optional vs target
+  *                                          // non-optional), so the Scala 3 order is used for both platforms.
+  *   TransformEitherToEitherRule,
+  *   TransformMapToMapRule,
+  *   TransformIterableToIterableRule,
+  *   TransformProductToProductRule,
+  *   TransformSealedHierarchyToSealedHierarchyRule
+  * )
+  * }}}
   */
 private[compiletime2] trait Derivation
     extends ChimneyDefinitions
@@ -21,7 +50,22 @@ private[compiletime2] trait Derivation
     with integrations.PartiallyBuildIterables
     with integrations.TotallyBuildIterables
     with integrations.TotallyOrPartiallyBuildIterables
-    with rules.TransformationRules {
+    with rules.TransformationRules
+    with rules.TransformImplicitRuleModule
+    with rules.TransformImplicitPartialFallbackToTotalRuleModule
+    with rules.TransformImplicitOuterTransformerRuleModule
+    with rules.TransformImplicitConversionRuleModule
+    with rules.TransformSubtypesRuleModule
+    with rules.TransformTypeConstraintRuleModule
+    with rules.TransformToSingletonRuleModule
+    with rules.TransformValueClassToValueClassRuleModule
+    with rules.TransformValueClassToTypeRuleModule
+    with rules.TransformTypeToValueClassRuleModule
+    with rules.TransformOptionToOptionRuleModule
+    with rules.TransformPartialOptionToNonOptionRuleModule
+    with rules.TransformToOptionRuleModule
+    with rules.TransformEitherToEitherRuleModule
+    with rules.TransformProductToProductRuleModule {
   this: hearth.MacroCommons & hearth.std.StdExtensions =>
 
   /** Intended use case: starting recursive derivation from Gateway */

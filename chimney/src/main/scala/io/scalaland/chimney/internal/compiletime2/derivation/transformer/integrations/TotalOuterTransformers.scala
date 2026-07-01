@@ -4,8 +4,8 @@ import io.scalaland.chimney.integrations
 import io.scalaland.chimney.internal.compiletime2.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-/** Hearth-based port of `...compiletime.derivation.transformer.integrations.TotalOuterTransformers` - 1:1 copy
-  * (`new Type.Cache[Option]` becomes `new TypeCache[Option]`, see [[MacroCommonsCompat]]).
+/** Hearth-based port of `...compiletime.derivation.transformer.integrations.TotalOuterTransformers` - 1:1 copy (`new
+  * Type.Cache[Option]` becomes `new TypeCache[Option]`, see [[MacroCommonsCompat]]).
   */
 trait TotalOuterTransformers { this: Derivation & hearth.MacroCommons =>
 
