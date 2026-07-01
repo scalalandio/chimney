@@ -15,8 +15,8 @@ import io.scalaland.chimney.partial
   *     `apply`/`unapply` for them); upper-bounded ones go through `ctorNUpperBoundedCompat` (see [[MacroCommonsCompat]]
   *     for the Hearth 0.4.0 bug it works around),
   *   - `unapply` results use Hearth existential spellings (`??`, `??<:[U]`) instead of macro-commons (`??`, `?<[U]`),
-  *   - `inferred` members hide their wildcards behind type aliases (cross-quotes `Type.of[F[A, ?]]` does not compile
-  *     on Scala 2 - another Hearth 0.4.0 bug),
+  *   - `inferred` members hide their wildcards behind type aliases (cross-quotes `Type.of[F[A, ?]]` does not compile on
+  *     Scala 2 - another Hearth 0.4.0 bug),
   *   - Scala-2-only `ChimneyType.platformSpecific.fixJavaEnum(s)` (the `runtime.RefinedJavaEnum` workaround) is NOT
   *     ported here - it is consumed only by the Scala 2 DSL macro entrypoints and will be revisited with them.
   */
@@ -90,8 +90,7 @@ private[compiletime2] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Mac
     object ArgumentLists {
       lazy val Empty: Type[runtime.ArgumentLists.Empty] = Type.of[runtime.ArgumentLists.Empty]
 
-      lazy val List
-          : Type.Ctor2.UpperBounded[runtime.ArgumentList, runtime.ArgumentLists, runtime.ArgumentLists.List] =
+      lazy val List: Type.Ctor2.UpperBounded[runtime.ArgumentList, runtime.ArgumentLists, runtime.ArgumentLists.List] =
         ctor2UpperBoundedCompat[runtime.ArgumentList, runtime.ArgumentLists, runtime.ArgumentLists.List](
           Type.of[runtime.ArgumentLists.List[runtime.ArgumentList, runtime.ArgumentLists]]
         )
@@ -393,8 +392,7 @@ private[compiletime2] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Mac
           Type.of[runtime.PatcherOverrides.Ignored[runtime.Path, runtime.PatcherOverrides]]
         )
 
-      lazy val Const
-          : Type.Ctor2.UpperBounded[runtime.Path, runtime.PatcherOverrides, runtime.PatcherOverrides.Const] =
+      lazy val Const: Type.Ctor2.UpperBounded[runtime.Path, runtime.PatcherOverrides, runtime.PatcherOverrides.Const] =
         ctor2UpperBoundedCompat[runtime.Path, runtime.PatcherOverrides, runtime.PatcherOverrides.Const](
           Type.of[runtime.PatcherOverrides.Const[runtime.Path, runtime.PatcherOverrides]]
         )
@@ -405,7 +403,12 @@ private[compiletime2] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Mac
         runtime.PatcherOverrides,
         runtime.PatcherOverrides.Computed
       ] =
-        ctor3UpperBoundedCompat[runtime.Path, runtime.Path, runtime.PatcherOverrides, runtime.PatcherOverrides.Computed](
+        ctor3UpperBoundedCompat[
+          runtime.Path,
+          runtime.Path,
+          runtime.PatcherOverrides,
+          runtime.PatcherOverrides.Computed
+        ](
           Type.of[runtime.PatcherOverrides.Computed[runtime.Path, runtime.Path, runtime.PatcherOverrides]]
         )
     }

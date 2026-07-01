@@ -6,7 +6,7 @@ package io.scalaland.chimney.internal.compiletime2
   * same way they extended `DefinitionsPlatform(c)` before. Its main purpose right now is to prove that the whole
   * `compiletime2` cake composes and compiles on Scala 2.
   */
-private[compiletime2] abstract class PlatformBridge(val c: scala.reflect.macros.blackbox.Context)
+abstract private[compiletime2] class PlatformBridge(val c: scala.reflect.macros.blackbox.Context)
     extends hearth.MacroCommonsScala2
     with ChimneyDefinitions {
 

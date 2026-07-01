@@ -8,6 +8,6 @@ import scala.quoted.Quotes
   * same way they extended `DefinitionsPlatform(using q)` before. Its main purpose right now is to prove that the whole
   * `compiletime2` cake composes and compiles on Scala 3.
   */
-private[compiletime2] abstract class PlatformBridge(q: Quotes)
+abstract private[compiletime2] class PlatformBridge(q: Quotes)
     extends hearth.MacroCommonsScala3(using q)
     with ChimneyDefinitions

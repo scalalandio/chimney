@@ -3,8 +3,8 @@ package io.scalaland.chimney.internal.compiletime2
 /** Compatibility shims between chimney-macro-commons API shapes and Hearth 0.4.0.
   *
   * Only contains what the Hearth-based `compiletime2` foundation (and, transitively, the rules that will be ported on
-  * top of it) actually needs and what has no direct Hearth counterpart. Everything that maps 1:1 (see
-  * `api-mapping.md`) should be used directly from Hearth instead of being aliased here.
+  * top of it) actually needs and what has no direct Hearth counterpart. Everything that maps 1:1 (see `api-mapping.md`)
+  * should be used directly from Hearth instead of being aliased here.
   *
   * NOT ported on purpose (REWRITE-rated in the API mapping, call sites will be migrated to Hearth natives):
   *   - `ExprPromise`/`PrependDefinitionsTo`/`PatternMatchCase` - use `LambdaBuilder`/`ValDefs`/`MatchCase`
@@ -47,10 +47,10 @@ private[compiletime2] trait MacroCommonsCompat { this: hearth.MacroCommons =>
 
   /** macro-commons `Expr.nowarn[A](warnings)(expr)` counterpart.
     *
-    * TODO(hearth-migration): Hearth has no annotation-attaching API in the typed layer - implement `@scala.annotation.nowarn`
-    * attachment (with a dynamic filter string) on untyped trees, or redesign GatewayCommons so the generated code does
-    * not need the suppression. Until then this is an identity, which only affects the opt-in (via `-Xmacro-settings`)
-    * warning suppression of generated code, not its correctness.
+    * TODO(hearth-migration): Hearth has no annotation-attaching API in the typed layer - implement
+    * `@scala.annotation.nowarn` attachment (with a dynamic filter string) on untyped trees, or redesign GatewayCommons
+    * so the generated code does not need the suppression. Until then this is an identity, which only affects the opt-in
+    * (via `-Xmacro-settings`) warning suppression of generated code, not its correctness.
     */
   protected def nowarnExpr[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A] = {
     hearth.fp.ignore(warnings)
@@ -72,8 +72,8 @@ private[compiletime2] trait MacroCommonsCompat { this: hearth.MacroCommons =>
     * argument to `Type[scala.Any]` and then calls `.as_<:??<:[L, U]`, which requires `U >: Any`).
     *
     * These factories hand-build the same `Type.CtorN.UpperBounded` instances on top of Hearth's untyped API instead.
-    * `applied` is the type constructor applied to its upper bounds - it only serves as a way to obtain the untyped
-    * type constructor in shared code.
+    * `applied` is the type constructor applied to its upper bounds - it only serves as a way to obtain the untyped type
+    * constructor in shared code.
     *
     * Semantics difference vs the cross-quotes-generated instances: `unapply` matches on the exact (dealiased) type
     * constructor, without `baseType` subtype-awareness - which is enough for Chimney's phantom-type configs.
@@ -150,9 +150,9 @@ private[compiletime2] trait MacroCommonsCompat { this: hearth.MacroCommons =>
     }
 
   /** Workaround for a Hearth 0.4.0 bug: on Scala 2 cross-quotes `Type.of[F[A, ?]]` fails to compile whenever the
-    * enclosing method has type parameters ("not found: type ?$1" - the generated workaround method loses the
-    * wildcard). `Type.of[F[Any, ?]]` in a member without type parameters expands fine, so `ChimneyType.*.inferred`
-    * captures such an example once and then replaces the leading type arguments with the actual ones.
+    * enclosing method has type parameters ("not found: type ?$1" - the generated workaround method loses the wildcard).
+    * `Type.of[F[Any, ?]]` in a member without type parameters expands fine, so `ChimneyType.*.inferred` captures such
+    * an example once and then replaces the leading type arguments with the actual ones.
     *
     * The shared implementation is correct on Scala 3 (wildcard arguments survive `applyTypeArgs`); on Scala 2 it would
     * leave the existential's quantified symbols unbound, so [[PlatformBridge]] (Scala 2) overrides it with a version
@@ -171,6 +171,30 @@ private[compiletime2] trait MacroCommonsCompat { this: hearth.MacroCommons =>
   // automatically. If the ported rules turn out to rely on `import Type.Implicits.*` for plain (non-quoted) shared
   // code, recreate the object here with `implicit val IntType: Type[Int] = Type.of[Int]` etc.
 
-  // TODO(hearth-migration): macro-commons `Type.Cache[F[_]]` (used by TotallyBuildIterables/OuterTransformers) is pure
-  // shared code over `Type` + `=:=` - copy it here when porting those files (or replace with `MLocal`/`ValDefsCache`).
+  /** macro-commons `Type.Cache[F[_]]` counterpart (verbatim copy - it is pure shared code over `Type` + `=:=`).
+    *
+    * We cannot add members to Hearth's `Type` module, so call sites change `new Type.Cache[F]` -> `new TypeCache[F]`.
+    * Used by the `datatypes` adapters and (later) by TotallyBuildIterables/OuterTransformers.
+    */
+  final protected class TypeCache[F[_]] {
+    sealed private trait Entry {
+      type Underlying
+      val key: Type[Underlying]
+      val value: F[Underlying]
+    }
+    private object Entry {
+      def apply[A](key: Type[A], value: F[A]): Entry { type Underlying = A } = new Impl(key, value)
+      final class Impl[A](val key: Type[A], val value: F[A]) extends Entry { type Underlying = A }
+    }
+    private val storage = scala.collection.mutable.ListBuffer.empty[Entry]
+
+    def apply[A](key: Type[A])(newValue: => F[A]): F[A] =
+      storage.find(_.key =:= key) match {
+        case Some(found) => found.value.asInstanceOf[F[A]]
+        case None        =>
+          val value = newValue
+          storage += Entry(key, value)
+          value
+      }
+  }
 }
