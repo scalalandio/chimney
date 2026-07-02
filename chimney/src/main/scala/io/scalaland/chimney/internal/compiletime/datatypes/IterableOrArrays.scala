@@ -16,8 +16,10 @@ import scala.collection.Factory
   *     e.g. transforming FROM `Array[T]` with an abstract `T` (no `ClassTag`) works in macro-commons because only
   *     `iterator` is needed,
   *   - this also keeps the plain-value datatypes layer independent from standard-extension loading.
-  * TODO(hearth-migration): consider ALSO consulting `IsCollection`/`IsMap` (after these built-in shapes) so that
-  * third-party Hearth collection extensions are picked up - as a new, opt-in feature.
+  * NOTE (Phase 5 prereq): `IsCollection`/`IsMap` ARE now consulted - but one layer up, in
+  * [[io.scalaland.chimney.internal.compiletime.derivation.transformer.integrations.TotallyBuildIterables]], as a
+  * fallback that runs only AFTER this hardcoded matching failed (see its ScalaDoc for the guards). This trait stays
+  * extension-free on purpose.
   *
   * Other judgment calls:
   *   - `map` for `Array`/`IArray` returns an `Iterator[B]` expression where macro-commons returned `Array[B]`/

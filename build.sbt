@@ -309,6 +309,7 @@ lazy val root = project
   .settings(publishSettings)
   .settings(noPublishSettings)
   .aggregate(chimney.projectRefs *)
+  .aggregate(chimneyEngineTestExtension.projectRefs *)
   .aggregate(chimneyCats.projectRefs *)
   .aggregate(chimneyJavaCollections.projectRefs *)
   .aggregate(chimneyProtobufs.projectRefs *)
@@ -394,6 +395,35 @@ lazy val chimney = projectMatrix
     ),
     // Changes to macros should not cause any runtime problems
     mimaBinaryIssueFilters := Seq(ProblemFilters.exclude[Problem]("io.scalaland.chimney.internal.compiletime.*"))
+  )
+  // Test-only Hearth StandardMacroExtension (ServiceLoader-registered) proving that third-party extensions are
+  // consulted by the engine's built-in fallbacks. Must be a SEPARATE module: extension classes are loaded reflectively
+  // at macro-expansion time, so they must be compiled before the test sources that trigger the expansion.
+  // NOTE: this puts a test-scoped dependency on an unpublished artifact into the published pom - harmless for
+  // consumers (test scope is not transitive), but TODO(hearth-extensions): consider pomPostProcess filtering.
+  .dependsOn(chimneyEngineTestExtension % Test)
+
+// Not published - see the comment at the `.dependsOn` in `chimney` above.
+lazy val chimneyEngineTestExtension = projectMatrix
+  .in(file("chimney-engine-test-extension"))
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE *)
+  .enablePlugins(GitVersioning, GitBranchPrompt)
+  .disablePlugins(WelcomePlugin, ProtocPlugin)
+  .settings(settings *)
+  .settings(publishSettings *)
+  .settings(noPublishSettings *)
+  .settings(dependencies *)
+  .settings(
+    moduleName := "chimney-engine-test-extension",
+    name := "chimney-engine-test-extension",
+    description := "Test-only Hearth StandardMacroExtension used by chimney's engine test suites",
+    mimaFailOnNoPrevious := false, // this module is not published
+    libraryDependencies += "com.kubuszok" %%% "hearth" % versions.hearth,
+    // Cross-quotes: on Scala 2 they are macros (part of hearth), on Scala 3 they are a compiler plugin.
+    libraryDependencies ++= versions.fold(scalaVersion.value)(
+      for2_13 = Seq.empty,
+      for3 = Seq(compilerPlugin("com.kubuszok" %% "hearth-cross-quotes" % versions.hearth))
+    )
   )
 
 lazy val chimneyCats = projectMatrix
