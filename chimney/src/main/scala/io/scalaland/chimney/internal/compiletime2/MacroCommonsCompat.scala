@@ -111,22 +111,20 @@ private[compiletime2] trait MacroCommonsCompat { this: hearth.MacroCommons =>
   /** macro-commons `Expr.summonImplicitUnsafe[A]` counterpart. */
   protected def summonImplicitUnsafeOf[A: Type]: Expr[A] = Expr.summonImplicit[A].get
 
-  /** macro-commons `Expr.nowarn[A](warnings)(expr)` counterpart.
+  /** macro-commons `Expr.nowarn[A](warnings)(expr)` counterpart (used by `GatewayCommons.suppressWarnings`).
     *
-    * TODO(hearth-migration): Hearth has no annotation-attaching API in the typed layer - implement
-    * `@scala.annotation.nowarn` attachment (with a dynamic filter string) on untyped trees, or redesign GatewayCommons
-    * so the generated code does not need the suppression. Until then this is an identity, which only affects the opt-in
-    * (via `-Xmacro-settings`) warning suppression of generated code, not its correctness.
+    * Hearth has no annotation-attaching API (typed or untyped), so the real implementations - the old quasiquote (Scala
+    * 2) / `AnnotatedType` `ValDef` (Scala 3) annotation attachment - live in the per-platform `PlatformBridge`s. This
+    * shared default is an identity kept only so that partial cakes (tests, future bridges) stay instantiable; both
+    * bridges override it.
     */
   protected def nowarnExpr[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A] = {
     hearth.fp.ignore(warnings)
     expr
   }
 
-  /** macro-commons `Expr.SuppressWarnings[A](warnings)(expr)` counterpart.
-    *
-    * TODO(hearth-migration): same as [[nowarnExpr]] - needs `@SuppressWarnings(Array(...))` attachment on untyped
-    * trees; identity until the Gateway port decides the final approach.
+  /** macro-commons `Expr.SuppressWarnings[A](warnings)(expr)` counterpart - see [[nowarnExpr]] (same per-platform
+    * `PlatformBridge` override arrangement).
     */
   protected def suppressWarningsExpr[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A] = {
     hearth.fp.ignore(warnings)

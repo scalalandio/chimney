@@ -21,8 +21,8 @@ import scala.collection.compat.Factory
   *     built `InnerFrom => partial.Result[InnerTo]` lambda is bound to a val and applied inside a directly cross-quoted
   *     `((InnerFrom, Int)) => partial.Result[InnerTo]` lambda ([[indexedPartialLambda]]); the old code emitted
   *     `{ (from, idx) => body }.tupled` (Function2 + tupled wrapper), the new code emits
-  *     `{ val inner = from => body; pair => inner(pair._1).unsealErrorPath.prependErrorPath(Index(pair._2)) }` -
-  *     the same runtime semantics and per-element dispatch count, slightly different tree shape,
+  *     `{ val inner = from => body; pair => inner(pair._1).unsealErrorPath.prependErrorPath(Index(pair._2)) }` - the
+  *     same runtime semantics and per-element dispatch count, slightly different tree shape,
   *   - `mergeTotal`/`mergePartial` keep their old signatures but delegate to new expr-level
   *     `mergeTotalExprs`/`mergePartialExprs` (exposed for TransformMapToMapRule's lazy fallback handling),
   *   - `.log` becomes `.logInfo`, `upcastToExprOf` becomes `upcast`, `Type.Tuple2` becomes `ScalaType.Tuple2`,

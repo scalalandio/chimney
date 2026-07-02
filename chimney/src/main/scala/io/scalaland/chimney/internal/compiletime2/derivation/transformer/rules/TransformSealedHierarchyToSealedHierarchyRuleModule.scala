@@ -8,7 +8,8 @@ import io.scalaland.chimney.internal.compiletime2.DerivationResult
 import io.scalaland.chimney.internal.compiletime2.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformSealedHierarchyToSealedHierarchyRuleModule`.
+/** Hearth-based port of
+  * `...compiletime.derivation.transformer.rules.TransformSealedHierarchyToSealedHierarchyRuleModule`.
   *
   * Differences vs the old version:
   *   - macro-commons' `Enum`/`Enum.Element` view is renamed `SealedEnum`/`SealedEnum.Element` (see

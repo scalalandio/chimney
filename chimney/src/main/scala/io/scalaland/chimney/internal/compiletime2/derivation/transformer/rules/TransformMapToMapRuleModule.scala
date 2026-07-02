@@ -21,10 +21,10 @@ import scala.collection.compat.Factory
   *     IterableToIterable module) inside `map2` instead of the old `DerivationResult`-level `mergeTotal`/`mergePartial`
   *     (same sequential `map2` evaluation and error semantics),
   *   - `ExprPromise` pairs + `fulfilAsLambda2(...).tupled` become a single `LambdaBuilder.of2` whose `traverse` runs
-  *     both key/value derivations `parTuple`d (same both-run + error-aggregation semantics, same generated lambda);
-  *     the tuple+index variant (`Expr.Function2.instance[(FromK, FromV), Int, ...]` with `fulfilAsVal` re-binding)
-  *     becomes `LambdaBuilder.of2[(FromK, FromV), Int]` with `ValDefs.createVal(...).traverse` for the
-  *     `val key = pair._1` / `val value = pair._2` bindings (same generated code),
+  *     both key/value derivations `parTuple`d (same both-run + error-aggregation semantics, same generated lambda); the
+  *     tuple+index variant (`Expr.Function2.instance[(FromK, FromV), Int, ...]` with `fulfilAsVal` re-binding) becomes
+  *     `LambdaBuilder.of2[(FromK, FromV), Int]` with `ValDefs.createVal(...).traverse` for the `val key = pair._1` /
+  *     `val value = pair._2` bindings (same generated code),
   *   - the `displayMacrosLogging` debug `println` now prints a lazy `DerivationResult` (opaque `MIO` toString) instead
   *     of the old computed value,
   *   - `.log` becomes `.logInfo`, `upcastToExprOf` becomes `upcast`, `Type.Tuple2` becomes `ScalaType.Tuple2`,

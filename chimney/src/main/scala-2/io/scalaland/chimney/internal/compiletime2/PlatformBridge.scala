@@ -26,4 +26,40 @@ abstract private[compiletime2] class PlatformBridge(val c: scala.reflect.macros.
     val applied = appliedType(underlying.typeConstructor, leading ++ underlying.typeArgs.drop(leading.size))
     internal.existentialAbstraction(quantified, applied)
   }
+
+  /** macro-commons `Expr.nowarn` (Scala 2) - Hearth has no annotation-attaching API, so the old quasiquote-based
+    * implementation lives here (see [[MacroCommonsCompat.nowarnExpr]]).
+    */
+  override protected def nowarnExpr[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A] = {
+    import c.universe.*
+    val name = c.internal.reificationSupport.freshTermName("nowarnresult$macro$")
+    c.Expr[A](
+      warnings.fold(
+        q"""
+        @ _root_.scala.annotation.nowarn
+        val $name = $expr
+        $name
+        """
+      ) { msg =>
+        q"""
+        @ _root_.scala.annotation.nowarn($msg)
+        val $name = $expr
+        $name
+        """
+      }
+    )
+  }
+
+  /** macro-commons `Expr.SuppressWarnings` (Scala 2) - see [[nowarnExpr]]. */
+  override protected def suppressWarningsExpr[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A] = {
+    import c.universe.*
+    val name = c.internal.reificationSupport.freshTermName("suppresswarningsresult$macro$")
+    c.Expr[A](
+      q"""
+      @ _root_.java.lang.SuppressWarnings(_root_.scala.Array(..$warnings))
+      val $name = $expr
+      $name
+      """
+    )
+  }
 }

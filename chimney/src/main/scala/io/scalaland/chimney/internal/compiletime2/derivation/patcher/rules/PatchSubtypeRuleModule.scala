@@ -1,0 +1,27 @@
+package io.scalaland.chimney.internal.compiletime2.derivation.patcher.rules
+
+import io.scalaland.chimney.internal.compiletime2.DerivationResult
+import io.scalaland.chimney.internal.compiletime2.derivation.patcher.Derivation
+
+/** Hearth-based port of `...compiletime.derivation.patcher.rules.PatchSubtypeRuleModule` - 1:1 copy
+  * (`upcastToExprOf[To]` becomes Hearth's `upcast[To]`; the inner object keeps its old - `Module`-suffixed - name).
+  */
+private[compiletime2] trait PatchSubtypeRuleModule { this: Derivation & hearth.MacroCommons =>
+
+  protected object PatchSubtypeRuleModule extends Rule("SubtypesPatch") {
+
+    def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+      if (Type[From] <:< Type[To]) {
+        if (ctx.config.areLocalFlagsAndOverridesEmpty && ctx.config.filterCurrentOverridesForFallbacks.isEmpty)
+          transformByUpcasting[From, To]
+        else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
+      } else DerivationResult.attemptNextRule
+
+    private def transformByUpcasting[From, To](implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[Rule.ExpansionResult[To]] =
+      // We're constructing:
+      // '{ ${ src } : $To } }
+      DerivationResult.expandedTotal(ctx.src.upcast[To])
+  }
+}
