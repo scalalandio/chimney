@@ -12,8 +12,8 @@ import io.scalaland.chimney.internal.compiletime2.derivation.transformer.rules.T
 
 /** Hearth-based port of `...compiletime.derivation.patcher.rules.PatchProductWithProductRuleModule` - 1:1 copy
   * (`errors.asVector` classifies the raw MIO `Throwable`s back into `DerivationError`s; `DerivationErrors(head, tail)`
-  * becomes the vararg-splatted `DerivationErrors(head, tail*)`; MIO's `recoverWith` takes a `PartialFunction`, to
-  * which the old total-lambda literal adapts with identical semantics).
+  * becomes the vararg-splatted `DerivationErrors(head, tail*)`; MIO's `recoverWith` takes a `PartialFunction`, to which
+  * the old total-lambda literal adapts with identical semantics).
   */
 private[compiletime2] trait PatchProductWithProductRuleModule {
   this: Derivation & TransformProductToProductRuleModule & hearth.MacroCommons =>

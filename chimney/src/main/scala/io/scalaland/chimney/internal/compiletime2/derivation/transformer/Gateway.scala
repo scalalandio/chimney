@@ -17,9 +17,8 @@ import io.scalaland.chimney.partial
   *     where [[GatewayCommons]] catches fatal errors instead,
   *   - `Expr.block` becomes the [[io.scalaland.chimney.internal.compiletime2.MacroCommonsCompat.blockExpr]] compat
   *     helper (pairwise-nested blocks, semantically identical),
-  *   - `DerivationResult.direct`+`await` stays (now backed by MIO's `DirectStyle`) - `ChimneyExpr.*.instance` take
-  *     pure `Expr => Expr` functions, so the effect must be unwrapped inside the generated-class body, exactly like
-  *     before.
+  *   - `DerivationResult.direct`+`await` stays (now backed by MIO's `DirectStyle`) - `ChimneyExpr.*.instance` take pure
+  *     `Expr => Expr` functions, so the effect must be unwrapped inside the generated-class body, exactly like before.
   */
 private[compiletime2] trait Gateway extends GatewayCommons {
   this: Derivation & hearth.MacroCommons & hearth.std.StdExtensions =>

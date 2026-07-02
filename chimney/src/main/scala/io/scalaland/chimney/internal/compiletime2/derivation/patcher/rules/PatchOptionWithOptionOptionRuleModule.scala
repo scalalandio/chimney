@@ -8,8 +8,8 @@ import io.scalaland.chimney.internal.compiletime2.derivation.patcher.Derivation
   *
   * Differences vs the old version: `Type.Implicits` becomes `ScalaType.Implicits` (for the `Some[OptionPatch]` `Type`
   * in the `Path`), and the `DerivationResult.direct` + `Expr.Function1.instance` + `await(...)` protocol becomes
-  * `LambdaBuilder.of1[OptionPatch]().traverse(...)` + `.build` (see
-  * [[PatchOptionWithNonOptionRuleModule]] for the rationale).
+  * `LambdaBuilder.of1[OptionPatch]().traverse(...)` + `.build` (see [[PatchOptionWithNonOptionRuleModule]] for the
+  * rationale).
   */
 private[compiletime2] trait PatchOptionWithOptionOptionRuleModule { this: Derivation & hearth.MacroCommons =>
 

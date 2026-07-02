@@ -7,8 +7,8 @@ import io.scalaland.chimney.internal.compiletime2.derivation.patcher.Derivation
 /** Hearth-based port of `...compiletime.derivation.patcher.rules.PatchOptionWithNonOptionRuleModule`.
   *
   * Differences vs the old version: the `DerivationResult.direct` + `Expr.Function1.instance` + `await(...)` protocol
-  * becomes `LambdaBuilder.of1[InnerPatch]().traverse(...)` + `.build` - the recursive derivation runs once, outside
-  * the lambda body, with identical error/log propagation (the lambda is passed to the runtime `OptionalValue.fold`
+  * becomes `LambdaBuilder.of1[InnerPatch]().traverse(...)` + `.build` - the recursive derivation runs once, outside the
+  * lambda body, with identical error/log propagation (the lambda is passed to the runtime `OptionalValue.fold`
   * iteration helper - a legitimate `LambdaBuilder` use).
   */
 private[compiletime2] trait PatchOptionWithNonOptionRuleModule { this: Derivation & hearth.MacroCommons =>
