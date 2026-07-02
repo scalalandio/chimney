@@ -38,6 +38,51 @@ private[compiletime2] trait ScalaStdCompat { this: hearth.MacroCommons =>
   private lazy val eitherOfAny: Type[scala.Either[Any, Any]] = Type.of[scala.Either[Any, Any]]
   private lazy val leftOfAny: Type[scala.Left[Any, Any]] = Type.of[scala.Left[Any, Any]]
   private lazy val rightOfAny: Type[scala.Right[Any, Any]] = Type.of[scala.Right[Any, Any]]
+  private lazy val tuple2Ctor: Type.Ctor2[scala.Tuple2] =
+    Type.Ctor2.fromUntyped[scala.Tuple2](Type.Ctor2.of[scala.Tuple2].asUntyped)
+  private lazy val iteratorCtor: Type.Ctor1[scala.collection.Iterator] =
+    Type.Ctor1.fromUntyped[scala.collection.Iterator](Type.Ctor1.of[scala.collection.Iterator].asUntyped)
+  private lazy val factoryCtor: Type.Ctor2[scala.collection.Factory] =
+    Type.Ctor2.fromUntyped[scala.collection.Factory](Type.Ctor2.of[scala.collection.Factory].asUntyped)
+  private lazy val anyType: Type[scala.Any] = Type.of[scala.Any]
+  private lazy val intType: Type[scala.Int] = Type.of[scala.Int]
+  private lazy val unitType: Type[scala.Unit] = Type.of[scala.Unit]
+  private lazy val nullType: Type[scala.Null] = Type.of[scala.Null]
+  private lazy val nullExprCompat: Expr[scala.Null] = Expr.NullExprCodec.toExpr(null)
+
+  // Cross-quotes helper defs for the `ScalaExpr.Iterator`/`Tuple2`/`Function2` modules below - hoisted to the
+  // (unshadowed) trait level like everything above (inside e.g. `object Iterator` the bare name `Iterator` that the
+  // generated code may reference would resolve to the module itself - the same trap as GOTCHA above).
+  private def iteratorMapCompat[A: Type, B: Type](
+      it: Expr[scala.collection.Iterator[A]],
+      f: Expr[A => B]
+  ): Expr[scala.collection.Iterator[B]] = Expr.quote {
+    Expr.splice(it).map(Expr.splice(f))
+  }
+  private def iteratorToCompat[A: Type, C: Type](
+      it: Expr[scala.collection.Iterator[A]],
+      factory: Expr[scala.collection.Factory[A, C]]
+  ): Expr[C] = Expr.quote {
+    Expr.splice(it).to(Expr.splice(factory))
+  }
+  private def iteratorZipWithIndexCompat[A: Type](
+      it: Expr[scala.collection.Iterator[A]]
+  ): Expr[scala.collection.Iterator[(A, scala.Int)]] = Expr.quote {
+    Expr.splice(it).zipWithIndex
+  }
+  private def iteratorConcatCompat[A: Type](
+      it: Expr[scala.collection.Iterator[A]],
+      it2: Expr[scala.collection.Iterator[A]]
+  ): Expr[scala.collection.Iterator[A]] = Expr.quote {
+    Expr.splice(it) ++ Expr.splice(it2)
+  }
+  private def tuple2ApplyCompat[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[(A, B)] = Expr.quote {
+    (Expr.splice(a), Expr.splice(b))
+  }
+  private def function2TupledCompat[A: Type, B: Type, C: Type](f: Expr[(A, B) => C]): Expr[((A, B)) => C] =
+    Expr.quote {
+      Expr.splice(f).tupled
+    }
 
   protected object ScalaType {
 
@@ -80,6 +125,26 @@ private[compiletime2] trait ScalaStdCompat { this: hearth.MacroCommons =>
       }
     }
 
+    /** macro-commons `Type.Tuple2`. */
+    object Tuple2 {
+
+      def apply[A: Type, B: Type]: Type[(A, B)] = tuple2Ctor[A, B]
+      def unapply[A](A: Type[A]): scala.Option[(??, ??)] = tuple2Ctor.unapply(A)
+    }
+
+    /** macro-commons `Type.Iterator`. */
+    object Iterator {
+
+      def apply[A: Type]: Type[scala.collection.Iterator[A]] = iteratorCtor[A]
+      def unapply[A](A: Type[A]): scala.Option[??] = iteratorCtor.unapply(A)
+    }
+
+    /** macro-commons `Type.Factory`. */
+    object Factory {
+
+      def apply[A: Type, C: Type]: Type[scala.collection.Factory[A, C]] = factoryCtor[A, C]
+    }
+
     /** macro-commons `Type.Implicits` subset needed by the rules (explicit import, like the original). */
     object Implicits {
 
@@ -92,6 +157,15 @@ private[compiletime2] trait ScalaStdCompat { this: hearth.MacroCommons =>
       implicit def RightType[L: Type, R: Type]: Type[scala.Right[L, R]] = Either.Right[L, R]
 
       implicit def Function1Type[A: Type, B: Type]: Type[A => B] = Type.of[A => B]
+
+      implicit def Tuple2Type[A: Type, B: Type]: Type[(A, B)] = Tuple2[A, B]
+      implicit def IteratorType[A: Type]: Type[scala.collection.Iterator[A]] = Iterator[A]
+      implicit def FactoryType[A: Type, C: Type]: Type[scala.collection.Factory[A, C]] = Factory[A, C]
+
+      implicit def AnyType: Type[scala.Any] = anyType
+      implicit def IntType: Type[scala.Int] = intType
+      implicit def UnitType: Type[scala.Unit] = unitType
+      implicit def NullType: Type[scala.Null] = nullType
     }
   }
 
@@ -158,6 +232,38 @@ private[compiletime2] trait ScalaStdCompat { this: hearth.MacroCommons =>
         Expr.splice(fn).apply(Expr.splice(a))
       }
     }
+
+    /** macro-commons `Expr.Function2.tupled` (`.instance` is replaced by `LambdaBuilder.of2`). */
+    object Function2 {
+      def tupled[A: Type, B: Type, C: Type](fn: Expr[(A, B) => C]): Expr[((A, B)) => C] = function2TupledCompat(fn)
+    }
+
+    /** macro-commons `Expr.Null`. */
+    def Null: Expr[scala.Null] = nullExprCompat
+
+    /** macro-commons `Expr.Tuple2.apply`. */
+    object Tuple2 {
+      def apply[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[(A, B)] = tuple2ApplyCompat(a, b)
+    }
+
+    /** macro-commons `Expr.Iterator` module subset used by the rules. */
+    object Iterator {
+      def map[A: Type, B: Type](it: Expr[scala.collection.Iterator[A]])(
+          f: Expr[A => B]
+      ): Expr[scala.collection.Iterator[B]] = iteratorMapCompat(it, f)
+
+      def to[A: Type, C: Type](it: Expr[scala.collection.Iterator[A]])(
+          factory: Expr[scala.collection.Factory[A, C]]
+      ): Expr[C] = iteratorToCompat(it, factory)
+
+      def zipWithIndex[A: Type](it: Expr[scala.collection.Iterator[A]]): Expr[scala.collection.Iterator[(A, Int)]] =
+        iteratorZipWithIndexCompat(it)
+
+      def concat[A: Type](
+          it: Expr[scala.collection.Iterator[A]],
+          it2: Expr[scala.collection.Iterator[A]]
+      ): Expr[scala.collection.Iterator[A]] = iteratorConcatCompat(it, it2)
+    }
   }
 
   /** macro-commons `Function1Ops.apply` counterpart. */
@@ -183,5 +289,23 @@ private[compiletime2] trait ScalaStdCompat { this: hearth.MacroCommons =>
   implicit final protected class ScalaRightExprOps[L: Type, R: Type](private val right: Expr[scala.Right[L, R]]) {
 
     def value: Expr[R] = ScalaExpr.Either.Right.value(right)
+  }
+
+  /** macro-commons `Function2Ops.tupled` counterpart. */
+  implicit final protected class ScalaFunction2ExprOps[A: Type, B: Type, C: Type](
+      private val fn: Expr[(A, B) => C]
+  ) {
+
+    def tupled: Expr[((A, B)) => C] = ScalaExpr.Function2.tupled(fn)
+  }
+
+  /** macro-commons `IteratorOps` counterpart (subset used by the rules). */
+  implicit final protected class ScalaIteratorExprOps[A: Type](private val it: Expr[scala.collection.Iterator[A]]) {
+
+    def map[B: Type](f: Expr[A => B]): Expr[scala.collection.Iterator[B]] = ScalaExpr.Iterator.map(it)(f)
+    def to[C: Type](factory: Expr[scala.collection.Factory[A, C]]): Expr[C] = ScalaExpr.Iterator.to(it)(factory)
+    def zipWithIndex: Expr[scala.collection.Iterator[(A, Int)]] = ScalaExpr.Iterator.zipWithIndex(it)
+    def concat(it2: Expr[scala.collection.Iterator[A]]): Expr[scala.collection.Iterator[A]] =
+      ScalaExpr.Iterator.concat(it, it2)
   }
 }

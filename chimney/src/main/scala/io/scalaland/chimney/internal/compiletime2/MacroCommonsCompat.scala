@@ -29,6 +29,30 @@ private[compiletime2] trait MacroCommonsCompat { this: hearth.MacroCommons =>
       Expr.splice(expr).asInstanceOf[B]
     }
 
+  /** macro-commons `Expr.ifElse[A](cond)(ifTrue)(ifFalse)` counterpart. */
+  protected def ifElseExpr[A: Type](cond: Expr[Boolean])(ifTrue: Expr[A])(ifFalse: Expr[A]): Expr[A] =
+    Expr.quote {
+      if (Expr.splice(cond)) Expr.splice(ifTrue) else Expr.splice(ifFalse)
+    }
+
+  /** macro-commons `Expr.block(statements, expr)` counterpart.
+    *
+    * Nests pairwise (`{ s1; { s2; expr } }`) instead of emitting one flat block - semantically identical.
+    */
+  protected def blockExpr[A: Type](statements: List[Expr[Unit]], expr: Expr[A]): Expr[A] =
+    statements.foldRight(expr) { (statement, acc) =>
+      Expr.quote {
+        Expr.splice(statement)
+        Expr.splice(acc)
+      }
+    }
+
+  /** macro-commons `expr eqExpr Expr.Null` counterpart (the only `eqExpr` shape the rules use). */
+  protected def isNullExpr[A: Type](expr: Expr[A]): Expr[Boolean] =
+    Expr.quote {
+      Expr.splice(expr) == null
+    }
+
   /** macro-commons `ExprOps.asInstanceOfExpr[B]` counterpart. */
   implicit final protected class CompatExprOps[A](private val expr: Expr[A]) {
 

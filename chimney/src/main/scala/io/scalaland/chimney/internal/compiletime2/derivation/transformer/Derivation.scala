@@ -9,34 +9,11 @@ import io.scalaland.chimney.internal.compiletime2.{ChimneyDefinitions, Derivatio
   *     became part of the compiletime2 foundation),
   *   - the rule modules are mixed in HERE instead of in the per-platform `DerivationPlatform`s (they are shared code
   *     now; the old platform division only existed for quasiquotes-vs-quotes implementations),
-  *   - the self-type mirrors [[ChimneyDefinitions]]'s (the cake is completed by the platform bridges).
-  *
-  * TODO(hearth-migration): once ALL rules are ported (TransformMapToMapRule, TransformIterableToIterableRule, the full
-  * TransformProductToProductRule and TransformSealedHierarchyToSealedHierarchyRule are still missing), define
-  * `rulesAvailableForPlatform` here (it is shared now; both old platforms listed the same rules) as:
-  * {{{
-  * override protected val rulesAvailableForPlatform: List[Rule] = List(
-  *   TransformImplicitRule,
-  *   TransformImplicitPartialFallbackToTotalRule,
-  *   TransformImplicitOuterTransformerRule,
-  *   TransformImplicitConversionRule,
-  *   TransformSubtypesRule,
-  *   TransformTypeConstraintRule,
-  *   TransformToSingletonRule,
-  *   TransformValueClassToValueClassRule,
-  *   TransformValueClassToTypeRule,
-  *   TransformTypeToValueClassRule,
-  *   TransformOptionToOptionRule,
-  *   TransformPartialOptionToNonOptionRule, // NB: the old Scala 2 platform ordered TransformToOptionRule BEFORE
-  *   TransformToOptionRule,                 // this one; their conditions are disjoint (target optional vs target
-  *                                          // non-optional), so the Scala 3 order is used for both platforms.
-  *   TransformEitherToEitherRule,
-  *   TransformMapToMapRule,
-  *   TransformIterableToIterableRule,
-  *   TransformProductToProductRule,
-  *   TransformSealedHierarchyToSealedHierarchyRule
-  * )
-  * }}}
+  *   - the self-type mirrors [[ChimneyDefinitions]]'s (the cake is completed by the platform bridges),
+  *   - `rulesAvailableForPlatform` is defined HERE, once, in shared code (the old per-platform lists were identical
+  *     except for the TransformPartialOptionToNonOptionRule/TransformToOptionRule order - their conditions are disjoint
+  *     at that pipeline position (target optional vs target non-optional), so the old Scala 3 order is used for both
+  *     platforms).
   */
 private[compiletime2] trait Derivation
     extends ChimneyDefinitions
@@ -65,8 +42,33 @@ private[compiletime2] trait Derivation
     with rules.TransformPartialOptionToNonOptionRuleModule
     with rules.TransformToOptionRuleModule
     with rules.TransformEitherToEitherRuleModule
-    with rules.TransformProductToProductRuleModule {
+    with rules.TransformMapToMapRuleModule
+    with rules.TransformIterableToIterableRuleModule
+    with rules.TransformProductToProductRuleModule
+    with rules.TransformSealedHierarchyToSealedHierarchyRuleModule {
   this: hearth.MacroCommons & hearth.std.StdExtensions =>
+
+  /** The old per-platform `DerivationPlatform.rulesAvailableForPlatform`, now shared (see the trait's ScalaDoc). */
+  override protected val rulesAvailableForPlatform: List[Rule] = List(
+    TransformImplicitRule,
+    TransformImplicitPartialFallbackToTotalRule,
+    TransformImplicitOuterTransformerRule,
+    TransformImplicitConversionRule,
+    TransformSubtypesRule,
+    TransformTypeConstraintRule,
+    TransformToSingletonRule,
+    TransformValueClassToValueClassRule,
+    TransformValueClassToTypeRule,
+    TransformTypeToValueClassRule,
+    TransformOptionToOptionRule,
+    TransformPartialOptionToNonOptionRule,
+    TransformToOptionRule,
+    TransformEitherToEitherRule,
+    TransformMapToMapRule,
+    TransformIterableToIterableRule,
+    TransformProductToProductRule,
+    TransformSealedHierarchyToSealedHierarchyRule
+  )
 
   /** Intended use case: starting recursive derivation from Gateway */
   final protected def deriveTransformationResultExpr[From, To](implicit

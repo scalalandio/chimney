@@ -163,5 +163,20 @@ private[compiletime2] trait TransformationRules { this: Derivation & hearth.Macr
     def ensurePartial: LambdaBuilder[From, Expr[partial.Result[To]]] = builder.map(_.ensurePartial)
   }
 
+  /** [[TransformationExprBuilderOps]] counterpart for `MatchCase` (the old code used `ExprPromise` for both lambdas and
+    * pattern-match cases; the SealedHierarchy rule needs the same folding over `MatchCase`).
+    */
+  implicit final class TransformationExprMatchCaseOps[To](matchCase: MatchCase[TransformationExpr[To]]) {
+
+    def exprPartition: Either[MatchCase[Expr[To]], MatchCase[Expr[partial.Result[To]]]] =
+      matchCase.partition(_.toEither)
+
+    def isTotal: Boolean = exprPartition.isLeft
+    def isPartial: Boolean = exprPartition.isRight
+
+    def ensureTotal: MatchCase[Expr[To]] = matchCase.map(_.ensureTotal)
+    def ensurePartial: MatchCase[Expr[partial.Result[To]]] = matchCase.map(_.ensurePartial)
+  }
+
   protected val rulesAvailableForPlatform: List[Rule]
 }

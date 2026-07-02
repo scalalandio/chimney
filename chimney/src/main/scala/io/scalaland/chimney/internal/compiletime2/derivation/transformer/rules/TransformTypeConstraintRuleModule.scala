@@ -6,8 +6,8 @@ import io.scalaland.chimney.internal.compiletime2.derivation.transformer.Derivat
 /** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformTypeConstraintRuleModule`.
   *
   * Differences vs the old version:
-  *   - `Type[From <:< To]`/`Type[From => To]` instances are created locally with cross-quotes `Type.of` in helpers
-  *     with their own `[From: Type, To: Type]` parameters (old code got them ambiently from `Type.Implicits`),
+  *   - `Type[From <:< To]`/`Type[From => To]` instances are created locally with cross-quotes `Type.of` in helpers with
+  *     their own `[From: Type, To: Type]` parameters (old code got them ambiently from `Type.Implicits`),
   *   - `ev.upcastToExprOf[From => To].apply(src)` becomes `ev.upcast[From => To].apply(src)` (Hearth upcast + the
   *     `ScalaFunction1ExprOps` compat ops).
   */

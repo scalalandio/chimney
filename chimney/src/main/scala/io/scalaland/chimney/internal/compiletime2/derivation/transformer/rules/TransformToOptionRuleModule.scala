@@ -5,8 +5,8 @@ import io.scalaland.chimney.internal.compiletime2.derivation.transformer.Derivat
 
 /** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformToOptionRuleModule`.
   *
-  * Differences vs the old version: `Expr.Option(...)` becomes the `ScalaExpr.Option(...)` compat helper, `.log`
-  * becomes `.logInfo`, `Type[None.type]`/`Type[Option[A]]` instances come from `ScalaType`/`ScalaType.Implicits`.
+  * Differences vs the old version: `Expr.Option(...)` becomes the `ScalaExpr.Option(...)` compat helper, `.log` becomes
+  * `.logInfo`, `Type[None.type]`/`Type[Option[A]]` instances come from `ScalaType`/`ScalaType.Implicits`.
   */
 private[compiletime2] trait TransformToOptionRuleModule {
   this: Derivation & TransformOptionToOptionRuleModule & hearth.MacroCommons =>

@@ -4,7 +4,7 @@ import io.scalaland.chimney.internal.compiletime2.DerivationResult
 import io.scalaland.chimney.internal.compiletime2.derivation.transformer.Derivation
 
 /** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformImplicitPartialFallbackToTotalRuleModule`
-  * - 1:1 copy.
+  *   - 1:1 copy.
   */
 private[compiletime2] trait TransformImplicitPartialFallbackToTotalRuleModule {
   this: Derivation & hearth.MacroCommons =>

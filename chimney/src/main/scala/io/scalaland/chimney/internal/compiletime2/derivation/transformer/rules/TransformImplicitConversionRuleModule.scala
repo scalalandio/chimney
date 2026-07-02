@@ -6,9 +6,9 @@ import io.scalaland.chimney.internal.compiletime2.derivation.transformer.Derivat
 /** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformImplicitConversionRuleModule`.
   *
   * Differences vs the old version:
-  *   - `Expr.summonImplicit[From => To]` (macro-commons `Option`-returning) goes through
-  *     [[summonImplicitConversion]], a helper with its own `[From: Type, To: Type]` parameters that also provides the
-  *     `Type[From => To]` instance (old code got it ambiently from `Type.Implicits`),
+  *   - `Expr.summonImplicit[From => To]` (macro-commons `Option`-returning) goes through [[summonImplicitConversion]],
+  *     a helper with its own `[From: Type, To: Type]` parameters that also provides the `Type[From => To]` instance
+  *     (old code got it ambiently from `Type.Implicits`),
   *   - `ev.apply(src)` uses the `ScalaFunction1ExprOps` compat ops (macro-commons `Function1Ops`).
   */
 private[compiletime2] trait TransformImplicitConversionRuleModule { this: Derivation & hearth.MacroCommons =>
