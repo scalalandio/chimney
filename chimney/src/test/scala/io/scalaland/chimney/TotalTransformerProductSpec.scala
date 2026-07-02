@@ -1453,7 +1453,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
       compileErrors("""Foo(Foo.Baz("test"), 1024).transformInto[Bar]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Foo to io.scalaland.chimney.TotalTransformerProductSpec.Bar",
         "io.scalaland.chimney.TotalTransformerProductSpec.Bar",
-        "  baz: io.scalaland.chimney.TotalTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
+        "Bar.Baz - no accessor named baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
         "  a: scala.Int - no accessor named a in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -1461,7 +1461,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
       compileErrors("""Foo(Foo.Baz("test"), 1024).into[Bar].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Foo to io.scalaland.chimney.TotalTransformerProductSpec.Bar",
         "io.scalaland.chimney.TotalTransformerProductSpec.Bar",
-        "  baz: io.scalaland.chimney.TotalTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
+        "Bar.Baz - no accessor named baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
         "  a: scala.Int - no accessor named a in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -1469,7 +1469,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
       compileErrors("""Bar(Bar.Baz("test"), 1024).transformInto[Foo]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Bar to io.scalaland.chimney.TotalTransformerProductSpec.Foo",
         "io.scalaland.chimney.TotalTransformerProductSpec.Foo",
-        "  Baz: io.scalaland.chimney.TotalTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+        "Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
         "  A: scala.Int - no accessor named A in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -1477,7 +1477,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
       compileErrors("""Bar(Bar.Baz("test"), 1024).into[Foo].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Bar to io.scalaland.chimney.TotalTransformerProductSpec.Foo",
         "io.scalaland.chimney.TotalTransformerProductSpec.Foo",
-        "  Baz: io.scalaland.chimney.TotalTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+        "Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
         "  A: scala.Int - no accessor named A in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -1493,7 +1493,8 @@ class TotalTransformerProductSpec extends ChimneySpec {
         """Foo(Foo.Baz("test"), 1024).into[Bar].enableCustomFieldNameComparison(BadNameComparison).transform"""
       )
         .check(
-          "Invalid TransformerNamesComparison type - only (case) objects are allowed, and only the ones defined as top-level or in top-level objects, got: io.scalaland.chimney.TotalTransformerProductSpec.BadNameComparison!!!"
+          "Invalid TransformerNamesComparison type - only (case) objects are allowed, and only the ones defined as top-level or in top-level objects, got: ",
+          "BadNameComparison.type!!!"
         )
     }
 
@@ -1516,10 +1517,12 @@ class TotalTransformerProductSpec extends ChimneySpec {
         .check(
           "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.FooAmbiguous to io.scalaland.chimney.TotalTransformerProductSpec.Bar",
           "io.scalaland.chimney.TotalTransformerProductSpec.Bar",
-          "  baz: io.scalaland.chimney.TotalTransformerProductSpec.Bar.Baz - can't derive transformation from baz: io.scalaland.chimney.TotalTransformerProductSpec.FooAmbiguous.Baz in source type io.scalaland.chimney.TotalTransformerProductSpec.FooAmbiguous",
+          "Bar.Baz - can't derive transformation from baz: ",
+          "FooAmbiguous.Baz in source type io.scalaland.chimney.TotalTransformerProductSpec.FooAmbiguous",
           "  field a: io.scalaland.chimney.TotalTransformerProductSpec.Bar has ambiguous matches in io.scalaland.chimney.TotalTransformerProductSpec.FooAmbiguous: A, a",
-          "io.scalaland.chimney.TotalTransformerProductSpec.Bar.Baz (transforming from: baz into: baz)",
-          "  field s: io.scalaland.chimney.TotalTransformerProductSpec.Bar.Baz has ambiguous matches in io.scalaland.chimney.TotalTransformerProductSpec.FooAmbiguous.Baz: S, s",
+          "Bar.Baz (transforming from: baz into: baz)",
+          "Bar.Baz has ambiguous matches in ",
+          "FooAmbiguous.Baz: S, s",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
     }
@@ -1585,7 +1588,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
       compileErrors("""Foo(Foo.Baz("test"), 1024).into[Bar].disableCustomFieldNameComparison.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Foo to io.scalaland.chimney.TotalTransformerProductSpec.Bar",
         "io.scalaland.chimney.TotalTransformerProductSpec.Bar",
-        "  baz: io.scalaland.chimney.TotalTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
+        "Bar.Baz - no accessor named baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
         "  a: scala.Int - no accessor named a in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
@@ -1593,7 +1596,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
       compileErrors("""Bar(Bar.Baz("test"), 1024).into[Foo].disableCustomFieldNameComparison.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Bar to io.scalaland.chimney.TotalTransformerProductSpec.Foo",
         "io.scalaland.chimney.TotalTransformerProductSpec.Foo",
-        "  Baz: io.scalaland.chimney.TotalTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+        "Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
         "  A: scala.Int - no accessor named A in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
         "Consult https://chimney.readthedocs.io for usage examples."
       )

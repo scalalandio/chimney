@@ -152,10 +152,14 @@ private[compiletime2] trait ResultOps { this: Derivation & hearth.MacroCommons =
           import fromSubtype.Underlying as FromSubtype
           Type.prettyPrint[FromSubtype]
         },
-        foundToSubtypes = foundToSubtypes.map { foundToSubtype =>
-          import foundToSubtype.Underlying as ToSubtype
-          Type.prettyPrint[ToSubtype]
-        }.sorted
+        foundToSubtypes = foundToSubtypes
+          .map { foundToSubtype =>
+            import foundToSubtype.Underlying as ToSubtype
+            Type.prettyPrint[ToSubtype]
+            // sortBy(color-stripped): Hearth's prettyPrint colors individual name segments, so sorting the raw
+            // colored strings (like the old code did with its uniformly-colored printer) would scramble the order.
+          }
+          .sortBy(s => s.replaceAll("\\[[0-9;]*m", ""))
       )
     )
 

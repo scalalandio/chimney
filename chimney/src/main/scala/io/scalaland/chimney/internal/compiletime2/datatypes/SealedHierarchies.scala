@@ -37,6 +37,31 @@ private[compiletime2] trait SealedHierarchies { this: ChimneyDefinitions & heart
     final type Elements[Of] = List[Existential.UpperBounded[Of, Element[Of, *]]]
   }
 
+  /** Extracts the flattened list of sealed subtypes / Java enum values, PRESERVING same-named entries.
+    *
+    * HEARTH 0.4.0 API-SHAPE WORKAROUND (Scala 2): Hearth's `Type.directChildren` returns a
+    * `ListMap[String, UntypedType]` keyed by the SIMPLE subtype name, and on Scala 2 it flattens nested sealed
+    * hierarchies itself - so two same-named subtypes defined in different scopes (e.g. `colors4.Green` and
+    * `colors4.Color.Green`) collapse into one entry and the ambiguity detection silently disappears. The Scala 2
+    * `PlatformBridge` overrides this with a port of the old macro-commons `extractSealedSubtypes` (symbol-based,
+    * position+name ordered, duplicates preserved). The shared default (used on Scala 3, where `directChildren` is
+    * direct-only and per-level) keeps the Hearth-based recursion.
+    */
+  protected def sealedSubtypesCompat[A: Type]: List[(String, ??<:[A])] =
+    Type[A].directChildren.fold(List.empty[(String, ??<:[A])]) {
+      _.toList.flatMap { case (name, child) =>
+        import child.Underlying as Subtype
+        // Stable singleton subtypes (case objects, Scala 3 enum case vals, Java enum values) are leaves: we must
+        // NOT recurse into them even when their type symbol points at a sealed parent (e.g. Color.Red.type's type
+        // symbol is the sealed enum class Color).
+        if (Type.isObject[Subtype] || Type.isVal[Subtype] || Type.isJavaEnumValue[Subtype]) List(name -> child)
+        else if (Type.isSealed[Subtype])
+          // The bound-widening cast is safe: Underlying <: Subtype <: A.
+          sealedSubtypesCompat[Subtype].map { case (n, s) => n -> s.asInstanceOf[??<:[A]] }
+        else List(name -> child)
+      }
+    }
+
   protected object SealedHierarchy {
 
     private type Cached[A] = Option[SealedEnum[A]]
@@ -51,20 +76,7 @@ private[compiletime2] trait SealedHierarchies { this: ChimneyDefinitions & heart
 
     def isSealed[A: Type]: Boolean = Type.isSealed[A]
 
-    private def flattenedSubtypes[A: Type]: List[(String, ??<:[A])] =
-      Type[A].directChildren.fold(List.empty[(String, ??<:[A])]) {
-        _.toList.flatMap { case (name, child) =>
-          import child.Underlying as Subtype
-          // Stable singleton subtypes (case objects, Scala 3 enum case vals, Java enum values) are leaves: we must
-          // NOT recurse into them even when their type symbol points at a sealed parent (e.g. Color.Red.type's type
-          // symbol is the sealed enum class Color).
-          if (Type.isObject[Subtype] || Type.isVal[Subtype] || Type.isJavaEnumValue[Subtype]) List(name -> child)
-          else if (Type.isSealed[Subtype])
-            // The bound-widening cast is safe: Underlying <: Subtype <: A.
-            flattenedSubtypes[Subtype].map { case (n, s) => n -> s.asInstanceOf[??<:[A]] }
-          else List(name -> child)
-        }
-      }
+    private def flattenedSubtypes[A: Type]: List[(String, ??<:[A])] = sealedSubtypesCompat[A]
 
     private def subtypesToEnum[A: Type](subtypes: List[(String, ??<:[A])]): Option[SealedEnum[A]] = {
       // `children` returns duplicates for multiply-inherited types - dedup the flattened list like macro-commons did.

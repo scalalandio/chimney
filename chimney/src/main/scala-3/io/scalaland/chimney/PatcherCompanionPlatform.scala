@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
+import io.scalaland.chimney.internal.compiletime2.derivation.patcher.PatcherMacros
 
 private[chimney] trait PatcherCompanionPlatform { this: Patcher.type =>
 

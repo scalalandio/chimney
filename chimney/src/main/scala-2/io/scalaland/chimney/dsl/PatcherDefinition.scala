@@ -1,8 +1,8 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.Patcher
-import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
-import io.scalaland.chimney.internal.compiletime.dsl.PatcherDefinitionMacros
+import io.scalaland.chimney.internal.compiletime2.derivation.patcher.PatcherMacros
+import io.scalaland.chimney.internal.compiletime2.dsl.PatcherDefinitionMacros
 import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, Path, WithRuntimeDataStore}
 
 import scala.language.experimental.macros

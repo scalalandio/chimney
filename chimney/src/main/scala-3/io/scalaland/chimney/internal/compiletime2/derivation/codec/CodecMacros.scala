@@ -10,13 +10,13 @@ import scala.quoted.{Expr, Quotes, Type}
 
 /** Hearth-based port of `...compiletime.derivation.codec.CodecMacros` (Scala 3).
   *
-  * Public methods (names, signatures, type params) of both the class and the companion mirror the old ones 1:1 so
-  * that the binding sites in `io.scalaland.chimney.dsl.*` can flip packages mechanically in the next phase.
+  * Public methods (names, signatures, type params) of both the class and the companion mirror the old ones 1:1 so that
+  * the binding sites in `io.scalaland.chimney.dsl.*` can flip packages mechanically in the next phase.
   *
   * Differences vs the old version: same as
-  * [[io.scalaland.chimney.internal.compiletime2.derivation.transformer.TransformerMacros]] - extends
-  * [[PlatformBridge]] + the now-shared transformer `Derivation`/`Gateway` instead of the old per-platform
-  * `DerivationPlatform`, `Expr.block` -> `blockExpr`, `?<`/`.as_?<` -> `??<:`/`.as_??<:`.
+  * [[io.scalaland.chimney.internal.compiletime2.derivation.transformer.TransformerMacros]] - extends [[PlatformBridge]]
+  * + the now-shared transformer `Derivation`/`Gateway` instead of the old per-platform `DerivationPlatform`,
+  * `Expr.block` -> `blockExpr`, `?<`/`.as_?<` -> `??<:`/`.as_??<:`.
   */
 final class CodecMacros(q: Quotes) extends PlatformBridge(q) with Derivation with Gateway {
 

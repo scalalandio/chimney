@@ -21,7 +21,10 @@ import io.scalaland.chimney.dsl.UnmatchedSubtypePolicy
   */
 private[compiletime2] trait Configurations { this: Derivation & hearth.MacroCommons =>
 
-  implicit private lazy val AnyType: Type[Any] = Type.of[Any]
+  // Delegates to ScalaStdCompat's hoisted non-implicit `Type.of[Any]`: initializing an IMPLICIT val with a
+  // cross-quoted `Type.of` in its own scope deadlocks lazy-val init at macro runtime on Scala 3 (the Cross-Quotes
+  // plugin's implicit-`Type` detection rewrites the call into a self-reference) - see SingletonTypes.
+  implicit private lazy val AnyType: Type[Any] = ScalaType.Implicits.AnyType
   private lazy val SomeAnyType: Type[Some[Any]] = Type.of[Some[Any]]
   private lazy val LeftAnyAnyType: Type[Left[Any, Any]] = Type.of[Left[Any, Any]]
   private lazy val RightAnyAnyType: Type[Right[Any, Any]] = Type.of[Right[Any, Any]]
@@ -911,10 +914,14 @@ private[compiletime2] trait Configurations { this: Derivation & hearth.MacroComm
         import init.Underlying as PathType2, fieldName.Underlying as FieldName
         extractPath[PathType2].select(Type[FieldName].extractStringSingleton)
       case ChimneyType.Path.Matching(init, subtype) =>
-        import init.Underlying as PathType2, subtype.Underlying as Subtype
+        // fixJavaEnumCompat: on Scala 2 the DSL encodes Java enum values as RefinedJavaEnum[E, "Name"] markers
+        // which have to be decoded back into the instance type (old fixJavaEnum, see MacroCommonsCompat).
+        val fixedSubtype = fixJavaEnumCompat(subtype)
+        import init.Underlying as PathType2, fixedSubtype.Underlying as Subtype
         extractPath[PathType2].matching[Subtype]
       case ChimneyType.Path.SourceMatching(init, sourceSubtype) =>
-        import init.Underlying as PathType2, sourceSubtype.Underlying as SourceSubtype
+        val fixedSourceSubtype = fixJavaEnumCompat(sourceSubtype)
+        import init.Underlying as PathType2, fixedSourceSubtype.Underlying as SourceSubtype
         extractPath[PathType2].matching[SourceSubtype]
       case ChimneyType.Path.EveryItem(init) =>
         import init.Underlying as PathType2

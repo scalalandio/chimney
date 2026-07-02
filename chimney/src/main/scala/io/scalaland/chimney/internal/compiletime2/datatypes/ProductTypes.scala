@@ -114,10 +114,41 @@ private[compiletime2] trait ProductTypes { this: ChimneyDefinitions & hearth.Mac
     }
   }
 
+  /** Scala 3-only: `Some(constructor)` when `A` is the EMPTY named tuple (`NamedTuple.Empty`); `None` (default)
+    * otherwise - see the workaround note in `ProductType.parseConstructor` (overridable trait member because object
+    * members cannot be overridden by the platform bridge).
+    */
+  protected def emptyNamedTupleConstructorCompat[A: Type]: Option[Product.Constructor[A]] = None
+
+  /** Scala 3-only: named-tuple element getter. The Scala 3 bridge overrides it with macro-commons' original shape:
+    * `in.asInstanceOf[(V1, ..., Vn)]._N` for arity < 23 (nicer bytecode AND the old field labels in error messages),
+    * `productElement(idx)` + cast otherwise. The shared default uses `productElement` for every arity (never called on
+    * Scala 2 - named tuples do not exist there).
+    */
+  protected def namedTupleGetterCompat[A: Type, Elem: Type](
+      in: Expr[A],
+      idx: Int,
+      valueTypes: List[??]
+  ): Expr[Elem] = {
+    val idxExpr = Expr.IntExprCodec.toExpr(idx)
+    Expr.quote {
+      Expr.splice(in).asInstanceOf[scala.Product].productElement(Expr.splice(idxExpr)).asInstanceOf[Elem]
+    }
+  }
+
+  /** Scala 3-only: constructs a named tuple of arity >= 23 (`Tuple.fromIArray(...)`) - see the workaround note in
+    * `ProductType.parseConstructor`. Never called on Scala 2 (named tuples do not exist there).
+    */
+  protected def tupleXXLConstructorCompat[A: Type](args: List[ExistentialExpr]): Expr[A] =
+    // $COVERAGE-OFF$should never happen - named tuples are Scala 3-only and the bridge overrides this
+    assertionFailed(s"Cannot construct 23+-arity named tuple ${Type.prettyPrint[A]} on this platform")
+  // $COVERAGE-ON$
+
   protected object ProductType {
 
     private[datatypes] lazy val AnyType: Type[Any] = Type.of[Any]
     private lazy val StringType: Type[String] = Type.of[String]
+    private lazy val UnitType: Type[Unit] = Type.of[Unit]
     private lazy val BooleanType: Type[Boolean] = Type.of[Boolean]
     // Wildcards inside cross-quotes `Type.of` are only safe in members without type parameters (Cross-Quotes'
     // best-effort implicit-Type resolution is a documented limitation, see
@@ -173,39 +204,70 @@ private[compiletime2] trait ProductTypes { this: ChimneyDefinitions & hearth.Mac
       case _                               => false
     }
 
-    /** Any class with a public constructor... explicitly excluding: primitives, String and Java enums */
-    def isPOJO[A](implicit A: Type[A]): Boolean =
-      !Type.isPrimitive[A] && !(A <:< StringType) && Type.isClass[A] && !Type.isAbstract[A] &&
+    /** Dealiases the type before symbol-based Hearth lookups.
+      *
+      * HEARTH 0.4.0 ISSUE WORKAROUND: Hearth's `primaryConstructor`/`constructors`/flag checks read symbols off the
+      * type AS GIVEN - on Scala 3 an `export`-created type alias (e.g. `export Inner.Foo`) then reports no
+      * constructors/flags at all and the type fails to parse as a product (issue 758 regression). Scala 2's
+      * `typeSymbol` auto-dealiases, so this is a no-op there.
+      */
+    private def dealiasedType[A](A: Type[A]): Type[A] =
+      UntypedType.toTyped[A](UntypedType.dealias(UntypedType.fromTyped[A](using A)))
+
+    /** Any class with a public constructor... explicitly excluding: primitives, String and Java enums.
+      *
+      * `Unit` is excluded explicitly: scalac's `Symbol.isPrimitive` (used by macro-commons) counts `Unit` as a
+      * primitive, while Hearth's `Type.isPrimitive` only counts the 8 JVM value types - without this check `Unit` would
+      * parse as a POJO and the engine would emit uncompilable `new Unit()`.
+      */
+    def isPOJO[A](implicit A0: Type[A]): Boolean = isPOJOImpl(dealiasedType(A0))
+    private def isPOJOImpl[A](implicit A: Type[A]): Boolean =
+      !Type.isPrimitive[A] && !(A =:= UnitType) && !(A <:< StringType) && Type.isClass[A] && !Type.isAbstract[A] &&
         unambiguousConstructorOf[A].isDefined
 
     /** Class defined with "case class" */
-    def isCaseClass[A](implicit A: Type[A]): Boolean =
+    def isCaseClass[A](implicit A0: Type[A]): Boolean = isCaseClassImpl(dealiasedType(A0))
+    private def isCaseClassImpl[A](implicit A: Type[A]): Boolean =
       Type.isCaseClass[A] && !Type.isAbstract[A] && Type[A].primaryConstructor.exists(_.isAvailable(Everywhere))
 
     /** Class defined with "case object" */
-    def isCaseObject[A](implicit A: Type[A]): Boolean =
+    def isCaseObject[A](implicit A0: Type[A]): Boolean = isCaseObjectImpl(dealiasedType(A0))
+    private def isCaseObjectImpl[A](implicit A: Type[A]): Boolean =
       Type.isCaseObject[A] && Type.isAvailable[A](Everywhere)
 
-    /** Scala 3 enum's case without parameters (a "val" under the hood, NOT an "object") */
-    def isCaseVal[A](implicit A: Type[A]): Boolean =
-      Type.isCaseVal[A] && Type.isAvailable[A](Everywhere)
+    /** Scala 3 enum's case without parameters (a "val" under the hood, NOT an "object").
+      *
+      * isEnumCaseValCompat: Hearth 0.4.0's `Type.isCaseVal` misses parameterless enum cases (their `Case` flag lives on
+      * the TERM symbol, but Hearth checks the TYPE symbol which is the enum class) - see MacroCommonsCompat.
+      */
+    def isCaseVal[A](implicit A0: Type[A]): Boolean = isCaseValImpl(dealiasedType(A0))
+    private def isCaseValImpl[A](implicit A: Type[A]): Boolean =
+      (Type.isCaseVal[A] || isEnumCaseValCompat[A]) && Type.isAvailable[A](Everywhere)
 
-    /** Java enum value - not the abstract enum type, but the concrete enum value */
-    def isJavaEnumValue[A](implicit A: Type[A]): Boolean =
-      (A <:< JavaLangEnumType) && !Type.isAbstract[A]
+    /** Java enum value - not the abstract enum type, but the concrete enum value.
+      *
+      * isJavaEnumValueTermCompat: on Scala 3 a plain Java enum CLASS is `final` (not abstract), so it also satisfies
+      * `<:< java.lang.Enum && !abstract` - it must NOT be classified as a value (targets that are the enum class itself
+      * have to fall through ToSingleton/ProductToProduct to the sealed-hierarchy rule).
+      */
+    def isJavaEnumValue[A](implicit A0: Type[A]): Boolean = isJavaEnumValueImpl(dealiasedType(A0))
+    private def isJavaEnumValueImpl[A](implicit A: Type[A]): Boolean =
+      (A <:< JavaLangEnumType) && !Type.isAbstract[A] && isJavaEnumValueTermCompat[A]
 
     /** Any POJO with a public DEFAULT constructor... and at least 1 setter or var */
-    def isJavaBean[A](implicit A: Type[A]): Boolean =
+    def isJavaBean[A](implicit A0: Type[A]): Boolean = isJavaBeanImpl(dealiasedType(A0))
+    private def isJavaBeanImpl[A](implicit A: Type[A]): Boolean =
       isPOJO[A] && Type[A].defaultConstructor.exists(_.isAvailable(Everywhere)) && setterCandidatesOf[A].nonEmpty
 
     private type CachedExtraction[A] = Option[Product.Extraction[A]]
     private val extractionCache = new TypeCache[CachedExtraction]
-    def parseExtraction[A: Type]: Option[Product.Extraction[A]] = extractionCache(Type[A])(
+    def parseExtraction[A](implicit A0: Type[A]): Option[Product.Extraction[A]] =
+      extractionCache(A0)(parseExtractionImpl(dealiasedType(A0)))
+    private def parseExtractionImpl[A](implicit A: Type[A]): Option[Product.Extraction[A]] =
       Some(Product.Extraction(NamedTuple.unapply(Type[A]) match {
         case Some(namedTuple) => namedTupleGetters[A](namedTuple)
         case None             => methodGetters[A]
       }))
-    )
 
     private def methodGetters[A: Type]: Product.Getters[A] = {
       val candidates = (Type[A].methods: List[Method]).iterator
@@ -254,25 +316,18 @@ private[compiletime2] trait ProductTypes { this: ChimneyDefinitions & hearth.Mac
       })
     }
 
-    private def namedTupleGetters[A: Type](namedTuple: NamedTuple[A]): Product.Getters[A] =
+    private def namedTupleGetters[A: Type](namedTuple: NamedTuple[A]): Product.Getters[A] = {
+      val valueTypes: List[??] = namedTuple.fields.map(_._2)
       ListMap.from(namedTuple.fields.zipWithIndex.map { case ((name, tpe), idx) =>
         import tpe.Underlying as Elem
         name -> Existential[Product.Getter[A, *], Elem](
           Product.Getter[A, Elem](
             sourceType = Product.Getter.SourceType.ConstructorArgVal,
             isInherited = false,
-            get = (in: Expr[A]) => productElementExpr[A, Elem](in, idx)
+            get = (in: Expr[A]) => namedTupleGetterCompat[A, Elem](in, idx, valueTypes)
           )
         )
       })
-
-    // Named tuples are plain tuples at runtime - unlike macro-commons we use `productElement` for every arity,
-    // not just above 22 (semantically identical, avoids platform-specific `_N` selection trees).
-    private def productElementExpr[A: Type, Elem: Type](in: Expr[A], idx: Int): Expr[Elem] = {
-      val idxExpr = Expr.IntExprCodec.toExpr(idx)
-      Expr.quote {
-        Expr.splice(in).asInstanceOf[scala.Product].productElement(Expr.splice(idxExpr)).asInstanceOf[Elem]
-      }
     }
 
     private def setterCandidatesOf[A: Type]: List[(String, Method)] = {
@@ -300,11 +355,16 @@ private[compiletime2] trait ProductTypes { this: ChimneyDefinitions & hearth.Mac
 
     private type CachedConstructor[A] = Option[Product.Constructor[A]]
     private val constructorCache = new TypeCache[CachedConstructor]
-    def parseConstructor[A: Type]: Option[Product.Constructor[A]] = constructorCache(Type[A]) {
+    def parseConstructor[A](implicit A0: Type[A]): Option[Product.Constructor[A]] =
+      // dealiasedType: Scala 3 export aliases would otherwise report no constructors (see above).
+      constructorCache(A0)(parseConstructorImpl(dealiasedType(A0)))
+    private def parseConstructorImpl[A](implicit A: Type[A]): Option[Product.Constructor[A]] = {
       if (isCaseObject[A] || isCaseVal[A] || isJavaEnumValue[A]) {
         val singleton = SingletonValue.unapply(Type[A]).getOrElse {
           // $COVERAGE-OFF$should never happen unless we messed up
-          assertionFailed(s"Expected ${Type.prettyPrint[A]} to be a singleton (case object/case val/Java enum value)")
+          assertionFailed(
+            s"Expected ${Type.prettyPrint[A]} to be a singleton (co=${isCaseObject[A]} cv=${isCaseVal[A]} cvH=${Type.isCaseVal[A]} cvC=${isEnumCaseValCompat[A]} jev=${isJavaEnumValue[A]} abs=${Type.isAbstract[A]})"
+          )
           // $COVERAGE-ON$
         }
         Some(Product.Constructor[A](ListMap.empty, _ => singleton.singletonExpr))
@@ -378,7 +438,9 @@ private[compiletime2] trait ProductTypes { this: ChimneyDefinitions & hearth.Mac
           if (setterArguments.isEmpty) {
             newExpr
           } else {
-            ValDefs.createVal[A](newExpr, FreshName.FromType).use { exprA =>
+            // retagExprCompat: `.use` (closeScope) junk-tags its result on Scala 2, and constructor results
+            // flow into `Expr.typeOf` via TransformationExpr's implicit `Type[A]` (see MacroCommonsCompat).
+            retagExprCompat[A](ValDefs.createVal[A](newExpr, FreshName.FromType).use { exprA =>
               setterArguments.toList.foldRight(exprA) { case ((name, exprArg), acc) =>
                 val call = setterCalls(name)(exprA, exprArg)
                 Expr.quote {
@@ -386,30 +448,41 @@ private[compiletime2] trait ProductTypes { this: ChimneyDefinitions & hearth.Mac
                   Expr.splice(acc)
                 }
               }
-            }
+            })
           }
         }
 
         Some(Product.Constructor(parameters, constructor))
       } else if (Type.isNamedTuple[A]) {
-        NamedTuple.unapply(Type[A]).map { namedTuple =>
-          val ctor = namedTuple.primaryConstructor
-          val parameters: Product.Parameters = ListMap.from(ctor.totalParameters.flatten.map { case (name, param) =>
-            import param.tpe.Underlying as ParamType
-            name -> Existential[Product.Parameter, ParamType](
-              Product.Parameter[ParamType](Product.Parameter.TargetType.ConstructorParameter, defaultValue = None)
-            )
-          })
-          val constructor: Product.Arguments => Expr[A] = arguments => {
-            val (constructorArguments, _) = checkArguments[A](parameters, arguments)
-            invokeMethodChain(ctor)(None, constructorArguments).fold(
-              error => assertionFailed(s"Failed to construct named tuple ${Type.prettyPrint[A]}: $error"),
-              result => result.value.asInstanceOf[Expr[A]]
-            )
+        NamedTuple
+          .unapply(Type[A])
+          .map { namedTuple =>
+            val ctor = namedTuple.primaryConstructor
+            val parameters: Product.Parameters = ListMap.from(ctor.totalParameters.flatten.map { case (name, param) =>
+              import param.tpe.Underlying as ParamType
+              name -> Existential[Product.Parameter, ParamType](
+                Product.Parameter[ParamType](Product.Parameter.TargetType.ConstructorParameter, defaultValue = None)
+              )
+            })
+            val constructor: Product.Arguments => Expr[A] = arguments => {
+              val (constructorArguments, _) = checkArguments[A](parameters, arguments)
+              if (parameters.sizeIs >= 23) {
+                // HEARTH 0.4.0 ISSUE WORKAROUND: Hearth's synthetic named-tuple constructor emits an invalid
+                // application for TupleXXL arities ("wrong number of arguments at inlining ... expected: 0,
+                // found: 23") - build `Tuple.fromIArray(IArray(...)).asInstanceOf[A]` like macro-commons did.
+                tupleXXLConstructorCompat[A](parameters.toList.map { case (name, _) => constructorArguments(name) })
+              } else
+                invokeMethodChain(ctor)(None, constructorArguments).fold(
+                  error => assertionFailed(s"Failed to construct named tuple ${Type.prettyPrint[A]}: $error"),
+                  result => result.value.asInstanceOf[Expr[A]]
+                )
+            }
+            Product.Constructor(parameters, constructor)
           }
-          Product.Constructor(parameters, constructor)
-        }
-      } else None
+          // HEARTH 0.4.0 ISSUE WORKAROUND: Hearth's NamedTuple view does not handle the EMPTY named tuple
+          // (`NamedTuple.Empty`) - macro-commons constructed it as `EmptyTuple` directly.
+          .orElse(emptyNamedTupleConstructorCompat[A])
+      } else emptyNamedTupleConstructorCompat[A]
     }
 
     final def parse[A: Type]: Option[Product[A]] = parseExtraction[A].zip(parseConstructor[A]).headOption.map {

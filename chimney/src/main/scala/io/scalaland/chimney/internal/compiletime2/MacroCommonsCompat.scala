@@ -53,6 +53,104 @@ private[compiletime2] trait MacroCommonsCompat { this: hearth.MacroCommons =>
       Expr.splice(expr) == null
     }
 
+  /** Scala 2 workaround for Java Enums in DSL-encoded `runtime.Path` types (old
+    * `ChimneyType.platformSpecific.fixJavaEnum`).
+    *
+    * On Scala 2 the whitebox DSL macros cannot embed the Java-enum-value singleton type (e.g. `Color.Black.type`) into
+    * the refined `TransformerOverrides` type, so they encode it as
+    * `io.scalaland.chimney.internal.runtime.RefinedJavaEnum[Color, "Black"]`. When `Configurations.extractPath` parses
+    * a `Path.Matching`/`Path.SourceMatching` element it must decode that marker back into the enum instance's real
+    * type, otherwise subtype-override matching silently fails.
+    *
+    * Default is identity (Scala 3 DSL embeds real singleton types); the Scala 2 `PlatformBridge` overrides it with the
+    * port of the old platform-specific implementation.
+    */
+  protected def fixJavaEnumCompat(inst: ??): ?? = inst
+
+  /** `true` for Scala 3 `enum` parameterless cases (`case Foo` - a `case val` under the hood).
+    *
+    * HEARTH 0.4.0 ISSUE WORKAROUND: Hearth's `Type.isCaseVal` = `isVal && isCase`, where `isCase` checks the `Case`
+    * flag ONLY on the TYPE symbol - but a parameterless enum case's type symbol is the enum CLASS itself (the case's
+    * own `Case|Enum|StableRealizable` flags live on the TERM symbol), so `Type.isCaseVal` is `false` for exactly the
+    * values it is supposed to detect. The Scala 3 `PlatformBridge` overrides this with the old macro-commons formula
+    * (checks `Case|Enum` on type OR term symbol); default is `false` (Scala 2 has no case vals).
+    */
+  protected def isEnumCaseValCompat[A: Type]: Boolean = false
+
+  /** `true` when the type is backed by an actual TERM (a concrete Java enum constant), not the enum class itself.
+    *
+    * On Scala 3 a plain Java enum class is compiled `final` (NOT abstract, unlike enums with constant bodies), so the
+    * old `<:< java.lang.Enum && !abstract` value-detection also fires for the CLASS - the class must fall through the
+    * singleton/product parsing to the sealed-hierarchy rule instead. The Scala 3 `PlatformBridge` overrides this with a
+    * term-symbol check; the Scala 2 default is `true` (there Hearth counts Java enum classes as abstract, so the old
+    * formula already excludes them).
+    */
+  protected def isJavaEnumValueTermCompat[A: Type]: Boolean = true
+
+  /** Runs the thunk with Cross-Quotes' active context restored to the MACRO-ENTRY one (`Quotes` on Scala 3).
+    *
+    * HEARTH 0.4.0 ISSUE WORKAROUND (Scala 3): whole derivations that run INSIDE an `Expr.splice` (the
+    * `Transformer`/`PartialTransformer`/`Patcher` `instance` builders) execute under Cross-Quotes' `nestedCtx`.
+    * Everything they create through cross-quoted helpers (types, exprs, cached `SealedEnum`/`Product` views,
+    * trait-level lazy vals initialized on first touch) then BELONGS to that one splice evaluation - deriving a SECOND
+    * instance in the same expansion (Iso/Codec do exactly that) re-evaluates the same splice and `-Xcheck-macros`
+    * aborts with "Type created in a splice, extruded from that splice and then used in a subsequent evaluation of that
+    * same splice" / "Expression created in a splice was used outside of that splice". Restoring the entry `Quotes` for
+    * the derivation makes it behave exactly like the old engine (which had NO context switching): all
+    * definitions/types/caches are entry-scoped and legal in every splice.
+    *
+    * IMPORTANT: quote any splice-scoped parameters (e.g. `Expr.quote(src)`) BEFORE entering this wrapper. Identity on
+    * Scala 2 (no `Quotes` scoping).
+    */
+  protected def withMacroEntryCtxCompat[T](thunk: => T): T = thunk
+
+  /** Prepends a `FreshName.FromType`-named val in front of `use`'s result - a `ValDefs.createVal(...).use(...)` that is
+    * SAFE to call inside an `Expr.splice` on Scala 3.
+    *
+    * HEARTH 0.4.0 ISSUE WORKAROUND (Scala 3): Hearth's `ValDefs` is bound to the macro-entry `Quotes`, so inside an
+    * `Expr.splice` (where Cross-Quotes' `nestedCtx` switched the active `Quotes`) the created `ValDef` is owned by the
+    * ENTRY splice owner, while trees that pass through cross-quoted helpers get re-owned to the nested quote's owner
+    * (e.g. `method transform`); `ValDefs.closeScope`'s `Block.apply` then trips `-Xcheck-macros` with "Block contains
+    * definition with different owners". The Scala 3 `PlatformBridge` override builds the val under `CrossQuotes.ctx`
+    * (correct owner) and heals the body with `changeOwner`. The shared default (fine on Scala 2, where there is no
+    * owner tracking) delegates to `ValDefs`.
+    */
+  protected def prependFreshValCompat[A: Type, B: Type](value: Expr[A])(use: Expr[A] => Expr[B]): Expr[B] =
+    ValDefs.createVal[A](value, FreshName.FromType).use(use)
+
+  /** Re-attaches a precise `Type[A]` to an expression whose statically-carried type information is unreliable.
+    *
+    * HEARTH 0.4.0 ISSUE WORKAROUND (Scala 2): `ValDefs.closeScope[A]` (which backs `.use`/`.close`) has no
+    * `Type`/`WeakTypeTag` bound, so the returned `c.Expr[A](block)` gets a compiler-materialized, UNRESOLVED
+    * `WeakTypeTag[A]` (its `tpe` is literally the abstract type param `A`). The block tree is untyped, so `Expr.typeOf`
+    * falls back to that junk tag, and everything derived from it (e.g. `TransformationExpr`'s implicit `Type[A]`,
+    * `partial.Result.Value.apply[A]` type arguments) renders an unresolvable `A` in trees - "type mismatch; found:
+    * x$macro$N.type; required: A" or `scala.MatchError: WeakTypeTag[A]`.
+    *
+    * Call this on every `.use` result that can later flow into `Expr.typeOf` (via `TransformationExpr`). The shared
+    * default is identity (on Scala 3 quoted exprs always carry their real type); the Scala 2 `PlatformBridge` overrides
+    * it to `c.Expr[A](expr.tree)(Type[A])`.
+    */
+  protected def retagExprCompat[A: Type](expr: Expr[A]): Expr[A] = expr
+
+  /** Safe replacement for `list.traverse[ValDefs, B](f)`.
+    *
+    * HEARTH 0.4.0 BUG WORKAROUND: `Applicative[ValDefs].map2(fa, fb)(f)` reads its BY-NAME `fb` twice (`fb.definitions`
+    * and `fb.value`), so `List.traverse[ValDefs, _]` re-runs every per-element computation:
+    * `ValDefs.createVal/createLazy/...` mint a fresh name on each evaluation, and the tree ends up with the DEFINITION
+    * carrying name `x$macro$N` (first evaluation) while the REFERENCE carries `x$macro$N+1` (second evaluation) -
+    * generated code then fails to typecheck with "not found: value x$macro$N+1".
+    *
+    * This helper evaluates each per-element `ValDefs` exactly once (strict `map`), then folds with `map2` over
+    * already-constructed values, for which the double read of the by-name argument is harmless.
+    */
+  protected def traverseValDefsCompat[A, B](list: List[A])(f: A => ValDefs[B]): ValDefs[List[B]] = {
+    val cells: List[ValDefs[B]] = list.map(f)
+    cells.foldRight(ValDefsTraverse.pure(List.empty[B])) { (cell, acc) =>
+      ValDefsTraverse.map2(cell, acc)(_ :: _)
+    }
+  }
+
   /** macro-commons `ExprOps.asInstanceOfExpr[B]` counterpart. */
   implicit final protected class CompatExprOps[A](private val expr: Expr[A]) {
 
@@ -218,16 +316,23 @@ private[compiletime2] trait MacroCommonsCompat { this: hearth.MacroCommons =>
     * `Type.of[F[Any, ?]]` in a member without type parameters expands fine, so `ChimneyType.*.inferred` captures such
     * an example once and then replaces the leading type arguments with the actual ones.
     *
-    * The shared implementation is correct on Scala 3 (wildcard arguments survive `applyTypeArgs`); on Scala 2 it would
-    * leave the existential's quantified symbols unbound, so [[PlatformBridge]] (Scala 2) overrides it with a version
-    * that re-quantifies via `internal.existentialAbstraction`.
+    * The shared implementation applies the args to the TYPE CONSTRUCTOR (`UntypedType.typeConstructor`) - Hearth
+    * 0.4.0's `applyTypeArgs` takes the constructor itself on Scala 2 (`appliedType(_.typeConstructor, args)`) but
+    * `appliedTo`s the given type AS-IS on Scala 3, so applying to the already-applied wildcard example would silently
+    * produce a malformed type there (and every implicit search against it - e.g. the
+    * `TotalOuterTransformer`/`PartialOuterTransformer` integration summons - would just fail). On Scala 2 the result
+    * would additionally leave the existential's quantified symbols unbound, so [[PlatformBridge]] (Scala 2) overrides
+    * it with a version that re-quantifies via `internal.existentialAbstraction`.
     *
     * TODO(hearth-migration): remove once fixed upstream (report to https://github.com/kubuszok/hearth/issues).
     */
   protected def reapplyLeadingTypeArgsCompat(wildcardExample: UntypedType, leading: List[UntypedType]): UntypedType = {
     val dealiased = UntypedType.dealias(wildcardExample)
     val existingArgs = UntypedType.typeArguments(dealiased)
-    UntypedType.applyTypeArgs(dealiased, leading ++ existingArgs.drop(leading.size))
+    UntypedType.applyTypeArgs(
+      UntypedType.typeConstructor(dealiased),
+      leading ++ existingArgs.drop(leading.size)
+    )
   }
 
   // TODO(hearth-migration): macro-commons `Type.Implicits` (ambient implicit `Type`s for Int/String/Option/...) is not

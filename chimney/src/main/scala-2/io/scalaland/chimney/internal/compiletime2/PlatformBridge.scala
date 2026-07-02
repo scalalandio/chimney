@@ -27,6 +27,100 @@ abstract private[compiletime2] class PlatformBridge(val c: scala.reflect.macros.
     internal.existentialAbstraction(quantified, applied)
   }
 
+  /** Scala 2 override of `SealedHierarchies.sealedSubtypesCompat`: port of the old macro-commons
+    * `SealedHierarchiesPlatform#extractSealedSubtypes` (+ `extractJavaEnumInstances`).
+    *
+    * Hearth's `Type.directChildren` on Scala 2 returns a name-keyed `ListMap` of ALREADY-flattened subtypes, which
+    * collapses same-named subtypes from different scopes (e.g. `colors4.Green` vs `colors4.Color.Green`) and loses the
+    * ambiguity that Chimney must detect and report. This override preserves duplicates and the old position+name
+    * ordering.
+    */
+  override protected def sealedSubtypesCompat[A: Type]: List[(String, ??<:[A])] = {
+    import c.universe.*
+    val A0: c.Type = Type[A].tpe
+
+    if (A0.typeSymbol.isJavaEnum) {
+      // Java enum values are unique within the enum - name collisions are impossible here.
+      A0.companion.decls
+        .filter(_.isJavaEnum)
+        .map { termSymbol =>
+          termSymbol.name.toString -> UntypedType.toTyped[A](termSymbol.asTerm.typeSignature).as_??<:[A]
+        }
+        .toList
+    } else {
+      // Workaround for <https://issues.scala-lang.org/browse/SI-7755>
+      val _ = A0.typeSymbol.typeSignature
+
+      implicit val order: Ordering[TypeSymbol] = {
+        val o1 = Ordering
+          .fromLessThan[c.universe.Position]((a, b) => a.line < b.line || (a.line == b.line && a.column < b.column))
+          .on[TypeSymbol](_.pos)
+        // Ensure parity with Scala 3 (which works around https://github.com/scala/scala3/issues/21672 bug)
+        val o2 = Ordering[String].on[TypeSymbol](_.name.toString)
+        (a, b) => {
+          val result = o1.compare(a, b)
+          if (result != 0) result else o2.compare(a, b)
+        }
+      }
+
+      def extractRecursively(t: TypeSymbol): List[TypeSymbol] =
+        if (t.asClass.isSealed) t.asClass.knownDirectSubclasses.toList.map(_.asType).flatMap(extractRecursively)
+        else List(t)
+
+      /** Applies type arguments from supertype to subtype if there are any (old `subtypeTypeOf`). */
+      def subtypeTypeOf(subtype: TypeSymbol): c.Type = {
+        val _ = subtype.typeSignature // force initialization (SI-7755)
+        val sEta = subtype.toType.etaExpand
+        sEta.finalResultType.substituteTypes(
+          sEta.baseType(A0.typeSymbol).typeArgs.map(_.typeSymbol),
+          A0.typeArgs
+        )
+      }
+
+      // calling .distinct here as `knownDirectSubclasses` returns duplicates for multiply-inherited types
+      extractRecursively(A0.typeSymbol.asType).distinct.sorted
+        .map(typeSymbol => typeSymbol.name.toString -> UntypedType.toTyped[A](subtypeTypeOf(typeSymbol)).as_??<:[A])
+    }
+  }
+
+  /** Scala 2 override of [[MacroCommonsCompat.fixJavaEnumCompat]]: port of the old
+    * `ChimneyType.platformSpecific.fixJavaEnum` - decodes `runtime.RefinedJavaEnum[E, "Name"]` markers (created by the
+    * Scala 2 whitebox DSL macros) back into the Java enum instance's real type.
+    */
+  override protected def fixJavaEnumCompat(inst: ??): ?? = {
+    import c.universe.*
+    val instTpe = inst.Underlying.tpe.dealias
+    val refinedJavaEnumSym = symbolOf[io.scalaland.chimney.internal.runtime.RefinedJavaEnum[?, ?]]
+    if (instTpe.typeConstructor.typeSymbol == refinedJavaEnumSym) {
+      val javaEnum = instTpe.typeArgs.head
+      val instanceName = instTpe.typeArgs(1).dealias match {
+        case ConstantType(Constant(value: String)) => value
+        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
+        case other => reportError(s"Invalid RefinedJavaEnum instance name: $other!")
+        // $COVERAGE-ON$
+      }
+
+      javaEnum.companion.decls
+        .filter(_.isJavaEnum)
+        .collectFirst {
+          case sym if sym.name.decodedName.toString == instanceName =>
+            c.WeakTypeTag[Any](sym.asTerm.typeSignature).as_??
+        }
+        .getOrElse {
+          // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
+          reportError("Failed at encoding Java Enum instance type")
+          // $COVERAGE-ON$
+        }
+    } else inst
+  }
+
+  /** Scala 2 override of [[MacroCommonsCompat.retagExprCompat]]: re-wraps the tree with the precise `WeakTypeTag`
+    * (hearth's `Type[A]` IS `c.WeakTypeTag[A]` on Scala 2), replacing the unresolved tag materialized by
+    * `ValDefs.closeScope[A]` (no `Type` bound in Hearth 0.4.0).
+    */
+  override protected def retagExprCompat[A: Type](expr: Expr[A]): Expr[A] =
+    c.Expr[A](expr.tree)(Type[A])
+
   /** macro-commons `Expr.nowarn` (Scala 2) - Hearth has no annotation-attaching API, so the old quasiquote-based
     * implementation lives here (see [[MacroCommonsCompat.nowarnExpr]]).
     */

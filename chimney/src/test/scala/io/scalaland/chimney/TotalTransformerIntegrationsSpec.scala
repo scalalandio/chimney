@@ -47,7 +47,7 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
     compileErrors("""Possible("foobar").into[None.type].transform""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] to scala.None",
       "scala.None",
-      "  derivation from possible: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] to scala.None is not supported in Chimney!",
+      "  derivation from possible: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] to scala.None.type is not supported in Chimney!",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
   }

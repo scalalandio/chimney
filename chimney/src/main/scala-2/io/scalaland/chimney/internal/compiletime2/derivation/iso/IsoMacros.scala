@@ -14,10 +14,10 @@ import scala.reflect.macros.blackbox
   * `io.scalaland.chimney.dsl.*` can flip packages mechanically in the next phase.
   *
   * Differences vs the old version: same as
-  * [[io.scalaland.chimney.internal.compiletime2.derivation.transformer.TransformerMacros]] - extends
-  * [[PlatformBridge]] + the now-shared transformer `Derivation`/`Gateway` instead of the old per-platform
-  * `DerivationPlatform`, `Expr.block` -> `blockExpr`, `Type.platformSpecific.fromUntyped[A](tpe)` ->
-  * `c.WeakTypeTag[A](tpe)`, `?<`/`.as_?<` -> `??<:`/`.as_??<:`, `Expr.summonImplicit(...)` -> `.toOption` added.
+  * [[io.scalaland.chimney.internal.compiletime2.derivation.transformer.TransformerMacros]] - extends [[PlatformBridge]]
+  * + the now-shared transformer `Derivation`/`Gateway` instead of the old per-platform `DerivationPlatform`,
+  * `Expr.block` -> `blockExpr`, `Type.platformSpecific.fromUntyped[A](tpe)` -> `c.WeakTypeTag[A](tpe)`, `?<`/`.as_?<`
+  * -> `??<:`/`.as_??<:`, `Expr.summonImplicit(...)` -> `.toOption` added.
   */
 final class IsoMacros(ctx: blackbox.Context) extends PlatformBridge(ctx) with Derivation with Gateway {
 

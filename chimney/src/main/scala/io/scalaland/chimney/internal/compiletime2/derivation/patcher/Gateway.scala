@@ -67,17 +67,17 @@ private[compiletime2] trait Gateway extends GatewayCommons {
     ensureStandardExtensionsLoaded()
     suppressWarnings {
       cacheDefinition(runtimeDataStore) { runtimeDataStore =>
-        val result = DerivationResult.direct[Expr[A], Expr[Patcher[A, Patch]]] { await =>
-          ChimneyExpr.Patcher.instance[A, Patch] { (obj: Expr[A], patch: Expr[Patch]) =>
-            val context = PatcherContext.create[A, Patch](
-              obj,
-              patch,
-              config =
-                PatcherConfigurations.readPatcherConfiguration[Overrides, Flags, ImplicitScopeFlags](runtimeDataStore)
-            )
+        // patcherInstanceCompat: on Scala 3 the old direct+await-inside-the-quote shape trips -Xcheck-macros
+        // (see ChimneyExprs) - the compat runs the derivation BEFORE constructing the instance quote there.
+        val result = patcherInstanceCompat[A, Patch] { (obj: Expr[A], patch: Expr[Patch]) =>
+          val context = PatcherContext.create[A, Patch](
+            obj,
+            patch,
+            config =
+              PatcherConfigurations.readPatcherConfiguration[Overrides, Flags, ImplicitScopeFlags](runtimeDataStore)
+          )
 
-            await(enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context))
-          }
+          enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context)
         }
 
         blockExpr(

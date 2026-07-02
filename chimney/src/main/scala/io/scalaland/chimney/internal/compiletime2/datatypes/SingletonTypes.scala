@@ -27,17 +27,26 @@ private[compiletime2] trait SingletonTypes { this: ChimneyDefinitions & hearth.M
 
   protected object SingletonType {
 
-    implicit private lazy val UnitType: Type[Unit] = Type.of[Unit]
-    implicit private lazy val NullType: Type[Null] = Type.of[Null]
+    // NOT `implicit` and NOT initialized with a local cross-quoted `Type.of` on purpose: on Scala 3 the
+    // Cross-Quotes plugin's best-effort implicit-`Type` detection would rewrite `Type.of[Unit]` into a reference
+    // to the implicit val being initialized, and the (thread-safe) lazy val initialization then DEADLOCKS at
+    // macro runtime (parked on its own initializer latch). ScalaStdCompat hoists the actual `Type.of` calls
+    // as non-implicit trait-level lazy vals, which is the documented-safe pattern.
+    private lazy val UnitType: Type[Unit] = ScalaType.Implicits.UnitType
+    private lazy val NullType: Type[Null] = ScalaType.Implicits.NullType
     private lazy val unitExpr: Expr[Unit] = Expr.UnitExprCodec.toExpr(())
     private lazy val nullExpr: Expr[Null] = Expr.NullExprCodec.toExpr(null)
 
     final def parse[A: Type]: Option[Singleton[A]] = {
       def found[B](b: Expr[B]): Option[Singleton[A]] = Some(Singleton(b.asInstanceOf[Expr[A]]))
       Type[A] match {
-        case _ if Type[A] <:< UnitType => found(castToExpr[Unit, A](unitExpr))
-        case _ if Type[A] <:< NullType => found(castToExpr[Null, A](nullExpr))
-        case _                         =>
+        case _ if Type[A] <:< UnitType =>
+          implicit val Unit: Type[Unit] = UnitType
+          found(castToExpr[Unit, A](unitExpr))
+        case _ if Type[A] <:< NullType =>
+          implicit val Null: Type[Null] = NullType
+          found(castToExpr[Null, A](nullExpr))
+        case _ =>
           literalOf[A]
             .map(expr => Singleton(expr))
             .orElse {

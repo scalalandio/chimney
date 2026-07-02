@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.compiletime.derivation.iso.IsoMacros
+import io.scalaland.chimney.internal.compiletime2.derivation.iso.IsoMacros
 
 private[chimney] trait IsoCompanionPlatform { this: Iso.type =>
 

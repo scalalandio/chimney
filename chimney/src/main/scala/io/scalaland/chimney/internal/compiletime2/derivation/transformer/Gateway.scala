@@ -73,18 +73,18 @@ private[compiletime2] trait Gateway extends GatewayCommons {
     ensureStandardExtensionsLoaded()
     suppressWarnings {
       cacheDefinition(runtimeDataStore) { runtimeDataStore =>
-        val result = DerivationResult.direct[Expr[To], Expr[Transformer[From, To]]] { await =>
-          ChimneyExpr.Transformer.instance[From, To] { (src: Expr[From]) =>
-            val context = TransformationContext.ForTotal
-              .create[From, To](
-                src,
-                TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
-                  runtimeDataStore
-                )
+        // transformerInstanceCompat: on Scala 3 the old direct+await-inside-the-quote shape trips -Xcheck-macros
+        // (see ChimneyExprs) - the compat runs the derivation BEFORE constructing the instance quote there.
+        val result = transformerInstanceCompat[From, To] { (src: Expr[From]) =>
+          val context = TransformationContext.ForTotal
+            .create[From, To](
+              src,
+              TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
+                runtimeDataStore
               )
+            )
 
-            await(enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context))
-          }
+          enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
         }
 
         blockExpr(
@@ -143,19 +143,19 @@ private[compiletime2] trait Gateway extends GatewayCommons {
     ensureStandardExtensionsLoaded()
     suppressWarnings {
       cacheDefinition(runtimeDataStore) { runtimeDataStore =>
-        val result = DerivationResult.direct[Expr[partial.Result[To]], Expr[PartialTransformer[From, To]]] { await =>
-          ChimneyExpr.PartialTransformer.instance[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
-            val context = TransformationContext.ForPartial
-              .create[From, To](
-                src,
-                failFast,
-                TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
-                  runtimeDataStore
-                )
+        // partialTransformerInstanceCompat: on Scala 3 the old direct+await-inside-the-quote shape trips
+        // -Xcheck-macros (see ChimneyExprs) - the compat runs the derivation BEFORE constructing the quote there.
+        val result = partialTransformerInstanceCompat[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
+          val context = TransformationContext.ForPartial
+            .create[From, To](
+              src,
+              failFast,
+              TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
+                runtimeDataStore
               )
+            )
 
-            await(enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context))
-          }
+          enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
         }
 
         blockExpr(

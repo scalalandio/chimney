@@ -13,7 +13,9 @@ import io.scalaland.chimney.internal.runtime
   */
 private[compiletime2] trait Configurations { this: Derivation & hearth.MacroCommons =>
 
-  implicit private lazy val AnyType: Type[Any] = Type.of[Any]
+  // Delegates to ScalaStdCompat's hoisted non-implicit `Type.of[Any]` - an IMPLICIT val initialized with a
+  // cross-quoted `Type.of` in its own scope deadlocks lazy-val init at macro runtime on Scala 3 (see SingletonTypes).
+  implicit private lazy val AnyType: Type[Any] = ScalaType.Implicits.AnyType
 
   final protected case class PatcherFlags(
       ignoreNoneInPatch: Boolean = false,

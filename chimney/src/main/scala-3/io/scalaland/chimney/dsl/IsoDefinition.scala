@@ -1,8 +1,8 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.Iso
-import io.scalaland.chimney.internal.compiletime.derivation.iso.IsoMacros
-import io.scalaland.chimney.internal.compiletime.dsl.IsoDefinitionMacros
+import io.scalaland.chimney.internal.compiletime2.derivation.iso.IsoMacros
+import io.scalaland.chimney.internal.compiletime2.dsl.IsoDefinitionMacros
 import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
 import scala.annotation.nowarn
 
