@@ -3,8 +3,13 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
+/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformValueClassToTypeRuleModule` - 1:1 copy
+  * (`.log` becomes `.logInfo`; the `TransformProductToProductRule.expand` fallback currently hits the not-yet-ported
+  * heavy rule's stub, see [[TransformProductToProductRuleModule]]).
+  */
 private[compiletime] trait TransformValueClassToTypeRuleModule {
-  this: Derivation & TransformProductToProductRuleModule & TransformValueClassToValueClassRuleModule =>
+  this: Derivation & TransformProductToProductRuleModule & TransformValueClassToValueClassRuleModule &
+    hearth.MacroCommons =>
 
   protected object TransformValueClassToTypeRule extends Rule("ValueClassToType") {
 
@@ -43,7 +48,7 @@ private[compiletime] trait TransformValueClassToTypeRuleModule {
         .orElse(
           DerivationResult
             .notSupportedTransformerDerivationForField(innerFromFieldName)(ctx)
-            .log(
+            .logInfo(
               s"Failed to resolve derivation from ${Type.prettyPrint[InnerFrom]} (wrapped by ${Type
                   .prettyPrint[From]}) to ${Type.prettyPrint[To]}"
             )

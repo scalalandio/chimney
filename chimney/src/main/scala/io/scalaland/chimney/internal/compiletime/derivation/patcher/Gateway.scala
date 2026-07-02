@@ -6,7 +6,15 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.GatewayCommons
 import io.scalaland.chimney.internal.runtime
 
-private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
+/** Hearth-based port of `...compiletime.derivation.patcher.Gateway`.
+  *
+  * Differences vs the old version: same as the transformer's
+  * [[io.scalaland.chimney.internal.compiletime.derivation.transformer.Gateway]] - `ensureStandardExtensionsLoaded()` on
+  * entry, no `DerivationResult.catchFatalErrors` (fatals are caught at `runSync` in [[GatewayCommons]]), `Expr.block`
+  * -> `blockExpr`.
+  */
+private[compiletime] trait Gateway extends GatewayCommons {
+  this: Derivation & hearth.MacroCommons & hearth.std.StdExtensions =>
 
   import ChimneyType.Implicits.*
 
@@ -20,25 +28,28 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
       obj: Expr[A],
       patch: Expr[Patch],
       runtimeDataStore: Expr[PatcherDefinitionCommons.RuntimeDataStore]
-  ): Expr[A] = suppressWarnings {
-    cacheDefinition(runtimeDataStore) { runtimeDataStore =>
-      cacheDefinition(obj) { obj =>
-        cacheDefinition(patch) { patch =>
-          val context = PatcherContext
-            .create[A, Patch](
-              obj,
-              patch,
-              config =
-                PatcherConfigurations.readPatcherConfiguration[Overrides, Flags, ImplicitScopeFlags](runtimeDataStore)
+  ): Expr[A] = {
+    ensureStandardExtensionsLoaded()
+    suppressWarnings {
+      cacheDefinition(runtimeDataStore) { runtimeDataStore =>
+        cacheDefinition(obj) { obj =>
+          cacheDefinition(patch) { patch =>
+            val context = PatcherContext
+              .create[A, Patch](
+                obj,
+                patch,
+                config =
+                  PatcherConfigurations.readPatcherConfiguration[Overrides, Flags, ImplicitScopeFlags](runtimeDataStore)
+              )
+              .updateConfig(_.allowAPatchImplicitSearch)
+
+            val result = enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context)
+
+            blockExpr(
+              List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(obj), Expr.suppressUnused(patch)),
+              extractExprAndLog[A, Patch, A](result)
             )
-            .updateConfig(_.allowAPatchImplicitSearch)
-
-          val result = enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context)
-
-          Expr.block(
-            List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(obj), Expr.suppressUnused(patch)),
-            extractExprAndLog[A, Patch, A](result)
-          )
+          }
         }
       }
     }
@@ -52,10 +63,13 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
   ](
       runtimeDataStore: Expr[PatcherDefinitionCommons.RuntimeDataStore]
-  ): Expr[Patcher[A, Patch]] = suppressWarnings {
-    cacheDefinition(runtimeDataStore) { runtimeDataStore =>
-      val result = DerivationResult.direct[Expr[A], Expr[Patcher[A, Patch]]] { await =>
-        ChimneyExpr.Patcher.instance[A, Patch] { (obj: Expr[A], patch: Expr[Patch]) =>
+  ): Expr[Patcher[A, Patch]] = {
+    ensureStandardExtensionsLoaded()
+    suppressWarnings {
+      cacheDefinition(runtimeDataStore) { runtimeDataStore =>
+        // patcherInstanceCompat: on Scala 3 the old direct+await-inside-the-quote shape trips -Xcheck-macros
+        // (see ChimneyExprs) - the compat runs the derivation BEFORE constructing the instance quote there.
+        val result = patcherInstanceCompat[A, Patch] { (obj: Expr[A], patch: Expr[Patch]) =>
           val context = PatcherContext.create[A, Patch](
             obj,
             patch,
@@ -63,14 +77,14 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
               PatcherConfigurations.readPatcherConfiguration[Overrides, Flags, ImplicitScopeFlags](runtimeDataStore)
           )
 
-          await(enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context))
+          enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context)
         }
-      }
 
-      Expr.block(
-        List(Expr.suppressUnused(runtimeDataStore)),
-        extractExprAndLog[A, Patch, Patcher[A, Patch]](result)
-      )
+        blockExpr(
+          List(Expr.suppressUnused(runtimeDataStore)),
+          extractExprAndLog[A, Patch, Patcher[A, Patch]](result)
+        )
+      }
     }
   }
 
@@ -78,11 +92,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
       result: => DerivationResult[A],
       ctx: PatcherContext[?, ?]
   ): DerivationResult[A] =
-    enableLoggingIfFlagEnabled[A](
-      DerivationResult.catchFatalErrors(result),
-      ctx.config.flags.displayMacrosLogging,
-      ctx.derivationStartedAt
-    )
+    enableLoggingIfFlagEnabled[A](result, ctx.config.flags.displayMacrosLogging, ctx.derivationStartedAt)
 
   private def extractExprAndLog[A: Type, Patch: Type, Out: Type](result: DerivationResult[Expr[Out]]): Expr[Out] =
     extractExprAndLog[Out](

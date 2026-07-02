@@ -5,9 +5,10 @@ import io.scalaland.chimney.partial
 
 import scala.collection.Factory
 
-trait PartiallyBuildIterables { this: Derivation =>
-
-  import ChimneyType.Implicits.*
+/** Hearth-based port of `...compiletime.derivation.transformer.integrations.PartiallyBuildIterables` - 1:1 copy (`new
+  * Type.Cache[Cached]` becomes `new TypeCache[Cached]`).
+  */
+trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons =>
 
   /** Something allowing us to share the logic which handles NonEmptyList, NonEmptySet, ... and whatever we want to
     * support.
@@ -35,7 +36,7 @@ trait PartiallyBuildIterables { this: Derivation =>
   protected object PartiallyBuildIterable {
 
     private type Cached[M] = Option[Existential[PartiallyBuildIterable[M, *]]]
-    private val partiallyBulidIterableCache = new Type.Cache[Cached]
+    private val partiallyBulidIterableCache = new TypeCache[Cached]
     def parse[M](implicit M: Type[M]): Option[Existential[PartiallyBuildIterable[M, *]]] =
       partiallyBulidIterableCache(M)(providedSupport[M])
     def unapply[M](M: Type[M]): Option[Existential[PartiallyBuildIterable[M, *]]] = parse(using M)

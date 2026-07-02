@@ -1,25 +1,74 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
-import io.scalaland.chimney.internal.compiletime.{datatypes, ChimneyDefinitions, DerivationResult}
+import io.scalaland.chimney.internal.compiletime.{ChimneyDefinitions, DerivationResult}
 
+/** Hearth-based port of `...compiletime.derivation.transformer.Derivation`.
+  *
+  * Differences vs the old version:
+  *   - the `datatypes.*` traits are NOT mixed in here anymore - [[ChimneyDefinitions]] already includes them (they
+  *     became part of the compiletime foundation),
+  *   - the rule modules are mixed in HERE instead of in the per-platform `DerivationPlatform`s (they are shared code
+  *     now; the old platform division only existed for quasiquotes-vs-quotes implementations),
+  *   - the self-type mirrors [[ChimneyDefinitions]]'s (the cake is completed by the platform bridges),
+  *   - `rulesAvailableForPlatform` is defined HERE, once, in shared code (the old per-platform lists were identical
+  *     except for the TransformPartialOptionToNonOptionRule/TransformToOptionRule order - their conditions are disjoint
+  *     at that pipeline position (target optional vs target non-optional), so the old Scala 3 order is used for both
+  *     platforms).
+  */
 private[compiletime] trait Derivation
     extends ChimneyDefinitions
     with Configurations
     with Contexts
     with ImplicitSummoning
     with ResultOps
-    with datatypes.IterableOrArrays
-    with datatypes.ProductTypes
-    with datatypes.SealedHierarchies
-    with datatypes.SingletonTypes
-    with datatypes.ValueClasses
     with integrations.TotalOuterTransformers
     with integrations.PartialOuterTransformers
     with integrations.OptionalValues
     with integrations.PartiallyBuildIterables
     with integrations.TotallyBuildIterables
     with integrations.TotallyOrPartiallyBuildIterables
-    with rules.TransformationRules {
+    with rules.TransformationRules
+    with rules.TransformImplicitRuleModule
+    with rules.TransformImplicitPartialFallbackToTotalRuleModule
+    with rules.TransformImplicitOuterTransformerRuleModule
+    with rules.TransformImplicitConversionRuleModule
+    with rules.TransformSubtypesRuleModule
+    with rules.TransformTypeConstraintRuleModule
+    with rules.TransformToSingletonRuleModule
+    with rules.TransformValueClassToValueClassRuleModule
+    with rules.TransformValueClassToTypeRuleModule
+    with rules.TransformTypeToValueClassRuleModule
+    with rules.TransformOptionToOptionRuleModule
+    with rules.TransformPartialOptionToNonOptionRuleModule
+    with rules.TransformToOptionRuleModule
+    with rules.TransformEitherToEitherRuleModule
+    with rules.TransformMapToMapRuleModule
+    with rules.TransformIterableToIterableRuleModule
+    with rules.TransformProductToProductRuleModule
+    with rules.TransformSealedHierarchyToSealedHierarchyRuleModule {
+  this: hearth.MacroCommons & hearth.std.StdExtensions =>
+
+  /** The old per-platform `DerivationPlatform.rulesAvailableForPlatform`, now shared (see the trait's ScalaDoc). */
+  override protected val rulesAvailableForPlatform: List[Rule] = List(
+    TransformImplicitRule,
+    TransformImplicitPartialFallbackToTotalRule,
+    TransformImplicitOuterTransformerRule,
+    TransformImplicitConversionRule,
+    TransformSubtypesRule,
+    TransformTypeConstraintRule,
+    TransformToSingletonRule,
+    TransformValueClassToValueClassRule,
+    TransformValueClassToTypeRule,
+    TransformTypeToValueClassRule,
+    TransformOptionToOptionRule,
+    TransformPartialOptionToNonOptionRule,
+    TransformToOptionRule,
+    TransformEitherToEitherRule,
+    TransformMapToMapRule,
+    TransformIterableToIterableRule,
+    TransformProductToProductRule,
+    TransformSealedHierarchyToSealedHierarchyRule
+  )
 
   /** Intended use case: starting recursive derivation from Gateway */
   final protected def deriveTransformationResultExpr[From, To](implicit

@@ -4,7 +4,10 @@ import io.scalaland.chimney.integrations
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-trait TotalOuterTransformers { this: Derivation =>
+/** Hearth-based port of `...compiletime.derivation.transformer.integrations.TotalOuterTransformers` - 1:1 copy (`new
+  * Type.Cache[Option]` becomes `new TypeCache[Option]`, see [[MacroCommonsCompat]]).
+  */
+trait TotalOuterTransformers { this: Derivation & hearth.MacroCommons =>
 
   import ChimneyType.Implicits.*
 
@@ -30,7 +33,7 @@ trait TotalOuterTransformers { this: Derivation =>
   }
   protected object TotalOuterTransformer {
 
-    private val implicitCache = new Type.Cache[Option]
+    private val implicitCache = new TypeCache[Option]
     def parse[From, To](implicit from: Type[From], to: Type[To]): Option[TotalOuterTransformer[From, To]] =
       implicitCache(
         Type[integrations.TotalOuterTransformer[From, To, From, To]].asInstanceOf[Type[TotalOuterTransformer[From, To]]]

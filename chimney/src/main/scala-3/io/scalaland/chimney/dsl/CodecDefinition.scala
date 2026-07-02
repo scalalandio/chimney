@@ -1,8 +1,8 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.Codec
-import io.scalaland.chimney.internal.compiletime2.derivation.codec.CodecMacros
-import io.scalaland.chimney.internal.compiletime2.dsl.CodecDefinitionMacros
+import io.scalaland.chimney.internal.compiletime.derivation.codec.CodecMacros
+import io.scalaland.chimney.internal.compiletime.dsl.CodecDefinitionMacros
 import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
 import scala.annotation.nowarn
 

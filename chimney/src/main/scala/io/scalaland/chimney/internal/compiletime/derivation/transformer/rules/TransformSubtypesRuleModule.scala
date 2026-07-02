@@ -3,7 +3,10 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
-private[compiletime] trait TransformSubtypesRuleModule { this: Derivation =>
+/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformSubtypesRuleModule` - 1:1 copy
+  * (`upcastToExprOf[To]` becomes Hearth's `upcast[To]`, same compile-time-checked semantics).
+  */
+private[compiletime] trait TransformSubtypesRuleModule { this: Derivation & hearth.MacroCommons =>
 
   protected object TransformSubtypesRule extends Rule("Subtypes") {
 
@@ -18,6 +21,6 @@ private[compiletime] trait TransformSubtypesRuleModule { this: Derivation =>
     ): DerivationResult[Rule.ExpansionResult[To]] =
       // We're constructing:
       // '{ ${ src } : $To } }
-      DerivationResult.expandedTotal(ctx.src.upcastToExprOf[To])
+      DerivationResult.expandedTotal(ctx.src.upcast[To])
   }
 }

@@ -1,11 +1,19 @@
 package io.scalaland.chimney.internal.compiletime.derivation.patcher.rules
 
+import hearth.fp.syntax.*
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.Derivation
 
-private[compiletime] trait PatchOptionWithOptionOptionRuleModule { this: Derivation =>
+/** Hearth-based port of `...compiletime.derivation.patcher.rules.PatchOptionWithOptionOptionRuleModule`.
+  *
+  * Differences vs the old version: `Type.Implicits` becomes `ScalaType.Implicits` (for the `Some[OptionPatch]` `Type`
+  * in the `Path`), and the `DerivationResult.direct` + `Expr.Function1.instance` + `await(...)` protocol becomes
+  * `LambdaBuilder.of1[OptionPatch]().traverse(...)` + `.build` (see [[PatchOptionWithNonOptionRuleModule]] for the
+  * rationale).
+  */
+private[compiletime] trait PatchOptionWithOptionOptionRuleModule { this: Derivation & hearth.MacroCommons =>
 
-  import Type.Implicits.*
+  import ScalaType.Implicits.*
 
   protected object PatchOptionWithOptionOptionRule extends Rule("PatchOptionWithOptionOption") {
 
@@ -30,24 +38,25 @@ private[compiletime] trait PatchOptionWithOptionOptionRuleModule { this: Derivat
     )(implicit
         ctx: TransformationContext[OptionOptionPatch, OptionA]
     ): DerivationResult[Rule.ExpansionResult[OptionA]] =
-      DerivationResult
-        .direct[Expr[OptionA], Expr[OptionA]] { await =>
+      LambdaBuilder
+        .of1[OptionPatch]()
+        .traverse { (expr: Expr[OptionPatch]) =>
+          deriveRecursiveTransformationExpr[OptionPatch, OptionA](
+            expr,
+            followFrom = Path(_.matching[Some[OptionPatch]].select("value")),
+            updateFallbacks = _ => Vector.empty
+          ).map(_.ensureTotal)
+        }
+        .flatMap { builder =>
           // We're constructing:
           // '{ ${ src }.fold(${ obj })(optionPatch => optionA ) }
-          optionOptionPatch.fold[OptionA](
-            ctx.src,
-            obj,
-            Expr.Function1.instance[OptionPatch, OptionA] { expr =>
-              await(
-                deriveRecursiveTransformationExpr[OptionPatch, OptionA](
-                  expr,
-                  followFrom = Path(_.matching[Some[OptionPatch]].select("value")),
-                  updateFallbacks = _ => Vector.empty
-                ).map(_.ensureTotal)
-              )
-            }
+          DerivationResult.expandedTotal(
+            optionOptionPatch.fold[OptionA](
+              ctx.src,
+              obj,
+              builder.build[OptionA]
+            )
           )
         }
-        .flatMap(DerivationResult.expandedTotal)
   }
 }

@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.compiletime2.derivation.transformer.TransformerMacros
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 
 private[chimney] trait PartialTransformerCompanionPlatform { this: PartialTransformer.type =>
 

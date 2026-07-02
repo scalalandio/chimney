@@ -1,13 +1,20 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
+import hearth.fp.syntax.*
 import io.scalaland.chimney.dsl.{PreferPartialTransformer, PreferTotalTransformer}
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.partial.Result
 
+/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformImplicitOuterTransformerRuleModule`.
+  *
+  * Differences vs the old version: the `ExprPromise.promise[InnerFrom](...).traverse(...).fulfilAsLambda` protocol
+  * becomes `LambdaBuilder.of1[InnerFrom]().traverse(...)....build` (the inner lambda is passed to the outer
+  * transformer's runtime `transformWith*Inner` iteration helpers - a legitimate `LambdaBuilder` use).
+  */
 private[compiletime] trait TransformImplicitOuterTransformerRuleModule {
-  this: Derivation & TransformProductToProductRuleModule =>
+  this: Derivation & TransformProductToProductRuleModule & hearth.MacroCommons =>
 
   import ChimneyType.Implicits.*, TransformProductToProductRule.useOverrideIfPresentOr
 
@@ -46,25 +53,25 @@ private[compiletime] trait TransformImplicitOuterTransformerRuleModule {
         failFast: Option[Expr[Boolean]]
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = {
       import totalOuterTransformer.{InnerFrom, InnerTo}
-      ExprPromise
-        .promise[InnerFrom](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
+      LambdaBuilder
+        .of1[InnerFrom]()
         .traverse { (innerFromExpr: Expr[InnerFrom]) =>
           useOverrideIfPresentOr("everyItem", ctx.config.filterCurrentOverridesForEveryItem) {
             deriveRecursiveTransformationExpr[InnerFrom, InnerTo](innerFromExpr, Path(_.everyItem), Path(_.everyItem))
           }
         }
-        .flatMap { promise =>
-          promise.foldTransformationExpr { (onTotal: ExprPromise[InnerFrom, Expr[InnerTo]]) =>
+        .flatMap { (builder: LambdaBuilder[InnerFrom => *, TransformationExpr[InnerTo]]) =>
+          builder.foldTransformationExpr { (onTotal: LambdaBuilder[InnerFrom => *, Expr[InnerTo]]) =>
             DerivationResult.expandedTotal(
-              totalOuterTransformer.transformWithTotalInner(src, onTotal.fulfilAsLambda[InnerTo])
+              totalOuterTransformer.transformWithTotalInner(src, onTotal.build[InnerTo])
             )
-          } { (onPartial: ExprPromise[InnerFrom, Expr[Result[InnerTo]]]) =>
+          } { (onPartial: LambdaBuilder[InnerFrom => *, Expr[Result[InnerTo]]]) =>
             failFast.fold(
               DerivationResult.assertionError[Rule.ExpansionResult[To]]("Derived Partial Expr for Total Context")
             ) { failFast =>
               DerivationResult.expandedPartial(
                 totalOuterTransformer
-                  .transformWithPartialInner(src, failFast, onPartial.fulfilAsLambda[partial.Result[InnerTo]])
+                  .transformWithPartialInner(src, failFast, onPartial.build[partial.Result[InnerTo]])
               )
             }
           }
@@ -77,23 +84,23 @@ private[compiletime] trait TransformImplicitOuterTransformerRuleModule {
         failFast: Expr[Boolean]
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = {
       import partialOuterTransformer.{InnerFrom, InnerTo}
-      ExprPromise
-        .promise[InnerFrom](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
+      LambdaBuilder
+        .of1[InnerFrom]()
         .traverse { (innerFromExpr: Expr[InnerFrom]) =>
           useOverrideIfPresentOr("everyItem", ctx.config.filterCurrentOverridesForEveryItem) {
             deriveRecursiveTransformationExpr[InnerFrom, InnerTo](innerFromExpr, Path(_.everyItem), Path(_.everyItem))
           }
         }
-        .flatMap { promise =>
-          promise.foldTransformationExpr { (onTotal: ExprPromise[InnerFrom, Expr[InnerTo]]) =>
+        .flatMap { (builder: LambdaBuilder[InnerFrom => *, TransformationExpr[InnerTo]]) =>
+          builder.foldTransformationExpr { (onTotal: LambdaBuilder[InnerFrom => *, Expr[InnerTo]]) =>
             DerivationResult.expandedPartial(
               partialOuterTransformer
-                .transformWithTotalInner(src, failFast, onTotal.fulfilAsLambda[InnerTo])
+                .transformWithTotalInner(src, failFast, onTotal.build[InnerTo])
             )
-          } { (onPartial: ExprPromise[InnerFrom, Expr[partial.Result[InnerTo]]]) =>
+          } { (onPartial: LambdaBuilder[InnerFrom => *, Expr[partial.Result[InnerTo]]]) =>
             DerivationResult.expandedPartial(
               partialOuterTransformer
-                .transformWithPartialInner(src, failFast, onPartial.fulfilAsLambda[partial.Result[InnerTo]])
+                .transformWithPartialInner(src, failFast, onPartial.build[partial.Result[InnerTo]])
             )
           }
         }

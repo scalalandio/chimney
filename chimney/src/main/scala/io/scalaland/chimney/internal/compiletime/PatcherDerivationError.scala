@@ -1,6 +1,10 @@
 package io.scalaland.chimney.internal.compiletime
 
-/** Patcher-specific error related to derivation logic */
+/** Patcher-specific error related to derivation logic.
+  *
+  * Hearth-based port of the pre-Hearth `io.scalaland.chimney.internal.compiletime.PatcherDerivationError` - 1:1 copy
+  * (all case classes, fields and `printErrors` rendering preserved byte-identical).
+  */
 sealed trait PatcherDerivationError extends Product with Serializable
 
 final case class NotSupportedPatcherDerivation(objTypeName: String, patchTypeName: String)

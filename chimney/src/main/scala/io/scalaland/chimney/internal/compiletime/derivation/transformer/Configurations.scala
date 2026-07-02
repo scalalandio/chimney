@@ -8,9 +8,27 @@ import scala.collection.immutable.{ListMap, ListSet}
 import io.scalaland.chimney.dsl.UnusedFieldPolicy
 import io.scalaland.chimney.dsl.UnmatchedSubtypePolicy
 
-private[compiletime] trait Configurations { this: Derivation =>
+/** Hearth-based port of the pre-Hearth
+  * `io.scalaland.chimney.internal.compiletime.derivation.transformer.Configurations`.
+  *
+  * Differences vs the old version (1:1 otherwise):
+  *   - `import Type.Implicits.*` is replaced by a private ambient `Type[Any]` plus hoisted `Type.of` lazy vals for the
+  *     few concrete types the file matches on (`Some[Any]`, `Left[Any, Any]`, `Right[Any, Any]`) - Hearth has no
+  *     ambient implicit `Type` instances,
+  *   - `ExistentialType.prettyPrint(x)`/`ExistentialExpr.prettyPrint(x)` become Hearth extensions (`x.prettyPrint`),
+  *   - `Type[S].extractStringSingleton` / `Type.extractObjectSingleton[M]` go through [[MacroCommonsCompat]]
+  *     (`extractStringSingleton` syntax / `extractObjectSingletonOf`),
+  *   - `XMacroSettings`/`reportError` come from [[MacroCommonsCompat]] aliases over Hearth's `Environment`.
+  */
+private[compiletime] trait Configurations { this: Derivation & hearth.MacroCommons =>
 
-  import Type.Implicits.*
+  // Delegates to ScalaStdCompat's hoisted non-implicit `Type.of[Any]`: initializing an IMPLICIT val with a
+  // cross-quoted `Type.of` in its own scope deadlocks lazy-val init at macro runtime on Scala 3 (the Cross-Quotes
+  // plugin's implicit-`Type` detection rewrites the call into a self-reference) - see SingletonTypes.
+  implicit private lazy val AnyType: Type[Any] = ScalaType.Implicits.AnyType
+  private lazy val SomeAnyType: Type[Some[Any]] = Type.of[Some[Any]]
+  private lazy val LeftAnyAnyType: Type[Left[Any, Any]] = Type.of[Left[Any, Any]]
+  private lazy val RightAnyAnyType: Type[Right[Any, Any]] = Type.of[Right[Any, Any]]
 
   final protected case class TransformerFlags(
       inheritedAccessors: Boolean = false,
@@ -143,7 +161,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         if (inheritedAccessors) Vector("inheritedAccessors") else Vector.empty,
         if (methodAccessors) Vector("methodAccessors") else Vector.empty,
         if (processDefaultValues) Vector("processDefaultValues") else Vector.empty,
-        if (processDefaultValuesOfType.nonEmpty) Vector(processDefaultValuesOfType.toVector.map(ExistentialType.prettyPrint).mkString("processDefaultValuesOfType=(", ", ", ")"))
+        if (processDefaultValuesOfType.nonEmpty) Vector(processDefaultValuesOfType.toVector.map(_.prettyPrint).mkString("processDefaultValuesOfType=(", ", ", ")"))
         else Vector.empty,
         if (beanSetters) Vector("beanSetters") else Vector.empty,
         if (beanSettersIgnoreUnmatched) Vector("beanSettersIgnoreUnmatched") else Vector.empty,
@@ -374,45 +392,43 @@ private[compiletime] trait Configurations { this: Derivation =>
     }
 
     final case class Const(runtimeData: ExistentialExpr) extends ForField {
-      override def toString: String = s"Const(${ExistentialExpr.prettyPrint(runtimeData)})"
+      override def toString: String = s"Const(${runtimeData.prettyPrint})"
     }
     final case class ConstPartial(runtimeData: ExistentialExpr) extends ForField {
-      override def toString: String = s"ConstPartial(${ExistentialExpr.prettyPrint(runtimeData)})"
+      override def toString: String = s"ConstPartial(${runtimeData.prettyPrint})"
     }
 
     final case class Computed(sourcePath: Path, targetPath: Path, runtimeData: ExistentialExpr)
         extends ForField
         with ForSubtype {
-      override def toString: String = s"Computed($sourcePath, $targetPath, ${ExistentialExpr.prettyPrint(runtimeData)})"
+      override def toString: String = s"Computed($sourcePath, $targetPath, ${runtimeData.prettyPrint})"
     }
     final case class ComputedPartial(sourcePath: Path, targetPath: Path, runtimeData: ExistentialExpr)
         extends ForField
         with ForSubtype {
       override def toString: String =
-        s"ComputedPartial($sourcePath, $targetPath, ${ExistentialExpr.prettyPrint(runtimeData)})"
+        s"ComputedPartial($sourcePath, $targetPath, ${runtimeData.prettyPrint})"
     }
 
     final case class Fallback(runtimeData: ExistentialExpr) extends ForFallback {
       override def toString: String =
-        s"Fallback(${ExistentialExpr.prettyPrint(runtimeData)})"
+        s"Fallback(${runtimeData.prettyPrint})"
     }
 
     type Args = List[ListMap[String, ??]]
     final case class Constructor(args: Args, runtimeData: ExistentialExpr) extends ForConstructor {
-      override def toString: String = s"Constructor(${printArgs(args)}, ${ExistentialExpr.prettyPrint(runtimeData)})"
+      override def toString: String = s"Constructor(${printArgs(args)}, ${runtimeData.prettyPrint})"
     }
     final case class ConstructorPartial(args: Args, runtimeData: ExistentialExpr) extends ForConstructor {
       override def toString: String =
-        s"ConstructorPartial(${printArgs(args)}, ${ExistentialExpr.prettyPrint(runtimeData)})"
+        s"ConstructorPartial(${printArgs(args)}, ${runtimeData.prettyPrint})"
     }
 
     final case class Renamed(sourcePath: Path, targetPath: Path) extends ForField with ForSubtype
 
-    private def printArgs(args: Args): String = {
-      import ExistentialType.prettyPrint as printTpe
+    private def printArgs(args: Args): String =
       if (args.isEmpty) "<no list>"
-      else args.map(list => "(" + list.map { case (n, t) => s"$n: ${printTpe(t)}" }.mkString(", ") + ")").mkString
-    }
+      else args.map(list => "(" + list.map { case (n, t) => s"$n: ${t.prettyPrint}" }.mkString(", ") + ")").mkString
   }
 
   final protected case class TransformerConfiguration(
@@ -500,7 +516,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         case (
               TargetPath(Path.AtSubtype(tpe, Path.AtField("value", Path.Root))),
               runtimeFieldOverride: TransformerOverride.ForField
-            ) if tpe.Underlying <:< Type[Some[Any]] =>
+            ) if tpe.Underlying <:< SomeAnyType =>
           runtimeFieldOverride
       }
     )
@@ -509,7 +525,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         case (
               TargetPath(Path.AtSubtype(tpe, Path.AtField("value", Path.Root))),
               runtimeFieldOverride: TransformerOverride.ForField
-            ) if tpe.Underlying <:< Type[Left[Any, Any]] =>
+            ) if tpe.Underlying <:< LeftAnyAnyType =>
           runtimeFieldOverride
       }
     )
@@ -518,7 +534,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         case (
               TargetPath(Path.AtSubtype(tpe, Path.AtField("value", Path.Root))),
               runtimeFieldOverride: TransformerOverride.ForField
-            ) if tpe.Underlying <:< Type[Right[Any, Any]] =>
+            ) if tpe.Underlying <:< RightAnyAnyType =>
           runtimeFieldOverride
       }
     )
@@ -573,7 +589,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         }
         .collect { case Some(Path.AtSubtype(toSubtype, _)) => toSubtype }
         .toList
-        .distinctBy(a => ExistentialType.prettyPrint(a))
+        .distinctBy(a => a.prettyPrint)
 
     def prepareForRecursiveCall(
         fromPath: Path,
@@ -616,7 +632,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       val runtimeOverridesString =
         runtimeOverrides.map { case (path, runtimeOverride) => s"$path -> $runtimeOverride" }.mkString(", ")
       val preventImplicitSummoningForTypesString = preventImplicitSummoningForTypes.map { case (f, t) =>
-        s"(${ExistentialType.prettyPrint(f)}, ${ExistentialType.prettyPrint(t)})"
+        s"(${f.prettyPrint}, ${t.prettyPrint})"
       }.toString
       s"""TransformerConfig(
          |  flags = $flags,
@@ -899,10 +915,14 @@ private[compiletime] trait Configurations { this: Derivation =>
         import init.Underlying as PathType2, fieldName.Underlying as FieldName
         extractPath[PathType2].select(Type[FieldName].extractStringSingleton)
       case ChimneyType.Path.Matching(init, subtype) =>
-        import init.Underlying as PathType2, subtype.Underlying as Subtype
+        // fixJavaEnumCompat: on Scala 2 the DSL encodes Java enum values as RefinedJavaEnum[E, "Name"] markers
+        // which have to be decoded back into the instance type (old fixJavaEnum, see MacroCommonsCompat).
+        val fixedSubtype = fixJavaEnumCompat(subtype)
+        import init.Underlying as PathType2, fixedSubtype.Underlying as Subtype
         extractPath[PathType2].matching[Subtype]
       case ChimneyType.Path.SourceMatching(init, sourceSubtype) =>
-        import init.Underlying as PathType2, sourceSubtype.Underlying as SourceSubtype
+        val fixedSourceSubtype = fixJavaEnumCompat(sourceSubtype)
+        import init.Underlying as PathType2, fixedSourceSubtype.Underlying as SourceSubtype
         extractPath[PathType2].matching[SourceSubtype]
       case ChimneyType.Path.EveryItem(init) =>
         import init.Underlying as PathType2
@@ -920,7 +940,7 @@ private[compiletime] trait Configurations { this: Derivation =>
     }
 
     private def extractNameComparisonObject[Comparison <: dsls.TransformedNamesComparison: Type]: Comparison =
-      Type.extractObjectSingleton[Comparison].getOrElse {
+      extractObjectSingletonOf[Comparison].getOrElse {
         // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         reportError(
           s"Invalid TransformerNamesComparison type - only (case) objects are allowed, and only the ones defined as top-level or in top-level objects, got: ${Type

@@ -1,12 +1,22 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
+import hearth.fp.syntax.*
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: Derivation =>
+/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformPartialOptionToNonOptionRuleModule`.
+  *
+  * Differences vs the old version:
+  *   - the old `DerivationResult.direct` + `Expr.Function1.instance` + `await(...)` protocol becomes
+  *     `LambdaBuilder.of1[InnerFrom]().traverse(...)` + `.build` - the recursive derivation runs once, outside the
+  *     lambda body, with identical error/log propagation (the lambda is passed to the runtime `OptionalValue.fold`
+  *     iteration helper - a legitimate `LambdaBuilder` use),
+  *   - `.log` becomes `.logInfo`, `Type[To].isOption` comes from the `ScalaStdTypeOps` compat ops.
+  */
+private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: Derivation & hearth.MacroCommons =>
 
-  import Type.Implicits.*, ChimneyType.Implicits.*
+  import ChimneyType.Implicits.*, ScalaType.Implicits.*
 
   protected object TransformPartialOptionToNonOptionRule extends Rule("PartialOptionToNonOption") {
 
@@ -35,26 +45,27 @@ private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: D
     private def mapOptionToPartial[From, To, InnerFrom: Type](optionalValue: OptionalValue[From, InnerFrom])(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[Rule.ExpansionResult[To]] =
-      DerivationResult
-        .direct { (await: DerivationResult.Await[TransformationExpr[To]]) =>
+      LambdaBuilder
+        .of1[InnerFrom]()
+        .traverse { (from2Expr: Expr[InnerFrom]) =>
+          deriveRecursiveTransformationExpr[InnerFrom, To](
+            from2Expr,
+            followFrom = Path(_.matching[Some[InnerFrom]].select("value"))
+          ).map(_.ensurePartial)
+        }
+        .flatMap { (builder: LambdaBuilder[InnerFrom => *, Expr[partial.Result[To]]]) =>
           // We're constructing:
           // ${ src }.fold[partial.Result[$To]](partial.Result.empty, { innerFrom: $InnerFrom =>
           //   ${ derivedResultTo } // wrap if needed
           // })
           // but working with every OptionalValue
-          optionalValue.fold[partial.Result[To]](
-            ctx.src,
-            ChimneyExpr.PartialResult.fromEmpty[To],
-            Expr.Function1.instance[InnerFrom, partial.Result[To]] { (from2Expr: Expr[InnerFrom]) =>
-              await(
-                deriveRecursiveTransformationExpr[InnerFrom, To](
-                  from2Expr,
-                  followFrom = Path(_.matching[Some[InnerFrom]].select("value"))
-                )
-              ).ensurePartial
-            }
+          DerivationResult.expandedPartial(
+            optionalValue.fold[partial.Result[To]](
+              ctx.src,
+              ChimneyExpr.PartialResult.fromEmpty[To],
+              builder.build[partial.Result[To]]
+            )
           )
         }
-        .flatMap(DerivationResult.expandedPartial(_))
   }
 }

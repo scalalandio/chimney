@@ -4,7 +4,12 @@ import Console.*
 import io.scalaland.chimney.internal.compiletime.NotSupportedOperationFromPath.Operation as FromOperation
 import io.scalaland.chimney.internal.compiletime.datatypes.ProductTypes.BeanAware
 
-/** Transformer-specific error related to derivation logic */
+/** Transformer-specific error related to derivation logic.
+  *
+  * Hearth-based port of the pre-Hearth `io.scalaland.chimney.internal.compiletime.TransformerDerivationError` - 1:1
+  * copy (all case classes, fields and `printErrors` rendering preserved byte-identical), only the `BeanAware` import
+  * points at the `compiletime` datatypes.
+  */
 sealed trait TransformerDerivationError extends Product with Serializable {
   def fromType: String
   def toType: String

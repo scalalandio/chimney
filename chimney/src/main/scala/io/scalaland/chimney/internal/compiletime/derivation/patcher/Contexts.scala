@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
-private[compiletime] trait Contexts { this: Derivation =>
+/** Hearth-based port of `...compiletime.derivation.patcher.Contexts` - 1:1 copy. */
+private[compiletime] trait Contexts { this: Derivation & hearth.MacroCommons =>
 
   /** Stores all the "global" information that might be needed: types used, user configuration, runtime values, etc */
   final protected case class PatcherContext[A, Patch](obj: Expr[A], patch: Expr[Patch])(

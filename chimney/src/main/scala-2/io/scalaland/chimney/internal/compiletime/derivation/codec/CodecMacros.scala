@@ -2,12 +2,24 @@ package io.scalaland.chimney.internal.compiletime.derivation.codec
 
 import io.scalaland.chimney.dsl
 import io.scalaland.chimney.Codec
-import io.scalaland.chimney.internal.compiletime.derivation.transformer.{DerivationPlatform, Gateway}
+import io.scalaland.chimney.internal.compiletime.PlatformBridge
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.{Derivation, Gateway}
 import io.scalaland.chimney.internal.runtime
 
 import scala.reflect.macros.blackbox
 
-final class CodecMacros(val c: blackbox.Context) extends DerivationPlatform with Gateway {
+/** Hearth-based port of `...compiletime.derivation.codec.CodecMacros` (Scala 2).
+  *
+  * Public methods (names, signatures, type params) mirror the old macro bundle 1:1 so that the binding sites in
+  * `io.scalaland.chimney.dsl.*` can flip packages mechanically in the next phase.
+  *
+  * Differences vs the old version: same as
+  * [[io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros]] - extends [[PlatformBridge]]
+  * + the now-shared transformer `Derivation`/`Gateway` instead of the old per-platform `DerivationPlatform`,
+  * `Expr.block` -> `blockExpr`, `Type.platformSpecific.fromUntyped[A](tpe)` -> `c.WeakTypeTag[A](tpe)`, `?<`/`.as_?<`
+  * -> `??<:`/`.as_??<:`, `Expr.summonImplicit(...)` -> `.toOption` added.
+  */
+final class CodecMacros(ctx: blackbox.Context) extends PlatformBridge(ctx) with Derivation with Gateway {
 
   import c.universe.{internal as _, Transformer as _, *}
 
@@ -50,7 +62,7 @@ final class CodecMacros(val c: blackbox.Context) extends DerivationPlatform with
   ](
       tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]
   ): Expr[Codec[Domain, Dto]] = retypecheck(
-    Expr.block(
+    blockExpr(
       List(Expr.suppressUnused(tc)),
       c.Expr(
         q"""
@@ -82,11 +94,11 @@ final class CodecMacros(val c: blackbox.Context) extends DerivationPlatform with
   )
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
-      useImplicitScopeFlags: ?<[runtime.TransformerFlags] => Expr[A]
+      useImplicitScopeFlags: ??<:[runtime.TransformerFlags] => Expr[A]
   ): Expr[A] = {
     val implicitScopeConfig = {
-      val transformerConfigurationType = Type.platformSpecific
-        .fromUntyped[io.scalaland.chimney.dsl.TransformerConfiguration[? <: runtime.TransformerFlags]](
+      val transformerConfigurationType =
+        c.WeakTypeTag[io.scalaland.chimney.dsl.TransformerConfiguration[? <: runtime.TransformerFlags]](
           c.typecheck(
             tree = tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[? <: runtime.TransformerFlags]]}",
             silent = true,
@@ -96,17 +108,17 @@ final class CodecMacros(val c: blackbox.Context) extends DerivationPlatform with
           ).tpe
         )
 
-      Expr.summonImplicit(transformerConfigurationType).getOrElse {
+      Expr.summonImplicit(transformerConfigurationType).toOption.getOrElse {
         // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         reportError("Can't locate implicit TransformerConfiguration!")
         // $COVERAGE-ON$
       }
     }
-    val implicitScopeFlagsType = Type.platformSpecific
-      .fromUntyped[runtime.TransformerFlags](implicitScopeConfig.tpe.tpe.typeArgs.head)
-      .as_?<[runtime.TransformerFlags]
+    val implicitScopeFlagsType = c
+      .WeakTypeTag[runtime.TransformerFlags](implicitScopeConfig.tpe.tpe.typeArgs.head)
+      .as_??<:[runtime.TransformerFlags]
 
-    Expr.block(
+    blockExpr(
       List(Expr.suppressUnused(implicitScopeConfig)),
       useImplicitScopeFlags(implicitScopeFlagsType)
     )

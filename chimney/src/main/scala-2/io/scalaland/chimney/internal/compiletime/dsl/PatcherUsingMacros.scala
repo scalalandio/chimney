@@ -1,5 +1,8 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
+// Hearth-migration (Phase 4): verbatim copy of the pre-Hearth io.scalaland.chimney.internal.compiletime.dsl.PatcherUsingMacros
+// (package rename only - DSL macros use plain platform reflection + public runtime types, no macro-commons/Hearth involved).
+
 import io.scalaland.chimney.dsl.PatcherUsing
 import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, Path}
 import io.scalaland.chimney.internal.runtime.PatcherOverrides.*

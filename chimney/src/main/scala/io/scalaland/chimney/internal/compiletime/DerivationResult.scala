@@ -1,169 +1,52 @@
 package io.scalaland.chimney.internal.compiletime
 
+import hearth.fp.DirectStyle
+import hearth.fp.effect.{Log, MIO, MLocal}
+
 import scala.collection.Factory
 import scala.util.control.NonFatal
 
-/** Representations of an ongoing computation.
+/** Companion-like module for the old `DerivationResult`, now backed by Hearth's [[hearth.fp.effect.MIO]].
   *
-  * Features:
-  *   - handles errors
-  *   - catches exceptions
-  *   - provides sequential and parallel combinators
+  * `DerivationResult[A]` itself is a type alias for `MIO[A]` (see the package object); this object maps the old
+  * constructors/combinators onto MIO. Rules are expected to use MIO's own API directly - this bridge exists so that
+  * shared infra and the mechanically-ported rules keep compiling with minimal edits.
   *
-  * Intended to simplify how we express our logic during the derivation without long types and boilerplate.
+  * Semantics notes (verified against both implementations):
+  *   - errors: old `DerivationErrors` (NEL of `DerivationError`) becomes `MErrors` (`NonEmptyVector[Throwable]`); the
+  *     error ADTs are now stackless exceptions ([[DerivationError]]),
+  *   - `orElse`/`firstOf`: MIO's `orElse` has EXACTLY the old semantics - errors of ALL failed alternatives aggregate
+  *     (`fail(e1 ++ e2)`); `MIO.firstOf` is the same fold as the old `firstOf`,
+  *   - `parMap2`/`parTraverse`/`parSequence`: both run the second branch even if the first failed and aggregate the
+  *     errors; MIO additionally forks/joins `MLocal` state between the "parallel" branches,
+  *   - exception catching: MIO catches `NonFatal` in every combinator (old code did it in `transformWith`); caught raw
+  *     `Throwable`s are classified as [[DerivationError.MacroException]] at RENDERING time
+  *     ([[DerivationError.fromThrowable]]) instead of at catch time,
+  *   - fatal errors (e.g. `StackOverflowError`): old code smuggled them through `FatalError`+`catchFatalErrors`; with
+  *     MIO they simply propagate out of `unsafe.runSync` - the Gateway wraps `runSync` in a `try`/`catch` to keep the
+  *     "increase -Xss" message (`DerivationError.printErrors` still renders it once given
+  *     `MacroException(e: StackOverflowError)`),
+  *   - logging: the old journal becomes Hearth's [[hearth.fp.effect.Log]]; old `State.macroLogging` becomes
+  *     [[DerivationResult.macroLogging]] (an [[hearth.fp.effect.MLocal]]) - the Gateway READS it inside the MIO program
+  *     (`result.attempt.tuple(DerivationResult.macroLogging.get)`) because the final `MState`'s local-value accessor is
+  *     `private[effect]` in Hearth; the log dump itself renders from `state.logs.render.fromInfo(...)` after `runSync`,
+  *   - `direct`: mapped onto MIO's `DirectStyle` (`MIO.scoped`); the old monomorphic `Await[A]` is now an alias for the
+  *     polymorphic `DirectStyle.RunSafe[MIO]` (the extra type parameter of `direct[A, B]` is kept so existing call
+  *     sites with explicit type applications compile unchanged),
+  *   - the old `fp.ParallelTraverse[DerivationResult]` instance is NOT ported: Hearth ships `Parallel[MIO]`
+  *     (`MIO.ParallelForMio`), which is what collection `traverse`/`parTraverse` syntax needs.
   */
-sealed private[compiletime] trait DerivationResult[+A] {
-
-  import DerivationResult.*
-
-  def state: State
-
-  private def updateState(update: State => State): DerivationResult[A] = this match {
-    case Success(value, state)            => Success(value, update(state))
-    case Failure(derivationErrors, state) => Failure(derivationErrors, update(state))
-  }
-
-  // monadic operations with sequential semantics (the first fail breaks the circuit)
-
-  final def transformWith[B](
-      onSuccess: A => DerivationResult[B]
-  )(
-      onFailure: DerivationErrors => DerivationResult[B]
-  ): DerivationResult[B] = {
-    var state: State = null.asInstanceOf[State]
-
-    val result =
-      try
-        this match {
-          case Success(value, s) =>
-            state = s
-            onSuccess(value)
-          case Failure(derivationErrors, s) =>
-            state = s
-            onFailure(derivationErrors)
-        }
-      catch {
-        case fatal @ FatalError(_, _) => throw fatal // unwind stack, we already saved the cause and last state
-        case NonFatal(err)            => DerivationResult.fromException(err) // recoverable, turn into DerivationResult
-        case fatal: Throwable => throw FatalError(fatal, this.state) // save last state and cause of a fatal error
-      }
-
-    result.updateState(_.appendedTo(state))
-  }
-
-  final def flatMap[B](f: A => DerivationResult[B]): DerivationResult[B] = transformWith(f)(fail)
-
-  final def map[B](f: A => B): DerivationResult[B] = flatMap(f andThen pure)
-
-  final def flatTap[B](f: A => DerivationResult[B]): DerivationResult[A] = flatMap(a => f(a).as(a))
-
-  final def tap[B](f: A => B): DerivationResult[A] = flatTap(a => pure(f(a)))
-
-  final def recoverWith[A1 >: A](f: DerivationErrors => DerivationResult[A1]): DerivationResult[A1] =
-    transformWith[A1](pure)(f(_))
-
-  final def recover[A1 >: A](f: DerivationErrors => A1): DerivationResult[A1] =
-    recoverWith(f andThen pure)
-
-  final def map2[B, C](result: => DerivationResult[B])(f: (A, B) => C): DerivationResult[C] =
-    flatMap(a => result.map(f(a, _)))
-
-  final def as[B](value: B): DerivationResult[B] = map(_ => value)
-
-  final def void: DerivationResult[Unit] = as(())
-
-  final def >>[B](result: => DerivationResult[B]): DerivationResult[B] = flatMap(_ => result)
-
-  final def <<[B](result: => DerivationResult[B]): DerivationResult[A] = flatMap(a => result.as(a))
-
-  // applicative operations with parallel semantics (both branches are evaluated and then their results aggregated)
-
-  final def parMap2[B, C](result: DerivationResult[B])(f: (A, B) => C): DerivationResult[C] = transformWith { a =>
-    result.map(b => f(a, b))
-  } { errors =>
-    result.transformWith(_ => fail(errors))(errors2 => fail(errors ++ errors2))
-  }
-
-  final def parTuple[B](result: => DerivationResult[B]): DerivationResult[(A, B)] =
-    parMap2(result)(_ -> _)
-
-  // evaluated until first success, if none succeed errors aggregate
-
-  final def orElse[A1 >: A](result: => DerivationResult[A1]): DerivationResult[A1] =
-    transformWith[A1](pure) { err1 =>
-      result.transformWith(pure) { err2 =>
-        fail(err1 ++ err2)
-      }
-    }
-
-  final def orElseOpt[A1 >: A](resultOpt: => Option[DerivationResult[A1]]): DerivationResult[A1] =
-    transformWith[A1](pure) { err1 =>
-      resultOpt match {
-        case Some(result) =>
-          result.transformWith(pure) { err2 =>
-            fail(err1 ++ err2)
-          }
-        case None => fail(err1)
-      }
-    }
-
-  // logging
-
-  final def log(msg: => String): DerivationResult[A] = updateState(_.log(msg))
-
-  final def logSuccess(msg: A => String): DerivationResult[A] = this match {
-    case Success(value, _) => log(msg(value))
-    case _: Failure        => this
-  }
-
-  final def logFailure(msg: DerivationErrors => String): DerivationResult[A] = this match {
-    case _: Success[?]                => this
-    case Failure(derivationErrors, _) => log(msg(derivationErrors))
-  }
-
-  final def namedScope[B](scopeName: String)(f: A => DerivationResult[B]): DerivationResult[B] = flatMap { a =>
-    f(a).updateState(_.nestScope(scopeName))
-  }
-
-  // conversion
-
-  final def toEither: Either[DerivationErrors, A] = this match {
-    case Success(value, _)            => Right(value)
-    case Failure(derivationErrors, _) => Left(derivationErrors)
-  }
-}
 private[compiletime] object DerivationResult {
 
-  final case class State(
-      journal: Log.Journal = Log.Journal(logs = Vector.empty),
-      macroLogging: Option[State.MacroLogging] = None
-  ) {
+  def apply[A](thunk: => A): DerivationResult[A] = MIO(thunk)
 
-    private[DerivationResult] def log(msg: => String): State = copy(journal = journal.append(msg))
+  def pure[A](value: A): DerivationResult[A] = MIO.pure(value)
+  def fail[A](error: DerivationErrors): DerivationResult[A] = MIO.fail(error)
 
-    private[DerivationResult] def nestScope(scopeName: String): State =
-      copy(journal = Log.Journal(Vector(Log.Scope(scopeName = scopeName, journal = journal))))
-
-    private[DerivationResult] def appendedTo(previousState: State): State = State(
-      journal = Log.Journal(logs = previousState.journal.logs ++ this.journal.logs),
-      macroLogging = previousState.macroLogging.orElse(macroLogging)
-    )
-  }
-  object State {
-    final case class MacroLogging(derivationStartedAt: java.time.Instant)
-  }
-
-  final private case class Success[A](value: A, state: State) extends DerivationResult[A]
-  final private case class Failure(derivationErrors: DerivationErrors, state: State) extends DerivationResult[Nothing]
-
-  def apply[A](thunk: => A): DerivationResult[A] = unit.map(_ => thunk)
-  def pure[A](value: A): DerivationResult[A] = Success(value, State())
-  def fail[A](error: DerivationErrors): DerivationResult[A] = Failure(error, State())
-
-  val unit: DerivationResult[Unit] = pure(())
+  val unit: DerivationResult[Unit] = MIO.void
 
   def fromException[A](error: Throwable): DerivationResult[A] =
-    fail(DerivationErrors(DerivationError.MacroException(error)))
+    fail(DerivationErrors(DerivationError.fromThrowable(error)))
   def assertionError[A](msg: String): DerivationResult[A] =
     fromException(new AssertionError(msg))
   def notYetImplemented[A](what: String): DerivationResult[A] =
@@ -208,79 +91,45 @@ private[compiletime] object DerivationResult {
   // evaluated until first success, if none succeed errors aggregate
 
   def firstOf[A](head: DerivationResult[A], tail: DerivationResult[A]*): DerivationResult[A] =
-    tail.foldLeft(head)(_.orElse(_))
+    MIO.firstOf(head, tail*)
 
   // logging
 
-  def log(msg: => String): DerivationResult[Unit] = unit.log(msg)
+  def log(msg: => String): DerivationResult[Unit] = Log.info(msg)
 
   def namedScope[A](name: String)(ra: => DerivationResult[A]): DerivationResult[A] =
-    unit.namedScope(name)(_ => ra)
+    Log.namedScope(name)(ra)
+
+  /** Old `DerivationResult.State.MacroLogging` - "the macro-logging flag was enabled, dump the log journal at the end
+    * of the derivation (in Gateway)".
+    */
+  final case class MacroLogging(derivationStartedAt: java.time.Instant)
+
+  /** Old `State#macroLogging`, now an [[MLocal]] (set by [[enableLogPrinting]], read by the Gateway). */
+  val macroLogging: MLocal[Option[MacroLogging]] =
+    MLocal(Option.empty[MacroLogging])(identity)((a, b) => a.orElse(b))
 
   def enableLogPrinting(derivationStartedAt: java.time.Instant): DerivationResult[Unit] =
-    unit.updateState(_.copy(macroLogging = Some(State.MacroLogging(derivationStartedAt))))
-
-  def catchFatalErrors[A](result: => DerivationResult[A]): DerivationResult[A] = try
-    result
-  catch {
-    case FatalError(fatal, state) => Failure(DerivationErrors(DerivationError.MacroException(fatal)), state)
-  }
+    macroLogging.set(Some(MacroLogging(derivationStartedAt)))
 
   // direct style
 
-  final private case class PassErrors(derivationErrors: DerivationErrors, owner: Await[?]) extends Throwable
-  sealed private[compiletime] trait Await[A] {
-    def apply(dr: DerivationResult[A]): A
-  }
+  /** Old `Await[A]` - the value extractor passed to [[direct]]'s body. MIO's `RunSafe` is polymorphic, so the type
+    * parameter is only kept for source compatibility with old call sites.
+    */
+  type Await[A] = DirectStyle.RunSafe[MIO]
 
-  def direct[A, B](thunk: Await[A] => B): DerivationResult[B] = {
-    var stateCache: State = null.asInstanceOf[State]
-    val await = new Await[A] {
-      def apply(dr: DerivationResult[A]): A = dr match {
-        case Success(value, state) =>
-          stateCache = state
-          value
-        case Failure(derivationErrors, state) =>
-          stateCache = state
-          throw PassErrors(derivationErrors, this)
+  def direct[A, B](thunk: Await[A] => B): DerivationResult[B] =
+    MIO
+      .scoped { runSafe =>
+        // Preserves the old `direct` behavior of turning NonFatal exceptions of the block itself into failures
+        // (MIO's `scoped` lets them fly); `RunSafe`'s own error-passing uses a ControlThrowable, which NonFatal
+        // does not intercept, so awaiting failed results still works.
+        try Right(thunk(runSafe))
+        catch { case NonFatal(error) => Left(error) }
       }
-    }
-    try {
-      val result = thunk(await)
-      Success(result, if (stateCache != null) stateCache else State()) // if await wasn't called stateCache is null
-    } catch {
-      case PassErrors(derivationErrors, `await`) => Failure(derivationErrors, stateCache)
-      case NonFatal(error)                       => DerivationResult.fromException(error)
-    }
-  }
-
-  implicit val DerivationResultTraversableApplicative: fp.ParallelTraverse[DerivationResult] =
-    new fp.ParallelTraverse[DerivationResult] {
-
-      def map2[A, B, C](fa: DerivationResult[A], fb: DerivationResult[B])(f: (A, B) => C): DerivationResult[C] =
-        fa.map2(fb)(f)
-
-      def parMap2[A, B, C](fa: DerivationResult[A], fb: DerivationResult[B])(f: (A, B) => C): DerivationResult[C] =
-        fa.parMap2(fb)(f)
-
-      def pure[A](a: A): DerivationResult[A] = DerivationResult.pure(a)
-
-      def traverse[G[_]: fp.Applicative, A, B](fa: DerivationResult[A])(f: A => G[B]): G[DerivationResult[B]] = {
-        import fp.Implicits.*
-        fa match {
-          case Success(value, state) => f(value).map(Success(_, state))
-          case failure: Failure      => (failure: DerivationResult[B]).pure[G]
-        }
+      .flatMap {
+        case Right(value) => pure(value)
+        case Left(error)  => fromException(error)
       }
-
-      def parTraverse[G[_]: fp.Parallel, A, B](fa: DerivationResult[A])(f: A => G[B]): G[DerivationResult[B]] = {
-        import fp.Implicits.*
-        fa match {
-          case Success(value, state) => f(value).map(Success(_, state))
-          case failure: Failure      => (failure: DerivationResult[B]).pure[G]
-        }
-      }
-    }
-
-  private case class FatalError(error: Throwable, state: State) extends Exception(error)
 }

@@ -4146,6 +4146,13 @@ available.
 
 ### `chimney-macro-commons`
 
+!!! warning
+
+    Since Chimney 2.0.0 the derivation engine is built on top of [Hearth](https://scala-hearth.readthedocs.io/) and
+    Chimney itself no longer depends on `chimney-macro-commons`. The library is still published and maintained as a
+    standalone artifact, and the description below (with source links pinned to the last Chimney version developing
+    it in this repository, 1.10.0) remains valid for it.
+
 This module contains no dependencies on Chimney runtime types, not Chimney-specific macro logic. It could be used to
 reuse Chimney utilities for e.g.:
 
@@ -4332,14 +4339,14 @@ For smaller/simpler/short-living libraries it might feel over-engineered.
 
 #### Components of `chimney-macro-commons`
 
- - [Types](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Types.scala) - for types and definitions related to type manipulations and build-in `Type` support, e.g.:
+ - [Types](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Types.scala) - for types and definitions related to type manipulations and build-in `Type` support, e.g.:
     - summoning with `Type[A]`
     - printing type with `Type.prettyPrint[A]`
     - comparison with `Type[A] =:= Type[B]`, `Type[A] <:< Type[B]`
     - creating (`apply`) or matching (`unapply`) some build-in types: primitives, `Option`s, `Either`s, `Iterable`s, `Map`s, `Factory`ies
     - implicit instances for some common types (`import Type.Implicits._`) - required in macro-agnostic code since it is not synthesising
       `c.WeakTypeTag`s nor `scala.quoted.Type`
- - [Exprs](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Exprs.scala) - for types and definitions related to expression manipulations and build-in `Expr` support, e.g.:
+ - [Exprs](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Exprs.scala) - for types and definitions related to expression manipulations and build-in `Expr` support, e.g.:
     - creating primitives' literals
     - printing with `Expr.prettyPrint(expr)`
     - creating instances of `Function1`/`Function2` out of `Expr[A] => Expr[B]`/``(Expr[A], Expr[B]) => Expr[C]`
@@ -4348,31 +4355,31 @@ For smaller/simpler/short-living libraries it might feel over-engineered.
     - summoning implicits
     - creating `if`-`else` branches and blocks
     - upcasting
- - [Results](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Results.scala) - for types and definitions related to returning info/error messages from macros:
+ - [Results](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Results.scala) - for types and definitions related to returning info/error messages from macros:
     - reporting `info` message that compiler should show in output/IDE
     - reporting `error` message that compiler should show as the reason for macro failure
- - [Existentials](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Existentials.scala) - for types and definitions related to working with unknown types ("existential types"), e.g.:
+ - [Existentials](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Existentials.scala) - for types and definitions related to working with unknown types ("existential types"), e.g.:
     - `ExistntialType` or `??` - usable via `import existentialType.Underlying as NewTypeName`
     - `ExistentialExpr` - usable via `import existentialExpr.{Underlying as NewTypeName, value as expr}`
- - [ExprPromises](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/ExprPromises.scala) - for types and definitions related to computing `val`s/`lazy val`s/`def`s/`var`s before knowing the returned `Expr`'s `Type`, caching value as val, caching  derivation as `def`
- - [Definitions](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Definitions.scala) - for types and definitions related to reading macro configurations:
+ - [ExprPromises](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/ExprPromises.scala) - for types and definitions related to computing `val`s/`lazy val`s/`def`s/`var`s before knowing the returned `Expr`'s `Type`, caching value as val, caching  derivation as `def`
+ - [Definitions](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Definitions.scala) - for types and definitions related to reading macro configurations:
     - `Definitions` contains all of the above traits for convenience
     - additionally, exposes the content of `-Xmacro-setting` scalac option
- - [ProductTypes](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/ProductTypes.scala) - for types and definitions related to extractors and constructors of a product type:
+ - [ProductTypes](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/ProductTypes.scala) - for types and definitions related to extractors and constructors of a product type:
     - `Type[A] match { case Product.Extraction(getters) => ... }` - provides getters (`val`s, `var`s, Java Bean getters, nullary `defs`) - always available
     - `Type[A] match { case Product.Constructor(getters, constructor) => ... }` - provides a constructor - primary constructor if it's public OR
       the only public constructor if there is exactly one
     - `Type[A] match { case Product(getters, constructor) => ... }` - provides both getters and constructor
- - [SealedHierarchies](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/SealedHierarchies.scala) - for types and definitions related to finding all subtypes of `sealed trait`s/`sealed abstrcto class`es/Scala 3 `enum`s/Java `enum`s:
+ - [SealedHierarchies](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/SealedHierarchies.scala) - for types and definitions related to finding all subtypes of `sealed trait`s/`sealed abstrcto class`es/Scala 3 `enum`s/Java `enum`s:
     - `Type[A] match { case SealedHierarchy(elements) => }` - provides a list of subtypes of a `sealed` hierarchy/Java `enum`/Scala 3 `enum`
- - [ValueClasses](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/ValueClasses.scala) - for types and definitions related to `AnyVal`s and "wrapper"s:
+ - [ValueClasses](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/ValueClasses.scala) - for types and definitions related to `AnyVal`s and "wrapper"s:
     - `Type[A] match { case ValueClassType(valueType) => ... }` - provides `wrap` and `unwrap` method if `Type[A]` is a subtype of `AnyVal` with unary public constructor
       and public value
     - `Type[A] match { case WrapperClassType(valueType) => ... }` - provides `wrap` and `unwrap` method if `Type[A]` has unary public constructor and public value
- - [SingletonTypes](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/SingletonTypes.scala) - for types and definitions related to singleton types:
+ - [SingletonTypes](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/SingletonTypes.scala) - for types and definitions related to singleton types:
     - `Type[A] match { case SingletonType(singleton) => ... }` - provides `Expr[A]` if it's a primitive type literal, `case object`, Scala 3 `enum` parameterless
       `case` or Java `enum` value
- - [IterableOrArrays](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/IterableOrArrays.scala) - for types and definitions related to unified interface for working with Arrays and Scala collections:
+ - [IterableOrArrays](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/IterableOrArrays.scala) - for types and definitions related to unified interface for working with Arrays and Scala collections:
     - `Type[A] match { case IterableOrArray(iOrA) => ... }` - provides `Factory`, `.map`, `.to` and `.interator` methods for Arrays/iterables/maps
 
 #### macro-commons examples

@@ -1,8 +1,8 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.Transformer
-import io.scalaland.chimney.internal.compiletime2.derivation.transformer.TransformerMacros
-import io.scalaland.chimney.internal.compiletime2.dsl.*
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
+import io.scalaland.chimney.internal.compiletime.dsl.*
 import io.scalaland.chimney.internal.runtime.{
   IsFunction,
   Path,

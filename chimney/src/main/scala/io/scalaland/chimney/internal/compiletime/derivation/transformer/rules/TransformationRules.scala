@@ -1,10 +1,28 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
+import hearth.fp.syntax.*
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-private[compiletime] trait TransformationRules { this: Derivation =>
+/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformationRules`.
+  *
+  * Chimney's OWN rule engine is preserved (NOT replaced by Hearth's `Rules`/`Rule.Applicability` combinator): the
+  * `ExpansionResult.AttemptNextRule(reason)` accumulation, logging and error semantics are kept exactly as before, just
+  * running on MIO. (Hearth's `Rules` is close - Matched/Yielded mirror Expanded/AttemptNextRule - but it returns the
+  * accumulated yield-reasons instead of logging them one-by-one and has no `TransformationExpr` awareness, so
+  * delegating would change the logs that tests assert on.)
+  *
+  * Differences vs the old version:
+  *   - `TransformationExpr#map`/`#flatMap` build lambdas with Hearth's `LambdaBuilder` instead of `ExprPromise`
+  *     (`Expr.Function1.instance`/`fulfilAsLambda` counterparts),
+  *   - the old `TransformationExprPromiseOps` (ops over `ExprPromise[From, TransformationExpr[To]]`) becomes
+  *     [[TransformationExprBuilderOps]] (ops over `LambdaBuilder[From, TransformationExpr[To]]`, where `From` is now
+  *     the lambda shape, e.g. `A => *`) - method names preserved (`foldTransformationExpr`, `exprPartition`, `isTotal`,
+  *     `isPartial`, `ensureTotal`, `ensurePartial`),
+  *   - `.log(msg)` becomes `.logInfo(msg)` (see the package object).
+  */
+private[compiletime] trait TransformationRules { this: Derivation & hearth.MacroCommons =>
 
   import ChimneyType.Implicits.*
 
@@ -36,7 +54,7 @@ private[compiletime] trait TransformationRules { this: Derivation =>
         rules: List[Rule]
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[TransformationExpr[To]] = rules match {
       case Nil =>
-        DerivationResult.notSupportedTransformerDerivation(ctx).log("Tested all derivation rules, none matched")
+        DerivationResult.notSupportedTransformerDerivation(ctx).logInfo("Tested all derivation rules, none matched")
       case rule :: nextRules =>
         DerivationResult
           .namedScope(s"Attempting expansion of rule ${rule.name}")(
@@ -73,21 +91,23 @@ private[compiletime] trait TransformationRules { this: Derivation =>
 
     final def map[B: Type](f: Expr[A] => Expr[B]): TransformationExpr[B] = this match {
       case TotalExpr(expr)   => TotalExpr(f(expr))
-      case PartialExpr(expr) => PartialExpr(ChimneyExpr.PartialResult.map(expr)(Expr.Function1.instance(f)))
+      case PartialExpr(expr) =>
+        // '{ ${ expr }.map { a: $A => ${ b } } }
+        PartialExpr(ChimneyExpr.PartialResult.map(expr)(LambdaBuilder.of1[A]().map(f).build[B]))
     }
 
     final def flatMap[B: Type](f: Expr[A] => TransformationExpr[B]): TransformationExpr[B] = this match {
       case TotalExpr(expr)   => f(expr)
       case PartialExpr(expr) =>
-        ExprPromise
-          .promise[A](ExprPromise.NameGenerationStrategy.FromType)
+        LambdaBuilder
+          .of1[A]()
           .map(f)
-          .foldTransformationExpr { (totalE: ExprPromise[A, Expr[B]]) =>
+          .foldTransformationExpr { (totalE: LambdaBuilder[A => *, Expr[B]]) =>
             // '{ ${ expr }.map { a: $A => ${ b } } }
-            PartialExpr(expr.map[B](totalE.fulfilAsLambda))
-          } { (partialE: ExprPromise[A, Expr[partial.Result[B]]]) =>
+            PartialExpr(expr.map[B](totalE.build[B]))
+          } { (partialE: LambdaBuilder[A => *, Expr[partial.Result[B]]]) =>
             // '{ ${ expr }.flatMap { a: $A => ${ resultB } } }
-            PartialExpr(expr.flatMap[B](partialE.fulfilAsLambda))
+            PartialExpr(expr.flatMap[B](partialE.build[partial.Result[B]]))
           }
     }
 
@@ -111,7 +131,7 @@ private[compiletime] trait TransformationRules { this: Derivation =>
     }
     final def ensurePartial: Expr[partial.Result[A]] = fold { expr =>
       implicit val A: Type[A] = Expr.typeOf(expr)
-      ChimneyExpr.PartialResult.Value(expr).upcastToExprOf[partial.Result[A]]
+      ChimneyExpr.PartialResult.Value(expr).upcast[partial.Result[A]]
     }(identity)
 
     def prettyPrint: String = fold(Expr.prettyPrint)(Expr.prettyPrint)
@@ -124,20 +144,38 @@ private[compiletime] trait TransformationRules { this: Derivation =>
     final case class PartialExpr[A](expr: Expr[partial.Result[A]]) extends TransformationExpr[A]
   }
 
-  implicit final class TransformationExprPromiseOps[From, To](promise: ExprPromise[From, TransformationExpr[To]]) {
+  /** Old `TransformationExprPromiseOps`, on `LambdaBuilder` instead of `ExprPromise` (see the trait's ScalaDoc). */
+  implicit final class TransformationExprBuilderOps[From[_], To](
+      builder: LambdaBuilder[From, TransformationExpr[To]]
+  ) {
 
-    def foldTransformationExpr[B](onTotal: ExprPromise[From, Expr[To]] => B)(
-        onPartial: ExprPromise[From, Expr[partial.Result[To]]] => B
-    ): B = promise.map(_.toEither).foldEither(onTotal)(onPartial)
+    def foldTransformationExpr[B](onTotal: LambdaBuilder[From, Expr[To]] => B)(
+        onPartial: LambdaBuilder[From, Expr[partial.Result[To]]] => B
+    ): B = exprPartition.fold(onTotal, onPartial)
 
-    def exprPartition: Either[ExprPromise[From, Expr[To]], ExprPromise[From, Expr[partial.Result[To]]]] =
-      promise.map(_.toEither).partition
+    def exprPartition: Either[LambdaBuilder[From, Expr[To]], LambdaBuilder[From, Expr[partial.Result[To]]]] =
+      builder.partition(_.toEither)
 
     def isTotal: Boolean = foldTransformationExpr(_ => true)(_ => false)
     def isPartial: Boolean = foldTransformationExpr(_ => false)(_ => true)
 
-    def ensureTotal: ExprPromise[From, Expr[To]] = promise.map(_.ensureTotal)
-    def ensurePartial: ExprPromise[From, Expr[partial.Result[To]]] = promise.map(_.ensurePartial)
+    def ensureTotal: LambdaBuilder[From, Expr[To]] = builder.map(_.ensureTotal)
+    def ensurePartial: LambdaBuilder[From, Expr[partial.Result[To]]] = builder.map(_.ensurePartial)
+  }
+
+  /** [[TransformationExprBuilderOps]] counterpart for `MatchCase` (the old code used `ExprPromise` for both lambdas and
+    * pattern-match cases; the SealedHierarchy rule needs the same folding over `MatchCase`).
+    */
+  implicit final class TransformationExprMatchCaseOps[To](matchCase: MatchCase[TransformationExpr[To]]) {
+
+    def exprPartition: Either[MatchCase[Expr[To]], MatchCase[Expr[partial.Result[To]]]] =
+      matchCase.partition(_.toEither)
+
+    def isTotal: Boolean = exprPartition.isLeft
+    def isPartial: Boolean = exprPartition.isRight
+
+    def ensureTotal: MatchCase[Expr[To]] = matchCase.map(_.ensureTotal)
+    def ensurePartial: MatchCase[Expr[partial.Result[To]]] = matchCase.map(_.ensurePartial)
   }
 
   protected val rulesAvailableForPlatform: List[Rule]

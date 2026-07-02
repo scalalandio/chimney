@@ -155,9 +155,8 @@ You can check its name in:
 If you want to test changes that were not merged to `master` you can publish them you for yourself locally. For that
 open sbt and run `publishLocal` task for every artifact that you want to publish as a snapshot. Keep in mind that:
 
- * `chimney-macro-commons` is required for `chimney` to work
  * `chimney-cats`, `chimney-java-collections` and `chimney-protobufs` rely on `chimney`
- * `chimneyMacroCommons`, `chimney`, `chimneyCats`, etc. are versions with Scala 2.13 on JVM
+ * `chimney`, `chimneyCats`, etc. are versions with Scala 2.13 on JVM
  * versions for Scala Scala 3, Scala.js and Scala Native are NOT published by prepending `++` but by
    using a different suffix (`3`, `JS`, `Native`, see `projects` task to get a full list of projects) 
 
@@ -169,7 +168,7 @@ would follow to publish a new version of the library:
 1. Pre-release checks 
   - [ ] verify that all task in the milestone are finished (if a milestone for the release exists)
   - [ ] verify that all Scala Steward PRs are merged or manually replaced
-  - [ ] verify that chimney-macro-commons is **not** on RC version
+  - [ ] verify that hearth is **not** on RC/snapshot version
   - [ ] wait for the `master` to build and pass all tests, ensure that they are all green
   - [ ] search `TODO`s in the code and verify that they are not problematic (no missing documentation links for instance)
   - [ ] verify that docs from the latest build are rendering correctly (on RTD or `cd docs && just serve`)

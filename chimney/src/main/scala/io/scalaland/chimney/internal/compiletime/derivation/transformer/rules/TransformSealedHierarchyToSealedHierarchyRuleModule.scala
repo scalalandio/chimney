@@ -1,21 +1,40 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
+import hearth.fp.data.NonEmptyVector
+import hearth.fp.instances.*
+import hearth.fp.syntax.*
 import io.scalaland.chimney.dsl.FailOnUnmatchedTargetSubtype
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
-import io.scalaland.chimney.internal.compiletime.fp.Traverse
-import io.scalaland.chimney.internal.compiletime.fp.Implicits.*
 import io.scalaland.chimney.partial
 
-private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule { this: Derivation =>
+/** Hearth-based port of
+  * `...compiletime.derivation.transformer.rules.TransformSealedHierarchyToSealedHierarchyRuleModule`.
+  *
+  * Differences vs the old version:
+  *   - macro-commons' `Enum`/`Enum.Element` view is renamed `SealedEnum`/`SealedEnum.Element` (see
+  *     [[datatypes.SealedHierarchies]] for why),
+  *   - `ExprPromise.promise[FromSubtype](...)` + `fulfillAsPatternMatchCase` becomes Hearth's
+  *     `MatchCase.typeMatch[FromSubtype](...)` + `.traverse` (the per-subtype mappings are
+  *     `MatchCase[TransformationExpr[To]]` instead of `Existential[ExprPromise[*, TransformationExpr[To]]]` - the
+  *     matched subtype type is existentialized inside `MatchCase` itself); the `List[PatternMatchCase].matchOn(src)`
+  *     call becomes `ctx.src.matchOn(NonEmptyVector(...))` (an empty subtype list - impossible for the inputs Chimney
+  *     accepts - now fails with an explicit assertion instead of emitting an empty match),
+  *   - `mapOverriddenElements` no longer needs `DerivationResult.direct`/`await`: `MatchCase.traverse` runs the
+  *     derivation effect directly where the old code had to `await` inside `ExprPromise.map`,
+  *   - `.log` becomes `.logInfo` where used on results (companion `DerivationResult.log` kept),
+  *   - `upcastToExprOf[B]` becomes Hearth's `upcast[B]`, `Type[A => B]` instances come from `ScalaType.Implicits`.
+  */
+private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
+  this: Derivation & hearth.MacroCommons =>
 
-  import Type.Implicits.*, ChimneyType.Implicits.*
+  import ChimneyType.Implicits.*, ScalaType.Implicits.*
 
   protected object TransformSealedHierarchyToSealedHierarchyRule extends Rule("SealedHierarchyToSealedHierarchy") {
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (Type[From], Type[To]) match {
-        case (SealedHierarchy(Enum(fromElements)), SealedHierarchy(Enum(toElements))) =>
+        case (SealedHierarchy(SealedEnum(fromElements)), SealedHierarchy(SealedEnum(toElements))) =>
           mapEachSealedElementToAnotherSealedElement(fromElements, toElements)
         case (SealedHierarchy(_), _) =>
           DerivationResult.attemptNextRuleBecause(
@@ -29,8 +48,8 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
       }
 
     private def mapEachSealedElementToAnotherSealedElement[From, To](
-        fromElements: Enum.Elements[From],
-        toElements: Enum.Elements[To]
+        fromElements: SealedEnum.Elements[From],
+        toElements: SealedEnum.Elements[To]
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = {
       val toSubtypesMatched = scala.collection.mutable.ListBuffer.empty[ExistentialType]
       val toSubtypesExplicitlyUnmatched = ctx.config.filterCurrentUnusedSubtypes
@@ -40,34 +59,34 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
         val toSubs = toElements.map(tpe => Type.prettyPrint(using tpe.Underlying)).mkString(", ")
         s"Resolved ${Type.prettyPrint[From]} subtypes: ($fromSubs) and ${Type.prettyPrint[To]} subtypes ($toSubs)"
       } >> mapOverriddenElements[From, To].flatMap { overrideMappings =>
-        Traverse[List]
-          .parTraverse[
-            DerivationResult,
-            Existential.UpperBounded[From, Enum.Element[From, *]],
-            Existential[ExprPromise[*, TransformationExpr[To]]]
-          ](fromElements.filterNot { fromSubtype =>
+        fromElements
+          .filterNot { fromSubtype =>
             // A single coproduct override might be a sealed which in nested sealed hierarchy which would remove
             // the need for several non-abstract subtypes - keeping them would result in unreachable code errors.
-            overrideMappings.exists(usedFromSubtype => fromSubtype.Underlying <:< usedFromSubtype.Underlying)
-          }) { (fromSubtype: Existential.UpperBounded[From, Enum.Element[From, *]]) =>
-            mapElementsMatchedByName[From, To](
-              fromSubtype,
-              toElements,
-              toSubtypesMatched,
-              toSubtypesExplicitlyUnmatched
-            )
-              .orElse(mapWholeTo[From, To](fromSubtype))
+            overrideMappings.exists { case (usedFromSubtype, _) =>
+              fromSubtype.Underlying <:< usedFromSubtype.Underlying
+            }
+          }
+          .parTraverse[DerivationResult, MatchCase[TransformationExpr[To]]] {
+            (fromSubtype: Existential.UpperBounded[From, SealedEnum.Element[From, *]]) =>
+              mapElementsMatchedByName[From, To](
+                fromSubtype,
+                toElements,
+                toSubtypesMatched,
+                toSubtypesExplicitlyUnmatched
+              )
+                .orElse(mapWholeTo[From, To](fromSubtype))
           }
           .flatTap(_ => checkPolicy(toElements, toSubtypesMatched.toSet, toSubtypesExplicitlyUnmatched))
-          .flatMap { (nameMatchedMappings: List[Existential[ExprPromise[*, TransformationExpr[To]]]]) =>
-            combineElementsMappings[From, To](overrideMappings ++ nameMatchedMappings)
+          .flatMap { (nameMatchedMappings: List[MatchCase[TransformationExpr[To]]]) =>
+            combineElementsMappings[From, To](overrideMappings.map(_._2) ++ nameMatchedMappings)
           }
       }
     }
 
     private def mapOverriddenElements[From, To](implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[List[Existential[ExprPromise[*, TransformationExpr[To]]]]] = {
+    ): DerivationResult[List[(ExistentialType, MatchCase[TransformationExpr[To]])]] = {
       val overrides = ctx.config
         .filterCurrentOverridesForSubtype { (someFrom: ??) =>
           import someFrom.Underlying as SomeFrom
@@ -85,74 +104,69 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
         }
         .toList
 
-      Traverse[List].parTraverse[
-        DerivationResult,
-        (ExistentialType, TransformerOverride.ForSubtype),
-        (Existential[ExprPromise[*, TransformationExpr[To]]])
-      ](overrides) { case (someFrom, runtimeSubtype) =>
-        import someFrom.Underlying as SomeFrom
-        DerivationResult.direct[TransformationExpr[To], Existential[ExprPromise[*, TransformationExpr[To]]]] { await =>
-          val promise = ExprPromise
-            .promise[SomeFrom](ExprPromise.NameGenerationStrategy.FromType)
-            .map { (someFromExpr: Expr[SomeFrom]) =>
+      overrides.parTraverse[DerivationResult, (ExistentialType, MatchCase[TransformationExpr[To]])] {
+        case (someFrom, runtimeSubtype) =>
+          import someFrom.Underlying as SomeFrom
+          MatchCase
+            .typeMatch[SomeFrom](FreshName.FromType)
+            .traverse[DerivationResult, TransformationExpr[To]] { (someFromExpr: Expr[SomeFrom]) =>
               // Ideally we would use here (someFrom => ...) types and pass down someFromExpr,
               // unfortunately on Scala 2 we end up with situations like:
               //   case javaEnum: JavaEnum.Value =>
               //      val _ = javaEnum
               //     runtimeDataStore(x).asInstanceOf[JavaEnum.Value => To](javaEnum)
               // complaining that javaEnum.type is not equal to expected JavaEnum.Value.type.
-              lazy val fromExpr = someFromExpr.upcastToExprOf[From]
+              lazy val fromExpr: Expr[From] = someFromExpr.upcast[From]
 
               // targetPath verified by filter in overrides
               runtimeSubtype match {
                 case TransformerOverride.Unused =>
-                  await(
-                    DerivationResult
-                      .assertionError("Unmatched subtype override should have been checked on target side Path")
-                  )
+                  DerivationResult
+                    .assertionError("Unmatched subtype override should have been checked on target side Path")
                 case TransformerOverride.Computed(_, _, runtimeData) =>
                   // We're constructing:
                   // case someFromExpr: $someFrom => runtimeDataStore(${ idx }).asInstanceOf[$someFrom => $To](someFromExpr)
-                  TransformationExpr.fromTotal(
-                    runtimeData.asInstanceOfExpr[From => To].apply(fromExpr)
+                  DerivationResult.pure(
+                    TransformationExpr.fromTotal(
+                      runtimeData.asInstanceOfExpr[From => To].apply(fromExpr)
+                    )
                   )
                 case TransformerOverride.ComputedPartial(_, _, runtimeData) =>
                   // We're constructing:
                   // case someFromExpr: $someFrom => runtimeDataStore(${ idx }).asInstanceOf[$someFrom => partial.Result[$To]](someFromExpr)
-                  TransformationExpr.fromPartial(
-                    runtimeData.asInstanceOfExpr[From => partial.Result[To]].apply(fromExpr)
+                  DerivationResult.pure(
+                    TransformationExpr.fromPartial(
+                      runtimeData.asInstanceOfExpr[From => partial.Result[To]].apply(fromExpr)
+                    )
                   )
                 case TransformerOverride.Renamed(_, targetPath) =>
                   val Some(Path.AtSubtype(someTo, _)) = targetPath.drop(ctx.currentTgt): @unchecked
                   // We're constructing:
                   // case someFromExpr: $someFrom => $derivedToSubtype.asInstance
                   import someTo.Underlying as SomeTo
-                  await(
-                    deriveRecursiveTransformationExpr[SomeFrom, SomeTo](
-                      someFromExpr,
-                      Path(_.matching[SomeFrom]),
-                      Path(_.matching[SomeTo])
-                    ).map(
-                      _.fold(totalExpr => TransformationExpr.fromTotal(totalExpr.asInstanceOfExpr[To])) { partialExpr =>
-                        TransformationExpr.fromPartial(partialExpr.asInstanceOfExpr[partial.Result[To]])
-                      }
-                    )
+                  deriveRecursiveTransformationExpr[SomeFrom, SomeTo](
+                    someFromExpr,
+                    Path(_.matching[SomeFrom]),
+                    Path(_.matching[SomeTo])
+                  ).map(
+                    _.fold(totalExpr => TransformationExpr.fromTotal(totalExpr.asInstanceOfExpr[To])) { partialExpr =>
+                      TransformationExpr.fromPartial(partialExpr.asInstanceOfExpr[partial.Result[To]])
+                    }
                   )
               }
             }
-          Existential[ExprPromise[*, TransformationExpr[To]], SomeFrom](promise)
-        }
+            .map(matchCase => (someFrom, matchCase))
       }
     }
 
     private def mapElementsMatchedByName[From, To](
-        fromSubtype: Existential.UpperBounded[From, Enum.Element[From, *]],
-        toElements: Enum.Elements[To],
+        fromSubtype: Existential.UpperBounded[From, SealedEnum.Element[From, *]],
+        toElements: SealedEnum.Elements[To],
         toSubtypesMatched: scala.collection.mutable.ListBuffer[??],
         toSubtypesExplicitlyUnmatched: Set[??]
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[Existential[ExprPromise[*, TransformationExpr[To]]]] = {
+    ): DerivationResult[MatchCase[TransformationExpr[To]]] = {
       import fromSubtype.Underlying as FromSubtype, fromSubtype.value.name as fromName
       toElements.filter { toSubtype =>
         areSubtypeNamesMatching(fromName, toSubtype.value.name) &&
@@ -161,17 +175,15 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
         // 0 matches - no coproduct with the same name
         case Nil =>
           DerivationResult
-            .missingSubtypeTransformer[From, To, FromSubtype, Existential[ExprPromise[*, TransformationExpr[To]]]]
+            .missingSubtypeTransformer[From, To, FromSubtype, MatchCase[TransformationExpr[To]]]
         // 1 match - unambiguous finding
         case toSubtype :: Nil =>
           import toSubtype.Underlying as ToSubtype, toSubtype.value.upcast as toUpcast
-          ExprPromise
+          MatchCase
             // Scala 2/3 compatibility: each Java enum value on Scala 3 would have distinct type,
-            // while on Scala 2 they all have the same type, so NameGenerationStrategy.FromType behaves differently
-            .promise[FromSubtype](
-              ExprPromise.NameGenerationStrategy.FromPrefix(fromSubtype.value.name.toLowerCase)
-            )
-            .traverse { (fromSubtypeExpr: Expr[FromSubtype]) =>
+            // while on Scala 2 they all have the same type, so FreshName.FromType behaves differently
+            .typeMatch[FromSubtype](FreshName.FromPrefix(fromSubtype.value.name.toLowerCase))
+            .traverse[DerivationResult, TransformationExpr[To]] { (fromSubtypeExpr: Expr[FromSubtype]) =>
               // We're constructing:
               // case fromSubtypeExpr: $fromSubtype => ${ derivedToSubtype } } // or ${ derivedResultToSubtype
               lazy val fromSubtypeIntoToSubtype =
@@ -221,25 +233,26 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                 .orElseOpt(fromSubtypeUnwrappedIntoToSubtype)
                 .orElseOpt(fromSubtypeIntoToSubtypeUnwrapped)
             }
-            .map(Existential[ExprPromise[*, TransformationExpr[To]], FromSubtype](_))
         // 2 or more matches - ambiguous coproduct instances
         case toSubtypes =>
-          DerivationResult.ambiguousSubtypeTargets[From, To, Existential[ExprPromise[*, TransformationExpr[To]]]](
+          DerivationResult.ambiguousSubtypeTargets[From, To, MatchCase[TransformationExpr[To]]](
             FromSubtype.as_??,
             toSubtypes.map(toSubtype => toSubtype.Underlying.as_??)
           )
       }
     }
 
-    private def mapWholeTo[From, To](fromSubtype: Existential.UpperBounded[From, Enum.Element[From, *]])(implicit
+    private def mapWholeTo[From, To](
+        fromSubtype: Existential.UpperBounded[From, SealedEnum.Element[From, *]]
+    )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[Existential[ExprPromise[*, TransformationExpr[To]]]] = {
+    ): DerivationResult[MatchCase[TransformationExpr[To]]] = {
       import fromSubtype.Underlying as FromSubtype
-      ExprPromise
+      MatchCase
         // Scala 2/3 compatibility: each Java enum value on Scala 3 would have distinct type,
-        // while on Scala 2 they all have the same type, so NameGenerationStrategy.FromType behaves differently
-        .promise[FromSubtype](ExprPromise.NameGenerationStrategy.FromPrefix(fromSubtype.value.name.toLowerCase))
-        .traverse { (fromSubtypeExpr: Expr[FromSubtype]) =>
+        // while on Scala 2 they all have the same type, so FreshName.FromType behaves differently
+        .typeMatch[FromSubtype](FreshName.FromPrefix(fromSubtype.value.name.toLowerCase))
+        .traverse[DerivationResult, TransformationExpr[To]] { (fromSubtypeExpr: Expr[FromSubtype]) =>
           // We're constructing:
           // case fromSubtypeExpr: $fromSubtype => ${ derivedTo } // or ${ derivedResultTo }
           DerivationResult.log(
@@ -251,39 +264,37 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
               updateRules = _.filter(_.name == "Implicit")
             )
         }
-        .map(Existential[ExprPromise[*, TransformationExpr[To]], FromSubtype](_))
     }
 
     private def combineElementsMappings[From, To](
-        subtypeMappings: List[Existential[ExprPromise[*, TransformationExpr[To]]]]
+        subtypeMappings: List[MatchCase[TransformationExpr[To]]]
     )(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[Rule.ExpansionResult[To]] =
-      if (subtypeMappings.exists(_.value.isPartial))
+      if (subtypeMappings.exists(_.isPartial))
         // if any result is partial, all results must be lifted to partial
         DerivationResult.log(
-          s"Found cases ${subtypeMappings.count(_.value.isPartial)} with Partial target, lifting all cases to Partial"
+          s"Found cases ${subtypeMappings.count(_.isPartial)} with Partial target, lifting all cases to Partial"
         ) >>
           DerivationResult
             .expandedPartial(
-              subtypeMappings
-                .map { subtype =>
-                  subtype.value.ensurePartial.fulfillAsPatternMatchCase[partial.Result[To]]
-                }
-                .matchOn(ctx.src)
+              ctx.src.matchOn[partial.Result[To]](toNonEmptyVector(subtypeMappings.map(_.ensurePartial)))
             )
       else
         // if all are total, we might treat them as such
         DerivationResult.expandedTotal(
-          subtypeMappings
-            .map { subtype =>
-              subtype.value.ensureTotal.fulfillAsPatternMatchCase[To]
-            }
-            .matchOn(ctx.src)
+          ctx.src.matchOn[To](toNonEmptyVector(subtypeMappings.map(_.ensureTotal)))
         )
 
+    private def toNonEmptyVector[A](cases: List[MatchCase[A]]): NonEmptyVector[MatchCase[A]] =
+      NonEmptyVector.fromVector(cases.toVector).getOrElse {
+        // $COVERAGE-OFF$should never happen unless we messed up
+        assertionFailed("Expected at least one subtype pattern-match case")
+        // $COVERAGE-ON$
+      }
+
     private def checkPolicy[From, To](
-        requiredToSubtypes: Enum.Elements[To],
+        requiredToSubtypes: SealedEnum.Elements[To],
         toSubtypesUsedInMatch: Set[ExistentialType],
         toSubtypesExplicitlyUnmatched: Set[ExistentialType]
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Unit] =

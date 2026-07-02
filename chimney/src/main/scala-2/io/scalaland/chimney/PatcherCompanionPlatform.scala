@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.compiletime2.derivation.patcher.PatcherMacros
+import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
 
 import scala.language.experimental.macros
 

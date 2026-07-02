@@ -19,9 +19,10 @@ import io.scalaland.chimney.integrations as in
 import io.scalaland.chimney.{partial, PartialTransformer, Transformer}
 import io.scalaland.chimney.internal.compiletime.TransformerDerivationError
 
-private[compiletime] trait ResultOps { this: Derivation =>
-
-  import ChimneyType.Implicits.*
+/** Hearth-based port of the pre-Hearth `io.scalaland.chimney.internal.compiletime.derivation.transformer.ResultOps` -
+  * 1:1 copy (`DerivationResult` is now MIO-backed, but all the helpers keep their old names and signatures).
+  */
+private[compiletime] trait ResultOps { this: Derivation & hearth.MacroCommons =>
 
   /** DerivationResult is defined outside the "cake", so methods using utilities from the cake have to be extensions */
   implicit final protected class DerivationResultModule(derivationResult: DerivationResult.type) {
@@ -151,10 +152,14 @@ private[compiletime] trait ResultOps { this: Derivation =>
           import fromSubtype.Underlying as FromSubtype
           Type.prettyPrint[FromSubtype]
         },
-        foundToSubtypes = foundToSubtypes.map { foundToSubtype =>
-          import foundToSubtype.Underlying as ToSubtype
-          Type.prettyPrint[ToSubtype]
-        }.sorted
+        foundToSubtypes = foundToSubtypes
+          .map { foundToSubtype =>
+            import foundToSubtype.Underlying as ToSubtype
+            Type.prettyPrint[ToSubtype]
+            // sortBy(color-stripped): Hearth's prettyPrint colors individual name segments, so sorting the raw
+            // colored strings (like the old code did with its uniformly-colored printer) would scramble the order.
+          }
+          .sortBy(s => s.replaceAll("\\[[0-9;]*m", ""))
       )
     )
 
@@ -217,6 +222,6 @@ private[compiletime] trait ResultOps { this: Derivation =>
       )
     )
 
-    def summonImplicit[A: Type]: DerivationResult[Expr[A]] = DerivationResult(Expr.summonImplicitUnsafe[A])
+    def summonImplicit[A: Type]: DerivationResult[Expr[A]] = DerivationResult(summonImplicitUnsafeOf[A])
   }
 }

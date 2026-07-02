@@ -3,7 +3,10 @@ package io.scalaland.chimney.internal.compiletime.derivation.patcher.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.Derivation
 
-private[compiletime] trait PatchSubtypeRuleModule { this: Derivation =>
+/** Hearth-based port of `...compiletime.derivation.patcher.rules.PatchSubtypeRuleModule` - 1:1 copy
+  * (`upcastToExprOf[To]` becomes Hearth's `upcast[To]`; the inner object keeps its old - `Module`-suffixed - name).
+  */
+private[compiletime] trait PatchSubtypeRuleModule { this: Derivation & hearth.MacroCommons =>
 
   protected object PatchSubtypeRuleModule extends Rule("SubtypesPatch") {
 
@@ -19,6 +22,6 @@ private[compiletime] trait PatchSubtypeRuleModule { this: Derivation =>
     ): DerivationResult[Rule.ExpansionResult[To]] =
       // We're constructing:
       // '{ ${ src } : $To } }
-      DerivationResult.expandedTotal(ctx.src.upcastToExprOf[To])
+      DerivationResult.expandedTotal(ctx.src.upcast[To])
   }
 }

@@ -2,12 +2,27 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinition}
 import io.scalaland.chimney.{PartialTransformer, Transformer}
+import io.scalaland.chimney.internal.compiletime.PlatformBridge
 import io.scalaland.chimney.internal.runtime
 import io.scalaland.chimney.partial
 
 import scala.quoted.{Expr, Quotes, Type}
 
-final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
+/** Hearth-based port of `...compiletime.derivation.transformer.TransformerMacros` (Scala 3).
+  *
+  * Public methods (names, signatures, type params) of both the class and the companion mirror the old ones 1:1 so that
+  * the binding sites in `io.scalaland.chimney.dsl.*` can flip packages mechanically in the next phase.
+  *
+  * Differences vs the old version:
+  *   - extends the `compiletime` [[PlatformBridge]] (Hearth cake) + the now-shared `Derivation` instead of the old
+  *     per-platform `DerivationPlatform` (rules and `summon*Unchecked` were de-platformed in earlier phases); inside
+  *     the class `Type`/`Expr` are Hearth's members, which on Scala 3 are transparent aliases of the `scala.quoted`
+  *     ones, so the companion's static signatures stay identical,
+  *   - `Expr.block` -> `blockExpr` compat helper (Hearth has no `Expr.block`; pairwise-nested blocks, semantically
+  *     identical),
+  *   - `?<[A]`/`.as_?<` -> Hearth's `??<:[A]`/`.as_??<:`.
+  */
+final class TransformerMacros(q: Quotes) extends PlatformBridge(q) with Derivation with Gateway {
 
   import quotes.*, quotes.reflect.*
 
@@ -64,7 +79,7 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
     })
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
-      useImplicitScopeFlags: ?<[runtime.TransformerFlags] => Expr[A]
+      useImplicitScopeFlags: ??<:[runtime.TransformerFlags] => Expr[A]
   ): Expr[A] = {
     val implicitScopeConfig = scala.quoted.Expr
       .summon[io.scalaland.chimney.dsl.TransformerConfiguration[? <: runtime.TransformerFlags]]
@@ -75,9 +90,9 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
       }
     val implicitScopeFlagsType = implicitScopeConfig.asTerm.tpe.widen.typeArgs.head.asType
       .asInstanceOf[Type[runtime.TransformerFlags]]
-      .as_?<[runtime.TransformerFlags]
+      .as_??<:[runtime.TransformerFlags]
 
-    Expr.block(
+    blockExpr(
       List(Expr.suppressUnused(implicitScopeConfig)),
       useImplicitScopeFlags(implicitScopeFlagsType)
     )

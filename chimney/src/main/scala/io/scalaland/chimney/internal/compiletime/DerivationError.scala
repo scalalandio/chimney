@@ -1,13 +1,35 @@
 package io.scalaland.chimney.internal.compiletime
 
-/** Gathers all possible derivation errors in a single type */
-sealed trait DerivationError extends Product with Serializable
+/** Gathers all possible derivation errors in a single type.
+  *
+  * Hearth-based port of the pre-Hearth `io.scalaland.chimney.internal.compiletime.DerivationError`. Differences vs the
+  * old version:
+  *   - reparented on a stackless `Exception` (instead of plain `Product with Serializable`) so instances can travel
+  *     inside MIO's `MErrors` (`NonEmptyVector[Throwable]`) - the `message` only serves debugging (e.g. MIO's own
+  *     "Caught exception ..." logs), user-facing rendering still goes through [[DerivationError.printErrors]], which is
+  *     preserved byte-identical,
+  *   - [[DerivationError.fromThrowable]] added - MIO can catch arbitrary `Throwable`s, which must be (re)classified as
+  *     [[DerivationError.MacroException]] before rendering.
+  */
+sealed abstract class DerivationError(message: String) extends Exception(message, null, false, false)
 object DerivationError {
 
-  final case class MacroException(exception: Throwable) extends DerivationError
-  final case class NotYetImplemented(what: String) extends DerivationError
-  final case class TransformerError(transformerDerivationError: TransformerDerivationError) extends DerivationError
-  final case class PatcherError(patcherDerivationError: PatcherDerivationError) extends DerivationError
+  final case class MacroException(exception: Throwable)
+      extends DerivationError(s"macro expansion thrown exception!: $exception")
+  final case class NotYetImplemented(what: String)
+      extends DerivationError(s"derivation failed because functionality $what is not yet implemented!")
+  final case class TransformerError(transformerDerivationError: TransformerDerivationError)
+      extends DerivationError(transformerDerivationError.toString)
+  final case class PatcherError(patcherDerivationError: PatcherDerivationError)
+      extends DerivationError(patcherDerivationError.toString)
+
+  /** Classifies an arbitrary `Throwable` caught by MIO as a [[DerivationError]] (old code never needed this since
+    * `DerivationResult` wrapped exceptions in `MacroException` at the catch site).
+    */
+  def fromThrowable(error: Throwable): DerivationError = error match {
+    case derivationError: DerivationError => derivationError
+    case _                                => MacroException(error)
+  }
 
   def printErrors(derivationErrors: Seq[DerivationError]): String =
     derivationErrors

@@ -1,5 +1,8 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
+// Hearth-migration (Phase 4): verbatim copy of the pre-Hearth io.scalaland.chimney.internal.compiletime.dsl.IsoDefinitionMacros
+// (package rename only - DSL macros use plain platform reflection + public runtime types, no macro-commons/Hearth involved).
+
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
 import io.scalaland.chimney.internal.runtime.{Path, TransformerFlags, TransformerOverrides}

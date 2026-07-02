@@ -1,13 +1,24 @@
 package io.scalaland.chimney.internal.compiletime.derivation.iso
 
 import io.scalaland.chimney.dsl.IsoDefinition
-import io.scalaland.chimney.internal.compiletime.derivation.transformer.{DerivationPlatform, Gateway}
+import io.scalaland.chimney.internal.compiletime.PlatformBridge
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.{Derivation, Gateway}
 import io.scalaland.chimney.Iso
 import io.scalaland.chimney.internal.runtime
 
 import scala.quoted.{Expr, Quotes, Type}
 
-final class IsoMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
+/** Hearth-based port of `...compiletime.derivation.iso.IsoMacros` (Scala 3).
+  *
+  * Public methods (names, signatures, type params) of both the class and the companion mirror the old ones 1:1 so that
+  * the binding sites in `io.scalaland.chimney.dsl.*` can flip packages mechanically in the next phase.
+  *
+  * Differences vs the old version: same as
+  * [[io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros]] - extends [[PlatformBridge]]
+  * + the now-shared transformer `Derivation`/`Gateway` instead of the old per-platform `DerivationPlatform`,
+  * `Expr.block` -> `blockExpr`, `?<`/`.as_?<` -> `??<:`/`.as_??<:`.
+  */
+final class IsoMacros(q: Quotes) extends PlatformBridge(q) with Derivation with Gateway {
 
   import quotes.*, quotes.reflect.*
 
@@ -66,7 +77,7 @@ final class IsoMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
     }
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
-      useImplicitScopeFlags: ?<[runtime.TransformerFlags] => Expr[A]
+      useImplicitScopeFlags: ??<:[runtime.TransformerFlags] => Expr[A]
   ): Expr[A] = {
     val implicitScopeConfig = scala.quoted.Expr
       .summon[io.scalaland.chimney.dsl.TransformerConfiguration[? <: runtime.TransformerFlags]]
@@ -77,9 +88,9 @@ final class IsoMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
       }
     val implicitScopeFlagsType = implicitScopeConfig.asTerm.tpe.widen.typeArgs.head.asType
       .asInstanceOf[Type[runtime.TransformerFlags]]
-      .as_?<[runtime.TransformerFlags]
+      .as_??<:[runtime.TransformerFlags]
 
-    Expr.block(
+    blockExpr(
       List(Expr.suppressUnused(implicitScopeConfig)),
       useImplicitScopeFlags(implicitScopeFlagsType)
     )

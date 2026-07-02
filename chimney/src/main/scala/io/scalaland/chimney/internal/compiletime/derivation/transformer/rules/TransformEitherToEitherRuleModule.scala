@@ -1,21 +1,32 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
+import hearth.fp.instances.*
+import hearth.fp.syntax.*
 import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
-import io.scalaland.chimney.internal.compiletime.fp.Implicits.*
 import io.scalaland.chimney.partial
 
+/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformEitherToEitherRuleModule`.
+  *
+  * Differences vs the old version:
+  *   - `Type.Either(.Left/.Right)` matching and `Expr.Either` construction go through the `ScalaType`/`ScalaExpr`
+  *     compat modules; `isEither/isLeft/isRight` come from the `ScalaStdTypeOps` compat ops,
+  *   - `ExprPromise.promise(...).traverse(...).fulfilAsLambda` becomes `LambdaBuilder.of1(...).traverse(...)....build`
+  *     (the lambdas are passed to the runtime `Either.fold`/`partial.Result.map/map2` iteration helpers - legitimate
+  *     `LambdaBuilder` uses); `Expr.Function1.instance`/`Expr.Function2.instance` become `LambdaBuilder....buildWith`,
+  *   - `upcastToExprOf` becomes `upcast`, `.sequence` comes from `hearth.fp` (instances + syntax).
+  */
 private[compiletime] trait TransformEitherToEitherRuleModule {
-  this: Derivation & TransformProductToProductRuleModule =>
+  this: Derivation & TransformProductToProductRuleModule & hearth.MacroCommons =>
 
-  import Type.Implicits.*, ChimneyType.Implicits.*, TransformProductToProductRule.useOverrideIfPresentOr
+  import ChimneyType.Implicits.*, ScalaType.Implicits.*, TransformProductToProductRule.useOverrideIfPresentOr
 
   protected object TransformEitherToEitherRule extends Rule("EitherToEither") {
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       Type[To] match {
-        case Type.Either(toL, toR) if Type[From].isEither =>
+        case ScalaType.Either(toL, toR) if Type[From].isEither =>
           import toL.Underlying as ToL, toR.Underlying as ToR
           mapEithers[From, To, ToL, ToR] match {
             case Some(srcToResult) =>
@@ -35,7 +46,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
                   srcToResult.parMap2(fallbackToResult)((srcTo, fallbackTo) =>
                     fallbackTo.reverseIterator.foldRight(srcTo)(merge)
                   )
-              }).flatMap(either => DerivationResult.expanded(either.map(_.upcastToExprOf[To])))
+              }).flatMap(either => DerivationResult.expanded(either.map(_.upcast[To])))
             case _ => DerivationResult.attemptNextRule
           }
         case _ => DerivationResult.attemptNextRule
@@ -44,13 +55,13 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
     private def mapEithers[From, To, ToL: Type, ToR: Type](implicit
         ctx: TransformationContext[From, To]
     ): Option[DerivationResult[TransformationExpr[To]]] = Type[From] match {
-      case Type.Either.Left(fromL, fromR) if !Type[To].isRight =>
+      case ScalaType.Either.Left(fromL, fromR) if !Type[To].isRight =>
         import fromL.Underlying as FromL, fromR.Underlying as FromR
         Some(mapLeft[From, To, FromL, FromR, ToL, ToR])
-      case Type.Either.Right(fromL, fromR) if !Type[To].isLeft =>
+      case ScalaType.Either.Right(fromL, fromR) if !Type[To].isLeft =>
         import fromL.Underlying as FromL, fromR.Underlying as FromR
         Some(mapRight[From, To, FromL, FromR, ToL, ToR])
-      case Type.Either(fromL, fromR) =>
+      case ScalaType.Either(fromL, fromR) =>
         import fromL.Underlying as FromL, fromR.Underlying as FromR
         Some(mapEither[From, To, FromL, FromR, ToL, ToR])
       case _ => None
@@ -75,7 +86,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
     ): DerivationResult[TransformationExpr[To]] =
       useOverrideIfPresentOr("matchingLeft", ctx.config.filterCurrentOverridesForLeft) {
         deriveRecursiveTransformationExpr[FromL, ToL](
-          ctx.src.upcastToExprOf[Left[FromL, FromR]].value,
+          ctx.src.upcast[Left[FromL, FromR]].value,
           Path(_.matching[Left[FromL, FromR]].select("value")),
           Path(_.matching[Left[ToL, ToR]].select("value"))
         )
@@ -83,7 +94,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
         .map { (derivedToL: TransformationExpr[ToL]) =>
           // We're constructing:
           // '{ Left( ${ derivedToL } ) /* from ${ src }.value */ }
-          derivedToL.map(Expr.Either.Left[ToL, ToR](_).upcastToExprOf[To])
+          derivedToL.map(ScalaExpr.Either.Left[ToL, ToR](_).upcast[To])
         }
 
     private def mapRight[From, To, FromL: Type, FromR: Type, ToL: Type, ToR: Type](implicit
@@ -91,7 +102,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
     ): DerivationResult[TransformationExpr[To]] =
       useOverrideIfPresentOr("matchingRight", ctx.config.filterCurrentOverridesForRight) {
         deriveRecursiveTransformationExpr[FromR, ToR](
-          ctx.src.upcastToExprOf[Right[FromL, FromR]].value,
+          ctx.src.upcast[Right[FromL, FromR]].value,
           Path(_.matching[Right[FromL, FromR]].select("value")),
           Path(_.matching[Right[ToL, ToR]].select("value"))
         )
@@ -99,14 +110,14 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
         .map { (derivedToR: TransformationExpr[ToR]) =>
           // We're constructing:
           // '{ Right( ${ derivedToR } ) /* from ${ src }.value */ }
-          derivedToR.map(Expr.Either.Right[ToL, ToR](_).upcastToExprOf[To])
+          derivedToR.map(ScalaExpr.Either.Right[ToL, ToR](_).upcast[To])
         }
 
     private def mapEither[From, To, FromL: Type, FromR: Type, ToL: Type, ToR: Type](implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[TransformationExpr[To]] = {
-      val toLeftResult = ExprPromise
-        .promise[FromL](ExprPromise.NameGenerationStrategy.FromPrefix("left"))
+      val toLeftResult = LambdaBuilder
+        .of1[FromL](FreshName.FromPrefix("left"))
         .traverse { (leftExpr: Expr[FromL]) =>
           useOverrideIfPresentOr("matchingLeft", ctx.config.filterCurrentOverridesForLeft) {
             deriveRecursiveTransformationExpr[FromL, ToL](
@@ -117,8 +128,8 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
           }
         }
 
-      val toRightResult = ExprPromise
-        .promise[FromR](ExprPromise.NameGenerationStrategy.FromPrefix("right"))
+      val toRightResult = LambdaBuilder
+        .of1[FromR](FreshName.FromPrefix("right"))
         .traverse { (rightExpr: Expr[FromR]) =>
           useOverrideIfPresentOr("matchingRight", ctx.config.filterCurrentOverridesForRight) {
             deriveRecursiveTransformationExpr[FromR, ToR](
@@ -130,13 +141,16 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
         }
 
       val inLeft =
-        (expr: Expr[ToL]) => Expr.Either.Left[ToL, ToR](expr).upcastToExprOf[To]
+        (expr: Expr[ToL]) => ScalaExpr.Either.Left[ToL, ToR](expr).upcast[To]
       val inRight =
-        (expr: Expr[ToR]) => Expr.Either.Right[ToL, ToR](expr).upcastToExprOf[To]
+        (expr: Expr[ToR]) => ScalaExpr.Either.Right[ToL, ToR](expr).upcast[To]
 
       toLeftResult
         .map2(toRightResult) {
-          (toLeft: ExprPromise[FromL, TransformationExpr[ToL]], toRight: ExprPromise[FromR, TransformationExpr[ToR]]) =>
+          (
+              toLeft: LambdaBuilder[FromL => *, TransformationExpr[ToL]],
+              toRight: LambdaBuilder[FromR => *, TransformationExpr[ToR]]
+          ) =>
             (toLeft.exprPartition, toRight.exprPartition) match {
               case (Left(totalToLeft), Left(totalToRight)) =>
                 // We're constructing:
@@ -147,11 +161,11 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
                 // }
                 TransformationExpr.fromTotal(
                   ctx.src
-                    .upcastToExprOf[Either[FromL, FromR]]
+                    .upcast[Either[FromL, FromR]]
                     .fold[To](
-                      totalToLeft.map(inLeft).fulfilAsLambda
+                      totalToLeft.map(inLeft).build[To]
                     )(
-                      totalToRight.map(inRight).fulfilAsLambda
+                      totalToRight.map(inRight).build[To]
                     )
                 )
               case _ =>
@@ -163,11 +177,15 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
                 // }
                 TransformationExpr.fromPartial(
                   ctx.src
-                    .upcastToExprOf[Either[FromL, FromR]]
+                    .upcast[Either[FromL, FromR]]
                     .fold[partial.Result[To]](
-                      toLeft.map(_.ensurePartial.map[To](Expr.Function1.instance(inLeft))).fulfilAsLambda
+                      toLeft
+                        .map(_.ensurePartial.map[To](LambdaBuilder.of1[ToL]().map(inLeft).build[To]))
+                        .build[partial.Result[To]]
                     )(
-                      toRight.map(_.ensurePartial.map[To](Expr.Function1.instance(inRight))).fulfilAsLambda
+                      toRight
+                        .map(_.ensurePartial.map[To](LambdaBuilder.of1[ToR]().map(inRight).build[To]))
+                        .build[partial.Result[To]]
                     )
                 )
             }
@@ -189,13 +207,13 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
           ChimneyExpr.PartialResult.map2(
             texpr1.ensurePartial,
             texpr2.ensurePartial,
-            Expr.Function2.instance(concatAndCast[To, ToL, ToR]),
+            LambdaBuilder.of2[To, To]().buildWith { case (e1, e2) => concatAndCast[To, ToL, ToR](e1, e2) },
             failFast
           )
         )
     }
 
     private def concatAndCast[To: Type, ToL: Type, ToR: Type](either1: Expr[To], either2: Expr[To]): Expr[To] =
-      either1.upcastToExprOf[Either[ToL, ToR]].orElse(either2.upcastToExprOf[Either[ToL, ToR]]).upcastToExprOf[To]
+      either1.upcast[Either[ToL, ToR]].orElse(either2.upcast[Either[ToL, ToR]]).upcast[To]
   }
 }

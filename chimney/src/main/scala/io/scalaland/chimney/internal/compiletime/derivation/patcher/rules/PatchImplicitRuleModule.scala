@@ -3,7 +3,8 @@ package io.scalaland.chimney.internal.compiletime.derivation.patcher.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.Derivation
 
-private[compiletime] trait PatchImplicitRuleModule { this: Derivation =>
+/** Hearth-based port of `...compiletime.derivation.patcher.rules.PatchImplicitRuleModule` - 1:1 copy. */
+private[compiletime] trait PatchImplicitRuleModule { this: Derivation & hearth.MacroCommons =>
 
   protected object PatchImplicitRule extends Rule("ImplicitPatcher") {
 

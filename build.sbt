@@ -27,12 +27,10 @@ val versions = new {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Dependencies.
-  val macroCommons = "2.1.0" // TODO(hearth-migration): remove once the engine is fully ported to Hearth
   val hearth = "0.4.0"
   val cats = "2.13.0"
   val kindProjector = "0.13.4"
   val munit = "1.2.4"
-  val scalaCollectionCompat = "2.14.0"
   val scalaJavaCompat = "1.0.2"
   val scalaJavaTime = "2.6.0"
   val scalapbRuntime = scalapb.compiler.Version.scalapbVersion
@@ -388,8 +386,6 @@ lazy val chimney = projectMatrix
       for3 = Seq("-skip-by-regex:io\\.scalaland\\.chimney\\.internal"),
       for2_13 = Seq("-skip-packages", "io.scalaland.chimney.internal")
     ),
-    resolvers += mavenCentralSnapshots,
-    libraryDependencies += "io.scalaland" %%% "chimney-macro-commons" % versions.macroCommons, // TODO(hearth-migration): remove
     libraryDependencies += "com.kubuszok" %%% "hearth" % versions.hearth,
     // Cross-quotes: on Scala 2 they are macros (part of hearth), on Scala 3 they are a compiler plugin.
     libraryDependencies ++= versions.fold(scalaVersion.value)(

@@ -4,9 +4,18 @@ import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.runtime
 
-private[compiletime] trait Configurations { this: Derivation =>
+/** Hearth-based port of `...compiletime.derivation.patcher.Configurations`.
+  *
+  * Differences vs the old version (1:1 otherwise, mirrors the transformer's [[transformer.Configurations]] port):
+  *   - `import Type.Implicits.*` dropped (a private ambient `Type[Any]` covers `runtimeDataStore(idx).as_??`),
+  *   - `ExistentialExpr.prettyPrint(x)`/`ExistentialType.prettyPrint(x)` become Hearth extensions (`x.prettyPrint`),
+  *   - `XMacroSettings`/`reportError` come from [[MacroCommonsCompat]] aliases over Hearth's `Environment`.
+  */
+private[compiletime] trait Configurations { this: Derivation & hearth.MacroCommons =>
 
-  import Type.Implicits.*
+  // Delegates to ScalaStdCompat's hoisted non-implicit `Type.of[Any]` - an IMPLICIT val initialized with a
+  // cross-quoted `Type.of` in its own scope deadlocks lazy-val init at macro runtime on Scala 3 (see SingletonTypes).
+  implicit private lazy val AnyType: Type[Any] = ScalaType.Implicits.AnyType
 
   final protected case class PatcherFlags(
       ignoreNoneInPatch: Boolean = false,
@@ -87,12 +96,12 @@ private[compiletime] trait Configurations { this: Derivation =>
     }
 
     final case class Const(runtimeData: ExistentialExpr) extends PatcherOverride {
-      override def toString: String = s"Const(${ExistentialExpr.prettyPrint(runtimeData)})"
+      override def toString: String = s"Const(${runtimeData.prettyPrint})"
     }
 
     final case class Computed(sourcePath: Path, targetPath: Path, runtimeData: ExistentialExpr)
         extends PatcherOverride {
-      override def toString: String = s"Computed($sourcePath, $targetPath, ${ExistentialExpr.prettyPrint(runtimeData)})"
+      override def toString: String = s"Computed($sourcePath, $targetPath, ${runtimeData.prettyPrint})"
     }
   }
 
@@ -154,7 +163,7 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     override def toString: String = {
       val preventImplicitSummoningForTypesString = preventImplicitSummoningForTypes.map { case (f, t) =>
-        s"(${ExistentialType.prettyPrint(f)}, ${ExistentialType.prettyPrint(t)})"
+        s"(${f.prettyPrint}, ${t.prettyPrint})"
       }.toString
       s"""PatcherConfig(
          |  flags = $flags,

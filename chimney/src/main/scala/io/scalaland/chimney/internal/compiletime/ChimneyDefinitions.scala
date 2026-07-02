@@ -1,6 +1,26 @@
 package io.scalaland.chimney.internal.compiletime
 
-private[compiletime] trait ChimneyDefinitions extends Definitions with ChimneyTypes with ChimneyExprs {
+/** Hearth-based port of the pre-Hearth `io.scalaland.chimney.internal.compiletime.ChimneyDefinitions`.
+  *
+  * Instead of macro-commons' `Definitions` the cake builds on `hearth.MacroCommons` (mixed in by the platform bridges)
+  * plus [[MacroCommonsCompat]] for the shims that have no direct Hearth counterpart.
+  *
+  * The self-type includes `hearth.std.StdExtensions` (mixed into `MacroCommonsScala2`/`MacroCommonsScala3` by Hearth
+  * itself) so that [[datatypes.StdExtensionsLoading]] and future `IsOption`/`IsEither`/... call sites type-check.
+  */
+private[compiletime] trait ChimneyDefinitions
+    extends MacroCommonsCompat
+    with ScalaStdCompat
+    with ResultSyntax
+    with ChimneyTypes
+    with ChimneyExprs
+    with datatypes.ProductTypes
+    with datatypes.SealedHierarchies
+    with datatypes.ValueClasses
+    with datatypes.IterableOrArrays
+    with datatypes.SingletonTypes
+    with datatypes.StdExtensionsLoading {
+  this: hearth.MacroCommons & hearth.std.StdExtensions =>
 
   // $COVERAGE-OFF$It's testable in (Scala-CLI) snippets and not really in normal tests with coverage
   implicit protected class FlagOps(sc: StringContext) {

@@ -5,7 +5,10 @@ import io.scalaland.chimney.partial
 
 import scala.collection.Factory
 
-trait TotallyOrPartiallyBuildIterables { this: Derivation =>
+/** Hearth-based port of `...compiletime.derivation.transformer.integrations.TotallyOrPartiallyBuildIterables` - 1:1
+  * copy.
+  */
+trait TotallyOrPartiallyBuildIterables { this: Derivation & hearth.MacroCommons =>
 
   /** Parent of [[TotallyBuildIterable]] and [[PartiallyBuildIterable]] which gives access to reading values from Expr.
     */

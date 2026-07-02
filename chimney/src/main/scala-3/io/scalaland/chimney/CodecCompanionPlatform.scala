@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.compiletime2.derivation.codec.CodecMacros
+import io.scalaland.chimney.internal.compiletime.derivation.codec.CodecMacros
 
 private[chimney] trait CodecCompanionPlatform { this: Codec.type =>
 

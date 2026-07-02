@@ -3,7 +3,10 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
-private[compiletime] trait TransformValueClassToValueClassRuleModule { this: Derivation =>
+/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformValueClassToValueClassRuleModule` - 1:1
+  * copy (`ValueClassType`/`WrapperClassType` come from the compiletime `datatypes.ValueClasses` port).
+  */
+private[compiletime] trait TransformValueClassToValueClassRuleModule { this: Derivation & hearth.MacroCommons =>
 
   protected object TransformValueClassToValueClassRule extends Rule("ValueClassToValueClass") {
 

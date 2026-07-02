@@ -3,11 +3,16 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.integra
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-import scala.collection.compat.Factory
+import scala.collection.Factory
 
-trait TotallyBuildIterables { this: Derivation =>
-
-  import ChimneyType.Implicits.*
+/** Hearth-based port of `...compiletime.derivation.transformer.integrations.TotallyBuildIterables`.
+  *
+  * Differences vs the old version:
+  *   - `new Type.Cache[Cached]` becomes `new TypeCache[Cached]`,
+  *   - `Type.Map.unapply` (macro-commons `Ctor2`) becomes a `Type.Ctor2.fromUntyped[scala.collection.Map]` extractor
+  *     (same `baseType`-aware matching, mirrors [[datatypes.IterableOrArrays]]).
+  */
+trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons =>
 
   /** Something allowing us to share the logic which handles [[scala.collection.Iterable]], [[scala.Array]],
     * [[java.util.Collection]], ... and whatever we want to support.
@@ -35,8 +40,11 @@ trait TotallyBuildIterables { this: Derivation =>
   }
   protected object TotallyBuildIterable {
 
+    private lazy val MapCtor: Type.Ctor2[scala.collection.Map] =
+      Type.Ctor2.fromUntyped[scala.collection.Map](Type.Ctor2.of[scala.collection.Map].asUntyped)
+
     private type Cached[M] = Option[Existential[TotallyBuildIterable[M, *]]]
-    private val totallyBulidIterableCache = new Type.Cache[Cached]
+    private val totallyBulidIterableCache = new TypeCache[Cached]
     def parse[M](implicit M: Type[M]): Option[Existential[TotallyBuildIterable[M, *]]] =
       totallyBulidIterableCache(M)(providedSupport[M].orElse(buildInSupport[M]))
     def unapply[M](M: Type[M]): Option[Existential[TotallyBuildIterable[M, *]]] = parse(using M)
@@ -86,8 +94,8 @@ trait TotallyBuildIterables { this: Derivation =>
             ): Expr[Collection2] = iora.to(collection)(factory)
 
             val asMap: Option[(ExistentialType, ExistentialType)] = Type[M] match {
-              case Type.Map(key, value) => Some(key -> value)
-              case _                    => None
+              case MapCtor(key, value) => Some(key -> value)
+              case _                   => None
             }
 
             override def toString: String = iora.toString
