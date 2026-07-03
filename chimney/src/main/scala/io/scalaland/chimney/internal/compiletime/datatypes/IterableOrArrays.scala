@@ -4,31 +4,25 @@ import io.scalaland.chimney.internal.compiletime.ChimneyDefinitions
 
 import scala.collection.Factory
 
-/** Hearth-based port of the pre-Hearth `io.scalaland.chimney.internal.compiletime.datatypes.IterableOrArrays`.
-  *
-  * DESIGN CHOICE: implemented on Hearth's `Type.CtorN.fromUntyped` extractors (Map/Iterable/Iterator/Array) plus
-  * `Type.isIArray`, NOT on Hearth's `IsCollection`/`IsMap`, because macro-commons semantics differ:
-  *   - Hearth's `IsCollection` also matches `String`, `Option` (and anything provided by loaded extensions) - types
-  *     that macro-commons' `IterableOrArray` did NOT treat as collections (matching them would change rule dispatch,
-  *     e.g. String-to-String transformations would suddenly become iterable transformations),
-  *   - Hearth's providers refuse to match when `Factory`/`ClassTag` cannot be summoned at parse time, while
-  *     macro-commons matched on the type shape alone and only summoned (unsafely) when `factory` was actually used -
-  *     e.g. transforming FROM `Array[T]` with an abstract `T` (no `ClassTag`) works in macro-commons because only
-  *     `iterator` is needed,
+/** DESIGN CHOICE: implemented on Hearth's `Type.CtorN.fromUntyped` extractors (Map/Iterable/Iterator/Array) plus
+  * `Type.isIArray`, NOT on Hearth's `IsCollection`/`IsMap`, because the semantics differ:
+  *   - Hearth's `IsCollection` also matches `String`, `Option` (and anything provided by loaded extensions) - matching
+  *     them would change rule dispatch, e.g. String-to-String transformations would suddenly become iterable
+  *     transformations,
+  *   - Hearth's providers refuse to match when `Factory`/`ClassTag` cannot be summoned at parse time, while this trait
+  *     matches on the type shape alone and only summons when `factory` is actually used - e.g. transforming FROM
+  *     `Array[T]` with an abstract `T` (no `ClassTag`) works because only `iterator` is needed,
   *   - this also keeps the plain-value datatypes layer independent from standard-extension loading.
-  * NOTE (Phase 5 prereq): `IsCollection`/`IsMap` ARE now consulted - but one layer up, in
+  * NOTE: `IsCollection`/`IsMap` ARE consulted - but one layer up, in
   * [[io.scalaland.chimney.internal.compiletime.derivation.transformer.integrations.TotallyBuildIterables]], as a
   * fallback that runs only AFTER this hardcoded matching failed (see its ScalaDoc for the guards). This trait stays
   * extension-free on purpose.
   *
-  * Other judgment calls:
-  *   - `map` for `Array`/`IArray` returns an `Iterator[B]` expression where macro-commons returned `Array[B]`/
-  *     `IArray[B]` - building an Array requires summoning `ClassTag[B]` inside the emitted code; `map` is not called by
-  *     any Chimney rule (verified by grep - only `factory`/`iterator`/`to` are used via
-  *     `TotallyOrPartiallyBuildIterable`), the member exists purely for API-shape parity,
-  *   - `IArray` support is written in shared code (Scala 2 sees `Type.isIArray == false`): the generated code casts to
-  *     `Array[Inner]` (valid: `IArray` is `Array` at runtime) and the factory adapts a summoned
-  *     `Factory[Inner, Array[Inner]]` instead of using chimney's Scala 3-only `FactoryCompat.iarrayFactory`.
+  * `map` for `Array`/`IArray` returns an `Iterator[B]` expression, NOT `Array[B]`/`IArray[B]` - building an Array would
+  * require summoning `ClassTag[B]` inside the emitted code; no Chimney rule calls `map`. `IArray` support lives in
+  * shared code (Scala 2 sees `Type.isIArray == false`): the generated code casts to `Array[Inner]` (valid: `IArray` is
+  * `Array` at runtime) and adapts a summoned `Factory[Inner, Array[Inner]]` rather than requiring a dedicated
+  * `Factory[Inner, IArray[Inner]]` instance.
   */
 private[compiletime] trait IterableOrArrays { this: ChimneyDefinitions & hearth.MacroCommons =>
 
@@ -48,16 +42,10 @@ private[compiletime] trait IterableOrArrays { this: ChimneyDefinitions & hearth.
   }
   protected object IterableOrArray {
 
-    // `fromUntyped` wrappers use `=:=` + `baseType` for matching, which is reliable across compilation-unit
-    // boundaries (see the hearth-value-types skill notes on `Type.CtorN.fromUntyped`).
-    private lazy val MapCtor: Type.Ctor2[scala.collection.Map] =
-      Type.Ctor2.fromUntyped[scala.collection.Map](Type.Ctor2.of[scala.collection.Map].asUntyped)
-    private lazy val IterableCtor: Type.Ctor1[Iterable] =
-      Type.Ctor1.fromUntyped[Iterable](Type.Ctor1.of[Iterable].asUntyped)
-    private lazy val IteratorCtor: Type.Ctor1[Iterator] =
-      Type.Ctor1.fromUntyped[Iterator](Type.Ctor1.of[Iterator].asUntyped)
-    private lazy val ArrayCtor: Type.Ctor1[Array] =
-      Type.Ctor1.fromUntyped[Array](Type.Ctor1.of[Array].asUntyped)
+    private lazy val MapCtor: Type.Ctor2[scala.collection.Map] = Type.Ctor2.of[scala.collection.Map]
+    private lazy val IterableCtor: Type.Ctor1[Iterable] = Type.Ctor1.of[Iterable]
+    private lazy val IteratorCtor: Type.Ctor1[Iterator] = Type.Ctor1.of[Iterator]
+    private lazy val ArrayCtor: Type.Ctor1[Array] = Type.Ctor1.of[Array]
 
     private type Cached[M] = Option[Existential[IterableOrArray[M, *]]]
     private val iterableOrArrayCache = new TypeCache[Cached]
@@ -161,7 +149,7 @@ private[compiletime] trait IterableOrArrays { this: ChimneyDefinitions & hearth.
           def iterator(m: Expr[M]): Expr[Iterator[Inner]] =
             Expr.quote(Expr.splice(m.upcast[Array[Inner]]).iterator)
 
-          // Returns Iterator[B] instead of macro-commons' Array[B] - see the trait's ScalaDoc (member is unused).
+          // Returns Iterator[B], not Array[B] - see the trait's ScalaDoc (member is unused).
           def map[B: Type](m: Expr[M])(f: Expr[Inner => B]): ExistentialExpr = {
             implicit val IteratorB: Type[Iterator[B]] = Type.of[Iterator[B]]
             Expr.quote(Expr.splice(m.upcast[Array[Inner]]).iterator.map(Expr.splice(f))).as_??
@@ -192,7 +180,7 @@ private[compiletime] trait IterableOrArrays { this: ChimneyDefinitions & hearth.
           def iterator(m: Expr[M]): Expr[Iterator[Inner]] =
             Expr.quote(Expr.splice(asArray(m)).iterator)
 
-          // Returns Iterator[B] instead of macro-commons' IArray[B] - see the trait's ScalaDoc (member is unused).
+          // Returns Iterator[B], not IArray[B] - see the trait's ScalaDoc (member is unused).
           def map[B: Type](m: Expr[M])(f: Expr[Inner => B]): ExistentialExpr = {
             implicit val IteratorB: Type[Iterator[B]] = Type.of[Iterator[B]]
             Expr.quote(Expr.splice(asArray(m)).iterator.map(Expr.splice(f))).as_??

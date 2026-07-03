@@ -4,13 +4,6 @@ import hearth.fp.syntax.*
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.Derivation
 
-/** Hearth-based port of `...compiletime.derivation.patcher.rules.PatchOptionWithNonOptionRuleModule`.
-  *
-  * Differences vs the old version: the `DerivationResult.direct` + `Expr.Function1.instance` + `await(...)` protocol
-  * becomes `LambdaBuilder.of1[InnerPatch]().traverse(...)` + `.build` - the recursive derivation runs once, outside the
-  * lambda body, with identical error/log propagation (the lambda is passed to the runtime `OptionalValue.fold`
-  * iteration helper - a legitimate `LambdaBuilder` use).
-  */
 private[compiletime] trait PatchOptionWithNonOptionRuleModule { this: Derivation & hearth.MacroCommons =>
 
   protected object PatchOptionWithNonOptionRule extends Rule("PatchOptionWithNonOption") {

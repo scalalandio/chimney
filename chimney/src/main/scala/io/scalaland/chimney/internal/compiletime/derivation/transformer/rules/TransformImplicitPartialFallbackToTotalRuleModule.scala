@@ -3,9 +3,6 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
-/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformImplicitPartialFallbackToTotalRuleModule`
-  *   - 1:1 copy.
-  */
 private[compiletime] trait TransformImplicitPartialFallbackToTotalRuleModule {
   this: Derivation & hearth.MacroCommons =>
 

@@ -354,10 +354,12 @@ object TotalTransformerIntegrationsSpec {
   implicit def customCollectionIsTotallyBuildIterable[A]: TotallyBuildIterable[CustomCollection[A], A] =
     new TotallyBuildIterable[CustomCollection[A], A] {
 
-      def totalFactory: Factory[A, CustomCollection[A]] = new FactoryCompat[A, CustomCollection[A]] {
+      def totalFactory: Factory[A, CustomCollection[A]] = new Factory[A, CustomCollection[A]] {
 
-        override def newBuilder: mutable.Builder[A, CustomCollection[A]] =
-          new FactoryCompat.Builder[A, CustomCollection[A]] {
+        def fromSpecific(it: IterableOnce[A]): CustomCollection[A] = newBuilder.addAll(it).result()
+
+        def newBuilder: mutable.Builder[A, CustomCollection[A]] =
+          new mutable.Builder[A, CustomCollection[A]] {
             private val implBuilder = Vector.newBuilder[A]
 
             override def clear(): Unit = implBuilder.clear()
@@ -392,10 +394,13 @@ object TotalTransformerIntegrationsSpec {
     new PartiallyBuildIterable[NonEmptyCollection[A], A] {
 
       def partialFactory: Factory[A, partial.Result[NonEmptyCollection[A]]] =
-        new FactoryCompat[A, partial.Result[NonEmptyCollection[A]]] {
+        new Factory[A, partial.Result[NonEmptyCollection[A]]] {
 
-          override def newBuilder: mutable.Builder[A, partial.Result[NonEmptyCollection[A]]] =
-            new FactoryCompat.Builder[A, partial.Result[NonEmptyCollection[A]]] {
+          def fromSpecific(it: IterableOnce[A]): partial.Result[NonEmptyCollection[A]] =
+            newBuilder.addAll(it).result()
+
+          def newBuilder: mutable.Builder[A, partial.Result[NonEmptyCollection[A]]] =
+            new mutable.Builder[A, partial.Result[NonEmptyCollection[A]]] {
               private val implBuilder = Vector.newBuilder[A]
 
               override def clear(): Unit = implBuilder.clear()
@@ -432,10 +437,12 @@ object TotalTransformerIntegrationsSpec {
   implicit def customMapIsTotallyBuildMap[K, V]: TotallyBuildMap[CustomMap[K, V], K, V] =
     new TotallyBuildMap[CustomMap[K, V], K, V] {
 
-      def totalFactory: Factory[(K, V), CustomMap[K, V]] = new FactoryCompat[(K, V), CustomMap[K, V]] {
+      def totalFactory: Factory[(K, V), CustomMap[K, V]] = new Factory[(K, V), CustomMap[K, V]] {
 
-        override def newBuilder: mutable.Builder[(K, V), CustomMap[K, V]] =
-          new FactoryCompat.Builder[(K, V), CustomMap[K, V]] {
+        def fromSpecific(it: IterableOnce[(K, V)]): CustomMap[K, V] = newBuilder.addAll(it).result()
+
+        def newBuilder: mutable.Builder[(K, V), CustomMap[K, V]] =
+          new mutable.Builder[(K, V), CustomMap[K, V]] {
             private val implBuilder = Vector.newBuilder[(K, V)]
 
             override def clear(): Unit = implBuilder.clear()
@@ -470,10 +477,13 @@ object TotalTransformerIntegrationsSpec {
     new PartiallyBuildMap[NonEmptyMap[K, V], K, V] {
 
       def partialFactory: Factory[(K, V), partial.Result[NonEmptyMap[K, V]]] =
-        new FactoryCompat[(K, V), partial.Result[NonEmptyMap[K, V]]] {
+        new Factory[(K, V), partial.Result[NonEmptyMap[K, V]]] {
 
-          override def newBuilder: mutable.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] =
-            new FactoryCompat.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] {
+          def fromSpecific(it: IterableOnce[(K, V)]): partial.Result[NonEmptyMap[K, V]] =
+            newBuilder.addAll(it).result()
+
+          def newBuilder: mutable.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] =
+            new mutable.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] {
               private val implBuilder = Vector.newBuilder[(K, V)]
 
               override def clear(): Unit = implBuilder.clear()

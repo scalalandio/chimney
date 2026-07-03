@@ -8,37 +8,72 @@ import io.scalaland.chimney.partial
 
 import scala.collection.Factory
 
-/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformMapToMapRuleModule`.
-  *
-  * Differences vs the old version:
-  *   - the old code EAGERLY ran the delegated-to-IterableToIterable expansion (`result.toEither`) to decide whether
-  *     MapToMap should pass on to the next rule; `DerivationResult` is now lazy (MIO), so `mapMaps` returns
-  *     `DerivationResult[Either[Option[String], TransformationExpr[To]]]` - `Left(reason)` is the
-  *     decided-at-derivation-time "attempt next rule" of the delegated expansion; `expand` translates a `Left` of the
-  *     main result into `AttemptNextRule` and fallbacks that delegated-and-yielded are skipped during the merge fold
-  *     (`.map(_.toOption)` + `Option.fold`) exactly like the old synchronous `collect { case Right(...) }` did,
-  *   - the merge fold therefore uses the expr-level `mergeTotalExprs`/`mergePartialExprs` (exposed by the
-  *     IterableToIterable module) inside `map2` instead of the old `DerivationResult`-level `mergeTotal`/`mergePartial`
-  *     (same sequential `map2` evaluation and error semantics),
-  *   - `ExprPromise` pairs + `fulfilAsLambda2(...).tupled` become a single `LambdaBuilder.of2` whose `traverse` runs
-  *     both key/value derivations `parTuple`d (same both-run + error-aggregation semantics, same generated lambda); the
-  *     tuple+index variant (`Expr.Function2.instance[(FromK, FromV), Int, ...]` with `fulfilAsVal` re-binding) becomes
-  *     `LambdaBuilder.of2[(FromK, FromV), Int]` with `ValDefs.createVal(...).traverse` for the `val key = pair._1` /
-  *     `val value = pair._2` bindings (same generated code),
-  *   - the `displayMacrosLogging` debug `println` now prints a lazy `DerivationResult` (opaque `MIO` toString) instead
-  *     of the old computed value,
-  *   - `.log` becomes `.logInfo`, `upcastToExprOf` becomes `upcast`, `Type.Tuple2` becomes `ScalaType.Tuple2`,
-  *     `Expr.String` becomes `Expr(...)`, `Expr.block`/`Expr.suppressUnused` become `blockExpr`/`Expr.suppressUnused`.
+/** `DerivationResult` is lazy (MIO), so `mapMaps` cannot eagerly run the delegated-to-IterableToIterable expansion to
+  * decide whether to pass on to the next rule - instead it returns
+  * `DerivationResult[Either[Option[String], TransformationExpr[To]]]`: `Left(reason)` is the decided-at-derivation-time
+  * "attempt next rule" of the delegated expansion; `expand` translates a `Left` of the main result into
+  * `AttemptNextRule`, and fallbacks that delegated-and-yielded are skipped during the merge fold.
   */
 private[compiletime] trait TransformMapToMapRuleModule {
   this: Derivation & TransformIterableToIterableRuleModule & TransformProductToProductRuleModule &
     hearth.MacroCommons =>
 
-  import ChimneyType.Implicits.*, ScalaType.Implicits.*
+  import ChimneyType.Implicits.*
   import TransformIterableToIterableRule.{mergePartialExprs, mergeTotalExprs}
   import TransformProductToProductRule.useOverrideIfPresentOr
 
   protected object TransformMapToMapRule extends Rule("MapToMap") {
+
+    private lazy val Tuple2Ctor: Type.Ctor2[Tuple2] = Type.Ctor2.of[Tuple2]
+
+    // hearth#316: NOT implicit - implicit Type vals with cross-quoted initializers deadlock lazy-val init at macro
+    // runtime on Scala 3; re-exposed as a method-local implicit val where needed.
+    private lazy val AnyType: Type[Any] = Type.of[Any]
+
+    // Cross-quotes helpers in methods with regular type parameters (the cross-quotes helper-def pattern).
+
+    private def tuple2TypeCompat[A: Type, B: Type]: Type[(A, B)] = Type.of[(A, B)]
+
+    private def iteratorTypeCompat[A: Type]: Type[Iterator[A]] = Type.of[Iterator[A]]
+
+    private def factoryTypeCompat[A: Type, C: Type]: Type[Factory[A, C]] = Type.of[Factory[A, C]]
+
+    // Upcast hoisted into a helper def: local implicit vals whose types mention pattern-extracted existentials
+    // trip Scala 2's "recursive value needs type" cycle detection.
+    private def upcastTupleIteratorCompat[A: Type, K: Type, V: Type](it: Expr[Iterator[A]]): Expr[Iterator[(K, V)]] = {
+      implicit val IteratorAType: Type[Iterator[A]] = iteratorTypeCompat[A]
+      implicit val TupleKVType: Type[(K, V)] = tuple2TypeCompat[K, V]
+      implicit val IteratorKVType: Type[Iterator[(K, V)]] = iteratorTypeCompat[(K, V)]
+      it.upcast[Iterator[(K, V)]]
+    }
+
+    private def tuple2ExprCompat[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[(A, B)] = {
+      implicit val TupleAB: Type[(A, B)] = Type.of[(A, B)]
+      Expr.quote((Expr.splice(a), Expr.splice(b)))
+    }
+
+    private def iteratorMapCompat[A: Type, B: Type](
+        it: Expr[Iterator[A]],
+        f: Expr[A => B]
+    ): Expr[Iterator[B]] = Expr.quote {
+      Expr.splice(it).map(Expr.splice(f))
+    }
+
+    private def iteratorToCompat[A: Type, C: Type](
+        it: Expr[Iterator[A]],
+        factory: Expr[Factory[A, C]]
+    ): Expr[C] = Expr.quote {
+      Expr.splice(it).to(Expr.splice(factory))
+    }
+
+    private def iteratorZipWithIndexCompat[A: Type](it: Expr[Iterator[A]]): Expr[Iterator[(A, Int)]] = Expr.quote {
+      Expr.splice(it).zipWithIndex
+    }
+
+    private def function2TupledCompat[A: Type, B: Type, C: Type](f: Expr[(A, B) => C]): Expr[((A, B)) => C] =
+      Expr.quote {
+        Expr.splice(f).tupled
+      }
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       mapMaps[From, To] match {
@@ -118,23 +153,22 @@ private[compiletime] trait TransformMapToMapRuleModule {
           }
         case (TotallyOrPartiallyBuildIterable(from2), TotallyOrPartiallyBuildMap(toMap))
             if !ctx.config.areOverridesEmpty && from2.Underlying.isTuple =>
-          val ScalaType.Tuple2(fromK, fromV) = from2.Underlying: @unchecked
+          val Tuple2Ctor(fromK, fromV) = from2.Underlying: @unchecked
           import from2.{Underlying as InnerFrom, value as fromIterable}, fromK.Underlying as FromK,
             fromV.Underlying as FromV, toMap.{Key as ToK, Value as ToV}
           ctx match {
             case TransformationContext.ForTotal(_) =>
               Right(
                 mapMapForTotalTransformers[From, To, FromK, FromV, ToK, ToV](
-                  fromIterable
-                    .iterator(ctx.src)
-                    .upcast[Iterator[(FromK, FromV)]], // needed because iterable, not map
+                  // upcast needed because iterable, not map
+                  upcastTupleIteratorCompat[InnerFrom, FromK, FromV](fromIterable.iterator(ctx.src)),
                   toMap.factory
                 ).map(Right(_))
               )
             case TransformationContext.ForPartial(_, failFast) =>
               Right(
                 mapMapForPartialTransformers[From, To, FromK, FromV, ToK, ToV](
-                  fromIterable.iterator(ctx.src).upcast[Iterator[(FromK, FromV)]],
+                  upcastTupleIteratorCompat[InnerFrom, FromK, FromV](fromIterable.iterator(ctx.src)),
                   toMap.factory,
                   failFast,
                   isConversionFromMap = false
@@ -195,7 +229,9 @@ private[compiletime] trait TransformMapToMapRuleModule {
         factoryEither: Either[Expr[Factory[(ToK, ToV), To]], Expr[Factory[(ToK, ToV), partial.Result[To]]]]
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[TransformationExpr[To]] =
+    ): DerivationResult[TransformationExpr[To]] = {
+      implicit val TupleFromKVType: Type[(FromK, FromV)] = Type.of[(FromK, FromV)]
+      implicit val TupleToKVType: Type[(ToK, ToV)] = Type.of[(ToK, ToV)]
       LambdaBuilder
         .of2[FromK, FromV](FreshName.FromPrefix("key"), FreshName.FromPrefix("value"))
         .traverse[DerivationResult, (Expr[ToK], Expr[ToV])] { case (key, value) =>
@@ -212,19 +248,22 @@ private[compiletime] trait TransformMapToMapRuleModule {
             //    (${ resultToKey }, ${ resultToValue })
             //    }
             // }.to(${ factory }) }
-            iterator
-              .map[(ToK, ToV)](
-                builder.buildWith { case (toKeyResult, toValueResult) =>
-                  ScalaExpr.Tuple2(toKeyResult, toValueResult)
-                }.tupled
-              )
-              .to(factory)
+            iteratorToCompat(
+              iteratorMapCompat(
+                iterator,
+                function2TupledCompat(builder.buildWith { case (toKeyResult, toValueResult) =>
+                  tuple2ExprCompat(toKeyResult, toValueResult)
+                })
+              ),
+              factory
+            )
 
           factoryEither match {
             case Left(totalFactory)    => DerivationResult.totalExpr(iteratorMapTo(totalFactory))
             case Right(partialFactory) => DerivationResult.partialExpr(iteratorMapTo(partialFactory))
           }
         }
+    }
 
     private def mapMapForPartialTransformers[From, To, FromK: Type, FromV: Type, ToK: Type, ToV: Type](
         iterator: Expr[Iterator[(FromK, FromV)]],
@@ -234,6 +273,11 @@ private[compiletime] trait TransformMapToMapRuleModule {
     )(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[TransformationExpr[To]] = {
+      implicit val AnyT: Type[Any] = AnyType
+      implicit val TupleFromKVType: Type[(FromK, FromV)] = Type.of[(FromK, FromV)]
+      implicit val TupleToKVType: Type[(ToK, ToV)] = Type.of[(ToK, ToV)]
+      implicit val IntType: Type[Int] = Type.of[Int]
+      implicit val IndexedPairType: Type[((FromK, FromV), Int)] = Type.of[((FromK, FromV), Int)]
       if (isConversionFromMap) {
         // We're constructing:
         // '{ partial.Result.traverse[To, ($FromK, $FromV), ($ToK, $ToV)](
@@ -260,23 +304,24 @@ private[compiletime] trait TransformMapToMapRuleModule {
               .parTuple(deriveValueMapping[From, To, FromV, ToV](value).map(_.ensurePartial -> value))
           }
           .flatMap { builder =>
-            val lambda = builder.buildWith { case ((keyResult, key), (valueResult, value)) =>
-              blockExpr(
-                List(
-                  Expr.suppressUnused(key),
-                  Expr.suppressUnused(value)
-                ),
-                ChimneyExpr.PartialResult.product(
-                  keyResult.unsealErrorPath.prependErrorPath(
-                    ChimneyExpr.PathElement.MapKey(key.upcast[Any]).upcast[partial.PathElement]
-                  ),
-                  valueResult.unsealErrorPath.prependErrorPath(
-                    ChimneyExpr.PathElement.MapValue(key.upcast[Any]).upcast[partial.PathElement]
-                  ),
-                  failFast
-                )
-              )
-            }.tupled
+            val lambda = function2TupledCompat[FromK, FromV, partial.Result[(ToK, ToV)]](builder.buildWith {
+              case ((keyResult, key), (valueResult, value)) =>
+                Expr.quote {
+                  Expr.splice(Expr.suppressUnused(key))
+                  Expr.splice(Expr.suppressUnused(value))
+                  Expr.splice {
+                    ChimneyExpr.PartialResult.product(
+                      keyResult.unsealErrorPath.prependErrorPath(
+                        ChimneyExpr.PathElement.MapKey(key.upcast[Any]).upcast[partial.PathElement]
+                      ),
+                      valueResult.unsealErrorPath.prependErrorPath(
+                        ChimneyExpr.PathElement.MapValue(key.upcast[Any]).upcast[partial.PathElement]
+                      ),
+                      failFast
+                    )
+                  }
+                }
+            })
 
             def partialResultTraverse[ToOrPartialTo: Type](
                 factory: Expr[Factory[(ToK, ToV), ToOrPartialTo]]
@@ -338,7 +383,12 @@ private[compiletime] trait TransformMapToMapRuleModule {
             keyResultVal.parTuple(valueResultVal).map { case (keyVD, valueVD) =>
               ChimneyExpr.PartialResult.product(
                 keyVD
-                  .use { case (keyResult, key) => blockExpr(List(Expr.suppressUnused(key)), keyResult) }
+                  .use { case (keyResult, key) =>
+                    Expr.quote {
+                      Expr.splice(Expr.suppressUnused(key))
+                      Expr.splice(keyResult)
+                    }
+                  }
                   .unsealErrorPath
                   .prependErrorPath(
                     ChimneyExpr.PathElement.Accessor(Expr("_1")).upcast[partial.PathElement]
@@ -347,7 +397,12 @@ private[compiletime] trait TransformMapToMapRuleModule {
                     ChimneyExpr.PathElement.Index(indexExpr).upcast[partial.PathElement]
                   ),
                 valueVD
-                  .use { case (valueResult, value) => blockExpr(List(Expr.suppressUnused(value)), valueResult) }
+                  .use { case (valueResult, value) =>
+                    Expr.quote {
+                      Expr.splice(Expr.suppressUnused(value))
+                      Expr.splice(valueResult)
+                    }
+                  }
                   .unsealErrorPath
                   .prependErrorPath(
                     ChimneyExpr.PathElement.Accessor(Expr("_2")).upcast[partial.PathElement]
@@ -360,13 +415,13 @@ private[compiletime] trait TransformMapToMapRuleModule {
             }
           }
           .flatMap { builder =>
-            val lambda = builder.build[partial.Result[(ToK, ToV)]].tupled
+            val lambda = function2TupledCompat(builder.build[partial.Result[(ToK, ToV)]])
 
             def partialResultTraverse[ToOrPartialTo: Type](
                 factory: Expr[Factory[(ToK, ToV), ToOrPartialTo]]
             ): Expr[partial.Result[ToOrPartialTo]] =
               ChimneyExpr.PartialResult.traverse[ToOrPartialTo, ((FromK, FromV), Int), (ToK, ToV)](
-                iterator.zipWithIndex,
+                iteratorZipWithIndexCompat(iterator),
                 lambda,
                 failFast,
                 factory
@@ -404,6 +459,7 @@ private[compiletime] trait TransformMapToMapRuleModule {
         TotallyOrPartiallyBuildIterable.parse[M].flatMap(it => it.value.asMap.map(it -> _)).map {
           case (it, (key, value)) =>
             import it.Underlying as Inner, key.Underlying as Key0, value.Underlying as Value0
+            implicit val TupleKey0Value0Type: Type[(Key0, Value0)] = tuple2TypeCompat[Key0, Value0]
             new TotallyOrPartiallyBuildMap[M] {
 
               type Key = Key0
@@ -412,21 +468,37 @@ private[compiletime] trait TransformMapToMapRuleModule {
               type Value = Value0
               val Value: Type[Value] = Value0
 
-              def factory: Either[Expr[Factory[(Key, Value), M]], Expr[Factory[(Key, Value), partial.Result[M]]]] =
+              def factory: Either[Expr[Factory[(Key, Value), M]], Expr[Factory[(Key, Value), partial.Result[M]]]] = {
+                implicit val FactoryInnerMType: Type[Factory[Inner, M]] = factoryTypeCompat[Inner, M]
+                implicit val FactoryInnerPartialMType: Type[Factory[Inner, partial.Result[M]]] =
+                  factoryTypeCompat[Inner, partial.Result[M]]
+                implicit val FactoryKVMType: Type[Factory[(Key0, Value0), M]] = factoryTypeCompat[(Key0, Value0), M]
+                implicit val FactoryKVPartialMType: Type[Factory[(Key0, Value0), partial.Result[M]]] =
+                  factoryTypeCompat[(Key0, Value0), partial.Result[M]]
                 it.value.factory match {
                   case Left(totalFactory) =>
                     Left(totalFactory.upcast[Factory[(Key, Value), M]])
                   case Right(partialFactory) =>
                     Right(partialFactory.upcast[Factory[(Key, Value), partial.Result[M]]])
                 }
+              }
 
-              def iterator(collection: Expr[M]): Expr[Iterator[(Key, Value)]] =
+              def iterator(collection: Expr[M]): Expr[Iterator[(Key, Value)]] = {
+                implicit val IteratorInnerType: Type[Iterator[Inner]] = iteratorTypeCompat[Inner]
+                implicit val IteratorKVType: Type[Iterator[(Key0, Value0)]] = iteratorTypeCompat[(Key0, Value0)]
                 it.value.iterator(collection).upcast[Iterator[(Key0, Value0)]]
+              }
 
               def to[Collection2: Type](
                   collection: Expr[M],
                   factory: Expr[Factory[(Key, Value), Collection2]]
-              ): Expr[Collection2] = it.value.to(collection, factory.upcast[Factory[Inner, Collection2]])
+              ): Expr[Collection2] = {
+                implicit val FactoryKVC2Type: Type[Factory[(Key0, Value0), Collection2]] =
+                  factoryTypeCompat[(Key0, Value0), Collection2]
+                implicit val FactoryInnerC2Type: Type[Factory[Inner, Collection2]] =
+                  factoryTypeCompat[Inner, Collection2]
+                it.value.to(collection, factory.upcast[Factory[Inner, Collection2]])
+              }
             }
         }
       final def unapply[M](M: Type[M]): Option[TotallyOrPartiallyBuildMap[M]] = parse(using M)

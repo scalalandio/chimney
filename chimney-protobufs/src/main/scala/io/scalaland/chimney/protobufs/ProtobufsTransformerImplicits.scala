@@ -2,17 +2,11 @@ package io.scalaland.chimney.protobufs
 
 import io.scalaland.chimney.Transformer
 
-/** Since 2.0.0 this trait contains ONLY the implicits that std-extension providers cannot express - everything else was
-  * fix-by-deletion replaced by the Hearth `StandardMacroExtension` shipped in this jar (see
+/** Since 2.0.0 this trait contains ONLY the implicits that std-extension providers cannot express - everything else is
+  * covered by the Hearth `StandardMacroExtension` shipped in this jar (see
   * [[io.scalaland.chimney.protobufs.internal.compiletime.ProtobufsMacroExtension]]), which requires NO import at all:
-  *
-  *   - `com.google.protobuf.ByteString` <-> collections of `Byte` -> `IsCollection` provider (was a
-  *     `TotallyBuildIterable` implicit),
-  *   - `com.google.protobuf.wrappers.*Value` <-> their unwrapped values -> `IsValueType` providers (were 16
-  *     `Transformer` implicits + a `TotallyBuildIterable` for `BytesValue`; `BytesValue`'s inner type is `ByteString`,
-  *     which composes transitively with the `ByteString` collection support),
-  *   - `com.google.protobuf.timestamp.Timestamp` <-> `java.time.Instant` -> `IsValueType` provider (were 2
-  *     `Transformer` implicits; the "inner type" is a computed conversion, which Hearth's contract permits).
+  * `com.google.protobuf.ByteString` <-> collections of `Byte` (`IsCollection`), `com.google.protobuf.wrappers.*Value`
+  * <-> their unwrapped values, and `com.google.protobuf.timestamp.Timestamp` <-> `java.time.Instant` (`IsValueType`).
   *
   * What stays here and WHY it cannot be a provider:
   *

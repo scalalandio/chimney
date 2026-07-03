@@ -8,29 +8,26 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-/** Hearth-based port of
-  * `...compiletime.derivation.transformer.rules.TransformSealedHierarchyToSealedHierarchyRuleModule`.
-  *
-  * Differences vs the old version:
-  *   - macro-commons' `Enum`/`Enum.Element` view is renamed `SealedEnum`/`SealedEnum.Element` (see
-  *     [[datatypes.SealedHierarchies]] for why),
-  *   - `ExprPromise.promise[FromSubtype](...)` + `fulfillAsPatternMatchCase` becomes Hearth's
-  *     `MatchCase.typeMatch[FromSubtype](...)` + `.traverse` (the per-subtype mappings are
-  *     `MatchCase[TransformationExpr[To]]` instead of `Existential[ExprPromise[*, TransformationExpr[To]]]` - the
-  *     matched subtype type is existentialized inside `MatchCase` itself); the `List[PatternMatchCase].matchOn(src)`
-  *     call becomes `ctx.src.matchOn(NonEmptyVector(...))` (an empty subtype list - impossible for the inputs Chimney
-  *     accepts - now fails with an explicit assertion instead of emitting an empty match),
-  *   - `mapOverriddenElements` no longer needs `DerivationResult.direct`/`await`: `MatchCase.traverse` runs the
-  *     derivation effect directly where the old code had to `await` inside `ExprPromise.map`,
-  *   - `.log` becomes `.logInfo` where used on results (companion `DerivationResult.log` kept),
-  *   - `upcastToExprOf[B]` becomes Hearth's `upcast[B]`, `Type[A => B]` instances come from `ScalaType.Implicits`.
-  */
 private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
   this: Derivation & hearth.MacroCommons =>
 
-  import ChimneyType.Implicits.*, ScalaType.Implicits.*
+  import ChimneyType.Implicits.*
 
   protected object TransformSealedHierarchyToSealedHierarchyRule extends Rule("SealedHierarchyToSealedHierarchy") {
+
+    // Cross-quotes helpers in methods with regular type parameters (the cross-quotes helper-def pattern).
+
+    private def fn1TypeCompat[A: Type, B: Type]: Type[A => B] = Type.of[A => B]
+
+    private def fnFromBooleanTypeCompat[A: Type]: Type[Boolean => A] = Type.of[Boolean => A]
+
+    private def applyFnCompat[A: Type, B: Type](fn: Expr[A => B], a: Expr[A]): Expr[B] = Expr.quote {
+      Expr.splice(fn).apply(Expr.splice(a))
+    }
+
+    private def applyFailFastCompat[A: Type](fn: Expr[Boolean => A], failFast: Expr[Boolean]): Expr[A] = Expr.quote {
+      Expr.splice(fn).apply(Expr.splice(failFast))
+    }
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (Type[From], Type[To]) match {
@@ -104,6 +101,12 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
         }
         .toList
 
+      implicit val FnFromTo: Type[From => To] = fn1TypeCompat[From, To]
+      implicit val FnFromPartialTo: Type[From => partial.Result[To]] = fn1TypeCompat[From, partial.Result[To]]
+      implicit val FnBoolPartialTo: Type[Boolean => partial.Result[To]] = fnFromBooleanTypeCompat[partial.Result[To]]
+      implicit val FnFromBoolPartialTo: Type[From => Boolean => partial.Result[To]] =
+        fn1TypeCompat[From, Boolean => partial.Result[To]]
+
       overrides.parTraverse[DerivationResult, (ExistentialType, MatchCase[TransformationExpr[To]])] {
         case (someFrom, runtimeSubtype) =>
           import someFrom.Underlying as SomeFrom
@@ -128,7 +131,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                   // case someFromExpr: $someFrom => runtimeDataStore(${ idx }).asInstanceOf[$someFrom => $To](someFromExpr)
                   DerivationResult.pure(
                     TransformationExpr.fromTotal(
-                      runtimeData.asInstanceOfExpr[From => To].apply(fromExpr)
+                      applyFnCompat(runtimeData.asInstanceOfExpr[From => To], fromExpr)
                     )
                   )
                 case TransformerOverride.ComputedPartial(_, _, runtimeData, failFastAware) =>
@@ -139,12 +142,12 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                       case TransformationContext.ForPartial(_, failFast) => failFast
                       case _                                             => Expr(false)
                     }
-                    runtimeData
-                      .asInstanceOfExpr[From => Boolean => partial.Result[To]]
-                      .apply(fromExpr)
-                      .apply(failFastExpr)
+                    applyFailFastCompat(
+                      applyFnCompat(runtimeData.asInstanceOfExpr[From => Boolean => partial.Result[To]], fromExpr),
+                      failFastExpr
+                    )
                   } else {
-                    runtimeData.asInstanceOfExpr[From => partial.Result[To]].apply(fromExpr)
+                    applyFnCompat(runtimeData.asInstanceOfExpr[From => partial.Result[To]], fromExpr)
                   }
                   DerivationResult.pure(TransformationExpr.fromPartial(partialResult))
                 case TransformerOverride.Renamed(_, targetPath) =>

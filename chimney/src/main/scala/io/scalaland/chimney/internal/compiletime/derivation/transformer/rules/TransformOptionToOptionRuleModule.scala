@@ -7,30 +7,21 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformOptionToOptionRuleModule`.
-  *
-  * Differences vs the old version:
-  *   - `ExprPromise.promise[InnerFrom](...).traverse(...).fulfilAsLambda` becomes
-  *     `LambdaBuilder.of1[InnerFrom]().traverse(...)....build` (the lambdas are passed to the runtime
-  *     `OptionalValue.fold`/`partial.Result.map` iteration helpers - legitimate `LambdaBuilder` uses),
-  *   - `Expr.Function1.instance`/`Expr.Function2.instance` become `LambdaBuilder.of1/of2(...).buildWith`,
-  *   - `.log` becomes `.logInfo`, `upcastToExprOf` becomes `upcast`,
-  *   - `Type[None.type]`/`Type[Some[A]]` instances come from `ScalaType`/`ScalaType.Implicits` (old `Type.Implicits`),
-  *   - `.sequence` comes from `hearth.fp` (instances + syntax) instead of chimney's own `fp.Implicits`.
-  */
 private[compiletime] trait TransformOptionToOptionRuleModule {
   this: Derivation & TransformProductToProductRuleModule & hearth.MacroCommons =>
 
-  import ChimneyType.Implicits.*, ScalaType.Implicits.*, TransformProductToProductRule.useOverrideIfPresentOr
+  import ChimneyType.Implicits.*, TransformProductToProductRule.useOverrideIfPresentOr
 
   protected object TransformOptionToOptionRule extends Rule("OptionToOption") {
 
+    private lazy val NoneType: Type[None.type] = Type.of[None.type]
+
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (Type[From], Type[To]) match {
-        case (OptionalValue(_), _) if Type[To] <:< ScalaType.Option.None =>
+        case (OptionalValue(_), _) if Type[To] <:< NoneType =>
           DerivationResult
             .notSupportedTransformerDerivation(ctx)
-            .logInfo(s"Discovered that target type is ${Type.prettyPrint[None.type]} which we explicitly reject")
+            .logInfo(s"Discovered that target type is ${Type.prettyPrint(using NoneType)} which we explicitly reject")
         case (OptionalValue(from2), OptionalValue(to2)) =>
           import from2.{Underlying as InnerFrom, value as optionalFrom},
             to2.{Underlying as InnerTo, value as optionalTo}
@@ -66,7 +57,9 @@ private[compiletime] trait TransformOptionToOptionRuleModule {
         optionalTo: OptionalValue[To, InnerTo]
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[TransformationExpr[To]] =
+    ): DerivationResult[TransformationExpr[To]] = {
+      implicit val SomeInnerFromType: Type[Some[InnerFrom]] = Type.of[Some[InnerFrom]]
+      implicit val SomeInnerToType: Type[Some[InnerTo]] = Type.of[Some[InnerTo]]
       LambdaBuilder
         .of1[InnerFrom]()
         .traverse { (newFromExpr: Expr[InnerFrom]) =>
@@ -109,6 +102,7 @@ private[compiletime] trait TransformOptionToOptionRuleModule {
             )
           }
         }
+    }
 
     private def mapFallbackOptions[From, To, InnerTo: Type](optionalTo: OptionalValue[To, InnerTo])(implicit
         ctx: TransformationContext[From, To]

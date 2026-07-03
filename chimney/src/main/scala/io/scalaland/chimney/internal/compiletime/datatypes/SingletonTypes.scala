@@ -2,13 +2,10 @@ package io.scalaland.chimney.internal.compiletime.datatypes
 
 import io.scalaland.chimney.internal.compiletime.ChimneyDefinitions
 
-/** Hearth-based port of the pre-Hearth `io.scalaland.chimney.internal.compiletime.datatypes.SingletonTypes`.
-  *
-  * Hearth's `SingletonValue`/`Expr.singletonOf` covers objects/enum values/stable refs but NOT literal types, `Unit`
+/** Hearth's `SingletonValue`/`Expr.singletonOf` covers objects/enum values/stable refs but NOT literal types, `Unit`
   * and `Null` - those are bridged with Hearth's `TypeCodec` (literal type -> value) + `ExprCodec` (value -> literal
-  * expr), exactly mirroring macro-commons' `Type.XLiteral` handling. The case-object/case-val/Java-enum-value branch
-  * goes through `Product.Constructor` like in macro-commons (so it matches `case object`s, but not plain `object`s,
-  * even though Hearth's `SingletonValue` would).
+  * expr). The case-object/case-val/Java-enum-value branch goes through `Product.Constructor` so that it matches `case
+  * object`s, but not plain `object`s, even though Hearth's `SingletonValue` would.
   */
 private[compiletime] trait SingletonTypes { this: ChimneyDefinitions & hearth.MacroCommons =>
 
@@ -27,13 +24,10 @@ private[compiletime] trait SingletonTypes { this: ChimneyDefinitions & hearth.Ma
 
   protected object SingletonType {
 
-    // NOT `implicit` and NOT initialized with a local cross-quoted `Type.of` on purpose: on Scala 3 the
-    // Cross-Quotes plugin's best-effort implicit-`Type` detection would rewrite `Type.of[Unit]` into a reference
-    // to the implicit val being initialized, and the (thread-safe) lazy val initialization then DEADLOCKS at
-    // macro runtime (parked on its own initializer latch). ScalaStdCompat hoists the actual `Type.of` calls
-    // as non-implicit trait-level lazy vals, which is the documented-safe pattern.
-    private lazy val UnitType: Type[Unit] = ScalaType.Implicits.UnitType
-    private lazy val NullType: Type[Null] = ScalaType.Implicits.NullType
+    // hearth#316: implicit Type vals with cross-quoted initializers deadlock lazy-val init at macro runtime on
+    // Scala 3 - keep these NON-implicit (object-level lazies with no implicit-Type-val siblings are safe).
+    private lazy val UnitType: Type[Unit] = Type.of[Unit]
+    private lazy val NullType: Type[Null] = Type.of[Null]
     private lazy val unitExpr: Expr[Unit] = Expr.UnitExprCodec.toExpr(())
     private lazy val nullExpr: Expr[Null] = Expr.NullExprCodec.toExpr(null)
 
@@ -67,7 +61,7 @@ private[compiletime] trait SingletonTypes { this: ChimneyDefinitions & hearth.Ma
     }
     final def unapply[A](tpe: Type[A]): Option[Singleton[A]] = parse(using tpe)
 
-    /** Bridges macro-commons' `Type.BooleanLiteral`/`IntLiteral`/... matching with Hearth's `TypeCodec`+`ExprCodec`.
+    /** Matches literal singleton types (Boolean/Int/.../String) via Hearth's `TypeCodec`+`ExprCodec`.
       *
       * The `Expr`-level cast is safe: the emitted tree is the literal itself, which inhabits the literal type `A`.
       */

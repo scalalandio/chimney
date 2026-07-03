@@ -1,17 +1,15 @@
 package io.scalaland.chimney.internal.compiletime
 
-/** Scala 2 entrypoint of the Hearth-based macro cake.
-  *
-  * Mirrors the old `DefinitionsPlatform`/`DerivationPlatform` split: concrete macro bundles will extend this class the
-  * same way they extended `DefinitionsPlatform(c)` before. Its main purpose right now is to prove that the whole
-  * `compiletime` cake composes and compiles on Scala 2.
+/** Scala 2 entrypoint of the macro cake: concrete macro bundles extend this class. It also hosts the Scala 2 overrides
+  * of the compat workarounds (see [[MacroCommonsCompat]]).
   */
 abstract private[compiletime] class PlatformBridge(val c: scala.reflect.macros.blackbox.Context)
     extends hearth.MacroCommonsScala2
     with ChimneyDefinitions {
 
   /** On Scala 2 the shared implementation would leave the wildcard example's existentially-quantified symbols unbound
-    * after re-application - re-quantify them here (see [[MacroCommonsCompat.reapplyLeadingTypeArgsCompat]]).
+    * after re-application - re-quantify them here (see [[MacroCommonsCompat.reapplyLeadingTypeArgsCompat]],
+    * hearth#312).
     */
   override protected def reapplyLeadingTypeArgsCompat(
       wildcardExample: UntypedType,
@@ -27,13 +25,11 @@ abstract private[compiletime] class PlatformBridge(val c: scala.reflect.macros.b
     internal.existentialAbstraction(quantified, applied)
   }
 
-  /** Scala 2 override of `SealedHierarchies.sealedSubtypesCompat`: port of the old macro-commons
-    * `SealedHierarchiesPlatform#extractSealedSubtypes` (+ `extractJavaEnumInstances`).
+  /** Scala 2 override of `SealedHierarchies.sealedSubtypesCompat` (hearth#309).
     *
     * Hearth's `Type.directChildren` on Scala 2 returns a name-keyed `ListMap` of ALREADY-flattened subtypes, which
     * collapses same-named subtypes from different scopes (e.g. `colors4.Green` vs `colors4.Color.Green`) and loses the
-    * ambiguity that Chimney must detect and report. This override preserves duplicates and the old position+name
-    * ordering.
+    * ambiguity that Chimney must detect and report. This override preserves duplicates and the position+name ordering.
     */
   override protected def sealedSubtypesCompat[A: Type]: List[(String, ??<:[A])] = {
     import c.universe.*
@@ -67,7 +63,7 @@ abstract private[compiletime] class PlatformBridge(val c: scala.reflect.macros.b
         if (t.asClass.isSealed) t.asClass.knownDirectSubclasses.toList.map(_.asType).flatMap(extractRecursively)
         else List(t)
 
-      /** Applies type arguments from supertype to subtype if there are any (old `subtypeTypeOf`). */
+      /** Applies type arguments from supertype to subtype if there are any. */
       def subtypeTypeOf(subtype: TypeSymbol): c.Type = {
         val _ = subtype.typeSignature // force initialization (SI-7755)
         val sEta = subtype.toType.etaExpand
@@ -83,9 +79,8 @@ abstract private[compiletime] class PlatformBridge(val c: scala.reflect.macros.b
     }
   }
 
-  /** Scala 2 override of [[MacroCommonsCompat.fixJavaEnumCompat]]: port of the old
-    * `ChimneyType.platformSpecific.fixJavaEnum` - decodes `runtime.RefinedJavaEnum[E, "Name"]` markers (created by the
-    * Scala 2 whitebox DSL macros) back into the Java enum instance's real type.
+  /** Scala 2 override of [[MacroCommonsCompat.fixJavaEnumCompat]]: decodes `runtime.RefinedJavaEnum[E, "Name"]` markers
+    * (created by the Scala 2 whitebox DSL macros) back into the Java enum instance's real type.
     */
   override protected def fixJavaEnumCompat(inst: ??): ?? = {
     import c.universe.*
@@ -114,41 +109,41 @@ abstract private[compiletime] class PlatformBridge(val c: scala.reflect.macros.b
     } else inst
   }
 
-  /** Scala 2 override of [[MacroCommonsCompat.isEnumCaseValCompat]]: port of the old macro-commons Scala 2 `isCaseVal`
-    * formula (`isPublic && isModuleClass && isStatic && isFinal` - "parameterless case in S3 cannot be checked for
-    * 'case'").
+  /** Scala 2 override of [[MacroCommonsCompat.isEnumCaseValCompat]] (hearth#311):
+    * `isPublic && isModuleClass && isStatic && isFinal` ("parameterless case in S3 cannot be checked for 'case'").
     *
     * Needed for the SANDWICH scenario: under `-Ytasty-reader` a Scala 3 parameterless enum case (e.g. `Foo.A` of
     * `enum Foo { case A }`) is seen by scalac as a static final module class WITHOUT the `Case` flag, so Hearth's
-    * `Type.isCaseVal` is `false` - the type then parsed as a POJO and the engine emitted uncompilable
-    * `new Foo.A.type()` instead of referencing the singleton. (Like in the old engine, this also classifies plain
-    * static final `object`s as singleton "case vals" - intentional parity.)
+    * `Type.isCaseVal` is `false` - the type would then parse as a POJO and the engine would emit uncompilable
+    * `new Foo.A.type()` instead of referencing the singleton. (This also classifies plain static final `object`s as
+    * singleton "case vals" - intentional.)
     */
   override protected def isEnumCaseValCompat[A: Type]: Boolean = {
     val sym = Type[A].tpe.typeSymbol
     sym.isPublic && sym.isModuleClass && sym.isStatic && sym.isFinal
   }
 
-  /** Scala 2 override of [[MacroCommonsCompat.isStableAccessorCompat]]: the old macro-commons Scala 2 `isBodyField`
-    * formula (`field.isStable` on the accessor's `MethodSymbol`). Catches `val` members of structural refinement types
-    * (`A <: { val value: String }`) - deferred stable methods with no accessed field, which Hearth 0.4.0's
-    * `Method.isVal` misses - so they classify as always-available `ConstructorBodyVal` getters like in 1.x.
+  /** Scala 2 override of [[MacroCommonsCompat.isStableAccessorCompat]] (hearth#326): `field.isStable` on the accessor's
+    * `MethodSymbol`. Catches `val` members of structural refinement types (`A <: { val value: String }`) - deferred
+    * stable methods with no accessed field, which Hearth 0.4.0's `Method.isVal` misses - so they classify as
+    * always-available `ConstructorBodyVal` getters like in 1.x.
     */
   override protected def isStableAccessorCompat(method: Method): Boolean = {
     val sym = method.asUntyped.symbol
     sym.isMethod && sym.asMethod.isStable
   }
 
-  /** Scala 2 override of [[MacroCommonsCompat.retagExprCompat]]: re-wraps the tree with the precise `WeakTypeTag`
-    * (hearth's `Type[A]` IS `c.WeakTypeTag[A]` on Scala 2), replacing the unresolved tag materialized by
+  /** Scala 2 override of [[MacroCommonsCompat.retagExprCompat]] (hearth#308): re-wraps the tree with the precise
+    * `WeakTypeTag` (hearth's `Type[A]` IS `c.WeakTypeTag[A]` on Scala 2), replacing the unresolved tag materialized by
     * `ValDefs.closeScope[A]` (no `Type` bound in Hearth 0.4.0).
     */
   override protected def retagExprCompat[A: Type](expr: Expr[A]): Expr[A] =
     c.Expr[A](expr.tree)(Type[A])
 
-  /** Scala 2 override of [[MacroCommonsCompat.classOfExprCompat]]: a proper class LITERAL (`Literal(Constant(tpe))`),
-    * which `showCode`/re-typecheck render as plain `classOf[fqcn.Type]` - unlike Hearth 0.4.0's `Expr.ClassExprCodec`
-    * quasiquote whose type splice does not survive Chimney's re-typecheck (see [[JavaCollectionsPlatformCompat]]).
+  /** Scala 2 override of [[MacroCommonsCompat.classOfExprCompat]] (hearth#321): a proper class LITERAL
+    * (`Literal(Constant(tpe))`), which `showCode`/re-typecheck render as plain `classOf[fqcn.Type]` - unlike Hearth
+    * 0.4.0's `Expr.ClassExprCodec` quasiquote whose type splice does not survive Chimney's re-typecheck (see
+    * [[JavaCollectionsPlatformCompat]]).
     */
   override protected def classOfExprCompat[A: Type]: Expr[java.lang.Class[A]] = {
     import c.universe.*
@@ -157,8 +152,8 @@ abstract private[compiletime] class PlatformBridge(val c: scala.reflect.macros.b
     c.Expr[java.lang.Class[A]](Literal(Constant(Type[A].tpe.dealias)))
   }
 
-  /** macro-commons `Expr.nowarn` (Scala 2) - Hearth has no annotation-attaching API, so the old quasiquote-based
-    * implementation lives here (see [[MacroCommonsCompat.nowarnExpr]]).
+  /** Hearth has no annotation-attaching API - the quasiquote-based implementation lives here (see
+    * [[MacroCommonsCompat.nowarnExpr]]).
     */
   override protected def nowarnExpr[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A] = {
     import c.universe.*
@@ -180,7 +175,7 @@ abstract private[compiletime] class PlatformBridge(val c: scala.reflect.macros.b
     )
   }
 
-  /** macro-commons `Expr.SuppressWarnings` (Scala 2) - see [[nowarnExpr]]. */
+  /** See [[nowarnExpr]]. */
   override protected def suppressWarningsExpr[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A] = {
     import c.universe.*
     val name = c.internal.reificationSupport.freshTermName("suppresswarningsresult$macro$")

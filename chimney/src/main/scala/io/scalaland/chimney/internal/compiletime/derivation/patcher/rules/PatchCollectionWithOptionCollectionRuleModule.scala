@@ -4,15 +4,7 @@ import hearth.fp.syntax.*
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.Derivation
 
-/** Hearth-based port of `...compiletime.derivation.patcher.rules.PatchCollectionWithOptionCollectionRuleModule`.
-  *
-  * Differences vs the old version: the `DerivationResult.direct` + `Expr.Function1.instance` + `await(...)` protocol
-  * becomes `LambdaBuilder.of1[OptionPatch]().traverse(...)` + `.build` (see [[PatchOptionWithNonOptionRuleModule]] for
-  * the rationale).
-  */
 private[compiletime] trait PatchCollectionWithOptionCollectionRuleModule { this: Derivation & hearth.MacroCommons =>
-
-  import ScalaType.Implicits.*
 
   protected object PatchCollectionWithOptionCollectionRule extends Rule("PatchCollectionWithOptionCollection") {
 
@@ -36,7 +28,8 @@ private[compiletime] trait PatchCollectionWithOptionCollectionRuleModule { this:
         optionOptionPatch: OptionalValue[OptionOptionPatch, OptionPatch]
     )(implicit
         ctx: TransformationContext[OptionOptionPatch, OptionA]
-    ): DerivationResult[Rule.ExpansionResult[OptionA]] =
+    ): DerivationResult[Rule.ExpansionResult[OptionA]] = {
+      implicit val SomeOptionPatchType: Type[Some[OptionPatch]] = Type.of[Some[OptionPatch]]
       LambdaBuilder
         .of1[OptionPatch]()
         .traverse { (expr: Expr[OptionPatch]) =>
@@ -57,5 +50,6 @@ private[compiletime] trait PatchCollectionWithOptionCollectionRuleModule { this:
             )
           )
         }
+    }
   }
 }

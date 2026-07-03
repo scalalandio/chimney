@@ -10,11 +10,6 @@ import io.scalaland.chimney.internal.compiletime.{
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.Derivation
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.rules.TransformProductToProductRuleModule
 
-/** Hearth-based port of `...compiletime.derivation.patcher.rules.PatchProductWithProductRuleModule` - 1:1 copy
-  * (`errors.asVector` classifies the raw MIO `Throwable`s back into `DerivationError`s; `DerivationErrors(head, tail)`
-  * becomes the vararg-splatted `DerivationErrors(head, tail*)`; MIO's `recoverWith` takes a `PartialFunction`, to which
-  * the old total-lambda literal adapts with identical semantics).
-  */
 private[compiletime] trait PatchProductWithProductRuleModule {
   this: Derivation & TransformProductToProductRuleModule & hearth.MacroCommons =>
 

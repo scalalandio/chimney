@@ -6,36 +6,27 @@ import io.scalaland.chimney.partial
 
 import scala.collection.Factory
 
-/** Hearth-based port of the pre-Hearth `io.scalaland.chimney.internal.compiletime.ChimneyExprs` - merges the shared
-  * trait and both platform implementations into a single cross-quoted source (`Expr.quote`/`Expr.splice` instead of
-  * per-platform quasiquotes/`'{}`).
+/** NB: in `Transformer.instance`/`PartialTransformer.instance`/`Patcher.instance` the method parameters keep their
+  * literal names (`src`/`failFast`/`obj`/`patch`) but a `FreshName.FromType`-named val is prepended (`val int$macro$N =
+  * src`) and the derivation sees THAT reference - this keeps the type-derived names in error messages ("derivation from
+  * int: ...").
   *
-  * Member names/paths and the implicit ops classes are preserved 1:1 with the macro-commons version so that rule code
-  * can be ported mechanically. Notable implementation differences:
-  *   - `Transformer.instance`/`PartialTransformer.instance`/`Patcher.instance` follow the OLD SCALA 3 shape: the method
-  *     parameters keep their literal names (`src`/`failFast`/`obj`/`patch`) but a `FreshName.FromType`-named val is
-  *     prepended (`val int$macro$N = src`) and the derivation sees THAT reference - this keeps the type-derived names
-  *     in error messages ("derivation from int: ..."), which the old Scala 2 implementation achieved by naming the
-  *     method parameter itself (`ExprPromise.provideFreshName`),
-  *   - `Expr.platformSpecific.resetOwner` call sites disappear - Hearth resets owners internally.
-  *
-  * TODO(hearth-migration): this module only existed because macro-commons had nothing like Cross-Quotes - most of it is
-  * now a layer of trivial `Expr.quote`/`Expr.splice` forwarders that the rules could inline directly. Inline them
-  * during the post-flip cleanup chunk. The `instance` builders (and anything else that carries real logic, like the
-  * fresh-name val prepending below) should be kept, but the rest of the module can go.
+  * TODO(hearth-migration): most of this module is a layer of trivial `Expr.quote`/`Expr.splice` forwarders that the
+  * rules could inline directly. The `instance` builders (and anything else that carries real logic, like the fresh-name
+  * val prepending below) should be kept, but the rest of the module can go.
   */
 private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions & hearth.MacroCommons =>
 
   /** Builds a `Transformer[From, To]` instance expr, running the body derivation through `deriveBody`.
     *
-    * HEARTH 0.4.0 ISSUE WORKAROUND (Scala 3): the shared default (used on Scala 2) keeps the old
+    * HEARTH 0.4.0 ISSUE WORKAROUND (hearth#318, Scala 3): the shared default (used on Scala 2) keeps the
     * `DerivationResult.direct` + `await`-inside-the-quote shape. On Scala 3 MIO's `await` hops to a
     * `DirectStyleExecutor` thread, so exprs quoted in the instance-method splice (e.g. `failFast`) and the awaited
     * derivation result belong to different splice evaluations and `-Xcheck-macros` aborts with "ScopeException:
     * Expression created in a splice was used outside of that splice". The Scala 3 `PlatformBridge` overrides these
-    * three builders with the OLD macro-commons pattern: mint a fresh `FromType`-named val symbol first, run the
-    * derivation against its `Ref` (plain MIO, no direct style), and only then construct the instance quote, binding the
-    * val to the method parameter inside the splice.
+    * three builders: mint a fresh `FromType`-named val symbol first, run the derivation against its `Ref` (plain MIO,
+    * no direct style), and only then construct the instance quote, binding the val to the method parameter inside the
+    * splice.
     */
   protected def transformerInstanceCompat[From: Type, To: Type](
       deriveBody: Expr[From] => DerivationResult[Expr[To]]
@@ -82,7 +73,7 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions & hearth.Macr
       ): Expr[io.scalaland.chimney.Transformer[From, To]] = Expr.quote {
         new io.scalaland.chimney.Transformer[From, To] {
           def transform(src: From): To = Expr.splice {
-            // Prepend a FromType-named val (like the old Scala 3 impl) so that derivation/errors see e.g. `int`;
+            // Prepend a FromType-named val so that derivation/errors see e.g. `int`;
             // suppressUnused because the derived body might not reference the source at all (e.g. singleton target);
             // srcRef captured BEFORE withMacroEntryCtxCompat (it must be quoted in the splice's own scope), the
             // derivation itself runs under the macro-entry ctx so nothing it creates/caches is splice-scoped and
@@ -90,7 +81,10 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions & hearth.Macr
             val srcRef = Expr.quote(src)
             withMacroEntryCtxCompat {
               prependFreshValCompat[From, To](srcRef) { fromRef =>
-                blockExpr(List(Expr.suppressUnused(fromRef)), toExpr(fromRef))
+                Expr.quote {
+                  Expr.splice(Expr.suppressUnused(fromRef))
+                  Expr.splice(toExpr(fromRef))
+                }
               }
             }
           }
@@ -113,7 +107,7 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions & hearth.Macr
       ): Expr[io.scalaland.chimney.PartialTransformer[From, To]] = Expr.quote {
         new io.scalaland.chimney.PartialTransformer[From, To] {
           def transform(src: From, failFast: Boolean): partial.Result[To] = Expr.splice {
-            // Prepend a FromType-named val (like the old Scala 3 impl) so that derivation/errors see e.g. `int`;
+            // Prepend a FromType-named val so that derivation/errors see e.g. `int`;
             // suppressUnused because the derived body might not reference the source at all (e.g. singleton target);
             // srcRef/failFastRef captured BEFORE withMacroEntryCtxCompat (they must be quoted in the splice's own
             // scope), the derivation itself runs under the macro-entry ctx so nothing it creates/caches is
@@ -123,7 +117,10 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions & hearth.Macr
             withMacroEntryCtxCompat {
               implicit val PartialResultTo: Type[partial.Result[To]] = ChimneyType.PartialResult[To]
               prependFreshValCompat[From, partial.Result[To]](srcRef) { fromRef =>
-                blockExpr(List(Expr.suppressUnused(fromRef)), toExpr(fromRef, failFastRef))
+                Expr.quote {
+                  Expr.splice(Expr.suppressUnused(fromRef))
+                  Expr.splice(toExpr(fromRef, failFastRef))
+                }
               }
             }
           }
@@ -297,18 +294,22 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions & hearth.Macr
       ): Expr[io.scalaland.chimney.Patcher[A, Patch]] = Expr.quote {
         new io.scalaland.chimney.Patcher[A, Patch] {
           def patch(obj: A, patch: Patch): A = Expr.splice {
-            // Prepend FromType-named vals (like the old Scala 3 impl) so that derivation/errors see e.g. `user`;
+            // Prepend FromType-named vals so that derivation/errors see e.g. `user`;
             // suppressUnused because the derived body might not reference them at all (e.g. singleton target);
             // objRef/patchRef captured BEFORE withMacroEntryCtxCompat (they must be quoted in the splice's own
             // scope), the derivation itself runs under the macro-entry ctx (see MacroCommonsCompat). Nesting two
-            // prepends produces `{ val a = obj; { val p = patch; body } }` instead of the old flat two-val block -
+            // prepends produces `{ val a = obj; { val p = patch; body } }` (nested, not a flat two-val block) -
             // semantically identical.
             val objRef = Expr.quote(obj)
             val patchRef0 = Expr.quote(patch)
             withMacroEntryCtxCompat {
               prependFreshValCompat[A, A](objRef) { objRef2 =>
                 prependFreshValCompat[Patch, A](patchRef0) { patchRef2 =>
-                  blockExpr(List(Expr.suppressUnused(objRef2), Expr.suppressUnused(patchRef2)), f(objRef2, patchRef2))
+                  Expr.quote {
+                    Expr.splice(Expr.suppressUnused(objRef2))
+                    Expr.splice(Expr.suppressUnused(patchRef2))
+                    Expr.splice(f(objRef2, patchRef2))
+                  }
                 }
               }
             }

@@ -24,7 +24,7 @@ trait TotallyBuildIterable[Collection, Item] {
 
   /** Converts Collection into `Collection2`. */
   def to[Collection2](collection: Collection, factory: Factory[Item, Collection2]): Collection2 =
-    FactoryCompat.iteratorTo(iterator(collection), factory)
+    iterator(collection).to(factory)
 
   /** Useful since this class is invariant. */
   def widen[Collection2 >: Collection]: TotallyBuildIterable[Collection2, Item] =

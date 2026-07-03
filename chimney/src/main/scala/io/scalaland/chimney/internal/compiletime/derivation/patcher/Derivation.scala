@@ -3,15 +3,6 @@ package io.scalaland.chimney.internal.compiletime.derivation.patcher
 import io.scalaland.chimney.internal.compiletime.{ChimneyDefinitions, DerivationResult}
 import io.scalaland.chimney.internal.compiletime.derivation.transformer
 
-/** Hearth-based port of `...compiletime.derivation.patcher.Derivation`.
-  *
-  * Differences vs the old version:
-  *   - the `datatypes.*` traits are NOT mixed in anymore - [[ChimneyDefinitions]] already includes them (they became
-  *     part of the compiletime foundation),
-  *   - the patcher rule modules are mixed in HERE instead of in the per-platform `DerivationPlatform`s, and
-  *     `rulesAvailableForPlatform` (identical between the old platforms) is overridden HERE, once, in shared code -
-  *     mirroring what the transformer's [[transformer.Derivation]] does for the transformer rules.
-  */
 private[compiletime] trait Derivation
     extends ChimneyDefinitions
     with Configurations
@@ -28,9 +19,7 @@ private[compiletime] trait Derivation
     with rules.PatchNotMatchedRuleModule {
   this: hearth.MacroCommons & hearth.std.StdExtensions =>
 
-  /** The old per-platform patcher `DerivationPlatform.rulesAvailableForPlatform` (identical on Scala 2 and 3), now
-    * shared - overrides the transformer-only list from [[transformer.Derivation]].
-    */
+  /** Overrides the transformer-only list from [[transformer.Derivation]]. */
   override protected val rulesAvailableForPlatform: List[Rule] = List(
     PatchImplicitRule,
     TransformImplicitRule,

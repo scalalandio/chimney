@@ -1,16 +1,5 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
-/** Hearth-based port of the pre-Hearth
-  * `io.scalaland.chimney.internal.compiletime.derivation.transformer.ImplicitSummoning`.
-  *
-  * Differences vs the old version:
-  *   - `summonTransformerUnchecked`/`summonPartialTransformerUnchecked` were abstract here and implemented TWICE (in
-  *     the Scala 2 and Scala 3 `DerivationPlatform`s, with identical logic modulo quasiquotes vs quotes); Hearth's
-  *     `Expr.summonImplicitIgnoring` (the platform-independent version of Scala 3's `summonIgnoring`) lets them be
-  *     implemented ONCE, here, in shared code - including the `Iso`/`Codec` fallbacks,
-  *   - `Expr.summonImplicit[A]: Option[...]` call sites go through [[MacroCommonsCompat.summonImplicitOptionOf]]
-  *     (Hearth's `summonImplicit` returns `SummoningResult`).
-  */
 private[compiletime] trait ImplicitSummoning { this: Derivation & hearth.MacroCommons =>
 
   import ChimneyType.Implicits.*

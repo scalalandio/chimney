@@ -7,12 +7,6 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivati
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.partial.Result
 
-/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformImplicitOuterTransformerRuleModule`.
-  *
-  * Differences vs the old version: the `ExprPromise.promise[InnerFrom](...).traverse(...).fulfilAsLambda` protocol
-  * becomes `LambdaBuilder.of1[InnerFrom]().traverse(...)....build` (the inner lambda is passed to the outer
-  * transformer's runtime `transformWith*Inner` iteration helpers - a legitimate `LambdaBuilder` use).
-  */
 private[compiletime] trait TransformImplicitOuterTransformerRuleModule {
   this: Derivation & TransformProductToProductRuleModule & hearth.MacroCommons =>
 

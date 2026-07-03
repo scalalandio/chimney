@@ -1,16 +1,11 @@
 package io.scalaland.chimney.internal.compiletime
 
-/** Hearth-based port of the pre-Hearth `io.scalaland.chimney.internal.compiletime.ChimneyDefinitions`.
-  *
-  * Instead of macro-commons' `Definitions` the cake builds on `hearth.MacroCommons` (mixed in by the platform bridges)
-  * plus [[MacroCommonsCompat]] for the shims that have no direct Hearth counterpart.
-  *
-  * The self-type includes `hearth.std.StdExtensions` (mixed into `MacroCommonsScala2`/`MacroCommonsScala3` by Hearth
-  * itself) so that [[datatypes.StdExtensionsLoading]] and future `IsOption`/`IsEither`/... call sites type-check.
+/** Foundation of the derivation cake: `hearth.MacroCommons` (mixed in by the platform bridges) plus the Chimney modules
+  * below. The self-type includes `hearth.std.StdExtensions` so that [[datatypes.StdExtensionsLoading]] and
+  * `IsOption`/`IsEither`/... call sites type-check.
   */
 private[compiletime] trait ChimneyDefinitions
     extends MacroCommonsCompat
-    with ScalaStdCompat
     with ResultSyntax
     with ChimneyTypes
     with ChimneyExprs

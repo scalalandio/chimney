@@ -11,35 +11,37 @@ import io.scalaland.chimney.partial
 import scala.annotation.unused
 import scala.collection.immutable.{ListMap, SortedSet}
 
-/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformProductToProductRuleModule` (full).
-  *
-  * Differences vs the old version:
-  *   - `Expr.String(value)` becomes Hearth's `Expr(value)` (via `ExprCodec`),
-  *   - `.upcastToExprOf[B]` becomes Hearth's `.upcast[B]`,
-  *   - `asInstanceOfExpr` on `ExistentialExpr` goes through [[MacroCommonsCompat.CompatExistentialExprOps]],
-  *   - `Type[A => B]`/`Type[Unit]`/`Type[Null]` instances come from `ScalaType.Implicits` (old code used
-  *     `Type.Implicits`),
-  *   - the single-error pattern in `useOverrideIfPresentOr` matches `MErrors` through the compat
-  *     `DerivationErrors.unapply` (`NonEmptyVector`'s `(head, tail)`),
-  *   - `Expr.Function1.instance`/`Expr.Function2.instance` become `LambdaBuilder.of1/of2().buildWith` (the lambdas are
-  *     passed to the runtime `partial.Result.map/flatMap/map2` helpers - legitimate `LambdaBuilder` uses),
-  *   - `PrependDefinitionsTo.prependLazyVal/prependVar` become `ValDefs.createLazy/createVar` (with the same
-  *     `.traverse`/`.use` shapes - `ValDefsTraverse` is Hearth's `ApplicativeTraverse[ValDefs]`),
-  *   - `Expr.block`/`Expr.ifElse`/`eqExpr Expr.Null` become the [[MacroCommonsCompat]] helper defs
-  *     `blockExpr`/`ifElseExpr`/`isNullExpr` (`blockExpr` nests pairwise instead of emitting one flat block -
-  *     semantically identical), `Expr.Null` becomes `ScalaExpr.Null`,
-  *   - `Traverse[List].parTraverse[DerivationResult, ...]` becomes `list.parTraverse` on `hearth.fp` instances+syntax
-  *     (same both-branches-run error aggregation),
-  *   - the mutable `fromNamesUsedByExtractors` buffer is now filled during the (lazy) MIO run instead of during eager
-  *     `DerivationResult` construction - the `flatTap(checkPolicy)` read still happens strictly after all writes.
+/** NB: the mutable `fromNamesUsedByExtractors` buffer is filled during the (lazy) MIO run - the `flatTap(checkPolicy)`
+  * read happens strictly after all writes.
   */
 private[compiletime] trait TransformProductToProductRuleModule { this: Derivation & hearth.MacroCommons =>
 
-  import ChimneyType.Implicits.*, ScalaType.Implicits.*
+  import ChimneyType.Implicits.*
 
   protected object TransformProductToProductRule extends Rule("ProductToProduct") {
 
     private type PartialExpr[A] = Expr[partial.Result[A]]
+
+    // hearth#316: NOT implicit - implicit Type vals with cross-quoted initializers deadlock lazy-val init at macro
+    // runtime on Scala 3; provided locally/explicitly where needed.
+    private lazy val UnitType: Type[Unit] = Type.of[Unit]
+    private lazy val NullType: Type[Null] = Type.of[Null]
+    private lazy val NoneType: Type[None.type] = Type.of[None.type]
+    private lazy val nullExpr: Expr[Null] = Expr.NullExprCodec.toExpr(null)
+
+    // Cross-quotes helpers in methods with regular type parameters (the cross-quotes helper-def pattern).
+
+    private def fn1TypeCompat[A: Type, B: Type]: Type[A => B] = Type.of[A => B]
+
+    private def fnFromBooleanTypeCompat[A: Type]: Type[Boolean => A] = Type.of[Boolean => A]
+
+    private def applyFnCompat[A: Type, B: Type](fn: Expr[A => B], a: Expr[A]): Expr[B] = Expr.quote {
+      Expr.splice(fn).apply(Expr.splice(a))
+    }
+
+    private def applyFailFastCompat[A: Type](fn: Expr[Boolean => A], failFast: Expr[Boolean]): Expr[A] = Expr.quote {
+      Expr.splice(fn).apply(Expr.splice(failFast))
+    }
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       // From is checked after To, because extraction always succeeds
@@ -84,6 +86,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               case Rule.ExpansionResult.AttemptNextRule(reason) => Rule.ExpansionResult.AttemptNextRule(reason)
             }
         case TransformerOverride.ConstructorPartial(args, runtimeData, _ /* failFastAware = true */ ) =>
+          implicit val FnBoolPartialTo: Type[Boolean => partial.Result[To]] =
+            fnFromBooleanTypeCompat[partial.Result[To]]
           val Product.Constructor(params, ctor) =
             mkCtor[Boolean => partial.Result[To]](args)(runtimeData)
           mapOverridesAndExtractorsToConstructorArguments[From, To, Boolean => partial.Result[To]](
@@ -100,13 +104,13 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               val appliedExpr =
                 transformationExpr.asInstanceOf[TransformationExpr[Boolean => partial.Result[To]]] match {
                   case TransformationExpr.TotalExpr(expr) =>
-                    TransformationExpr.PartialExpr(expr.apply(failFastExpr))
+                    TransformationExpr.PartialExpr(applyFailFastCompat(expr, failFastExpr))
                   case TransformationExpr.PartialExpr(expr) =>
                     TransformationExpr.PartialExpr(
                       expr
                         .map(LambdaBuilder.of1[Boolean => partial.Result[To]]().buildWith {
                           (fn: Expr[Boolean => partial.Result[To]]) =>
-                            fn.apply(failFastExpr)
+                            applyFailFastCompat(fn, failFastExpr)
                         })
                         .flatten
                     )
@@ -197,7 +201,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           .filter { case (toName, param) =>
             flags.atTgt(_.select(toName)).nonUnitBeanSetters || (param.value.targetType match {
               case Product.Parameter.TargetType.SetterParameter(returnedType) =>
-                returnedType.Underlying =:= Type[Unit]
+                returnedType.Underlying =:= UnitType
               case Product.Parameter.TargetType.ConstructorParameter => true
             })
           }
@@ -341,7 +345,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                       case Product.Parameter.TargetType.SetterParameter(_) if fieldFlags.beanSettersIgnoreUnmatched =>
                         DerivationResult.pure(unmatchedSetter)
                       case Product.Parameter.TargetType.SetterParameter(returnedType)
-                          if !fieldFlags.nonUnitBeanSetters && !(returnedType.Underlying =:= Type[Unit]) =>
+                          if !fieldFlags.nonUnitBeanSetters && !(returnedType.Underlying =:= UnitType) =>
                         DerivationResult.pure(nonUnitSetter)
                       case Product.Parameter.TargetType.SetterParameter(_) =>
                         DerivationResult
@@ -425,12 +429,13 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       case TransformerOverride.Computed(sourcePath, _, runtimeData) =>
         extractSrcByPath(FromOperation.Computed, sourcePath, toName).map { extractedSrc =>
           import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
+          implicit val FnSrcCtorParam: Type[ExtractedSrc => CtorParam] = fn1TypeCompat[ExtractedSrc, CtorParam]
           ctx match {
             case TransformationContext.ForTotal(_) =>
               // We're constructing:
               // '{ ${ runtimeDataStore }(idx).asInstanceOf[$ExtractedSrc => $CtorParam](${ extractedSrcExpr }) }
               TransformationExpr.fromTotal(
-                runtimeData.asInstanceOfExpr[ExtractedSrc => CtorParam].apply(extractedSrcExpr)
+                applyFnCompat(runtimeData.asInstanceOfExpr[ExtractedSrc => CtorParam], extractedSrcExpr)
               )
             case TransformationContext.ForPartial(_, _) =>
               // We're constructing:
@@ -444,9 +449,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               // }
               TransformationExpr.fromPartial(
                 prependWholeErrorPath(
-                  ChimneyExpr.PartialResult
-                    .fromFunction(runtimeData.asInstanceOfExpr[ExtractedSrc => CtorParam])
-                    .apply(extractedSrcExpr),
+                  applyFnCompat(
+                    ChimneyExpr.PartialResult
+                      .fromFunction(runtimeData.asInstanceOfExpr[ExtractedSrc => CtorParam]),
+                    extractedSrcExpr
+                  ),
                   sourcePath
                 )
                   .prependErrorPath(
@@ -460,6 +467,12 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       case TransformerOverride.ComputedPartial(sourcePath, _, runtimeData, failFastAware) =>
         extractSrcByPath(FromOperation.ComputedPartial, sourcePath, toName).map { extractedSrc =>
           import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
+          implicit val FnBoolPartialCtorParam: Type[Boolean => partial.Result[CtorParam]] =
+            fnFromBooleanTypeCompat[partial.Result[CtorParam]]
+          implicit val FnSrcPartialCtorParam: Type[ExtractedSrc => partial.Result[CtorParam]] =
+            fn1TypeCompat[ExtractedSrc, partial.Result[CtorParam]]
+          implicit val FnSrcBoolPartialCtorParam: Type[ExtractedSrc => Boolean => partial.Result[CtorParam]] =
+            fn1TypeCompat[ExtractedSrc, Boolean => partial.Result[CtorParam]]
           // We're constructing:
           // '{
           //   ${ runtimeDataStore }(idx)
@@ -473,14 +486,18 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               case TransformationContext.ForPartial(_, failFast) => failFast
               case _                                             => Expr(false)
             }
-            runtimeData
-              .asInstanceOfExpr[ExtractedSrc => Boolean => partial.Result[CtorParam]]
-              .apply(extractedSrcExpr)
-              .apply(failFastExpr)
+            applyFailFastCompat(
+              applyFnCompat(
+                runtimeData.asInstanceOfExpr[ExtractedSrc => Boolean => partial.Result[CtorParam]],
+                extractedSrcExpr
+              ),
+              failFastExpr
+            )
           } else {
-            runtimeData
-              .asInstanceOfExpr[ExtractedSrc => partial.Result[CtorParam]]
-              .apply(extractedSrcExpr)
+            applyFnCompat(
+              runtimeData.asInstanceOfExpr[ExtractedSrc => partial.Result[CtorParam]],
+              extractedSrcExpr
+            )
           }
           TransformationExpr.fromPartial(
             prependWholeErrorPath(partialResult, sourcePath)
@@ -690,7 +707,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
       def useSingletonType: Option[DerivationResult[Existential[TransformationExpr]]] =
         // Singletons are always supported as a fallback (except None as this is explicitly handled with a flag).
-        SingletonType.parse[CtorParam].filterNot(_ => Type[CtorParam] =:= ScalaType.Option.None).map { singleton =>
+        SingletonType.parse[CtorParam].filterNot(_ => Type[CtorParam] =:= NoneType).map { singleton =>
           // We're constructing:
           // '{ singleton } // e.g. (), null, case object, val, Java enum
           DerivationResult.existential[TransformationExpr, CtorParam](
@@ -852,38 +869,45 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     // }
                     ValDefs
                       .createVar[partial.Result.Errors](
-                        ScalaExpr.Null.asInstanceOfExpr[partial.Result.Errors],
+                        nullExpr.asInstanceOfExpr[partial.Result.Errors](using NullType, implicitly),
                         FreshName.FromPrefix("allerrors")
                       )
                       .use { case (allerrors, setAllErrors) =>
-                        blockExpr(
-                          partialsAsLazy.map { case (_, result) =>
-                            import result.{Underlying, value as expr}
-                            // Here, we're building:
-                            // '{ allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ resN }) }
-                            setAllErrors(ChimneyExpr.PartialResult.Errors.mergeResultNullable(allerrors, expr))
-                          },
+                        val mergeErrorsStatements = partialsAsLazy.map { case (_, result) =>
+                          import result.{Underlying, value as expr}
                           // Here, we're building:
-                          // '{ if (allerrors == null) $ifBlock else $elseBock }
-                          ifElseExpr[partial.Result[ToOrPartialTo]](isNullExpr(allerrors)) {
-                            // Here, we're building:
-                            // '{ partial.Result.Value(${ constructor }) } // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
-                            ChimneyExpr.PartialResult
-                              .Value[ToOrPartialTo](
-                                constructor(
-                                  totalConstructorArguments ++ partialsAsLazy.map { case (name, result) =>
-                                    import result.Underlying as Res
-                                    name -> result.mapK[Expr] { _ => (expr: Expr[partial.Result[Res]]) =>
-                                      expr.asInstanceOfExpr[partial.Result.Value[Res]].value
-                                    }
-                                  }
-                                )
-                              )
-                              .upcast[partial.Result[ToOrPartialTo]]
-                          } {
-                            allerrors.upcast[partial.Result[ToOrPartialTo]]
+                          // '{ allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ resN }) }
+                          setAllErrors(ChimneyExpr.PartialResult.Errors.mergeResultNullable(allerrors, expr))
+                        }
+                        // Here, we're building:
+                        // '{ partial.Result.Value(${ constructor }) } // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
+                        // (hoisted before the quote - Scala 2 cross-quotes cannot reify splices referencing cake members)
+                        val constructedExpr: Expr[partial.Result[ToOrPartialTo]] = ChimneyExpr.PartialResult
+                          .Value[ToOrPartialTo](
+                            constructor(
+                              totalConstructorArguments ++ partialsAsLazy.map { case (name, result) =>
+                                import result.Underlying as Res
+                                name -> result.mapK[Expr] { _ => (expr: Expr[partial.Result[Res]]) =>
+                                  expr.asInstanceOfExpr[partial.Result.Value[Res]].value
+                                }
+                              }
+                            )
+                          )
+                          .upcast[partial.Result[ToOrPartialTo]]
+                        val allErrorsExpr: Expr[partial.Result[ToOrPartialTo]] =
+                          allerrors.upcast[partial.Result[ToOrPartialTo]]
+                        // Here, we're building:
+                        // '{ if (allerrors == null) $ifBlock else $elseBock }
+                        val checkErrorsExpr: Expr[partial.Result[ToOrPartialTo]] = Expr.quote {
+                          if (Expr.splice(allerrors) == null) Expr.splice(constructedExpr)
+                          else Expr.splice(allErrorsExpr)
+                        }
+                        mergeErrorsStatements.foldRight(checkErrorsExpr) { (statement, acc) =>
+                          Expr.quote {
+                            Expr.splice(statement)
+                            Expr.splice(acc)
                           }
-                        )
+                        }
                       }
 
                   ctx match {
@@ -898,7 +922,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                       // } else {
                       //   ${ fullErrorBranch }
                       // }
-                      ifElseExpr[partial.Result[ToOrPartialTo]](failFast)(failFastBranch)(fullErrorBranch)
+                      Expr.quote {
+                        if (Expr.splice(failFast)) Expr.splice(failFastBranch) else Expr.splice(fullErrorBranch)
+                      }
                   }
                 }
             )
@@ -1064,10 +1090,15 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     // Constants compared by refs to handle some special cases without an explosion in complexity.
 
     // Stub to use when the setter's return type is not Unit and nonUnitBeanSetters flag is off.
-    private lazy val nonUnitSetter = Existential[TransformationExpr, Null](TransformationExpr.fromTotal(ScalaExpr.Null))
+    private lazy val nonUnitSetter = {
+      implicit val NullT: Type[Null] = NullType
+      Existential[TransformationExpr, Null](TransformationExpr.fromTotal(nullExpr))
+    }
 
     // Stub to use when the setter's was not matched and beanSettersIgnoreUnmatched flag is on.
-    private lazy val unmatchedSetter =
-      Existential[TransformationExpr, Null](TransformationExpr.fromTotal(ScalaExpr.Null))
+    private lazy val unmatchedSetter = {
+      implicit val NullT: Type[Null] = NullType
+      Existential[TransformationExpr, Null](TransformationExpr.fromTotal(nullExpr))
+    }
   }
 }

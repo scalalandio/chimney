@@ -2,18 +2,9 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.internal.compiletime.{ChimneyDefinitions, DerivationResult}
 
-/** Hearth-based port of `...compiletime.derivation.transformer.Derivation`.
-  *
-  * Differences vs the old version:
-  *   - the `datatypes.*` traits are NOT mixed in here anymore - [[ChimneyDefinitions]] already includes them (they
-  *     became part of the compiletime foundation),
-  *   - the rule modules are mixed in HERE instead of in the per-platform `DerivationPlatform`s (they are shared code
-  *     now; the old platform division only existed for quasiquotes-vs-quotes implementations),
-  *   - the self-type mirrors [[ChimneyDefinitions]]'s (the cake is completed by the platform bridges),
-  *   - `rulesAvailableForPlatform` is defined HERE, once, in shared code (the old per-platform lists were identical
-  *     except for the TransformPartialOptionToNonOptionRule/TransformToOptionRule order - their conditions are disjoint
-  *     at that pipeline position (target optional vs target non-optional), so the old Scala 3 order is used for both
-  *     platforms).
+/** Rule order in [[rulesAvailableForPlatform]] matters. NB: TransformPartialOptionToNonOptionRule and
+  * TransformToOptionRule have disjoint conditions at their pipeline position (target optional vs target non-optional),
+  * so their relative order is free.
   */
 private[compiletime] trait Derivation
     extends ChimneyDefinitions
@@ -48,7 +39,6 @@ private[compiletime] trait Derivation
     with rules.TransformSealedHierarchyToSealedHierarchyRuleModule {
   this: hearth.MacroCommons & hearth.std.StdExtensions =>
 
-  /** The old per-platform `DerivationPlatform.rulesAvailableForPlatform`, now shared (see the trait's ScalaDoc). */
   override protected val rulesAvailableForPlatform: List[Rule] = List(
     TransformImplicitRule,
     TransformImplicitPartialFallbackToTotalRule,

@@ -8,24 +8,11 @@ import scala.collection.immutable.{ListMap, ListSet}
 import io.scalaland.chimney.dsl.UnusedFieldPolicy
 import io.scalaland.chimney.dsl.UnmatchedSubtypePolicy
 
-/** Hearth-based port of the pre-Hearth
-  * `io.scalaland.chimney.internal.compiletime.derivation.transformer.Configurations`.
-  *
-  * Differences vs the old version (1:1 otherwise):
-  *   - `import Type.Implicits.*` is replaced by a private ambient `Type[Any]` plus hoisted `Type.of` lazy vals for the
-  *     few concrete types the file matches on (`Some[Any]`, `Left[Any, Any]`, `Right[Any, Any]`) - Hearth has no
-  *     ambient implicit `Type` instances,
-  *   - `ExistentialType.prettyPrint(x)`/`ExistentialExpr.prettyPrint(x)` become Hearth extensions (`x.prettyPrint`),
-  *   - `Type[S].extractStringSingleton` / `Type.extractObjectSingleton[M]` go through [[MacroCommonsCompat]]
-  *     (`extractStringSingleton` syntax / `extractObjectSingletonOf`),
-  *   - `XMacroSettings`/`reportError` come from [[MacroCommonsCompat]] aliases over Hearth's `Environment`.
-  */
 private[compiletime] trait Configurations { this: Derivation & hearth.MacroCommons =>
 
-  // Delegates to ScalaStdCompat's hoisted non-implicit `Type.of[Any]`: initializing an IMPLICIT val with a
-  // cross-quoted `Type.of` in its own scope deadlocks lazy-val init at macro runtime on Scala 3 (the Cross-Quotes
-  // plugin's implicit-`Type` detection rewrites the call into a self-reference) - see SingletonTypes.
-  implicit private lazy val AnyType: Type[Any] = ScalaType.Implicits.AnyType
+  // hearth#316: not implicit - an implicit Type val with a cross-quoted initializer deadlocks lazy-val init at macro
+  // runtime on Scala 3; passed explicitly at the call sites that need it.
+  private lazy val AnyType: Type[Any] = Type.of[Any]
   private lazy val SomeAnyType: Type[Some[Any]] = Type.of[Some[Any]]
   private lazy val LeftAnyAnyType: Type[Left[Any, Any]] = Type.of[Left[Any, Any]]
   private lazy val RightAnyAnyType: Type[Right[Any, Any]] = Type.of[Right[Any, Any]]
@@ -932,13 +919,13 @@ private[compiletime] trait Configurations { this: Derivation & hearth.MacroCommo
         import toPath.Underlying as ToPath, cfg.Underlying as Tail2
         extractTransformerConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addTransformerOverride(
           TargetPath(extractPath[ToPath]),
-          TransformerOverride.Const(runtimeDataStore(runtimeDataIdx).as_??)
+          TransformerOverride.Const(runtimeDataStore(runtimeDataIdx).as_??(using AnyType))
         )
       case ChimneyType.TransformerOverrides.ConstPartial(toPath, cfg) =>
         import toPath.Underlying as ToPath, cfg.Underlying as Tail2
         extractTransformerConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addTransformerOverride(
           TargetPath(extractPath[ToPath]),
-          TransformerOverride.ConstPartial(runtimeDataStore(runtimeDataIdx).as_??)
+          TransformerOverride.ConstPartial(runtimeDataStore(runtimeDataIdx).as_??(using AnyType))
         )
       case ChimneyType.TransformerOverrides.Computed(fromPath, toPath, cfg) =>
         import fromPath.Underlying as FromPath, toPath.Underlying as ToPath, cfg.Underlying as Tail2
@@ -947,7 +934,7 @@ private[compiletime] trait Configurations { this: Derivation & hearth.MacroCommo
         extractTransformerConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addTransformerOverride(
           sourcePath,
           targetPath,
-          TransformerOverride.Computed(sourcePath, targetPath, runtimeDataStore(runtimeDataIdx).as_??)
+          TransformerOverride.Computed(sourcePath, targetPath, runtimeDataStore(runtimeDataIdx).as_??(using AnyType))
         )
       case ChimneyType.TransformerOverrides.ComputedPartial(fromPath, toPath, cfg) =>
         import fromPath.Underlying as FromPath, toPath.Underlying as ToPath, cfg.Underlying as Tail2
@@ -956,7 +943,11 @@ private[compiletime] trait Configurations { this: Derivation & hearth.MacroCommo
         extractTransformerConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addTransformerOverride(
           sourcePath,
           targetPath,
-          TransformerOverride.ComputedPartial(sourcePath, targetPath, runtimeDataStore(runtimeDataIdx).as_??)
+          TransformerOverride.ComputedPartial(
+            sourcePath,
+            targetPath,
+            runtimeDataStore(runtimeDataIdx).as_??(using AnyType)
+          )
         )
       case ChimneyType.TransformerOverrides.ComputedPartialFailFast(fromPath, toPath, cfg) =>
         import fromPath.Underlying as FromPath, toPath.Underlying as ToPath, cfg.Underlying as Tail2
@@ -966,25 +957,38 @@ private[compiletime] trait Configurations { this: Derivation & hearth.MacroCommo
           sourcePath,
           targetPath,
           TransformerOverride
-            .ComputedPartial(sourcePath, targetPath, runtimeDataStore(runtimeDataIdx).as_??, failFastAware = true)
+            .ComputedPartial(
+              sourcePath,
+              targetPath,
+              runtimeDataStore(runtimeDataIdx).as_??(using AnyType),
+              failFastAware = true
+            )
         )
       case ChimneyType.TransformerOverrides.Fallback(fallbackType, fromPath, cfg) =>
         import fallbackType.Underlying as FallbackType, fromPath.Underlying as FromPath, cfg.Underlying as Tail2
         extractTransformerConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addTransformerOverride(
           SourcePath(extractPath[FromPath]),
-          TransformerOverride.Fallback(runtimeDataStore(runtimeDataIdx).asInstanceOfExpr[FallbackType].as_??)
+          TransformerOverride.Fallback(
+            runtimeDataStore(runtimeDataIdx).asInstanceOfExpr[FallbackType](using AnyType, FallbackType).as_??
+          )
         )
       case ChimneyType.TransformerOverrides.Constructor(args, toPath, cfg) =>
         import args.Underlying as Args, toPath.Underlying as ToPath, cfg.Underlying as Tail2
         extractTransformerConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addTransformerOverride(
           TargetPath(extractPath[ToPath]),
-          TransformerOverride.Constructor(extractArgumentLists[Args], runtimeDataStore(runtimeDataIdx).as_??)
+          TransformerOverride.Constructor(
+            extractArgumentLists[Args],
+            runtimeDataStore(runtimeDataIdx).as_??(using AnyType)
+          )
         )
       case ChimneyType.TransformerOverrides.ConstructorPartial(args, toPath, cfg) =>
         import args.Underlying as Args, toPath.Underlying as ToPath, cfg.Underlying as Tail2
         extractTransformerConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addTransformerOverride(
           TargetPath(extractPath[ToPath]),
-          TransformerOverride.ConstructorPartial(extractArgumentLists[Args], runtimeDataStore(runtimeDataIdx).as_??)
+          TransformerOverride.ConstructorPartial(
+            extractArgumentLists[Args],
+            runtimeDataStore(runtimeDataIdx).as_??(using AnyType)
+          )
         )
       case ChimneyType.TransformerOverrides.ConstructorPartialFailFast(args, toPath, cfg) =>
         import args.Underlying as Args, toPath.Underlying as ToPath, cfg.Underlying as Tail2
@@ -992,7 +996,7 @@ private[compiletime] trait Configurations { this: Derivation & hearth.MacroCommo
           TargetPath(extractPath[ToPath]),
           TransformerOverride.ConstructorPartial(
             extractArgumentLists[Args],
-            runtimeDataStore(runtimeDataIdx).as_??,
+            runtimeDataStore(runtimeDataIdx).as_??(using AnyType),
             failFastAware = true
           )
         )
@@ -1064,7 +1068,7 @@ private[compiletime] trait Configurations { this: Derivation & hearth.MacroCommo
         extractPath[PathType2].select(Type[FieldName].extractStringSingleton)
       case ChimneyType.Path.Matching(init, subtype) =>
         // fixJavaEnumCompat: on Scala 2 the DSL encodes Java enum values as RefinedJavaEnum[E, "Name"] markers
-        // which have to be decoded back into the instance type (old fixJavaEnum, see MacroCommonsCompat).
+        // which have to be decoded back into the instance type (see MacroCommonsCompat.fixJavaEnumCompat).
         val fixedSubtype = fixJavaEnumCompat(subtype)
         import init.Underlying as PathType2, fixedSubtype.Underlying as Subtype
         extractPath[PathType2].matching[Subtype]

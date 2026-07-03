@@ -1,8 +1,5 @@
 package io.scalaland.chimney.internal.compiletime.dsl.utils
 
-// Hearth-migration (Phase 4): verbatim copy of the pre-Hearth io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
-// (package rename only - DSL macros use plain platform reflection + public runtime types, no macro-commons/Hearth involved).
-
 import io.scalaland.chimney.internal.runtime
 
 import scala.annotation.nowarn
@@ -31,7 +28,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
     // Borrowed from an amazing work by @arainko,
     // https://github.com/arainko/ducktape/blob/7984125ffe3493c2e61b72dea799017bb31597f7/ducktape/src/main/scala/io/github/arainko/ducktape/internal/Tuples.scala#L8-L30
     private def tupleUnroll(tpe: quoted.Type[?]): Option[List[TypeRepr]] = {
-      // TODO: duplicated from chimney-macro-commons, should be shared
+      // TODO: consider sharing with the engine
       @scala.annotation.tailrec
       def loop(curr: quoted.Type[?], acc: List[TypeRepr]): Option[List[reflect.TypeRepr]] = curr match {
         case '[head *: tail] => loop(quoted.Type.of[tail], TypeRepr.of[head] :: acc)

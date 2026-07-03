@@ -2,11 +2,8 @@ package io.scalaland.chimney.internal.compiletime
 
 import scala.quoted.Quotes
 
-/** Scala 3 entrypoint of the Hearth-based macro cake.
-  *
-  * Mirrors the old `DefinitionsPlatform`/`DerivationPlatform` split: concrete macro classes will extend this class the
-  * same way they extended `DefinitionsPlatform(using q)` before. Its main purpose right now is to prove that the whole
-  * `compiletime` cake composes and compiles on Scala 3.
+/** Scala 3 entrypoint of the macro cake: concrete macro classes extend this class. It also hosts the Scala 3 overrides
+  * of the compat workarounds (see [[MacroCommonsCompat]]).
   */
 abstract private[compiletime] class PlatformBridge(q: Quotes)
     extends hearth.MacroCommonsScala3(using q)
@@ -14,8 +11,7 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
 
   import quotes.reflect.*
 
-  // Workaround to contain @experimental Symbol.freshName from polluting the whole codebase (same trick as
-  // macro-commons' ExprPromise.platformSpecific.freshTerm).
+  // Workaround to contain @experimental Symbol.freshName from polluting the whole codebase.
   private lazy val freshName = quotes.reflect.Symbol.getClass.getMethod("freshName", classOf[String])
   private def freshTerm(prefix: String): String =
     freshName.invoke(quotes.reflect.Symbol, prefix).asInstanceOf[String]
@@ -36,8 +32,7 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
   }
 
   /** Fresh `FromType`-named val symbol + its `Ref`, minted against the macro-entry `Quotes` (used by the
-    * instance-builder overrides below - the old macro-commons "promise a name, derive against it, bind it in the quote"
-    * pattern).
+    * instance-builder overrides below - "promise a name, derive against it, bind it in the quote").
     */
   private def freshValSymbolOf[A](prefix0: Option[String])(using scala.quoted.Type[A]): (Symbol, Expr[A]) = {
     val prefix = prefix0.getOrElse {
@@ -59,10 +54,10 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
       body.asTerm
     ).asExprOf[B]
 
-  /** Scala 3 override of `ChimneyExprs.transformerInstanceCompat`: derives the body FIRST (plain MIO - no direct-style
-    * `await`, whose executor-thread hop makes splice-scoped exprs escape their evaluation and trips `-Xcheck-macros`'
-    * ScopeException), then constructs the instance quote binding the promised val to the method parameter - the old
-    * macro-commons `ExprPromise` pattern.
+  /** Scala 3 override of `ChimneyExprs.transformerInstanceCompat` (hearth#318): derives the body FIRST (plain MIO - no
+    * direct-style `await`, whose executor-thread hop makes splice-scoped exprs escape their evaluation and trips
+    * `-Xcheck-macros`' ScopeException), then constructs the instance quote binding the promised val to the method
+    * parameter.
     */
   override protected def transformerInstanceCompat[From: Type, To: Type](
       deriveBody: Expr[From] => DerivationResult[Expr[To]]
@@ -122,8 +117,8 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     }
   }
 
-  /** Scala 3 override of `ProductTypes.emptyNamedTupleConstructorCompat`: Hearth 0.4.0's NamedTuple view does not
-    * recognize `NamedTuple.Empty` - construct it as `EmptyTuple` like macro-commons did.
+  /** Scala 3 override of `ProductTypes.emptyNamedTupleConstructorCompat` (hearth#313): Hearth 0.4.0's NamedTuple view
+    * does not recognize `NamedTuple.Empty` - construct it as `EmptyTuple` directly.
     */
   override protected def emptyNamedTupleConstructorCompat[A: Type]: Option[Product.Constructor[A]] = {
     given tA: scala.quoted.Type[A] = Type[A].asInstanceOf[scala.quoted.Type[A]]
@@ -136,8 +131,8 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     else None
   }
 
-  /** Scala 3 override of `ProductTypes.namedTupleGetterCompat`: macro-commons' original getters -
-    * `in.asInstanceOf[(V1, ..., Vn)]._N` for arity < 23, `productElement(idx)` + cast for TupleXXL.
+  /** Scala 3 override of `ProductTypes.namedTupleGetterCompat`: `in.asInstanceOf[(V1, ..., Vn)]._N` for arity < 23,
+    * `productElement(idx)` + cast for TupleXXL.
     */
   override protected def namedTupleGetterCompat[A: Type, Elem: Type](
       in: Expr[A],
@@ -164,9 +159,9 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
      }).asInstanceOf[Expr[Elem]]
   }
 
-  /** Scala 3 override of `ProductTypes.tupleXXLConstructorCompat`: Hearth 0.4.0's synthetic named-tuple constructor
-    * emits an invalid application for TupleXXL arities - build `Tuple.fromIArray(IArray(...)).asInstanceOf[A]` like
-    * macro-commons did.
+  /** Scala 3 override of `ProductTypes.tupleXXLConstructorCompat` (hearth#314): Hearth 0.4.0's synthetic named-tuple
+    * constructor emits an invalid application for TupleXXL arities - build
+    * `Tuple.fromIArray(IArray(...)).asInstanceOf[A]` instead.
     */
   override protected def tupleXXLConstructorCompat[A: Type](args: List[ExistentialExpr]): Expr[A] = {
     given tA: scala.quoted.Type[A] = Type[A].asInstanceOf[scala.quoted.Type[A]]
@@ -174,10 +169,10 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     '{ Tuple.fromIArray(IArray(${ scala.quoted.Varargs(argExprs) }*)).asInstanceOf[A] }.asInstanceOf[Expr[A]]
   }
 
-  /** Scala 3 override of `ProductTypes.inheritedFieldGettersCompat`: `val` fields inherited from parent classes are
-    * invisible to Hearth 0.4.0's `Type[A].methods` (`typeSymbol.fieldMembers` does not see them and they are not
-    * methods) - walk `A.baseClasses` like the old macro-commons fix did (scalalandio/chimney-macro-commons#85, chimney
-    * issue #835).
+  /** Scala 3 override of `ProductTypes.inheritedFieldGettersCompat` (hearth#327): `val` fields inherited from parent
+    * classes are invisible to Hearth 0.4.0's `Type[A].methods` (`typeSymbol.fieldMembers` does not see them and they
+    * are not methods) - walk `A.baseClasses` (same approach as scalalandio/chimney-macro-commons#85, chimney issue
+    * #835).
     */
   override protected def inheritedFieldGettersCompat[A: Type](existingNames: Set[String]): List[(String, ??)] = {
     given tA: scala.quoted.Type[A] = Type[A].asInstanceOf[scala.quoted.Type[A]]
@@ -185,8 +180,9 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     def isPublic(sym: Symbol): Boolean =
       !sym.flags.is(Flags.Private) && !sym.flags.is(Flags.Protected) &&
         sym.privateWithin.isEmpty && sym.protectedWithin.isEmpty
-    // NOTE: hearth defines its own `baseClasses` extension on UntypedType (= TypeRepr) returning List[UntypedType],
-    // which wins over quotes.reflect's `TypeRepr#baseClasses: List[Symbol]` - call the reflect one explicitly.
+    // NOTE (hearth#328): hearth defines its own `baseClasses` extension on UntypedType (= TypeRepr) returning
+    // List[UntypedType], which wins over quotes.reflect's `TypeRepr#baseClasses: List[Symbol]` - call the reflect one
+    // explicitly.
     val bases: List[Symbol] = quotes.reflect.TypeReprMethods.baseClasses(aRepr)
     (for {
       base <- bases
@@ -208,9 +204,9 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     Select.unique(in.asInstanceOf[scala.quoted.Expr[A]].asTerm, name).asExprOf[Tpe].asInstanceOf[Expr[Tpe]]
   }
 
-  /** Scala 3 override of [[MacroCommonsCompat.isEnumCaseValCompat]]: the old macro-commons `isCaseVal` formula - checks
-    * `Case|Enum` (+ static/stable) on the type symbol OR the TERM symbol (parameterless enum cases carry their flags on
-    * the term symbol; the type symbol is the enum class itself).
+  /** Scala 3 override of [[MacroCommonsCompat.isEnumCaseValCompat]] (hearth#311): checks `Case|Enum` (+ static/stable)
+    * on the type symbol OR the TERM symbol (parameterless enum cases carry their flags on the term symbol; the type
+    * symbol is the enum class itself).
     */
   override protected def isEnumCaseValCompat[A: Type]: Boolean = {
     def attempt(sym: Symbol): Boolean =
@@ -271,8 +267,8 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     ).asExprOf[B].asInstanceOf[Expr[B]]
   }
 
-  /** macro-commons `Expr.nowarn` (Scala 3) - Hearth has no annotation-attaching API, so the old `AnnotatedType`-based
-    * implementation lives here (see [[MacroCommonsCompat.nowarnExpr]]).
+  /** Hearth has no annotation-attaching API - the `AnnotatedType`-based implementation lives here (see
+    * [[MacroCommonsCompat.nowarnExpr]]).
     */
   override protected def nowarnExpr[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A] = {
     val annotationSymbol: Symbol = TypeRepr.of[scala.annotation.nowarn].typeSymbol
@@ -283,7 +279,7 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     annotatedValExpr[A](annotation, "nowarnResult")(expr)
   }
 
-  /** macro-commons `Expr.SuppressWarnings` (Scala 3) - see [[nowarnExpr]]. */
+  /** See [[nowarnExpr]]. */
   override protected def suppressWarningsExpr[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A] = {
     val annotationSymbol: Symbol = TypeRepr.of[java.lang.SuppressWarnings].typeSymbol
     val annotation = Apply(

@@ -8,37 +8,55 @@ import io.scalaland.chimney.partial
 
 import scala.collection.Factory
 
-/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformIterableToIterableRuleModule`.
-  *
-  * Differences vs the old version:
-  *   - `ExprPromise.promise(...).traverse(...)` becomes `LambdaBuilder.of1/of2(...).traverse(...)` (the lambdas are
-  *     passed to the runtime `partial.Result.traverse`/`Iterator.map` helpers - legitimate `LambdaBuilder` uses);
-  *     `mapPartialMaps`' `toKeyP.fulfilAsLambda2(toValueP)(...)` (two independently-traversed promises merged into one
-  *     2-ary lambda) becomes a single `LambdaBuilder.of2[FromK, FromV]` whose `traverse` runs both derivations
-  *     `parTuple`d (same both-run + error-aggregation semantics, same generated lambda),
-  *   - the indexed partial per-item lambda (`partialP.fulfilAsLambda2(idxPromise)(...).tupled`) has no LambdaBuilder
-  *     counterpart (`ExprPromise`'s free names could be re-bound under a wider lambda; builders cannot) - instead the
-  *     built `InnerFrom => partial.Result[InnerTo]` lambda is bound to a val and applied inside a directly cross-quoted
-  *     `((InnerFrom, Int)) => partial.Result[InnerTo]` lambda ([[indexedPartialLambda]]); the old code emitted
-  *     `{ (from, idx) => body }.tupled` (Function2 + tupled wrapper), the new code emits
-  *     `{ val inner = from => body; pair => inner(pair._1).unsealErrorPath.prependErrorPath(Index(pair._2)) }` - the
-  *     same runtime semantics and per-element dispatch count, slightly different tree shape,
-  *   - `mergeTotal`/`mergePartial` keep their old signatures but delegate to new expr-level
-  *     `mergeTotalExprs`/`mergePartialExprs` (exposed for TransformMapToMapRule's lazy fallback handling),
-  *   - `.log` becomes `.logInfo`, `upcastToExprOf` becomes `upcast`, `Type.Tuple2` becomes `ScalaType.Tuple2`,
-  *     `Expr.Function2.instance` becomes `LambdaBuilder.of2().buildWith`, iterator `map/to/zipWithIndex/concat` expr
-  *     ops come from the `ScalaIteratorExprOps` compat ops,
-  *   - the collection-item `LambdaBuilder` uses `FreshName.FromType` naming where the old code used
-  *     `NameGenerationStrategy.FromExpr(ctx.src)` (Hearth's `FreshName.FromExpr` needs an expr in context that
-  *     `LambdaBuilder.of1` does not provide) - affects only generated fresh names.
-  */
 private[compiletime] trait TransformIterableToIterableRuleModule {
   this: Derivation & TransformProductToProductRuleModule & hearth.MacroCommons =>
 
-  import ChimneyType.Implicits.*, ScalaType.Implicits.*
+  import ChimneyType.Implicits.*
   import TransformProductToProductRule.useOverrideIfPresentOr
 
   protected object TransformIterableToIterableRule extends Rule("IterableToIterable") {
+
+    private lazy val Tuple2Ctor: Type.Ctor2[Tuple2] = Type.Ctor2.of[Tuple2]
+
+    // hearth#316: NOT implicit - implicit Type vals with cross-quoted initializers deadlock lazy-val init at macro
+    // runtime on Scala 3; re-exposed as a method-local implicit val where needed.
+    private lazy val AnyType: Type[Any] = Type.of[Any]
+
+    // Cross-quotes helpers in methods with regular type parameters (the cross-quotes helper-def pattern).
+
+    private def iteratorTypeCompat[A: Type]: Type[Iterator[A]] = Type.of[Iterator[A]]
+
+    private def factoryTypeCompat[A: Type, C: Type]: Type[Factory[A, C]] = Type.of[Factory[A, C]]
+
+    private def iteratorMapCompat[A: Type, B: Type](
+        it: Expr[Iterator[A]],
+        f: Expr[A => B]
+    ): Expr[Iterator[B]] = Expr.quote {
+      Expr.splice(it).map(Expr.splice(f))
+    }
+
+    private def iteratorToCompat[A: Type, C: Type](
+        it: Expr[Iterator[A]],
+        factory: Expr[Factory[A, C]]
+    ): Expr[C] = Expr.quote {
+      Expr.splice(it).to(Expr.splice(factory))
+    }
+
+    private def iteratorZipWithIndexCompat[A: Type](it: Expr[Iterator[A]]): Expr[Iterator[(A, Int)]] = Expr.quote {
+      Expr.splice(it).zipWithIndex
+    }
+
+    private def iteratorConcatCompat[A: Type](
+        it: Expr[Iterator[A]],
+        it2: Expr[Iterator[A]]
+    ): Expr[Iterator[A]] = Expr.quote {
+      Expr.splice(it) ++ Expr.splice(it2)
+    }
+
+    private def function2TupledCompat[A: Type, B: Type, C: Type](f: Expr[(A, B) => C]): Expr[((A, B)) => C] =
+      Expr.quote {
+        Expr.splice(f).tupled
+      }
 
     @scala.annotation.nowarn
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
@@ -76,7 +94,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
               TotallyOrPartiallyBuildIterable(to2)
             ) if from2.value.asMap.isDefined && to2.Underlying.isTuple =>
           val Some((fromK, fromV)) = from2.value.asMap: @unchecked
-          val ScalaType.Tuple2(toK, toV) = to2.Underlying: @unchecked
+          val Tuple2Ctor(toK, toV) = to2.Underlying: @unchecked
           import fromK.Underlying as FromK, fromV.Underlying as FromV, toK.Underlying as ToK, toV.Underlying as ToV
           Right(
             DerivationResult.log(
@@ -123,7 +141,10 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
         fromIterable: TotallyOrPartiallyBuildIterable[From, (FromK, FromV)],
         toIterable: TotallyOrPartiallyBuildIterable[To, (ToK, ToV)],
         failFast: Expr[Boolean]
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[TransformationExpr[To]] =
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[TransformationExpr[To]] = {
+      implicit val AnyT: Type[Any] = AnyType
+      implicit val TupleFromKV: Type[(FromK, FromV)] = Type.of[(FromK, FromV)]
+      implicit val TupleToKV: Type[(ToK, ToV)] = Type.of[(ToK, ToV)]
       LambdaBuilder
         .of2[FromK, FromV](FreshName.FromPrefix("key"), FreshName.FromPrefix("value"))
         .traverse[DerivationResult, ((Expr[partial.Result[ToK]], Expr[FromK]), Expr[partial.Result[ToV]])] {
@@ -171,7 +192,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
             ChimneyExpr.PartialResult
               .traverse[ToOrPartialTo, (FromK, FromV), (ToK, ToV)](
                 fromIterable.iterator(ctx.src),
-                builder.buildWith { case ((keyResult, key), valueResult) =>
+                function2TupledCompat(builder.buildWith { case ((keyResult, key), valueResult) =>
                   ChimneyExpr.PartialResult.product(
                     keyResult.unsealErrorPath.prependErrorPath(
                       ChimneyExpr.PathElement.MapKey(key.upcast[Any]).upcast[partial.PathElement]
@@ -181,7 +202,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
                     ),
                     failFast
                   )
-                }.tupled,
+                }),
                 failFast,
                 factory
               )
@@ -191,11 +212,13 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
             case Right(partialFactory) => DerivationResult.partialExpr(partialResultTraverse(partialFactory).flatten)
           }
         }
+    }
 
     private def mapIterables[From, To, InnerFrom: Type, InnerTo: Type](
         fromIterable: TotallyOrPartiallyBuildIterable[From, InnerFrom],
         toIterable: TotallyOrPartiallyBuildIterable[To, InnerTo]
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[TransformationExpr[To]] =
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[TransformationExpr[To]] = {
+      implicit val PairInnerFromInt: Type[(InnerFrom, Int)] = Type.of[(InnerFrom, Int)]
       LambdaBuilder
         .of1[InnerFrom]()
         .traverse[DerivationResult, TransformationExpr[InnerTo]] { (newFromSrc: Expr[InnerFrom]) =>
@@ -217,10 +240,17 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
             if (Type[InnerFrom] =:= Type[InnerTo] && ctx.config.areOverridesEmpty) {
               def srcToFactory[ToOrPartialTo: Type](
                   factory: Expr[Factory[InnerTo, ToOrPartialTo]]
-              ): Expr[ToOrPartialTo] =
+              ): Expr[ToOrPartialTo] = {
+                // helper defs, not inline Type.of: cross-quotes inside a def nested in lambdas does not substitute
+                // the type parameters on Scala 2
+                implicit val FactoryInnerFromType: Type[Factory[InnerFrom, ToOrPartialTo]] =
+                  factoryTypeCompat[InnerFrom, ToOrPartialTo]
+                implicit val FactoryInnerToType: Type[Factory[InnerTo, ToOrPartialTo]] =
+                  factoryTypeCompat[InnerTo, ToOrPartialTo]
                 // We're constructing:
                 // '{ ${ src }.to(Factory[$InnerTo, $ToOrPartialTo]) }
                 fromIterable.to[ToOrPartialTo](ctx.src, factory.upcast[Factory[InnerFrom, ToOrPartialTo]])
+              }
 
               toIterable.factory match {
                 case Left(totalFactory)    => DerivationResult.totalExpr(srcToFactory(totalFactory))
@@ -232,7 +262,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
               ): Expr[ToOrPartialTo] =
                 // We're constructing
                 // '{ ${ src }.iterator.map(from2 => ${ derivedInnerTo }).to(Factory[$InnerTo, $ToOrPartialTo]) }
-                fromIterable.iterator(ctx.src).map(totalP.build[InnerTo]).to[ToOrPartialTo](factory)
+                iteratorToCompat(iteratorMapCompat(fromIterable.iterator(ctx.src), totalP.build[InnerTo]), factory)
 
               toIterable.factory match {
                 case Left(totalFactory)    => DerivationResult.totalExpr(srcIteratorMapTo(totalFactory))
@@ -254,7 +284,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
                   //   ${ failFast }
                   // )(${ factory }) }
                   ChimneyExpr.PartialResult.traverse[ToOrPartialTo, (InnerFrom, Int), InnerTo](
-                    fromIterable.iterator(src).zipWithIndex,
+                    iteratorZipWithIndexCompat(fromIterable.iterator(src)),
                     indexedPartialLambda[InnerFrom, InnerTo](partialP.build[partial.Result[InnerTo]]),
                     failFast,
                     factory
@@ -271,14 +301,16 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
             }
           }
         }
+    }
 
     /** Wraps the derived per-item partial lambda into the `((InnerFrom, Int)) => partial.Result[InnerTo]` shape that
-      * `partial.Result.traverse` over `iterator.zipWithIndex` expects (see the trait's ScalaDoc for how this differs
-      * from the old `fulfilAsLambda2(idxPromise).tupled`).
+      * `partial.Result.traverse` over `iterator.zipWithIndex` expects.
       */
     private def indexedPartialLambda[InnerFrom: Type, InnerTo: Type](
         inner: Expr[InnerFrom => partial.Result[InnerTo]]
-    ): Expr[((InnerFrom, Int)) => partial.Result[InnerTo]] =
+    ): Expr[((InnerFrom, Int)) => partial.Result[InnerTo]] = {
+      implicit val FnType: Type[InnerFrom => partial.Result[InnerTo]] =
+        Type.of[InnerFrom => partial.Result[InnerTo]]
       ValDefs.createVal(inner, FreshName.FromPrefix("inner")).use { innerRef =>
         Expr.quote { (pair: (InnerFrom, Int)) =>
           Expr
@@ -288,6 +320,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
             .prependErrorPath(io.scalaland.chimney.partial.PathElement.Index(pair._2))
         }
       }
+    }
 
     // Exposed for TransformMapToMapRuleModule
 
@@ -303,10 +336,13 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
       val TotallyBuildIterable(to2) = Type[To]: @unchecked
       import to2.{Underlying as InnerTo, value as buildIterable}
       TransformationExpr.fromTotal(
-        buildIterable
-          .iterator(texpr1.ensureTotal)
-          .concat(buildIterable.iterator(texpr2.ensureTotal))
-          .to(buildIterable.totalFactory)
+        iteratorToCompat(
+          iteratorConcatCompat(
+            buildIterable.iterator(texpr1.ensureTotal),
+            buildIterable.iterator(texpr2.ensureTotal)
+          ),
+          buildIterable.totalFactory
+        )
       )
     }
 
@@ -322,25 +358,35 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
     ): TransformationExpr[To] = {
       val TotallyOrPartiallyBuildIterable(to2) = Type[To]: @unchecked
       import to2.{Underlying as InnerTo, value as buildIterable}
+      mergePartialExprsImpl[To, InnerTo](buildIterable, failFast, texpr1, texpr2)
+    }
+
+    private def mergePartialExprsImpl[To: Type, InnerTo: Type](
+        buildIterable: TotallyOrPartiallyBuildIterable[To, InnerTo],
+        failFast: Expr[Boolean],
+        texpr1: TransformationExpr[To],
+        texpr2: TransformationExpr[To]
+    ): TransformationExpr[To] = {
+      implicit val IteratorInnerTo: Type[Iterator[InnerTo]] = iteratorTypeCompat[InnerTo]
 
       val iterators: TransformationExpr[Iterator[InnerTo]] = (texpr1, texpr2) match {
         case (TransformationExpr.TotalExpr(expr1), TransformationExpr.TotalExpr(expr2)) =>
           TransformationExpr.fromTotal[Iterator[InnerTo]](
-            buildIterable.iterator(expr1).concat(buildIterable.iterator(expr2))
+            iteratorConcatCompat(buildIterable.iterator(expr1), buildIterable.iterator(expr2))
           )
         case _ =>
           TransformationExpr.fromPartial[Iterator[InnerTo]](
             texpr1.ensurePartial.map2(texpr2.ensurePartial, failFast)(
               LambdaBuilder.of2[To, To]().buildWith { case (expr1, expr2) =>
-                buildIterable.iterator(expr1).concat(buildIterable.iterator(expr2))
+                iteratorConcatCompat(buildIterable.iterator(expr1), buildIterable.iterator(expr2))
               }
             )
           )
       }
       iterators.flatMap { expr =>
         buildIterable.factory match {
-          case Left(totalFactor)     => TransformationExpr.fromTotal(expr.to(totalFactor))
-          case Right(partialFactory) => TransformationExpr.fromPartial(expr.to(partialFactory))
+          case Left(totalFactor)     => TransformationExpr.fromTotal(iteratorToCompat(expr, totalFactor))
+          case Right(partialFactory) => TransformationExpr.fromPartial(iteratorToCompat(expr, partialFactory))
         }
       }
     }

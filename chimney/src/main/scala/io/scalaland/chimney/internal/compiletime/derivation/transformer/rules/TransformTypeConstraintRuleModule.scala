@@ -3,19 +3,14 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
-/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformTypeConstraintRuleModule`.
-  *
-  * Differences vs the old version:
-  *   - `Type[From <:< To]`/`Type[From => To]` instances are created locally with cross-quotes `Type.of` in helpers with
-  *     their own `[From: Type, To: Type]` parameters (old code got them ambiently from `Type.Implicits`),
-  *   - `ev.upcastToExprOf[From => To].apply(src)` becomes `ev.upcast[From => To].apply(src)` (Hearth upcast + the
-  *     `ScalaFunction1ExprOps` compat ops).
-  */
 private[compiletime] trait TransformTypeConstraintRuleModule { this: Derivation & hearth.MacroCommons =>
 
-  import ScalaType.Implicits.*
-
   protected object TransformTypeConstraintRule extends Rule("TypeConstraint") {
+
+    // Cross-quotes helper in a method with regular type parameters (the cross-quotes helper-def pattern).
+    private def applyFnCompat[A: Type, B: Type](fn: Expr[A => B], a: Expr[A]): Expr[B] = Expr.quote {
+      Expr.splice(fn).apply(Expr.splice(a))
+    }
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       if (ctx.config.areLocalFlagsAndOverridesEmpty) {
@@ -36,9 +31,10 @@ private[compiletime] trait TransformTypeConstraintRuleModule { this: Derivation 
         ctx: TransformationContext[From, To]
     ): DerivationResult[Rule.ExpansionResult[To]] = {
       implicit val EvidenceType: Type[From <:< To] = Type.of[From <:< To]
+      implicit val FnFromToType: Type[From => To] = Type.of[From => To]
       // We're constructing:
       // '{ ${ ev }.apply(${ src }) }
-      DerivationResult.expandedTotal(ev.upcast[From => To].apply(ctx.src))
+      DerivationResult.expandedTotal(applyFnCompat(ev.upcast[From => To], ctx.src))
     }
   }
 }

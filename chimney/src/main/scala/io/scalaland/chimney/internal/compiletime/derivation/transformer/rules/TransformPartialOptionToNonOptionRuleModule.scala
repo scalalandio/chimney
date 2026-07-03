@@ -5,24 +5,17 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformPartialOptionToNonOptionRuleModule`.
-  *
-  * Differences vs the old version:
-  *   - the old `DerivationResult.direct` + `Expr.Function1.instance` + `await(...)` protocol becomes
-  *     `LambdaBuilder.of1[InnerFrom]().traverse(...)` + `.build` - the recursive derivation runs once, outside the
-  *     lambda body, with identical error/log propagation (the lambda is passed to the runtime `OptionalValue.fold`
-  *     iteration helper - a legitimate `LambdaBuilder` use),
-  *   - `.log` becomes `.logInfo`, `Type[To].isOption` comes from the `ScalaStdTypeOps` compat ops.
-  */
 private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: Derivation & hearth.MacroCommons =>
 
-  import ChimneyType.Implicits.*, ScalaType.Implicits.*
+  import ChimneyType.Implicits.*
 
   protected object TransformPartialOptionToNonOptionRule extends Rule("PartialOptionToNonOption") {
 
+    private lazy val OptionOfAnyType: Type[Option[Any]] = Type.of[Option[Any]]
+
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       Type[From] match {
-        case (OptionalValue(from2)) if !Type[To].isOption =>
+        case (OptionalValue(from2)) if !(Type[To] <:< OptionOfAnyType) =>
           ctx match {
             case TransformationContext.ForPartial(_, _) =>
               if (ctx.config.flags.partialUnwrapsOption) {
@@ -44,7 +37,8 @@ private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: D
 
     private def mapOptionToPartial[From, To, InnerFrom: Type](optionalValue: OptionalValue[From, InnerFrom])(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[Rule.ExpansionResult[To]] =
+    ): DerivationResult[Rule.ExpansionResult[To]] = {
+      implicit val SomeInnerFromType: Type[Some[InnerFrom]] = Type.of[Some[InnerFrom]]
       LambdaBuilder
         .of1[InnerFrom]()
         .traverse { (from2Expr: Expr[InnerFrom]) =>
@@ -67,5 +61,6 @@ private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: D
             )
           )
         }
+    }
   }
 }

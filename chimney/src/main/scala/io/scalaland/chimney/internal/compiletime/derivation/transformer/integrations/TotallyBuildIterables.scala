@@ -5,72 +5,79 @@ import io.scalaland.chimney.partial
 
 import scala.collection.Factory
 
-/** Hearth-based port of `...compiletime.derivation.transformer.integrations.TotallyBuildIterables`.
-  *
-  * Differences vs the old version:
-  *   - `new Type.Cache[Cached]` becomes `new TypeCache[Cached]`,
-  *   - `Type.Map.unapply` (macro-commons `Ctor2`) becomes a `Type.Ctor2.fromUntyped[scala.collection.Map]` extractor
-  *     (same `baseType`-aware matching, mirrors [[datatypes.IterableOrArrays]]).
-  *
-  * EXTENSION FALLBACK (Phase 5 prereq): [[TotallyBuildIterable.parse]] gained a THIRD alternative consulting Hearth's
-  * `IsCollection`/`IsMap` providers (built-ins AND ServiceLoader-registered `StandardMacroExtension`s). This is the
-  * mechanism that will let chimney-java-collections (and Kindlings-style collection extensions) plug into the
+/** EXTENSION FALLBACK: [[TotallyBuildIterable.parse]] has a THIRD alternative consulting Hearth's
+  * `IsCollection`/`IsMap` providers (built-ins AND ServiceLoader-registered `StandardMacroExtension`s) - the mechanism
+  * that lets chimney-java-collections (and Kindlings-style collection extensions) plug into the
   * MapToMap/IterableToIterable rules without implicits. Precedence and guards (order matters):
   *   - it ranks BELOW `providedSupport` (the [[io.scalaland.chimney.integrations.TotallyBuildIterable]] implicit) and
-  *     below `buildInSupport` ([[IterableOrArray]]'s hardcoded Map/Iterable/Iterator/Array/IArray shapes) - anything
-  *     the old engine matched keeps its exact old expansion; the fallback is only consulted for types the existing
-  *     engine REJECTED,
+  *     below `buildInSupport` ([[IterableOrArray]]'s hardcoded Map/Iterable/Iterator/Array/IArray shapes) - the
+  *     fallback is only consulted for types the hardcoded support REJECTED,
   *   - `String` is filtered out: Hearth's built-in `IsCollectionProviderForString` would otherwise turn every String
   *     into a `Char` collection and change rule dispatch for String-typed fields,
   *   - `scala.Option`/`scala.Either` shapes are filtered out: Hearth's `IsCollectionProviderForScalaOption` models
   *     Option as an at-most-1-element collection - chimney handles optionals via [[OptionalValues]] and eithers via the
-  *     EitherToEither rule and must keep doing so (Option-to-List etc. staying unsupported is covered behavior). Hearth
-  *     0.4.0 has no Either-as-collection built-in, but the filter also pins the semantics against third-party
-  *     providers,
+  *     EitherToEither rule and must keep doing so (Option-to-List etc. staying unsupported is covered behavior); the
+  *     Either filter pins the semantics against third-party providers,
   *   - any type that Hearth's `IsOption` matches is filtered out (e.g. `java.util.Optional`, which Hearth's built-ins
   *     model BOTH as an option and as a collection): optional semantics win, mirroring the OptionToOption-before-
   *     IterableToIterable rule order; such types go through [[OptionalValues]]' own fallback instead,
   *   - only "total-shaped" providers are accepted: `build` must be a `CtorLikeOf.PlainValue`. Smart-constructor
   *     providers (e.g. Kindlings' NonEmptyList with `EitherStringOrValue`) cannot be a TOTAL factory - they surface
-  *     through [[PartiallyBuildIterables]]' twin fallback instead (Phase 5 smart-constructor support). When
-  *     `CtorResult =:= M` (all Hearth built-in scala/java collection providers) the provider's factory is used AS-IS
-  *     (byte-identical trees to the pre-Phase-5b behavior); when `CtorResult != M` (e.g. Kindlings' `Chain`, which
-  *     accumulates into a `List[E]` and converts at the end) the intermediate `Factory[Item, CtorResult]` is wrapped
-  *     into a generated `Factory[Item, M]` whose `result()` applies the provider's total constructor,
+  *     through [[PartiallyBuildIterables]]' twin fallback instead. When `CtorResult =:= M` (all Hearth built-in
+  *     scala/java collection providers) the provider's factory is used AS-IS; when `CtorResult != M` (e.g. Kindlings'
+  *     `Chain`, which accumulates into a `List[E]` and converts at the end) the intermediate
+  *     `Factory[Item, CtorResult]` is wrapped into a generated `Factory[Item, M]` whose `result()` applies the
+  *     provider's total constructor,
   *   - `java.util.EnumSet`/`java.util.EnumMap` targets get their PROVIDER factory expr replaced with a Chimney-built
   *     equivalent - a Hearth 0.4.0 provider bug workaround, see [[JavaCollectionsPlatformCompat]],
   *   - it is SKIPPED when a `PartiallyBuildIterable`/`OptionalValue` implicit exists for the type: integrations
   *     implicits must beat extension providers ([[TotallyOrPartiallyBuildIterable]] tries Totally BEFORE Partially, and
   *     MapToMap/IterableToIterable run before ToOption, so without these guards an extension match would shadow the
   *     implicit),
-  *   - map-ness is detected via `IsCollectionOf.asMap` (Hearth's `IsMap` is exactly `IsCollection` + `asMap`, so
-  *     "consult IsMap first, then IsCollection" collapses into one parse + a shape check). Hearth map providers use
-  *     provider-specific `Pair` types (e.g. `java.util.Map.Entry`), while chimney's Map support requires
-  *     `Item =:= (K, V)` at codegen level - the fallback adapts by mapping the pair iterator to tuples and wrapping the
-  *     provider's `Factory[Pair, M]` in a generated `Factory[(K, V), M]` (`pair(k, v)` inserted in `addOne`).
-  * KNOWN PITFALL (accepted & documented): Hearth providers gate on `Factory`/`ClassTag` summonability at PARSE time
-  * (e.g. `IsCollectionProviderForScalaCollection` skips when `Factory[Item, M]` cannot be summoned), while chimney's
-  * hardcoded shapes only summon when the factory is actually USED. That difference is invisible here because the
-  * hardcoded shapes win for every type they match; for extension-provided types parse-time gating is the provider
-  * author's contract. NEW CAPABILITY (not a covered-behavior change): on the JVM, Hearth 0.4.0's built-in `java.util.*`
-  * collection providers make Java collections derivable WITHOUT the chimney-java-collections import (that module's
-  * planned migration path). No core spec covered `java.util` collections before; with the import, the module's
-  * implicits keep winning via `providedSupport`. (On JS/Native Hearth ships no Java providers - the fallback never
-  * matches there.) The fallback calls `ensureStandardExtensionsLoaded()` (idempotent; the Gateways already load at
-  * entry).
+  *   - map-ness is detected via `IsCollectionOf.asMap` (Hearth's `IsMap` is exactly `IsCollection` + `asMap`). Hearth
+  *     map providers use provider-specific `Pair` types (e.g. `java.util.Map.Entry`), while chimney's Map support
+  *     requires `Item =:= (K, V)` at codegen level - the fallback adapts by mapping the pair iterator to tuples and
+  *     wrapping the provider's `Factory[Pair, M]` in a generated `Factory[(K, V), M]` (`pair(k, v)` inserted in
+  *     `addOne`).
+  * KNOWN PITFALL (accepted): Hearth providers gate on `Factory`/`ClassTag` summonability at PARSE time, while chimney's
+  * hardcoded shapes only summon when the factory is actually USED. Invisible for hardcoded-matched types (they never
+  * reach the fallback); for extension-provided types parse-time gating is the provider author's contract. On the JVM,
+  * Hearth's built-in `java.util.*` collection providers make Java collections derivable WITHOUT the
+  * chimney-java-collections import; with the import, the module's implicits keep winning via `providedSupport`. (On
+  * JS/Native Hearth ships no Java providers - the fallback never matches there.)
   */
 trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.std.StdExtensions =>
 
-  // Cross-quotes helpers for the Hearth-provider fallback - hoisted to the (unshadowed) trait level and kept in
-  // methods with regular type parameters (the cross-quotes helper-def pattern; see ScalaStdCompat's GOTCHA).
+  // Cross-quotes helpers for the Hearth-provider fallback - hoisted to the trait level and kept in methods with
+  // regular type parameters (the cross-quotes helper-def pattern).
   // `protected` (not `private`) - PartiallyBuildIterables' twin fallback reuses them through the cake.
 
   private lazy val hearthFallbackStringType: Type[String] = Type.of[String]
+  // hearth#316: NOT implicit - implicit Type vals with cross-quoted initializers deadlock lazy-val init at macro
+  // runtime on Scala 3.
+  protected lazy val hearthFallbackNullType: Type[Null] = Type.of[Null]
+  protected lazy val hearthFallbackOptionOfAnyType: Type[Option[Any]] = Type.of[Option[Any]]
+  protected lazy val hearthFallbackEitherOfAnyType: Type[Either[Any, Any]] = Type.of[Either[Any, Any]]
+
+  @scala.annotation.nowarn("msg=is never used")
+  protected def iteratorToCompat[A: Type, C: Type](
+      it: Expr[Iterator[A]],
+      factory: Expr[Factory[A, C]]
+  ): Expr[C] = {
+    implicit val IteratorA: Type[Iterator[A]] = Type.of[Iterator[A]]
+    implicit val FactoryAC: Type[Factory[A, C]] = Type.of[Factory[A, C]]
+    Expr.quote(Expr.splice(it).to(Expr.splice(factory)))
+  }
+
+  protected def tuple2ExprCompat[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[(A, B)] = {
+    implicit val TupleAB: Type[(A, B)] = Type.of[(A, B)]
+    Expr.quote((Expr.splice(a), Expr.splice(b)))
+  }
 
   @scala.annotation.nowarn("msg=is never used")
   protected def iterableIteratorCompat[A: Type](iterable: Expr[Iterable[A]]): Expr[Iterator[A]] = {
     implicit val IterableA: Type[Iterable[A]] = Type.of[Iterable[A]]
-    implicit val IteratorA: Type[Iterator[A]] = ScalaType.Iterator[A]
+    implicit val IteratorA: Type[Iterator[A]] = Type.of[Iterator[A]]
     Expr.quote(Expr.splice(iterable).iterator)
   }
 
@@ -79,9 +86,9 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
       iterator: Expr[Iterator[Pair]],
       toTuple: Expr[Pair] => Expr[(K, V)]
   ): Expr[Iterator[(K, V)]] = {
-    implicit val IteratorPair: Type[Iterator[Pair]] = ScalaType.Iterator[Pair]
-    implicit val TupleKV: Type[(K, V)] = ScalaType.Tuple2[K, V]
-    implicit val IteratorKV: Type[Iterator[(K, V)]] = ScalaType.Iterator[(K, V)]
+    implicit val IteratorPair: Type[Iterator[Pair]] = Type.of[Iterator[Pair]]
+    implicit val TupleKV: Type[(K, V)] = Type.of[(K, V)]
+    implicit val IteratorKV: Type[Iterator[(K, V)]] = Type.of[Iterator[(K, V)]]
     Expr.quote {
       Expr.splice(iterator).map { (pair: Pair) =>
         Expr.splice(toTuple(Expr.quote(pair)))
@@ -94,9 +101,9 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
       pairFactory: Expr[Factory[Pair, M]],
       fromTuple: Expr[(K, V)] => Expr[Pair]
   ): Expr[Factory[(K, V), M]] = {
-    implicit val TupleKV: Type[(K, V)] = ScalaType.Tuple2[K, V]
-    implicit val FactoryPairM: Type[Factory[Pair, M]] = ScalaType.Factory[Pair, M]
-    implicit val FactoryKVM: Type[Factory[(K, V), M]] = ScalaType.Factory[(K, V), M]
+    implicit val TupleKV: Type[(K, V)] = Type.of[(K, V)]
+    implicit val FactoryPairM: Type[Factory[Pair, M]] = Type.of[Factory[Pair, M]]
+    implicit val FactoryKVM: Type[Factory[(K, V), M]] = Type.of[Factory[(K, V), M]]
     Expr.quote {
       new scala.collection.Factory[(K, V), M] {
         private val underlying = Expr.splice(pairFactory)
@@ -128,8 +135,8 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
       underlyingFactory: Expr[Factory[Item, CtorResult0]],
       buildToValue: Expr[scala.collection.mutable.Builder[Item, CtorResult0]] => Expr[M]
   ): Expr[Factory[Item, M]] = {
-    implicit val FactoryItemCtorResult: Type[Factory[Item, CtorResult0]] = ScalaType.Factory[Item, CtorResult0]
-    implicit val FactoryItemM: Type[Factory[Item, M]] = ScalaType.Factory[Item, M]
+    implicit val FactoryItemCtorResult: Type[Factory[Item, CtorResult0]] = Type.of[Factory[Item, CtorResult0]]
+    implicit val FactoryItemM: Type[Factory[Item, M]] = Type.of[Factory[Item, M]]
     implicit val BuilderItemCtorResult: Type[scala.collection.mutable.Builder[Item, CtorResult0]] =
       Type.of[scala.collection.mutable.Builder[Item, CtorResult0]]
     Expr.quote {
@@ -156,9 +163,9 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
       fromTuple: Expr[(K, V)] => Expr[Pair],
       buildToValue: Expr[scala.collection.mutable.Builder[Pair, CtorResult0]] => Expr[M]
   ): Expr[Factory[(K, V), M]] = {
-    implicit val TupleKV: Type[(K, V)] = ScalaType.Tuple2[K, V]
-    implicit val FactoryPairCtorResult: Type[Factory[Pair, CtorResult0]] = ScalaType.Factory[Pair, CtorResult0]
-    implicit val FactoryKVM: Type[Factory[(K, V), M]] = ScalaType.Factory[(K, V), M]
+    implicit val TupleKV: Type[(K, V)] = Type.of[(K, V)]
+    implicit val FactoryPairCtorResult: Type[Factory[Pair, CtorResult0]] = Type.of[Factory[Pair, CtorResult0]]
+    implicit val FactoryKVM: Type[Factory[(K, V), M]] = Type.of[Factory[(K, V), M]]
     implicit val BuilderPairCtorResult: Type[scala.collection.mutable.Builder[Pair, CtorResult0]] =
       Type.of[scala.collection.mutable.Builder[Pair, CtorResult0]]
     Expr.quote {
@@ -181,13 +188,13 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
 
   @scala.annotation.nowarn("msg=is never used")
   protected def tupleFirstCompat[A: Type, B: Type](tuple: Expr[(A, B)]): Expr[A] = {
-    implicit val TupleAB: Type[(A, B)] = ScalaType.Tuple2[A, B]
+    implicit val TupleAB: Type[(A, B)] = Type.of[(A, B)]
     Expr.quote(Expr.splice(tuple)._1)
   }
 
   @scala.annotation.nowarn("msg=is never used")
   protected def tupleSecondCompat[A: Type, B: Type](tuple: Expr[(A, B)]): Expr[B] = {
-    implicit val TupleAB: Type[(A, B)] = ScalaType.Tuple2[A, B]
+    implicit val TupleAB: Type[(A, B)] = Type.of[(A, B)]
     Expr.quote(Expr.splice(tuple)._2)
   }
 
@@ -217,8 +224,7 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
   }
   protected object TotallyBuildIterable {
 
-    private lazy val MapCtor: Type.Ctor2[scala.collection.Map] =
-      Type.Ctor2.fromUntyped[scala.collection.Map](Type.Ctor2.of[scala.collection.Map].asUntyped)
+    private lazy val MapCtor: Type.Ctor2[scala.collection.Map] = Type.Ctor2.of[scala.collection.Map]
 
     private type Cached[M] = Option[Existential[TotallyBuildIterable[M, *]]]
     private val totallyBulidIterableCache = new TypeCache[Cached]
@@ -287,12 +293,13 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
       */
     private def hearthProviderSupport[M: Type]: Option[Existential[TotallyBuildIterable[M, *]]] = {
       ensureStandardExtensionsLoaded()
-      // HEARTH GOTCHA (report upstream): bottom types conform to everything (`Null <:< java.util.Optional[?]` etc.),
+      // HEARTH GOTCHA (hearth#319): bottom types conform to everything (`Null <:< java.util.Optional[?]` etc.),
       // so `<:<`-matching built-in providers match `Null`/`Nothing` and then CRASH eagerly while building their exprs
       // (upcast assertion at parse time). Never consult providers for bottom types.
-      if (Type[M] <:< ScalaType.Implicits.NullType) None
+      if (Type[M] <:< hearthFallbackNullType) None
       else if (Type[M] =:= hearthFallbackStringType) None // String-as-collection excluded
-      else if (Type[M].isOption || Type[M].isEither) None // Option/Either-as-collection excluded
+      else if (Type[M] <:< hearthFallbackOptionOfAnyType || Type[M] <:< hearthFallbackEitherOfAnyType)
+        None // Option/Either-as-collection excluded
       else if (IsOption.unapply(Type[M]).isDefined) None // optional semantics win (handled by OptionalValues)
       else
         IsCollection.unapply(Type[M]).flatMap { isCollection =>
@@ -313,8 +320,8 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
               if (summonPartiallyBuildIterable[M].isDefined || summonOptionalValue[M].isDefined) None
               else {
                 implicit val CtorResult0: Type[isCollectionOf.CtorResult] = isCollectionOf.CtorResult
-                // None = provider builds M directly, use its factory AS-IS (byte-identical to pre-Phase-5b trees,
-                // incl. all Hearth built-ins); Some = CtorResult != M, wrap the intermediate factory so that
+                // None = provider builds M directly, use its factory AS-IS (all Hearth built-ins);
+                // Some = CtorResult != M, wrap the intermediate factory so that
                 // result() applies the provider's total constructor (e.g. Kindlings' Chain builds a List[E] first).
                 val buildToValue
                     : Option[Expr[scala.collection.mutable.Builder[Item, isCollectionOf.CtorResult]] => Expr[M]] =
@@ -347,7 +354,7 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
         isCollectionOf: IsCollectionOf[M, Item],
         buildToValue: Option[Expr[scala.collection.mutable.Builder[Item, CtorResult0]] => Expr[M]]
     ): Existential[TotallyBuildIterable[M, *]] = {
-      // HEARTH 0.4.0 BUG WORKAROUND (detected at parse level, never inside splices): the provider's EnumSet branch
+      // HEARTH 0.4.0 BUG WORKAROUND (hearth#324, detected at parse level, never inside splices): the provider's EnumSet branch
       // embeds a class token (factory) and inline-quoted trees (asIterable) that do not survive Chimney's Scala 2
       // re-typecheck - replace both exprs with Chimney-built equivalents (see JavaCollectionsPlatformCompat).
       val isEnumSet = isJavaEnumSetCompat[M]
@@ -377,7 +384,7 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
           def to[Collection2: Type](
               collection: Expr[M],
               factory: Expr[Factory[Item, Collection2]]
-          ): Expr[Collection2] = iterator(collection).to(factory)
+          ): Expr[Collection2] = iteratorToCompat(iterator(collection), factory)
 
           val asMap: Option[(ExistentialType, ExistentialType)] = None
 
@@ -391,17 +398,17 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
         isMapOf: IsMapOf[M, Pair],
         buildToValue: Option[Expr[scala.collection.mutable.Builder[Pair, CtorResult0]] => Expr[M]]
     ): Existential[TotallyBuildIterable[M, *]] = {
-      implicit val TupleKV: Type[(K, V)] = ScalaType.Tuple2[K, V]
+      implicit val TupleKV: Type[(K, V)] = Type.of[(K, V)]
       // K/V are exactly isMapOf.Key/isMapOf.Value (extracted by the caller) - the casts below are identities that
       // only bridge the path-dependent types to the regular type parameters (cross-quotes helper-def pattern).
       def toTuple(pair: Expr[Pair]): Expr[(K, V)] =
-        ScalaExpr.Tuple2(isMapOf.key(pair).asInstanceOf[Expr[K]], isMapOf.value(pair).asInstanceOf[Expr[V]])
+        tuple2ExprCompat(isMapOf.key(pair).asInstanceOf[Expr[K]], isMapOf.value(pair).asInstanceOf[Expr[V]])
       def fromTuple(tuple: Expr[(K, V)]): Expr[Pair] =
         isMapOf.pair(
           tupleFirstCompat(tuple).asInstanceOf[Expr[isMapOf.Key]],
           tupleSecondCompat(tuple).asInstanceOf[Expr[isMapOf.Value]]
         )
-      // HEARTH 0.4.0 BUG WORKAROUND (detected at parse level, never inside splices): the provider's EnumMap branch
+      // HEARTH 0.4.0 BUG WORKAROUND (hearth#324, detected at parse level, never inside splices): the provider's EnumMap branch
       // embeds a class token (factory) and inline-quoted trees (asIterable/key/value) that do not survive Chimney's
       // Scala 2 re-typecheck - replace both the (tuple-level) factory and the iterator with Chimney-built equivalents
       // (see JavaCollectionsPlatformCompat for the full story).
@@ -438,7 +445,7 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
           def to[Collection2: Type](
               collection: Expr[M],
               factory: Expr[Factory[(K, V), Collection2]]
-          ): Expr[Collection2] = iterator(collection).to(factory)
+          ): Expr[Collection2] = iteratorToCompat(iterator(collection), factory)
 
           val asMap: Option[(ExistentialType, ExistentialType)] = Some(Type[K].as_?? -> Type[V].as_??)
 

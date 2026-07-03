@@ -5,41 +5,33 @@ import io.scalaland.chimney.partial
 
 import scala.collection.Factory
 
-/** Hearth-based port of `...compiletime.derivation.transformer.integrations.PartiallyBuildIterables` - 1:1 copy (`new
-  * Type.Cache[Cached]` becomes `new TypeCache[Cached]`).
-  *
-  * EXTENSION FALLBACK (Phase 5 smart-constructor support): [[PartiallyBuildIterable.parse]] gained a SECOND alternative
-  * consulting Hearth's `IsCollection`/`IsMap` providers whose `build` is a SMART CONSTRUCTOR (one of the four
-  * `CtorLikeOf.Either*OrValue` shapes - e.g. Kindlings cats-integration's `NonEmptyList` provider builds a `List[E]`
-  * and then returns `Left("Cannot create NonEmptyList from empty collection")` for an empty one). It is the twin of
-  * [[TotallyBuildIterables]]' fallback, which accepts only `CtorLikeOf.PlainValue`-with-`CtorResult =:= M` providers -
-  * the two are disjoint by construction, and rules keep trying Totally BEFORE Partially
-  * ([[TotallyOrPartiallyBuildIterable]]). Precedence and guards mirror the total fallback (see its ScalaDoc for the
-  * full rationale): ranks below `providedSupport` (the [[io.scalaland.chimney.integrations.PartiallyBuildIterable]]
-  * implicit); bottom types / `String` / `Option`/`Either` shapes / `IsOption` matches are filtered out; it is SKIPPED
-  * when a `TotallyBuildIterable`/`OptionalValue` implicit exists for the type (integrations implicits beat extension
-  * providers); map-ness detected via `asMap` with the same pair-to-tuple adaptation.
+/** EXTENSION FALLBACK: [[PartiallyBuildIterable.parse]] has a SECOND alternative consulting Hearth's
+  * `IsCollection`/`IsMap` providers whose `build` is a SMART CONSTRUCTOR (one of the four `CtorLikeOf.Either*OrValue`
+  * shapes - e.g. Kindlings cats-integration's `NonEmptyList` provider builds a `List[E]` and then returns
+  * `Left("Cannot create NonEmptyList from empty collection")` for an empty one). It is the twin of
+  * [[TotallyBuildIterables]]' fallback, which accepts only `CtorLikeOf.PlainValue` providers - the two are disjoint by
+  * construction, and rules try Totally BEFORE Partially ([[TotallyOrPartiallyBuildIterable]]). Precedence and guards
+  * mirror the total fallback (see its ScalaDoc for the full rationale): ranks below `providedSupport` (the
+  * [[io.scalaland.chimney.integrations.PartiallyBuildIterable]] implicit); bottom types / `String` / `Option`/`Either`
+  * shapes / `IsOption` matches are filtered out; it is SKIPPED when a `TotallyBuildIterable`/`OptionalValue` implicit
+  * exists for the type (integrations implicits beat extension providers); map-ness detected via `asMap` with the same
+  * pair-to-tuple adaptation.
   *
   * The generated `partialFactory` delegates to the provider's `factory` (an intermediate `Factory[Item, CtorResult]`,
   * e.g. `Factory[E, List[E]]` for NonEmptyList) for accumulation and applies the provider's smart constructor in
-  * `result()`, adapting its `Either` error channel onto `partial.Result` through
-  * [[io.scalaland.chimney.internal.runtime.SmartConstructorResults]] (see
+  * `result()`, adapting its `Either` error channel onto `partial.Result` (see
   * [[io.scalaland.chimney.internal.compiletime.CtorLikeExprs]] for the exact mapping). From the rules' perspective the
   * result behaves EXACTLY like an `io.scalaland.chimney.integrations.PartiallyBuildIterable` implicit:
   * PartialTransformer works (construction failure surfaces as `partial.Result.Errors` at the collection's path), Total
   * derivation fails with the usual "Only PartiallyBuildIterable available ... in total context" -> "Chimney can't
   * derive ..." error.
-  *
-  * Providers with `CtorLikeOf.PlainValue` but `CtorResult != M` (e.g. Kindlings' `Chain`, which builds a `List[E]` and
-  * converts totally) are total-capable and handled by [[TotallyBuildIterables]]' fallback, which wraps their
-  * intermediate factory (Phase 5b).
   */
 trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.std.StdExtensions =>
 
   private lazy val hearthPartialFallbackStringType: Type[String] = Type.of[String]
 
-  // Cross-quotes helpers for the Hearth-provider fallback - hoisted to the (unshadowed) trait level and kept in
-  // methods with regular type parameters (the cross-quotes helper-def pattern; see ScalaStdCompat's GOTCHA).
+  // Cross-quotes helpers for the Hearth-provider fallback - hoisted to the trait level and kept in methods with
+  // regular type parameters (the cross-quotes helper-def pattern).
 
   @scala.annotation.nowarn("msg=is never used")
   private def partialFactoryFromBuilderCompat[Item: Type, CtorResult0: Type, M: Type](
@@ -47,9 +39,9 @@ trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.
       buildToPartial: Expr[scala.collection.mutable.Builder[Item, CtorResult0]] => Expr[partial.Result[M]]
   ): Expr[Factory[Item, partial.Result[M]]] = {
     implicit val PartialResultM: Type[partial.Result[M]] = ChimneyType.PartialResult[M]
-    implicit val FactoryItemCtorResult: Type[Factory[Item, CtorResult0]] = ScalaType.Factory[Item, CtorResult0]
+    implicit val FactoryItemCtorResult: Type[Factory[Item, CtorResult0]] = Type.of[Factory[Item, CtorResult0]]
     implicit val FactoryItemPartialM: Type[Factory[Item, partial.Result[M]]] =
-      ScalaType.Factory[Item, partial.Result[M]]
+      Type.of[Factory[Item, partial.Result[M]]]
     implicit val BuilderItemCtorResult: Type[scala.collection.mutable.Builder[Item, CtorResult0]] =
       Type.of[scala.collection.mutable.Builder[Item, CtorResult0]]
     Expr.quote {
@@ -76,11 +68,11 @@ trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.
       fromTuple: Expr[(K, V)] => Expr[Pair],
       buildToPartial: Expr[scala.collection.mutable.Builder[Pair, CtorResult0]] => Expr[partial.Result[M]]
   ): Expr[Factory[(K, V), partial.Result[M]]] = {
-    implicit val TupleKV: Type[(K, V)] = ScalaType.Tuple2[K, V]
+    implicit val TupleKV: Type[(K, V)] = Type.of[(K, V)]
     implicit val PartialResultM: Type[partial.Result[M]] = ChimneyType.PartialResult[M]
-    implicit val FactoryPairCtorResult: Type[Factory[Pair, CtorResult0]] = ScalaType.Factory[Pair, CtorResult0]
+    implicit val FactoryPairCtorResult: Type[Factory[Pair, CtorResult0]] = Type.of[Factory[Pair, CtorResult0]]
     implicit val FactoryKVPartialM: Type[Factory[(K, V), partial.Result[M]]] =
-      ScalaType.Factory[(K, V), partial.Result[M]]
+      Type.of[Factory[(K, V), partial.Result[M]]]
     implicit val BuilderPairCtorResult: Type[scala.collection.mutable.Builder[Pair, CtorResult0]] =
       Type.of[scala.collection.mutable.Builder[Pair, CtorResult0]]
     Expr.quote {
@@ -165,9 +157,10 @@ trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.
     private def hearthProviderSupport[M: Type]: Option[Existential[PartiallyBuildIterable[M, *]]] = {
       ensureStandardExtensionsLoaded()
       // Guards mirror TotallyBuildIterables.hearthProviderSupport (incl. the bottom-type provider-crash gotcha).
-      if (Type[M] <:< ScalaType.Implicits.NullType) None
+      if (Type[M] <:< hearthFallbackNullType) None
       else if (Type[M] =:= hearthPartialFallbackStringType) None // String-as-collection excluded
-      else if (Type[M].isOption || Type[M].isEither) None // Option/Either-as-collection excluded
+      else if (Type[M] <:< hearthFallbackOptionOfAnyType || Type[M] <:< hearthFallbackEitherOfAnyType)
+        None // Option/Either-as-collection excluded
       else if (IsOption.unapply(Type[M]).isDefined) None // optional semantics win (handled by OptionalValues)
       else
         IsCollection.unapply(Type[M]).flatMap { isCollection =>
@@ -222,7 +215,7 @@ trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.
           def to[Collection2: Type](
               collection: Expr[M],
               factory: Expr[Factory[Item, Collection2]]
-          ): Expr[Collection2] = iterator(collection).to(factory)
+          ): Expr[Collection2] = iteratorToCompat(iterator(collection), factory)
 
           val asMap: Option[(ExistentialType, ExistentialType)] = None
 
@@ -235,11 +228,11 @@ trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.
         isMapOf: IsMapOf[M, Pair],
         buildToPartial: Expr[scala.collection.mutable.Builder[Pair, CtorResult0]] => Expr[partial.Result[M]]
     ): Existential[PartiallyBuildIterable[M, *]] = {
-      implicit val TupleKV: Type[(K, V)] = ScalaType.Tuple2[K, V]
+      implicit val TupleKV: Type[(K, V)] = Type.of[(K, V)]
       // K/V are exactly isMapOf.Key/isMapOf.Value (extracted by the caller) - the casts below are identities that
       // only bridge the path-dependent types to the regular type parameters (cross-quotes helper-def pattern).
       def toTuple(pair: Expr[Pair]): Expr[(K, V)] =
-        ScalaExpr.Tuple2(isMapOf.key(pair).asInstanceOf[Expr[K]], isMapOf.value(pair).asInstanceOf[Expr[V]])
+        tuple2ExprCompat(isMapOf.key(pair).asInstanceOf[Expr[K]], isMapOf.value(pair).asInstanceOf[Expr[V]])
       def fromTuple(tuple: Expr[(K, V)]): Expr[Pair] =
         isMapOf.pair(
           tupleFirstCompat(tuple).asInstanceOf[Expr[isMapOf.Key]],
@@ -264,7 +257,7 @@ trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.
           def to[Collection2: Type](
               collection: Expr[M],
               factory: Expr[Factory[(K, V), Collection2]]
-          ): Expr[Collection2] = iterator(collection).to(factory)
+          ): Expr[Collection2] = iteratorToCompat(iterator(collection), factory)
 
           val asMap: Option[(ExistentialType, ExistentialType)] = Some(Type[K].as_?? -> Type[V].as_??)
 

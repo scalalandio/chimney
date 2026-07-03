@@ -4,7 +4,6 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.Derivation
 import io.scalaland.chimney.internal.compiletime.NotSupportedPatcherDerivation
 
-/** Hearth-based port of `...compiletime.derivation.patcher.rules.PatchNotMatchedRuleModule` - 1:1 copy. */
 private[compiletime] trait PatchNotMatchedRuleModule { this: Derivation & hearth.MacroCommons =>
 
   protected object PatchNotMatchedRule extends Rule("PatchNotMatched") {

@@ -6,13 +6,6 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.GatewayCommons
 import io.scalaland.chimney.internal.runtime
 
-/** Hearth-based port of `...compiletime.derivation.patcher.Gateway`.
-  *
-  * Differences vs the old version: same as the transformer's
-  * [[io.scalaland.chimney.internal.compiletime.derivation.transformer.Gateway]] - `ensureStandardExtensionsLoaded()` on
-  * entry, no `DerivationResult.catchFatalErrors` (fatals are caught at `runSync` in [[GatewayCommons]]), `Expr.block`
-  * -> `blockExpr`.
-  */
 private[compiletime] trait Gateway extends GatewayCommons {
   this: Derivation & hearth.MacroCommons & hearth.std.StdExtensions =>
 
@@ -45,10 +38,9 @@ private[compiletime] trait Gateway extends GatewayCommons {
 
             val result = enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context)
 
-            blockExpr(
-              List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(obj), Expr.suppressUnused(patch)),
-              extractExprAndLog[A, Patch, A](result)
-            )
+            prependSuppressUnused(
+              List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(obj), Expr.suppressUnused(patch))
+            )(extractExprAndLog[A, Patch, A](result))
           }
         }
       }
@@ -67,8 +59,8 @@ private[compiletime] trait Gateway extends GatewayCommons {
     ensureStandardExtensionsLoaded()
     suppressWarnings {
       cacheDefinition(runtimeDataStore) { runtimeDataStore =>
-        // patcherInstanceCompat: on Scala 3 the old direct+await-inside-the-quote shape trips -Xcheck-macros
-        // (see ChimneyExprs) - the compat runs the derivation BEFORE constructing the instance quote there.
+        // patcherInstanceCompat: on Scala 3 the direct+await-inside-the-quote shape trips -Xcheck-macros
+        // (see ChimneyExprs, hearth#318) - the compat runs the derivation BEFORE constructing the instance quote.
         val result = patcherInstanceCompat[A, Patch] { (obj: Expr[A], patch: Expr[Patch]) =>
           val context = PatcherContext.create[A, Patch](
             obj,
@@ -80,8 +72,7 @@ private[compiletime] trait Gateway extends GatewayCommons {
           enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context)
         }
 
-        blockExpr(
-          List(Expr.suppressUnused(runtimeDataStore)),
+        prependSuppressUnused(List(Expr.suppressUnused(runtimeDataStore)))(
           extractExprAndLog[A, Patch, Patcher[A, Patch]](result)
         )
       }

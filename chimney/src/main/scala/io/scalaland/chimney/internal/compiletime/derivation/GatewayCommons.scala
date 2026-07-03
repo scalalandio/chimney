@@ -8,30 +8,12 @@ import io.scalaland.chimney.internal.compiletime.{
   DerivationResult
 }
 
-/** Hearth-based port of `...compiletime.derivation.GatewayCommons`.
+/** Shared logic of the transformer/patcher Gateways.
   *
-  * Differences vs the old version (full it.6 semantics-audit resolution):
-  *   - [[cacheDefinition]]: `PrependDefinitionsTo.prependVal(_, NameGenerationStrategy.FromType).use` becomes
-  *     `ValDefs.createVal(_, FreshName.FromType).use` (same generated `val` + scoping semantics),
-  *   - [[extractExprAndLog]]: `DerivationResult` is now a lazy MIO, so this is where the program actually RUNS
-  *     (`unsafe.runSync`); consequences:
-  *     - the old `State#macroLogging` is an `MLocal` now and the final `MState`'s local-value accessor is
-  *       `private[effect]` in Hearth, so it is read INSIDE the program (`result.attempt.tuple(macroLogging.get)`),
-  *     - the old `FatalError`-smuggling + `DerivationResult.catchFatalErrors` (removed from the Gateways) is replaced
-  *       by a `try`/`catch` around `runSync`: fatal errors (e.g. `StackOverflowError`) still render through
-  *       [[DerivationError.printErrors]] with the old "increase -Xss64m" guidance and the same error header/footer;
-  *       KNOWN DIVERGENCE: on the fatal path the logs (and the macro-logging flag) are lost with the unwound stack, so
-  *       the `MacrosLogging` journal dump is skipped where the old code could still print the journal-so-far,
-  *     - the journal dump keeps the OLD `Log.Journal#print` output shape byte-for-byte ([[renderOldJournalShape]]
-  *       re-renders Hearth's flat `Logs` with the old `"$indent+ "`/`"$indent| "` scheme instead of Hearth's own
-  *       `├`/`└`-style renderer); KNOWN DIVERGENCE: `Warn`/`Error`-level entries are skipped - Chimney logs everything
-  *       at `Info`, but MIO itself appends `[Error] Caught exception ...` entries when catching `NonFatal` exceptions,
-  *       which the old journal never contained,
-  *     - the trailing "Derived final expression is:\n..." (success only) and "Derivation took ..." root-level entries
-  *       are appended to the rendered journal exactly like the old `logSuccess`+`log` calls did,
-  *   - [[suppressWarnings]]: same `-Xmacro-settings` parsing; `Expr.SuppressWarnings`/`Expr.nowarn` become
-  *     [[MacroCommonsCompat.suppressWarningsExpr]]/[[MacroCommonsCompat.nowarnExpr]] (implemented per-platform in the
-  *     `PlatformBridge`s - Hearth has no annotation-attaching API).
+  * [[extractExprAndLog]] is where the (lazy, MIO-backed) derivation program actually runs (`unsafe.runSync`). KNOWN
+  * DIVERGENCES vs the pre-Hearth journal: on the fatal-error path the logs are lost with the unwound stack, so the
+  * `MacrosLogging` journal dump is skipped; `Warn`/`Error`-level entries (emitted only by MIO internals) are not
+  * rendered (see [[renderOldJournalShape]]).
   */
 private[compiletime] trait GatewayCommons {
   this: ChimneyDefinitions & hearth.MacroCommons & hearth.std.StdExtensions =>
@@ -68,9 +50,8 @@ private[compiletime] trait GatewayCommons {
           // $COVERAGE-ON$
         }
       } catch {
-        // Old code smuggled fatal errors (e.g. StackOverflowError) through FatalError+catchFatalErrors so that they
-        // render with the "-Xss64m" guidance; with MIO they fly out of runSync, so they are caught here instead
-        // (the state - so the logs and the macro-logging flag - is lost with the unwound stack).
+        // Fatal errors (e.g. StackOverflowError) fly out of runSync; catching them here keeps the "-Xss64m" guidance
+        // in the rendered error (the state - so the logs and the macro-logging flag - is lost with the unwound stack).
         case error: Throwable =>
           (Vector.empty[Log], Left(DerivationErrors(DerivationError.MacroException(error))), None)
       }
@@ -108,6 +89,22 @@ private[compiletime] trait GatewayCommons {
       identity
     )
   }
+
+  /** `{ ${ statement1 }; ...; ${ expr } }` - prepends suppress-unused statements in front of the extracted expr.
+    *
+    * HEARTH 0.4.0 ISSUE WORKAROUND (hearth#317, Scala 3): keep this a def, do NOT inline the quote at call sites with
+    * the derivation call inside `Expr.splice(...)` - the splice would then run the whole derivation under the nested
+    * quote's `Quotes`, and everything it creates becomes splice-scoped (`-Xcheck-macros`: "Expression created in a
+    * splice was used outside of that splice" once Iso/Codec derive their second instance). As an argument of this def
+    * the derivation is evaluated eagerly, under the macro-entry context, before any quote is entered.
+    */
+  protected def prependSuppressUnused[Out: Type](statements: List[Expr[Unit]])(expr: Expr[Out]): Expr[Out] =
+    statements.foldRight(expr) { (statement, acc) =>
+      Expr.quote {
+        Expr.splice(statement)
+        Expr.splice(acc)
+      }
+    }
 
   /** Adds @SuppressWarnings/@nowarn annotation the generated code - allows customizing it with a compiler flag. */
   protected def suppressWarnings[A: Type](expr: Expr[A]): Expr[A] = {

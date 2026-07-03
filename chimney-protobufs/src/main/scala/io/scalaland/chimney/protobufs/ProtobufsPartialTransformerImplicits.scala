@@ -2,9 +2,8 @@ package io.scalaland.chimney.protobufs
 
 import io.scalaland.chimney.{partial, PartialTransformer}
 
-/** Kept as implicits in 2.0.0 (NOT replaced by the std-extension providers of
-  * [[io.scalaland.chimney.protobufs.internal.compiletime.ProtobufsMacroExtension]]) because none of them is expressible
-  * through a provider:
+/** Kept as implicits (NOT provided by [[io.scalaland.chimney.protobufs.internal.compiletime.ProtobufsMacroExtension]])
+  * because none of them is expressible through a std-extension provider:
   *
   *   - the empty `GeneratedOneof`/`SealedOneof` and `UnrecognizedEnum` instances match a BOUNDED `From` for ANY `To` -
   *     they hook the Implicit rule for whole type families, which no `IsValueType`/`IsCollection`/`IsOption` shape can

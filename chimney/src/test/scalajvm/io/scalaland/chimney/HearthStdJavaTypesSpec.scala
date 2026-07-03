@@ -6,7 +6,7 @@ import io.scalaland.chimney.partial.syntax.*
 import io.scalaland.chimney.utils.OptionUtils.*
 
 /** Proves that Hearth's JVM-only built-in std providers serve `java.*` types through the engine's extension-fallback
-  * layer WITHOUT any import and WITHOUT any flag (Phase 5 engine prerequisites):
+  * layer WITHOUT any import and WITHOUT any flag:
   *   - the 8 Java boxed primitives via `IsValueTypeProviderForJava*` (surfaced through the ungated `ValueClassType` -
   *     this replaces chimney-java-collections' `JavaPrimitivesImplicits`),
   *   - `java.util.EnumSet`/`java.util.EnumMap` via the java-collection providers + the engine's class-token compat

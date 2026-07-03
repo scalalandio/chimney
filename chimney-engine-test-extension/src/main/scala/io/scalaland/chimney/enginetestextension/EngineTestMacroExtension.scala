@@ -10,7 +10,7 @@ import hearth.std.{ProviderResult, StandardMacroExtension, StdExtensions}
   * so chimney's engine tests can prove that ServiceLoader-registered extensions are consulted as the engine's built-in
   * FALLBACK layer (below user implicits and below `io.scalaland.chimney.integrations` implicits).
   *
-  * Implementation notes (see the Kindlings `hearth-collection-map`/`hearth-value-types` skill patterns):
+  * Implementation notes:
   *   - all cross-quotes live in helper methods with REGULAR type parameters (path-dependent types from
   *     `Type.Ctor1.unapply` inside `Expr.quote` break Scala 2's reifier),
   *   - generic type constructors are matched with `Type.Ctor1.fromUntyped` (`=:=` + `baseType`-aware, safe across
@@ -174,9 +174,9 @@ final class EngineTestMacroExtension extends StandardMacroExtension { loader =>
       }
     })
 
-    // --- Smart-constructor providers (Phase 5: CtorLikeOf.Either*OrValue shapes) ---
+    // --- Smart-constructor providers (CtorLikeOf.Either*OrValue shapes) ---
 
-    // Mirrors Kindlings cats-integration's NonEmptyList provider 1:1: CtorResult is an intermediate List[Item],
+    // Mirrors Kindlings cats-integration's NonEmptyList provider: CtorResult is an intermediate List[Item],
     // `build` is CtorLikeOf.EitherStringOrValue applying the validating constructor to the builder's result.
     IsCollection.registerProvider(new IsCollection.Provider {
 

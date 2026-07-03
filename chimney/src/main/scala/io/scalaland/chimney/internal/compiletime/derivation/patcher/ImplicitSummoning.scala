@@ -1,11 +1,5 @@
 package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
-/** Hearth-based port of `...compiletime.derivation.patcher.ImplicitSummoning`.
-  *
-  * Difference vs the old version: `summonPatcherUnchecked` was abstract here and implemented per platform
-  * (`summonIgnoring` twice); Hearth's `Expr.summonImplicitIgnoring` lets it be implemented ONCE, in shared code
-  * (mirrors the transformer's [[transformer.ImplicitSummoning]] port).
-  */
 private[compiletime] trait ImplicitSummoning { this: Derivation & hearth.MacroCommons =>
 
   import ChimneyType.Implicits.*

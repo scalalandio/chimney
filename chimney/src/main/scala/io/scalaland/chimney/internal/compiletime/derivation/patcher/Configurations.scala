@@ -4,18 +4,11 @@ import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.runtime
 
-/** Hearth-based port of `...compiletime.derivation.patcher.Configurations`.
-  *
-  * Differences vs the old version (1:1 otherwise, mirrors the transformer's [[transformer.Configurations]] port):
-  *   - `import Type.Implicits.*` dropped (a private ambient `Type[Any]` covers `runtimeDataStore(idx).as_??`),
-  *   - `ExistentialExpr.prettyPrint(x)`/`ExistentialType.prettyPrint(x)` become Hearth extensions (`x.prettyPrint`),
-  *   - `XMacroSettings`/`reportError` come from [[MacroCommonsCompat]] aliases over Hearth's `Environment`.
-  */
 private[compiletime] trait Configurations { this: Derivation & hearth.MacroCommons =>
 
-  // Delegates to ScalaStdCompat's hoisted non-implicit `Type.of[Any]` - an IMPLICIT val initialized with a
-  // cross-quoted `Type.of` in its own scope deadlocks lazy-val init at macro runtime on Scala 3 (see SingletonTypes).
-  implicit private lazy val AnyType: Type[Any] = ScalaType.Implicits.AnyType
+  // hearth#316: not implicit - an implicit Type val with a cross-quoted initializer deadlocks lazy-val init at macro
+  // runtime on Scala 3; passed explicitly at the call sites that need it.
+  private lazy val AnyType: Type[Any] = Type.of[Any]
 
   final protected case class PatcherFlags(
       ignoreNoneInPatch: Boolean = false,
@@ -234,7 +227,7 @@ private[compiletime] trait Configurations { this: Derivation & hearth.MacroCommo
           import objPath.Underlying as ObjPath, cfg.Underlying as Tail2
           extractPatcherConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addPatcherOverride(
             TargetPath(extractPath[ObjPath]),
-            PatcherOverride.Const(runtimeDataStore(runtimeDataIdx).as_??)
+            PatcherOverride.Const(runtimeDataStore(runtimeDataIdx).as_??(using AnyType))
           )
         case ChimneyType.PatcherOverrides.Computed(patchPath, objPath, cfg) =>
           import patchPath.Underlying as PatchPath, objPath.Underlying as ObjPath, cfg.Underlying as Tail2
@@ -243,7 +236,7 @@ private[compiletime] trait Configurations { this: Derivation & hearth.MacroCommo
           extractPatcherConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addPatcherOverride(
             sourcePath,
             targetPath,
-            PatcherOverride.Computed(sourcePath, targetPath, runtimeDataStore(runtimeDataIdx).as_??)
+            PatcherOverride.Computed(sourcePath, targetPath, runtimeDataStore(runtimeDataIdx).as_??(using AnyType))
           )
         // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         case _ =>

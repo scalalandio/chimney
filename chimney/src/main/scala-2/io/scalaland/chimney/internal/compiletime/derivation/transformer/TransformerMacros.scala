@@ -8,23 +8,11 @@ import io.scalaland.chimney.partial
 
 import scala.reflect.macros.blackbox
 
-/** Hearth-based port of `...compiletime.derivation.transformer.TransformerMacros` (Scala 2).
+/** The constructor parameter is deliberately NOT named `c`: [[PlatformBridge]] declares `val c`, and body references
+  * must resolve to the inherited member, not the constructor parameter.
   *
-  * Public methods (names, signatures, type params) mirror the old macro bundle 1:1 so that the binding sites in
-  * `io.scalaland.chimney.dsl.*` can flip packages mechanically in the next phase.
-  *
-  * Differences vs the old version:
-  *   - extends the `compiletime` [[PlatformBridge]] (Hearth cake) + the now-shared `Derivation` instead of the old
-  *     per-platform `DerivationPlatform` (rules and `summon*Unchecked` were de-platformed in earlier phases),
-  *   - the constructor parameter is passed through to [[PlatformBridge]] (which declares `val c`) instead of being
-  *     declared here; it is deliberately NOT named `c` so that body references resolve to the inherited member (the
-  *     same path Hearth's own internals use) instead of the constructor parameter,
-  *   - `Expr.block` -> `blockExpr` compat helper (Hearth has no `Expr.block`; pairwise-nested blocks, semantically
-  *     identical),
-  *   - `Type.platformSpecific.fromUntyped[A](tpe)` -> `c.WeakTypeTag[A](tpe)` (Hearth's `Type[A]` IS
-  *     `c.WeakTypeTag[A]`),
-  *   - `?<[A]`/`.as_?<` -> Hearth's `??<:[A]`/`.as_??<:`,
-  *   - `Expr.summonImplicit(...)` returns Hearth's `SummoningResult` -> `.toOption` added.
+  * Plain quasiquotes are used instead of `Expr.quote` - its generated quasiquotes would be ambiguous with this file's
+  * own `c.universe` import.
   */
 final class TransformerMacros(ctx: blackbox.Context) extends PlatformBridge(ctx) with Derivation with Gateway {
 
@@ -42,13 +30,11 @@ final class TransformerMacros(ctx: blackbox.Context) extends PlatformBridge(ctx)
     // Called by TransformerInto => prefix is TransformerInto
     // We're caching it because it is used twice: once for RuntimeDataStore and once for source
     cacheDefinition(c.Expr[dsl.TransformerInto[From, To, Overrides, InstanceFlags]](c.prefix.tree)) { ti =>
-      blockExpr(
-        List(Expr.suppressUnused(tc)),
-        deriveTotalTransformationResult[From, To, Overrides, InstanceFlags, ImplicitScopeFlags](
-          src = c.Expr[From](q"$ti.source"),
-          runtimeDataStore = c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"$ti.td.runtimeData")
-        )
+      val body = deriveTotalTransformationResult[From, To, Overrides, InstanceFlags, ImplicitScopeFlags](
+        src = c.Expr[From](q"$ti.source"),
+        runtimeDataStore = c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"$ti.td.runtimeData")
       )
+      c.Expr[To](q"{ ${Expr.suppressUnused(tc)}; $body }")
     }
   )
 
@@ -76,15 +62,13 @@ final class TransformerMacros(ctx: blackbox.Context) extends PlatformBridge(ctx)
       ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](
       tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]
-  ): Expr[Transformer[From, To]] = retypecheck(
-    blockExpr(
-      List(Expr.suppressUnused(tc)),
-      deriveTotalTransformer[From, To, Overrides, InstanceFlags, ImplicitScopeFlags](
-        // Called by TransformerDefinition => prefix is TransformerDefinition
-        c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.runtimeData")
-      )
+  ): Expr[Transformer[From, To]] = retypecheck {
+    val body = deriveTotalTransformer[From, To, Overrides, InstanceFlags, ImplicitScopeFlags](
+      // Called by TransformerDefinition => prefix is TransformerDefinition
+      c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.runtimeData")
     )
-  )
+    c.Expr[Transformer[From, To]](q"{ ${Expr.suppressUnused(tc)}; $body }")
+  }
 
   def derivePartialTransformationWithConfigNoFailFast[
       From: WeakTypeTag,
@@ -98,14 +82,12 @@ final class TransformerMacros(ctx: blackbox.Context) extends PlatformBridge(ctx)
     // Called by PartialTransformerInto => prefix is PartialTransformerInto
     // We're caching it because it is used twice: once for RuntimeDataStore and once for source
     cacheDefinition(c.Expr[dsl.PartialTransformerInto[From, To, Overrides, InstanceFlags]](c.prefix.tree)) { pti =>
-      blockExpr(
-        List(Expr.suppressUnused(tc)),
-        derivePartialTransformationResult[From, To, Overrides, InstanceFlags, ImplicitScopeFlags](
-          src = c.Expr[From](q"$pti.source"),
-          failFast = c.Expr[Boolean](q"false"),
-          runtimeDataStore = c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"$pti.td.runtimeData")
-        )
+      val body = derivePartialTransformationResult[From, To, Overrides, InstanceFlags, ImplicitScopeFlags](
+        src = c.Expr[From](q"$pti.source"),
+        failFast = c.Expr[Boolean](q"false"),
+        runtimeDataStore = c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"$pti.td.runtimeData")
       )
+      c.Expr[partial.Result[To]](q"{ ${Expr.suppressUnused(tc)}; $body }")
     }
   )
 
@@ -121,14 +103,12 @@ final class TransformerMacros(ctx: blackbox.Context) extends PlatformBridge(ctx)
     // Called by PartialTransformerInto => prefix is PartialTransformerInto
     // We're caching it because it is used twice: once for RuntimeDataStore and once for source
     cacheDefinition(c.Expr[dsl.PartialTransformerInto[From, To, Overrides, InstanceFlags]](c.prefix.tree)) { pti =>
-      blockExpr(
-        List(Expr.suppressUnused(tc)),
-        derivePartialTransformationResult[From, To, Overrides, InstanceFlags, ImplicitScopeFlags](
-          src = c.Expr[From](q"$pti.source"),
-          failFast = c.Expr[Boolean](q"true"),
-          runtimeDataStore = c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"$pti.td.runtimeData")
-        )
+      val body = derivePartialTransformationResult[From, To, Overrides, InstanceFlags, ImplicitScopeFlags](
+        src = c.Expr[From](q"$pti.source"),
+        failFast = c.Expr[Boolean](q"true"),
+        runtimeDataStore = c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"$pti.td.runtimeData")
       )
+      c.Expr[partial.Result[To]](q"{ ${Expr.suppressUnused(tc)}; $body }")
     }
   )
 
@@ -156,15 +136,13 @@ final class TransformerMacros(ctx: blackbox.Context) extends PlatformBridge(ctx)
       ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](
       tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]
-  ): Expr[PartialTransformer[From, To]] = retypecheck(
-    blockExpr(
-      List(Expr.suppressUnused(tc)),
-      derivePartialTransformer[From, To, Overrides, InstanceFlags, ImplicitScopeFlags](
-        // Called by PartialTransformerDefinition => prefix is PartialTransformerDefinition
-        c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.runtimeData")
-      )
+  ): Expr[PartialTransformer[From, To]] = retypecheck {
+    val body = derivePartialTransformer[From, To, Overrides, InstanceFlags, ImplicitScopeFlags](
+      // Called by PartialTransformerDefinition => prefix is PartialTransformerDefinition
+      c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.runtimeData")
     )
-  )
+    c.Expr[PartialTransformer[From, To]](q"{ ${Expr.suppressUnused(tc)}; $body }")
+  }
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
       useImplicitScopeFlags: ??<:[runtime.TransformerFlags] => Expr[A]
@@ -191,10 +169,8 @@ final class TransformerMacros(ctx: blackbox.Context) extends PlatformBridge(ctx)
       .WeakTypeTag[runtime.TransformerFlags](implicitScopeConfig.tpe.tpe.typeArgs.head)
       .as_??<:[runtime.TransformerFlags]
 
-    blockExpr(
-      List(Expr.suppressUnused(implicitScopeConfig)),
-      useImplicitScopeFlags(implicitScopeFlagsType)
-    )
+    val body = useImplicitScopeFlags(implicitScopeFlagsType)
+    c.Expr[A](q"{ ${Expr.suppressUnused(implicitScopeConfig)}; $body }")
   }
 
   private def retypecheck[A: Type](expr: c.Expr[A]): c.Expr[A] = try {

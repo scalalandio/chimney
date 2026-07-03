@@ -5,22 +5,9 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformationRules`.
-  *
-  * Chimney's OWN rule engine is preserved (NOT replaced by Hearth's `Rules`/`Rule.Applicability` combinator): the
-  * `ExpansionResult.AttemptNextRule(reason)` accumulation, logging and error semantics are kept exactly as before, just
-  * running on MIO. (Hearth's `Rules` is close - Matched/Yielded mirror Expanded/AttemptNextRule - but it returns the
-  * accumulated yield-reasons instead of logging them one-by-one and has no `TransformationExpr` awareness, so
-  * delegating would change the logs that tests assert on.)
-  *
-  * Differences vs the old version:
-  *   - `TransformationExpr#map`/`#flatMap` build lambdas with Hearth's `LambdaBuilder` instead of `ExprPromise`
-  *     (`Expr.Function1.instance`/`fulfilAsLambda` counterparts),
-  *   - the old `TransformationExprPromiseOps` (ops over `ExprPromise[From, TransformationExpr[To]]`) becomes
-  *     [[TransformationExprBuilderOps]] (ops over `LambdaBuilder[From, TransformationExpr[To]]`, where `From` is now
-  *     the lambda shape, e.g. `A => *`) - method names preserved (`foldTransformationExpr`, `exprPartition`, `isTotal`,
-  *     `isPartial`, `ensureTotal`, `ensurePartial`),
-  *   - `.log(msg)` becomes `.logInfo(msg)` (see the package object).
+/** Chimney's OWN rule engine, deliberately NOT delegated to Hearth's `Rules`/`Rule.Applicability` combinator: Hearth's
+  * `Rules` returns the accumulated yield-reasons instead of logging them one-by-one and has no `TransformationExpr`
+  * awareness, so delegating would change the logs that tests assert on.
   */
 private[compiletime] trait TransformationRules { this: Derivation & hearth.MacroCommons =>
 
@@ -144,7 +131,7 @@ private[compiletime] trait TransformationRules { this: Derivation & hearth.Macro
     final case class PartialExpr[A](expr: Expr[partial.Result[A]]) extends TransformationExpr[A]
   }
 
-  /** Old `TransformationExprPromiseOps`, on `LambdaBuilder` instead of `ExprPromise` (see the trait's ScalaDoc). */
+  /** Ops over lambda-shaped `TransformationExpr`s (`From` is the lambda shape, e.g. `A => *`). */
   implicit final class TransformationExprBuilderOps[From[_], To](
       builder: LambdaBuilder[From, TransformationExpr[To]]
   ) {
@@ -163,9 +150,7 @@ private[compiletime] trait TransformationRules { this: Derivation & hearth.Macro
     def ensurePartial: LambdaBuilder[From, Expr[partial.Result[To]]] = builder.map(_.ensurePartial)
   }
 
-  /** [[TransformationExprBuilderOps]] counterpart for `MatchCase` (the old code used `ExprPromise` for both lambdas and
-    * pattern-match cases; the SealedHierarchy rule needs the same folding over `MatchCase`).
-    */
+  /** [[TransformationExprBuilderOps]] equivalent for `MatchCase` (the SealedHierarchy rule needs the same folding). */
   implicit final class TransformationExprMatchCaseOps[To](matchCase: MatchCase[TransformationExpr[To]]) {
 
     def exprPartition: Either[MatchCase[Expr[To]], MatchCase[Expr[partial.Result[To]]]] =

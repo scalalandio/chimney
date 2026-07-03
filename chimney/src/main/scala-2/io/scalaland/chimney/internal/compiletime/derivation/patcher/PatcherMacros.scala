@@ -6,17 +6,6 @@ import io.scalaland.chimney.internal.runtime
 
 import scala.reflect.macros.blackbox
 
-/** Hearth-based port of `...compiletime.derivation.patcher.PatcherMacros` (Scala 2).
-  *
-  * Public methods (names, signatures, type params) mirror the old macro bundle 1:1 so that the binding sites in
-  * `io.scalaland.chimney.dsl.*` can flip packages mechanically in the next phase.
-  *
-  * Differences vs the old version: same as the transformer's
-  * [[io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros]] - extends [[PlatformBridge]]
-  * + the now-shared `Derivation`/`Gateway` instead of the old per-platform `DerivationPlatform`, `Expr.block` ->
-  * `blockExpr`, `Type.platformSpecific.fromUntyped[A](tpe)` -> `c.WeakTypeTag[A](tpe)`, `?<`/`.as_?<` ->
-  * `??<:`/`.as_??<:`, `Expr.summonImplicit(...)` -> `.toOption` added.
-  */
 final class PatcherMacros(ctx: blackbox.Context) extends PlatformBridge(ctx) with Derivation with Gateway {
 
   import c.universe.{internal as _, Transformer as _, *}
@@ -32,14 +21,12 @@ final class PatcherMacros(ctx: blackbox.Context) extends PlatformBridge(ctx) wit
   ): c.Expr[A] = retypecheck(
     // Called by PatcherUsing => prefix is PatcherUsing
     cacheDefinition(c.Expr[dsl.PatcherUsing[A, Patch, Overrides, Flags]](c.prefix.tree)) { pu =>
-      blockExpr(
-        List(Expr.suppressUnused(pc)),
-        derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](
-          obj = c.Expr[A](q"$pu.obj"),
-          patch = c.Expr[Patch](q"$pu.objPatch"),
-          runtimeDataStore = c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](q"$pu.pd.runtimeData")
-        )
+      val body = derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](
+        obj = c.Expr[A](q"$pu.obj"),
+        patch = c.Expr[Patch](q"$pu.objPatch"),
+        runtimeDataStore = c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](q"$pu.pd.runtimeData")
       )
+      c.Expr[A](q"{ ${Expr.suppressUnused(pc)}; $body }")
     }
   )
 
@@ -51,15 +38,13 @@ final class PatcherMacros(ctx: blackbox.Context) extends PlatformBridge(ctx) wit
       ImplicitScopeFlags <: runtime.PatcherFlags: WeakTypeTag
   ](
       pc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
-  ): Expr[Patcher[A, Patch]] = retypecheck(
-    blockExpr(
-      List(Expr.suppressUnused(pc)),
-      derivePatcher[A, Patch, Overrides, InstanceFlags, ImplicitScopeFlags](
-        // Called by PatcherDefinition => prefix is PatcherDefinition
-        c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.runtimeData")
-      )
+  ): Expr[Patcher[A, Patch]] = retypecheck {
+    val body = derivePatcher[A, Patch, Overrides, InstanceFlags, ImplicitScopeFlags](
+      // Called by PatcherDefinition => prefix is PatcherDefinition
+      c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.runtimeData")
     )
-  )
+    c.Expr[Patcher[A, Patch]](q"{ ${Expr.suppressUnused(pc)}; $body }")
+  }
 
   def derivePatcherWithDefaults[
       A: WeakTypeTag,
@@ -98,10 +83,8 @@ final class PatcherMacros(ctx: blackbox.Context) extends PlatformBridge(ctx) wit
       .WeakTypeTag[runtime.PatcherFlags](implicitScopeConfig.tpe.tpe.typeArgs.head)
       .as_??<:[runtime.PatcherFlags]
 
-    blockExpr(
-      List(Expr.suppressUnused(implicitScopeConfig)),
-      useImplicitScopeFlags(implicitScopeFlagsType)
-    )
+    val body = useImplicitScopeFlags(implicitScopeFlagsType)
+    c.Expr[A](q"{ ${Expr.suppressUnused(implicitScopeConfig)}; $body }")
   }
 
   private def retypecheck[A: Type](expr: c.Expr[A]): c.Expr[A] = try

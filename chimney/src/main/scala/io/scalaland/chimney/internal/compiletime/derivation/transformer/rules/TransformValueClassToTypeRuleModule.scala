@@ -3,17 +3,13 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
-/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformValueClassToTypeRuleModule` - 1:1 copy
-  * (`.log` becomes `.logInfo`; the `TransformProductToProductRule.expand` fallback currently hits the not-yet-ported
-  * heavy rule's stub, see [[TransformProductToProductRuleModule]]).
-  *
-  * Phase 5 addition: SMART-CONSTRUCTOR value types (`datatypes.ValueClasses.PartialWrapperClassType`) can be UNWRAPPED
-  * as sources in both total and partial derivation (only their CONSTRUCTION is partial-only - see
+/** SMART-CONSTRUCTOR value types (`datatypes.ValueClasses.PartialWrapperClassType`) can be UNWRAPPED as sources in both
+  * total and partial derivation (only their CONSTRUCTION is partial-only - see
   * [[TransformTypeToValueClassRuleModule]]).
   *
-  * Flag gating (Phase 5 decision, see `ValueClasses.WrapperClass.fromStdExtension`): only STRUCTURALLY matched
-  * (Method-based) wrappers require the `nonAnyValWrappers` flag; extension-provided value types (Hearth `IsValueType`
-  * providers - both the total and the smart-constructor ones) skip it, like the `integrations` implicits they replace.
+  * Flag gating (see `ValueClasses.WrapperClass.fromStdExtension`): only STRUCTURALLY matched (Method-based) wrappers
+  * require the `nonAnyValWrappers` flag; extension-provided value types (Hearth `IsValueType` providers - both the
+  * total and the smart-constructor ones) skip it, like the `integrations` implicits they replace.
   */
 private[compiletime] trait TransformValueClassToTypeRuleModule {
   this: Derivation & TransformProductToProductRuleModule & TransformValueClassToValueClassRuleModule &

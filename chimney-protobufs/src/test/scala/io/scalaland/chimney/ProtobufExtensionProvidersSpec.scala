@@ -201,9 +201,11 @@ object ProtobufExtensionProvidersSpec {
       new TotallyBuildIterable[com.google.protobuf.ByteString, Byte] {
 
         def totalFactory: scala.collection.Factory[Byte, com.google.protobuf.ByteString] =
-          new FactoryCompat[Byte, com.google.protobuf.ByteString] {
-            override def newBuilder: mutable.Builder[Byte, com.google.protobuf.ByteString] =
-              new FactoryCompat.Builder[Byte, com.google.protobuf.ByteString] {
+          new scala.collection.Factory[Byte, com.google.protobuf.ByteString] {
+            def fromSpecific(it: IterableOnce[Byte]): com.google.protobuf.ByteString =
+              newBuilder.addAll(it).result()
+            def newBuilder: mutable.Builder[Byte, com.google.protobuf.ByteString] =
+              new mutable.Builder[Byte, com.google.protobuf.ByteString] {
                 private val impl = mutable.ListBuffer.empty[Byte]
                 override def clear(): Unit = impl.clear()
                 override def result(): com.google.protobuf.ByteString =

@@ -19,9 +19,6 @@ import io.scalaland.chimney.integrations as in
 import io.scalaland.chimney.{partial, PartialTransformer, Transformer}
 import io.scalaland.chimney.internal.compiletime.TransformerDerivationError
 
-/** Hearth-based port of the pre-Hearth `io.scalaland.chimney.internal.compiletime.derivation.transformer.ResultOps` -
-  * 1:1 copy (`DerivationResult` is now MIO-backed, but all the helpers keep their old names and signatures).
-  */
 private[compiletime] trait ResultOps { this: Derivation & hearth.MacroCommons =>
 
   /** DerivationResult is defined outside the "cake", so methods using utilities from the cake have to be extensions */
@@ -157,7 +154,7 @@ private[compiletime] trait ResultOps { this: Derivation & hearth.MacroCommons =>
             import foundToSubtype.Underlying as ToSubtype
             Type.prettyPrint[ToSubtype]
             // sortBy(color-stripped): Hearth's prettyPrint colors individual name segments, so sorting the raw
-            // colored strings (like the old code did with its uniformly-colored printer) would scramble the order.
+            // colored strings would scramble the order.
           }
           .sortBy(s => s.replaceAll("\\[[0-9;]*m", ""))
       )

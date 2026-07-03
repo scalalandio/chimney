@@ -4,7 +4,6 @@ import io.scalaland.chimney.dsl.{PreferPartialTransformer, PreferTotalTransforme
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
-/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformImplicitRuleModule` - 1:1 copy. */
 private[compiletime] trait TransformImplicitRuleModule { this: Derivation & hearth.MacroCommons =>
 
   protected object TransformImplicitRule extends Rule("Implicit") {

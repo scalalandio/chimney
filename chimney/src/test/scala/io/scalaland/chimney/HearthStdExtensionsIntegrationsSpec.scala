@@ -31,7 +31,7 @@ class HearthStdExtensionsIntegrationsSpec extends ChimneySpec {
   group("IsValueType extension providers (WrapperClassType fallback)") {
 
     test("transform into and from extension-provided value type, without any flag (total)") {
-      // Phase 5 decision (see ValueClasses.WrapperClass.fromStdExtension): extension-provided value types skip the
+      // See ValueClasses.WrapperClass.fromStdExtension: extension-provided value types skip the
       // nonAnyValWrappers flag - registering an IsValueType provider is an explicit opt-in by the integration author,
       // like an integrations.TotallyBuildIterable implicit (which needs no flag either).
       "abc".transformInto[TestWrapper] ==> TestWrapper.wrap("abc")
@@ -344,9 +344,10 @@ object HearthStdExtensionsIntegrationsSpec {
       new TotallyBuildIterable[TestCollection[Item], Item] {
 
         def totalFactory: scala.collection.Factory[Item, TestCollection[Item]] =
-          new FactoryCompat[Item, TestCollection[Item]] {
-            override def newBuilder: mutable.Builder[Item, TestCollection[Item]] =
-              new FactoryCompat.Builder[Item, TestCollection[Item]] {
+          new scala.collection.Factory[Item, TestCollection[Item]] {
+            def fromSpecific(it: IterableOnce[Item]): TestCollection[Item] = newBuilder.addAll(it).result()
+            def newBuilder: mutable.Builder[Item, TestCollection[Item]] =
+              new mutable.Builder[Item, TestCollection[Item]] {
                 private val implBuilder = Vector.newBuilder[Item]
 
                 override def clear(): Unit = implBuilder.clear()

@@ -2,14 +2,9 @@ package io.scalaland.chimney.internal.compiletime
 
 /** Gathers all possible derivation errors in a single type.
   *
-  * Hearth-based port of the pre-Hearth `io.scalaland.chimney.internal.compiletime.DerivationError`. Differences vs the
-  * old version:
-  *   - reparented on a stackless `Exception` (instead of plain `Product with Serializable`) so instances can travel
-  *     inside MIO's `MErrors` (`NonEmptyVector[Throwable]`) - the `message` only serves debugging (e.g. MIO's own
-  *     "Caught exception ..." logs), user-facing rendering still goes through [[DerivationError.printErrors]], which is
-  *     preserved byte-identical,
-  *   - [[DerivationError.fromThrowable]] added - MIO can catch arbitrary `Throwable`s, which must be (re)classified as
-  *     [[DerivationError.MacroException]] before rendering.
+  * Extends a stackless `Exception` so instances can travel inside MIO's `MErrors` (`NonEmptyVector[Throwable]`) - the
+  * `message` only serves debugging; user-facing rendering goes through [[DerivationError.printErrors]], which is pinned
+  * (tests assert on the exact output).
   */
 sealed abstract class DerivationError(message: String) extends Exception(message, null, false, false)
 object DerivationError {
@@ -23,9 +18,7 @@ object DerivationError {
   final case class PatcherError(patcherDerivationError: PatcherDerivationError)
       extends DerivationError(patcherDerivationError.toString)
 
-  /** Classifies an arbitrary `Throwable` caught by MIO as a [[DerivationError]] (old code never needed this since
-    * `DerivationResult` wrapped exceptions in `MacroException` at the catch site).
-    */
+  /** Classifies an arbitrary `Throwable` caught by MIO as a [[DerivationError]] before rendering. */
   def fromThrowable(error: Throwable): DerivationError = error match {
     case derivationError: DerivationError => derivationError
     case _                                => MacroException(error)

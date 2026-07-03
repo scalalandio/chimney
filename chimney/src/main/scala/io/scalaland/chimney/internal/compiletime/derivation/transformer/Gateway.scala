@@ -7,18 +7,12 @@ import io.scalaland.chimney.internal.compiletime.derivation.GatewayCommons
 import io.scalaland.chimney.internal.runtime
 import io.scalaland.chimney.partial
 
-/** Hearth-based port of `...compiletime.derivation.transformer.Gateway`.
+/** Every public entry point calls `ensureStandardExtensionsLoaded()` first (Hearth's `IsOption`/`IsEither`/...
+  * providers return nothing until `Environment.loadStandardExtensions()` ran; the call is idempotent per bundle).
   *
-  * Differences vs the old version:
-  *   - every public entry point calls `ensureStandardExtensionsLoaded()` first (Hearth's `IsOption`/`IsEither`/...
-  *     providers return nothing until `Environment.loadStandardExtensions()` ran; the call is idempotent per bundle),
-  *   - `DerivationResult.catchFatalErrors` disappears from the private `enableLoggingIfFlagEnabled` - the
-  *     `DerivationResult` is a lazy MIO now, so nothing runs until `extractExprAndLog`'s `unsafe.runSync`, which is
-  *     where [[GatewayCommons]] catches fatal errors instead,
-  *   - `Expr.block` becomes the [[io.scalaland.chimney.internal.compiletime.MacroCommonsCompat.blockExpr]] compat
-  *     helper (pairwise-nested blocks, semantically identical),
-  *   - `DerivationResult.direct`+`await` stays (now backed by MIO's `DirectStyle`) - `ChimneyExpr.*.instance` take pure
-  *     `Expr => Expr` functions, so the effect must be unwrapped inside the generated-class body, exactly like before.
+  * `DerivationResult.direct`+`await` is used because `ChimneyExpr.*.instance` take pure `Expr => Expr` functions, so
+  * the effect must be unwrapped inside the generated-class body (hearth#318). Fatal errors are caught at
+  * `unsafe.runSync` in [[GatewayCommons]].
   */
 private[compiletime] trait Gateway extends GatewayCommons {
   this: Derivation & hearth.MacroCommons & hearth.std.StdExtensions =>
@@ -52,8 +46,7 @@ private[compiletime] trait Gateway extends GatewayCommons {
 
           val result = enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
 
-          blockExpr(
-            List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(src)),
+          prependSuppressUnused(List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(src)))(
             extractExprAndLog[From, To, To](result)
           )
         }
@@ -73,8 +66,8 @@ private[compiletime] trait Gateway extends GatewayCommons {
     ensureStandardExtensionsLoaded()
     suppressWarnings {
       cacheDefinition(runtimeDataStore) { runtimeDataStore =>
-        // transformerInstanceCompat: on Scala 3 the old direct+await-inside-the-quote shape trips -Xcheck-macros
-        // (see ChimneyExprs) - the compat runs the derivation BEFORE constructing the instance quote there.
+        // transformerInstanceCompat: on Scala 3 the direct+await-inside-the-quote shape trips -Xcheck-macros
+        // (see ChimneyExprs, hearth#318) - the compat runs the derivation BEFORE constructing the instance quote.
         val result = transformerInstanceCompat[From, To] { (src: Expr[From]) =>
           val context = TransformationContext.ForTotal
             .create[From, To](
@@ -87,8 +80,7 @@ private[compiletime] trait Gateway extends GatewayCommons {
           enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
         }
 
-        blockExpr(
-          List(Expr.suppressUnused(runtimeDataStore)),
+        prependSuppressUnused(List(Expr.suppressUnused(runtimeDataStore)))(
           extractExprAndLog[From, To, Transformer[From, To]](result)
         )
       }
@@ -122,8 +114,7 @@ private[compiletime] trait Gateway extends GatewayCommons {
 
           val result = enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
 
-          blockExpr(
-            List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(src)),
+          prependSuppressUnused(List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(src)))(
             extractExprAndLog[From, To, partial.Result[To]](result)
           )
         }
@@ -143,8 +134,8 @@ private[compiletime] trait Gateway extends GatewayCommons {
     ensureStandardExtensionsLoaded()
     suppressWarnings {
       cacheDefinition(runtimeDataStore) { runtimeDataStore =>
-        // partialTransformerInstanceCompat: on Scala 3 the old direct+await-inside-the-quote shape trips
-        // -Xcheck-macros (see ChimneyExprs) - the compat runs the derivation BEFORE constructing the quote there.
+        // partialTransformerInstanceCompat: on Scala 3 the direct+await-inside-the-quote shape trips
+        // -Xcheck-macros (see ChimneyExprs, hearth#318) - the compat runs the derivation BEFORE constructing the quote.
         val result = partialTransformerInstanceCompat[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
           val context = TransformationContext.ForPartial
             .create[From, To](
@@ -158,8 +149,7 @@ private[compiletime] trait Gateway extends GatewayCommons {
           enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
         }
 
-        blockExpr(
-          List(Expr.suppressUnused(runtimeDataStore)),
+        prependSuppressUnused(List(Expr.suppressUnused(runtimeDataStore)))(
           extractExprAndLog[From, To, PartialTransformer[From, To]](result)
         )
       }

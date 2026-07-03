@@ -3,58 +3,46 @@ package io.scalaland.chimney.internal.compiletime.datatypes
 import io.scalaland.chimney.internal.compiletime.ChimneyDefinitions
 import io.scalaland.chimney.partial
 
-/** Hearth-based port of the pre-Hearth `io.scalaland.chimney.internal.compiletime.datatypes.ValueClasses`.
-  *
-  * DESIGN CHOICE: implemented as a custom parse on Hearth's `Method` API (unambiguous unary public constructor +
+/** DESIGN CHOICE: implemented as a custom parse on Hearth's `Method` API (unambiguous unary public constructor +
   * same-named public getter) instead of Hearth's `IsValueType`:
-  *   - Hearth's built-in providers cover only `AnyVal` (and Java boxed primitives) - macro-commons' `WrapperClassType`
-  *     matches ANY single-public-field class with a matching constructor, so a custom provider would have been needed
-  *     anyway,
+  *   - Hearth's built-in providers cover only `AnyVal` (and Java boxed primitives), while `WrapperClassType` matches
+  *     ANY single-public-field class with a matching constructor, so a custom provider would have been needed anyway,
   *   - `IsValueType` does not expose `fieldName` (used by the rules for `Path` bookkeeping),
   *   - it requires standard extensions to be loaded, which the plain-value datatypes layer should not depend on.
+  * The getter is looked up directly by the constructor argument's name (public + nullary), per the documented contract
+  * ("expose a getter of the same name and type as constructor's argument").
   *
-  * EXTENSION FALLBACK (Phase 5 prereq): when the Method-based parse rejects a type, [[WrapperClassType.parse]]
-  * additionally consults Hearth's `IsValueType` providers - this is how ServiceLoader-registered
-  * `StandardMacroExtension`s (e.g. a future chimney-protobufs `Timestamp` <-> `Instant` provider) plug into the
-  * value-class rules. Guards (and their rationale):
+  * EXTENSION FALLBACK: when the Method-based parse rejects a type, [[WrapperClassType.parse]] additionally consults
+  * Hearth's `IsValueType` providers - this is how ServiceLoader-registered `StandardMacroExtension`s (e.g.
+  * chimney-protobufs' `Timestamp` provider) plug into the value-class rules. Guards (and their rationale):
   *   - `A <:< AnyVal` is never consulted: `IsValueTypeProviderForAnyVal` (the only built-in that can match Scala
   *     classes) disagrees with the Method-based parse on edge cases (it uses `primaryConstructor` where we require an
   *     UNambiguous constructor, and it doesn't require the getter NAME to match the argument), so AnyVal handling stays
-  *     100% with the Method-based parse (which already accepts all proper AnyVal wrappers),
-  *   - the 8 `java.lang` boxed primitives ARE consulted (Phase 5 revision - the ORIGINAL fallback excluded them so that
-  *     chimney-java-collections' `JavaPrimitivesImplicits` stayed the only support): Hearth's
-  *     `IsValueTypeProviderForJava*` built-ins now make `Int <-> java.lang.Integer` etc. derivable with no import at
-  *     all. They surface through the UNGATED [[ValueClassType]] (not the flag-gated `WrapperClassType` - a boxed
-  *     primitive is the Java spelling of an `AnyVal`, not a "non-AnyVal wrapper", and the replaced implicits required
-  *     no flag either); user-provided `Transformer` implicits keep winning through rule #1 as always. The
-  *     ValueClassToType/TypeToValueClass rules use boxed matches ONLY for the exact `boxed <-> primitive` pairs (see
-  *     [[isJavaBoxedPrimitive]] - nullable boxed types must not preempt the null-safe Option rules),
-  *   - Hearth exposes no provider provenance on a successful match (only skip-reasons carry provider names), so the
-  *     built-in-vs-extension distinction is enforced by the type-level filters above. TODO(hearth-extensions): re-audit
-  *     this list on every Hearth version bump (e.g. newer Hearth adds an opaque-type provider that these filters would
-  *     NOT exclude),
+  *     100% with the Method-based parse,
+  *   - the 8 `java.lang` boxed primitives ARE consulted: Hearth's `IsValueTypeProviderForJava*` built-ins make
+  *     `Int <-> java.lang.Integer` etc. derivable with no import at all. They surface through the UNGATED
+  *     [[ValueClassType]] (not the flag-gated `WrapperClassType` - a boxed primitive is the Java spelling of an
+  *     `AnyVal`, not a "non-AnyVal wrapper"); user-provided `Transformer` implicits keep winning through rule #1 as
+  *     always. The ValueClassToType/TypeToValueClass rules use boxed matches ONLY for the exact `boxed <-> primitive`
+  *     pairs (see [[isJavaBoxedPrimitive]] - nullable boxed types must not preempt the null-safe Option rules),
+  *   - Hearth exposes no provider provenance on a successful match (only skip-reasons carry provider names,
+  *     hearth#329), so the built-in-vs-extension distinction is enforced by the type-level filters above.
+  *     TODO(hearth-extensions): re-audit this list on every Hearth version bump (e.g. newer Hearth adds an opaque-type
+  *     provider that these filters would NOT exclude),
   *   - only `CtorLikeOf.PlainValue` wraps are accepted by `WrapperClassType` - smart-constructor (validated) value
-  *     types cannot be expressed as a total `WrapperClass`; they parse as [[PartialWrapperClassType]] instead (Phase 5
-  *     smart-constructor support) and surface only in PartialTransformer derivation (see
-  *     [[io.scalaland.chimney.internal.compiletime.CtorLikeExprs]] for the `CtorLike` error -> `partial.Result`
-  *     mapping),
+  *     types cannot be expressed as a total `WrapperClass`; they parse as [[PartialWrapperClassType]] instead and
+  *     surface only in PartialTransformer derivation (see [[io.scalaland.chimney.internal.compiletime.CtorLikeExprs]]
+  *     for the `CtorLike` error -> `partial.Result` mapping),
   *   - `fieldName` (Path bookkeeping + error messages only) is taken from the wrap-method's parameter name when the
   *     provider supplies a `Method`, otherwise it defaults to `"value"`,
   *   - the rules gate STRUCTURALLY matched (Method-based) `WrapperClassType`s behind the `nonAnyValWrappers` flag, but
-  *     extension-provided value types SKIP the flag (Phase 5 decision, see [[WrapperClass.fromStdExtension]]):
-  *     registering an `IsValueType` provider is an explicit opt-in by the integration's author - the same trust level
-  *     as an `integrations.TotallyBuildIterable`/`OptionalValue` implicit, neither of which is flag-gated - and it is
-  *     what makes e.g. chimney-protobufs' `Timestamp`/`wrappers.*Value` support work without any flag (like the
-  *     implicits it replaced). `PartialWrapperClassType` is by construction ALWAYS extension-provided, so it is not
-  *     flag-gated at all (boxed primitives are exempt via `ValueClassType`, see above).
+  *     extension-provided value types SKIP the flag (see [[WrapperClass.fromStdExtension]]): registering an
+  *     `IsValueType` provider is an explicit opt-in by the integration's author - the same trust level as an
+  *     `integrations.TotallyBuildIterable`/`OptionalValue` implicit, neither of which is flag-gated.
+  *     `PartialWrapperClassType` is by construction ALWAYS extension-provided, so it is not flag-gated at all (boxed
+  *     primitives are exempt via `ValueClassType`, see above).
   * The fallback calls `ensureStandardExtensionsLoaded()` (idempotent; the Gateways already load at entry), so the
   * datatypes layer stays safe even if consulted from a path that skipped a Gateway.
-  *
-  * Semantic judgment call: macro-commons' platforms disagreed on how the getter was found (Scala 3: first public
-  * declaration; Scala 2: first public val accessor) and then required its name to match the constructor argument. Here
-  * the getter is looked up directly by the constructor argument's name (public + nullary), which matches the documented
-  * contract ("expose a getter of the same name and type as constructor's argument") and both platforms' behavior for
-  * actual wrapper classes.
   */
 private[compiletime] trait ValueClasses {
   this: ChimneyDefinitions & hearth.MacroCommons & hearth.std.StdExtensions =>
@@ -101,7 +89,8 @@ private[compiletime] trait ValueClasses {
       partialWrap: Expr[Inner] => Expr[partial.Result[Outer]]
   )
 
-  // Hoisted to the (unshadowed) trait level like all other cross-quotes expansions - see the ScalaStdCompat GOTCHA.
+  // Hoisted to the (unshadowed) trait level - Scala 2 cross-quotes expansions must not run inside scopes that shadow
+  // the bare names the generated code references.
   private lazy val wrapperAnyValType: Type[AnyVal] = Type.of[AnyVal]
   private lazy val wrapperBottomType: Type[Null] = Type.of[Null]
   private lazy val javaBoxedPrimitiveTypes: List[??] = List(
@@ -128,7 +117,7 @@ private[compiletime] trait ValueClasses {
       * ScalaDoc for the full list of guards and their rationale.
       */
     private def hearthProviderSupport[A: Type]: Option[Existential[WrapperClass[A, *]]] =
-      // HEARTH GOTCHA (report upstream): bottom types conform to everything (`Null <:< java.lang.Integer` etc.), so
+      // HEARTH GOTCHA (hearth#319): bottom types conform to everything (`Null <:< java.lang.Integer` etc.), so
       // `<:<`-matching built-in providers match `Null`/`Nothing` and may CRASH eagerly while building their exprs.
       // Never consult providers for bottom types.
       if (Type[A] <:< wrapperBottomType) None
@@ -213,15 +202,15 @@ private[compiletime] trait ValueClasses {
     private type Cached[A] = Option[Existential.UpperBounded[AnyVal, ValueClass[A, *]]]
     private val valueClassCache = new TypeCache[Cached]
     def parse[A: Type]: Option[Existential.UpperBounded[AnyVal, ValueClass[A, *]]] = valueClassCache(Type[A]) {
-      // Java boxed primitives (Phase 5 revision) surface through the UNGATED ValueClassType: `java.lang.Integer` is
+      // Java boxed primitives surface through the UNGATED ValueClassType: `java.lang.Integer` is
       // the Java spelling of an AnyVal, its Inner (`Int`) genuinely IS <: AnyVal, and the chimney-java-collections
       // implicits it replaces required no flag either. The actual unwrap/wrap exprs come from Hearth's built-in
       // `IsValueTypeProviderForJava*` through WrapperClassType.parse's provider fallback (the Method-based parse
       // rejects boxed types: ambiguous constructors and/or no matching getter names).
       if ((Type[A] <:< AnyValType) || isJavaBoxedPrimitive[A])
         WrapperClassType.parse[A].map {
-          // The cast is a macro-commons-inherited lie: the Inner type of an AnyVal does not have to be <: AnyVal
-          // (e.g. a String field) - existing rules rely on this loose upper bound the same way macro-commons did.
+          // The cast is a deliberate lie: the Inner type of an AnyVal does not have to be <: AnyVal (e.g. a String
+          // field) - the rules rely on this loose upper bound.
           _.asInstanceOf[Existential.UpperBounded[AnyVal, WrapperClass[A, *]]].mapK[ValueClass[A, *]] { _ =>
             { case WrapperClass(fieldName, unwrap, wrap, _) =>
               ValueClass(fieldName, unwrap, wrap)
@@ -233,19 +222,18 @@ private[compiletime] trait ValueClasses {
     def unapply[A](tpe: Type[A]): Option[Existential.UpperBounded[AnyVal, ValueClass[A, *]]] = parse(using tpe)
   }
 
-  /** True for the 8 `java.lang` boxed primitives. Exposed for the rules: boxed primitives ARE [[ValueClassType]]s
-    * (Phase 5), but UNLIKE real AnyVal wrappers they are NULLABLE, so the ValueClassToType/TypeToValueClass rules must
-    * only use them for their EXACT primitive counterpart (`Integer <-> Int` etc. - the semantics of the replaced
-    * chimney-java-collections implicits). Eager structural unwrapping for arbitrary targets would preempt the null-SAFE
-    * ToOption/OptionToOption rules (e.g. `(null: Integer) -> Option[String]` must keep producing `None`, not throw an
-    * NPE from `.intValue()`).
+  /** True for the 8 `java.lang` boxed primitives. Exposed for the rules: boxed primitives ARE [[ValueClassType]]s, but
+    * UNLIKE real AnyVal wrappers they are NULLABLE, so the ValueClassToType/TypeToValueClass rules must only use them
+    * for their EXACT primitive counterpart (`Integer <-> Int` etc.). Eager structural unwrapping for arbitrary targets
+    * would preempt the null-SAFE ToOption/OptionToOption rules (e.g. `(null: Integer) -> Option[String]` must keep
+    * producing `None`, not throw an NPE from `.intValue()`).
     */
   protected def isJavaBoxedPrimitive[A: Type]: Boolean =
     javaBoxedPrimitiveTypes.exists(boxed => Type[A] =:= boxed.Underlying)
 
-  /** Smart-constructor value types (Phase 5): consulted by the rules AFTER [[ValueClassType]]/[[WrapperClassType]] both
-    * rejected a type. Matches when a Hearth `IsValueType` provider exists whose `wrap` is one of the four
-    * smart-constructor `CtorLikeOf` shapes - the CtorLike error channel maps onto `partial.Result` (see
+  /** Smart-constructor value types: consulted by the rules AFTER [[ValueClassType]]/[[WrapperClassType]] both rejected
+    * a type. Matches when a Hearth `IsValueType` provider exists whose `wrap` is one of the four smart-constructor
+    * `CtorLikeOf` shapes - the CtorLike error channel maps onto `partial.Result` (see
     * [[io.scalaland.chimney.internal.compiletime.CtorLikeExprs]]), so such types can only be CONSTRUCTED by
     * PartialTransformers (unwrapping them as a source works in both).
     */

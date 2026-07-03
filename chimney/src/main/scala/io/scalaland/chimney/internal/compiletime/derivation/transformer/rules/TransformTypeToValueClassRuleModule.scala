@@ -3,20 +3,16 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
-/** Hearth-based port of `...compiletime.derivation.transformer.rules.TransformTypeToValueClassRuleModule` - 1:1 copy
-  * (`.log` becomes `.logInfo`; the `TransformProductToProductRule.expand` fallback currently hits the not-yet-ported
-  * heavy rule's stub, see [[TransformProductToProductRuleModule]]).
+/** SMART-CONSTRUCTOR value types (Hearth `IsValueType` extensions whose `wrap` is a `CtorLikeOf.Either*OrValue` - see
+  * `datatypes.ValueClasses.PartialWrapperClassType`) are supported in PARTIAL derivation: the inner value is derived
+  * recursively (like for any wrapper) and then passed through the provider's validating constructor, whose error
+  * channel maps onto `partial.Result` ([[io.scalaland.chimney.internal.compiletime.CtorLikeExprs]]). In a TOTAL context
+  * the rule yields with an attempt-next reason, so Total derivation fails with the usual meaningful "Chimney can't
+  * derive ..." error.
   *
-  * Phase 5 addition: SMART-CONSTRUCTOR value types (Hearth `IsValueType` extensions whose `wrap` is a
-  * `CtorLikeOf.Either*OrValue` - see `datatypes.ValueClasses.PartialWrapperClassType`) are supported in PARTIAL
-  * derivation: the inner value is derived recursively (like for any wrapper) and then passed through the provider's
-  * validating constructor, whose error channel maps onto `partial.Result`
-  * ([[io.scalaland.chimney.internal.compiletime.CtorLikeExprs]]). In a TOTAL context the rule yields with an
-  * attempt-next reason, so Total derivation fails with the usual meaningful "Chimney can't derive ..." error.
-  *
-  * Flag gating (Phase 5 decision, see `ValueClasses.WrapperClass.fromStdExtension`): only STRUCTURALLY matched
-  * (Method-based) wrappers require the `nonAnyValWrappers` flag; extension-provided value types (Hearth `IsValueType`
-  * providers - both the total and the smart-constructor ones) skip it, like the `integrations` implicits they replace.
+  * Flag gating (see `ValueClasses.WrapperClass.fromStdExtension`): only STRUCTURALLY matched (Method-based) wrappers
+  * require the `nonAnyValWrappers` flag; extension-provided value types (Hearth `IsValueType` providers - both the
+  * total and the smart-constructor ones) skip it, like the `integrations` implicits they replace.
   */
 private[compiletime] trait TransformTypeToValueClassRuleModule {
   this: Derivation & TransformProductToProductRuleModule & hearth.MacroCommons =>
@@ -98,7 +94,7 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
     )
       .flatMap { derivedInnerTo =>
         // We're constructing:
-        // '{ SmartConstructorResults.fromEither*(${ smartCtor }(${ derivedInnerTo })) }
+        // '{ partial.Result.fromEither*(${ smartCtor }(${ derivedInnerTo })) }
         // (flatMapped into the inner partial.Result when the inner derivation itself was partial)
         DerivationResult.expanded(
           derivedInnerTo.flatMap(innerTo => TransformationExpr.fromPartial(wrapInnerToIntoPartialTo(innerTo)))

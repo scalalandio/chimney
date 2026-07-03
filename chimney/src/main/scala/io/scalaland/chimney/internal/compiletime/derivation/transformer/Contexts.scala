@@ -2,9 +2,6 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.partial
 
-/** Hearth-based port of the pre-Hearth `io.scalaland.chimney.internal.compiletime.derivation.transformer.Contexts` -
-  * 1:1 copy, only the pretty-printing goes through Hearth (`Type.prettyPrint`/`Expr.prettyPrint` have the same names).
-  */
 private[compiletime] trait Contexts { this: Derivation & hearth.MacroCommons =>
 
   /** Stores all the "global" information that might be needed: types used, user configuration, runtime values, etc */

@@ -3733,17 +3733,19 @@ Most of the time a collection doesn't perform any sort of validations, and you c
     }
     
     // ...you can provide Chimney support for it...
-    import io.scalaland.chimney.integrations.{ FactoryCompat, TotallyBuildIterable }
+    import io.scalaland.chimney.integrations.TotallyBuildIterable
     import scala.collection.Factory
     import scala.collection.mutable
 
     implicit def myCollectionIsTotallyBuildIterable[A]: TotallyBuildIterable[MyCollection[A], A] =
       new TotallyBuildIterable[MyCollection[A], A] {
         // Factory for your type
-        def totalFactory: Factory[A, MyCollection[A]] = new FactoryCompat[A, MyCollection[A]] {
+        def totalFactory: Factory[A, MyCollection[A]] = new Factory[A, MyCollection[A]] {
   
-          override def newBuilder: mutable.Builder[A, MyCollection[A]] =
-            new FactoryCompat.Builder[A, MyCollection[A]] {
+          def fromSpecific(it: IterableOnce[A]): MyCollection[A] = newBuilder.addAll(it).result()
+  
+          def newBuilder: mutable.Builder[A, MyCollection[A]] =
+            new mutable.Builder[A, MyCollection[A]] {
               private val implBuilder = Vector.newBuilder[A]
   
               override def clear(): Unit = implBuilder.clear()
@@ -3818,7 +3820,7 @@ If your collection performs some sort of validation, you can integrate it with C
     }
     
     // ...you can provide Chimney support for it...
-    import io.scalaland.chimney.integrations.{ FactoryCompat, PartiallyBuildIterable }
+    import io.scalaland.chimney.integrations.PartiallyBuildIterable
     import io.scalaland.chimney.partial
     import scala.collection.Factory
     import scala.collection.mutable
@@ -3828,10 +3830,13 @@ If your collection performs some sort of validation, you can integrate it with C
   
         // notice, that this Factory returns partial.Result of your collection!
         def partialFactory: Factory[A, partial.Result[NonEmptyCollection[A]]] =
-          new FactoryCompat[A, partial.Result[NonEmptyCollection[A]]] {
+          new Factory[A, partial.Result[NonEmptyCollection[A]]] {
   
-            override def newBuilder: mutable.Builder[A, partial.Result[NonEmptyCollection[A]]] =
-              new FactoryCompat.Builder[A, partial.Result[NonEmptyCollection[A]]] {
+            def fromSpecific(it: IterableOnce[A]): partial.Result[NonEmptyCollection[A]] =
+              newBuilder.addAll(it).result()
+  
+            def newBuilder: mutable.Builder[A, partial.Result[NonEmptyCollection[A]]] =
+              new mutable.Builder[A, partial.Result[NonEmptyCollection[A]]] {
                 private val implBuilder = Vector.newBuilder[A]
   
                 override def clear(): Unit = implBuilder.clear()
@@ -3892,10 +3897,12 @@ For map types there are specialized versions of these type classes:
     implicit def customMapIsTotallyBuildMap[K, V]: TotallyBuildMap[MyMap[K, V], K, V] =
       new TotallyBuildMap[MyMap[K, V], K, V] {
   
-        def totalFactory: Factory[(K, V), MyMap[K, V]] = new FactoryCompat[(K, V), MyMap[K, V]] {
+        def totalFactory: Factory[(K, V), MyMap[K, V]] = new Factory[(K, V), MyMap[K, V]] {
   
-          override def newBuilder: mutable.Builder[(K, V), MyMap[K, V]] =
-            new FactoryCompat.Builder[(K, V), MyMap[K, V]] {
+          def fromSpecific(it: IterableOnce[(K, V)]): MyMap[K, V] = newBuilder.addAll(it).result()
+  
+          def newBuilder: mutable.Builder[(K, V), MyMap[K, V]] =
+            new mutable.Builder[(K, V), MyMap[K, V]] {
               private val implBuilder = Vector.newBuilder[(K, V)]
   
               override def clear(): Unit = implBuilder.clear()
@@ -3930,10 +3937,13 @@ For map types there are specialized versions of these type classes:
       new PartiallyBuildMap[NonEmptyMap[K, V], K, V] {
   
         def partialFactory: Factory[(K, V), partial.Result[NonEmptyMap[K, V]]] =
-          new FactoryCompat[(K, V), partial.Result[NonEmptyMap[K, V]]] {
+          new Factory[(K, V), partial.Result[NonEmptyMap[K, V]]] {
   
-            override def newBuilder: mutable.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] =
-              new FactoryCompat.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] {
+            def fromSpecific(it: IterableOnce[(K, V)]): partial.Result[NonEmptyMap[K, V]] =
+              newBuilder.addAll(it).result()
+  
+            def newBuilder: mutable.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] =
+              new mutable.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] {
                 private val implBuilder = Vector.newBuilder[(K, V)]
   
                 override def clear(): Unit = implBuilder.clear()
@@ -4339,9 +4349,11 @@ behavior for any concrete pair of types with their own `implicit`s.
 
 !!! warning
 
-    If your extension is compiled with Scala 2, remember that quotes referencing companion objects of classes from
-    your module may not resolve correctly at the downstream macro-expansion site - route such calls through a plain
-    (companion-less) helper `object`, fully qualified inside the quote. Scala 3 is unaffected. Also remember that
+    If your extension is compiled with Scala 2, remember that quotes referencing companion objects of classes defined
+    in your own module may not resolve correctly at the downstream macro-expansion site
+    ([hearth#320](https://github.com/kubuszok/hearth/issues/320)) - route such calls through a plain
+    (companion-less) helper `object`, fully qualified inside the quote. Companions of types coming from your
+    dependencies (e.g. protobuf classes) are unaffected, and so is Scala 3. Also remember that
     on Scala 3 the artifact must be **loadable by your users' compiler** - build it on the oldest Scala 3 (LTS)
     version you want to support.
 

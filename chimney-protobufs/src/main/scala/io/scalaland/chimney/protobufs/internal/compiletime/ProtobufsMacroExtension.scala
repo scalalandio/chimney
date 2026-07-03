@@ -23,12 +23,10 @@ import hearth.std.{ProviderResult, StandardMacroExtension, StdExtensions}
   * per type - see `ProtobufsTransformerImplicits`), `Empty` <-> anything, the empty-oneof/`UnrecognizedEnum` partial
   * instances, and `DefaultValue[UnknownFieldSet]` - none of these are expressible through std-extension providers.
   *
-  * Implementation notes (Kindlings `hearth-value-types`/`hearth-collection-map` skill patterns):
-  *   - all matched types are MONOMORPHIC, so `parse` uses plain `tpe =:= Type.of[X]` checks (no `Ctor1.fromUntyped`
-  *     machinery needed) and no existential imports appear anywhere,
-  *   - every companion/static call inside a quote is routed FULLY QUALIFIED through the companion-less
-  *     [[io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions]] helper object (Scala 2 resolves a
-  *     companion-object qualifier from a separately compiled module to the CLASS at the downstream expansion site),
+  * Implementation notes:
+  *   - the quotes are self-contained: they reference only scalapb/protobuf/std-library API (FULLY QUALIFIED - the
+  *     expansion site's imports are unknown), never anything from this jar, so chimney-protobufs is a compile-only
+  *     dependency as far as the providers are concerned,
   *   - quotes are prepared OUTSIDE the anonymous `IsCollectionOf` class (its implicit `CtorResult` member would be
   *     ambiguous with the local implicit `Type` when cross-quotes resolve implicits),
   *   - this file compiles with the module's stripped-down `scalacOptions` (no `-Xsource:3`, no kind-projector), hence
@@ -63,11 +61,23 @@ final class ProtobufsMacroExtension extends StandardMacroExtension { loader =>
         val asIterableFn: Expr[com.google.protobuf.ByteString] => Expr[Iterable[Byte]] =
           value =>
             Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions
-                .byteStringAsIterable(Expr.splice(value))
+              // toByteArray() returns a fresh array, safe to wrap
+              scala.collection.immutable.ArraySeq.unsafeWrapArray(
+                Expr.splice(value).toByteArray()
+              ): Iterable[Byte]
             )
         val factoryExpr: Expr[scala.collection.Factory[Byte, com.google.protobuf.ByteString]] =
-          Expr.quote(io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions.byteStringFactory)
+          Expr.quote {
+            new scala.collection.Factory[Byte, com.google.protobuf.ByteString] {
+              def fromSpecific(it: scala.collection.IterableOnce[Byte]): com.google.protobuf.ByteString =
+                newBuilder.addAll(it).result()
+              // ArrayBuilder.ofByte, NOT Array.newBuilder[Byte]: the latter needs an implicit ClassTag, whose
+              // inserted reference does not survive the downstream re-typecheck on Scala 2
+              def newBuilder: scala.collection.mutable.Builder[Byte, com.google.protobuf.ByteString] =
+                (new scala.collection.mutable.ArrayBuilder.ofByte)
+                  .mapResult(array => com.google.protobuf.ByteString.copyFrom(array))
+            }
+          }
         val buildCtor: CtorLikeOf[
           scala.collection.mutable.Builder[Byte, com.google.protobuf.ByteString],
           com.google.protobuf.ByteString
@@ -145,15 +155,8 @@ final class ProtobufsMacroExtension extends StandardMacroExtension { loader =>
         implicit val OuterT: Type[com.google.protobuf.wrappers.BoolValue] = BoolValueType
         implicit val InnerT: Type[Boolean] = Type.of[Boolean]
         plainWrapperSupport(OuterT, InnerT)(
-          unwrapFn = wrapper =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions
-                .unwrapBoolValue(Expr.splice(wrapper))
-            ),
-          wrapFn = inner =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions.wrapBoolValue(Expr.splice(inner))
-            )
+          unwrapFn = wrapper => Expr.quote(Expr.splice(wrapper).value),
+          wrapFn = inner => Expr.quote(com.google.protobuf.wrappers.BoolValue.of(Expr.splice(inner)))
         )
       }
 
@@ -161,15 +164,8 @@ final class ProtobufsMacroExtension extends StandardMacroExtension { loader =>
         implicit val OuterT: Type[com.google.protobuf.wrappers.BytesValue] = BytesValueType
         implicit val InnerT: Type[com.google.protobuf.ByteString] = Type.of[com.google.protobuf.ByteString]
         plainWrapperSupport(OuterT, InnerT)(
-          unwrapFn = wrapper =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions
-                .unwrapBytesValue(Expr.splice(wrapper))
-            ),
-          wrapFn = inner =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions.wrapBytesValue(Expr.splice(inner))
-            )
+          unwrapFn = wrapper => Expr.quote(Expr.splice(wrapper).value),
+          wrapFn = inner => Expr.quote(com.google.protobuf.wrappers.BytesValue.of(Expr.splice(inner)))
         )
       }
 
@@ -177,15 +173,8 @@ final class ProtobufsMacroExtension extends StandardMacroExtension { loader =>
         implicit val OuterT: Type[com.google.protobuf.wrappers.DoubleValue] = DoubleValueType
         implicit val InnerT: Type[Double] = Type.of[Double]
         plainWrapperSupport(OuterT, InnerT)(
-          unwrapFn = wrapper =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions
-                .unwrapDoubleValue(Expr.splice(wrapper))
-            ),
-          wrapFn = inner =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions.wrapDoubleValue(Expr.splice(inner))
-            )
+          unwrapFn = wrapper => Expr.quote(Expr.splice(wrapper).value),
+          wrapFn = inner => Expr.quote(com.google.protobuf.wrappers.DoubleValue.of(Expr.splice(inner)))
         )
       }
 
@@ -193,15 +182,8 @@ final class ProtobufsMacroExtension extends StandardMacroExtension { loader =>
         implicit val OuterT: Type[com.google.protobuf.wrappers.FloatValue] = FloatValueType
         implicit val InnerT: Type[Float] = Type.of[Float]
         plainWrapperSupport(OuterT, InnerT)(
-          unwrapFn = wrapper =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions
-                .unwrapFloatValue(Expr.splice(wrapper))
-            ),
-          wrapFn = inner =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions.wrapFloatValue(Expr.splice(inner))
-            )
+          unwrapFn = wrapper => Expr.quote(Expr.splice(wrapper).value),
+          wrapFn = inner => Expr.quote(com.google.protobuf.wrappers.FloatValue.of(Expr.splice(inner)))
         )
       }
 
@@ -209,15 +191,8 @@ final class ProtobufsMacroExtension extends StandardMacroExtension { loader =>
         implicit val OuterT: Type[com.google.protobuf.wrappers.Int32Value] = Int32ValueType
         implicit val InnerT: Type[Int] = Type.of[Int]
         plainWrapperSupport(OuterT, InnerT)(
-          unwrapFn = wrapper =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions
-                .unwrapInt32Value(Expr.splice(wrapper))
-            ),
-          wrapFn = inner =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions.wrapInt32Value(Expr.splice(inner))
-            )
+          unwrapFn = wrapper => Expr.quote(Expr.splice(wrapper).value),
+          wrapFn = inner => Expr.quote(com.google.protobuf.wrappers.Int32Value.of(Expr.splice(inner)))
         )
       }
 
@@ -225,15 +200,8 @@ final class ProtobufsMacroExtension extends StandardMacroExtension { loader =>
         implicit val OuterT: Type[com.google.protobuf.wrappers.Int64Value] = Int64ValueType
         implicit val InnerT: Type[Long] = Type.of[Long]
         plainWrapperSupport(OuterT, InnerT)(
-          unwrapFn = wrapper =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions
-                .unwrapInt64Value(Expr.splice(wrapper))
-            ),
-          wrapFn = inner =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions.wrapInt64Value(Expr.splice(inner))
-            )
+          unwrapFn = wrapper => Expr.quote(Expr.splice(wrapper).value),
+          wrapFn = inner => Expr.quote(com.google.protobuf.wrappers.Int64Value.of(Expr.splice(inner)))
         )
       }
 
@@ -241,15 +209,8 @@ final class ProtobufsMacroExtension extends StandardMacroExtension { loader =>
         implicit val OuterT: Type[com.google.protobuf.wrappers.UInt32Value] = UInt32ValueType
         implicit val InnerT: Type[Int] = Type.of[Int]
         plainWrapperSupport(OuterT, InnerT)(
-          unwrapFn = wrapper =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions
-                .unwrapUInt32Value(Expr.splice(wrapper))
-            ),
-          wrapFn = inner =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions.wrapUInt32Value(Expr.splice(inner))
-            )
+          unwrapFn = wrapper => Expr.quote(Expr.splice(wrapper).value),
+          wrapFn = inner => Expr.quote(com.google.protobuf.wrappers.UInt32Value.of(Expr.splice(inner)))
         )
       }
 
@@ -257,15 +218,8 @@ final class ProtobufsMacroExtension extends StandardMacroExtension { loader =>
         implicit val OuterT: Type[com.google.protobuf.wrappers.UInt64Value] = UInt64ValueType
         implicit val InnerT: Type[Long] = Type.of[Long]
         plainWrapperSupport(OuterT, InnerT)(
-          unwrapFn = wrapper =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions
-                .unwrapUInt64Value(Expr.splice(wrapper))
-            ),
-          wrapFn = inner =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions.wrapUInt64Value(Expr.splice(inner))
-            )
+          unwrapFn = wrapper => Expr.quote(Expr.splice(wrapper).value),
+          wrapFn = inner => Expr.quote(com.google.protobuf.wrappers.UInt64Value.of(Expr.splice(inner)))
         )
       }
 
@@ -273,15 +227,8 @@ final class ProtobufsMacroExtension extends StandardMacroExtension { loader =>
         implicit val OuterT: Type[com.google.protobuf.wrappers.StringValue] = StringValueType
         implicit val InnerT: Type[String] = Type.of[String]
         plainWrapperSupport(OuterT, InnerT)(
-          unwrapFn = wrapper =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions
-                .unwrapStringValue(Expr.splice(wrapper))
-            ),
-          wrapFn = inner =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions.wrapStringValue(Expr.splice(inner))
-            )
+          unwrapFn = wrapper => Expr.quote(Expr.splice(wrapper).value),
+          wrapFn = inner => Expr.quote(com.google.protobuf.wrappers.StringValue.of(Expr.splice(inner)))
         )
       }
 
@@ -290,15 +237,15 @@ final class ProtobufsMacroExtension extends StandardMacroExtension { loader =>
         implicit val InnerT: Type[java.time.Instant] = Type.of[java.time.Instant]
         plainWrapperSupport(OuterT, InnerT)(
           unwrapFn = timestamp =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions
-                .timestampToInstant(Expr.splice(timestamp))
-            ),
+            Expr.quote {
+              val ts = Expr.splice(timestamp)
+              java.time.Instant.ofEpochSecond(ts.seconds, ts.nanos.toLong)
+            },
           wrapFn = instant =>
-            Expr.quote(
-              io.scalaland.chimney.protobufs.internal.runtime.ProtobufsConversions
-                .instantToTimestamp(Expr.splice(instant))
-            )
+            Expr.quote {
+              val i = Expr.splice(instant)
+              com.google.protobuf.timestamp.Timestamp.of(i.getEpochSecond, i.getNano)
+            }
         )
       }
 

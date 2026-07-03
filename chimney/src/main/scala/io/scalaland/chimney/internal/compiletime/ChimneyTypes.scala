@@ -6,19 +6,9 @@ import io.scalaland.chimney.integrations
 import io.scalaland.chimney.internal.runtime
 import io.scalaland.chimney.partial
 
-/** Hearth-based port of the pre-Hearth `io.scalaland.chimney.internal.compiletime.ChimneyTypes` - merges the shared
-  * trait and both platform implementations into a single cross-quoted source.
-  *
-  * Member names/paths are preserved 1:1 with the macro-commons version so that rule code can be ported mechanically.
-  * Differences:
-  *   - modules that used to be hand-implemented `Type.CtorN(Bounded)` are now `Type.CtorN` instances (Hearth generates
-  *     `apply`/`unapply` for them); upper-bounded ones go through `ctorNUpperBoundedCompat` (see [[MacroCommonsCompat]]
-  *     for the Hearth 0.4.0 bug it works around),
-  *   - `unapply` results use Hearth existential spellings (`??`, `??<:[U]`) instead of macro-commons (`??`, `?<[U]`),
-  *   - `inferred` members hide their wildcards behind type aliases (cross-quotes `Type.of[F[A, ?]]` does not compile on
-  *     Scala 2 - another Hearth 0.4.0 bug),
-  *   - Scala-2-only `ChimneyType.platformSpecific.fixJavaEnum(s)` (the `runtime.RefinedJavaEnum` workaround) is NOT
-  *     ported here - it is consumed only by the Scala 2 DSL macro entrypoints and will be revisited with them.
+/** NB: upper-bounded `Type.CtorN` modules go through `ctorNUpperBoundedCompat` (see [[MacroCommonsCompat]],
+  * hearth#307), and `inferred` members hide their wildcards behind type aliases (cross-quotes `Type.of[F[A, ?]]` does
+  * not compile on Scala 2).
   */
 private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.MacroCommons =>
 
