@@ -561,7 +561,10 @@ lazy val chimneySandwichTestCases3 = projectMatrix
     moduleName := "chimney-sandwich-test-cases-3",
     name := "chimney-sandwich-test-cases-3",
     description := "Tests cases compiled with Scala 3 to test macros in 2.13x3 cross-compilation",
-    mimaFailOnNoPrevious := false // this module is not published
+    mimaFailOnNoPrevious := false, // this module is not published
+    // Unpublished fixture: don't force the JDK 17 bytecode floor - the Scala 2.13 CI job (temurin:11) compiles
+    // this module for the 2.13x3 sandwich tests, and -release 17 cannot be honored by a compiler running on JDK 11.
+    scalacOptions --= Seq("-release", "17")
   )
 
 lazy val chimneySandwichTests = projectMatrix
