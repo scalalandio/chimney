@@ -2,6 +2,10 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
 
+object PartialTransformerSingletonSpec {
+  object PlainTarget
+}
+
 class PartialTransformerSingletonSpec extends ChimneySpec {
 
   test("""transformation into Null should always be possible""") {
@@ -31,6 +35,16 @@ class PartialTransformerSingletonSpec extends ChimneySpec {
     result2.asOption ==> Some(Target)
     result2.asEither ==> Right(Target)
     result2.asErrorPathMessageStrings ==> Iterable.empty
+  }
+
+  test("""transformation into a plain object should always be possible (Hearth SingletonValue semantics)""") {
+    case class Example(a: Int, b: String)
+    import PartialTransformerSingletonSpec.PlainTarget
+
+    val result = Example(10, "test").transformIntoPartial[PlainTarget.type]
+    result.asOption ==> Some(PlainTarget)
+    result.asEither ==> Right(PlainTarget)
+    result.asErrorPathMessageStrings ==> Iterable.empty
   }
 
   test("""transformation into literal-based singleton should always be possible""") {

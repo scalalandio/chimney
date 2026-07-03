@@ -4,22 +4,13 @@ import io.scalaland.chimney.internal.compiletime.ChimneyDefinitions
 
 import scala.collection.immutable.ListMap
 
-/** `Product`/`ProductType` view built on Hearth's `Method`/`Parameter` API.
+/** `Product`/`ProductType` view - thin layer over Hearth's `Method`/`Parameter` API and `SingletonValue`.
   *
-  * Semantic pins:
-  *   - Hearth's `Type[A].methods` already merges class+companion members, dedups val/def duplicates and sorts:
-  *     constructor arguments first (by constructor position), then declared members (by position), then the rest (by
-  *     name); we re-partition so that body vals come before plain accessor defs,
-  *   - `exprAsInstanceOfMethod` (powers `.withConstructor` DSL) builds `FunctionN[...] => ...` types with the untyped
-  *     API, casts the expr to them (runtime `.asInstanceOf`) and applies the `apply` methods via the `Method` chain
-  *     (arguments re-keyed positionally to `v1..vN`),
-  *   - named tuples (Scala 3.7+): construction goes through Hearth's `NamedTuple` view (with `NamedTuple.Empty` and
-  *     23+-arity workarounds - see `emptyNamedTupleConstructorCompat`/`tupleXXLConstructorCompat`); extraction uses
-  *     `._N` selection below 23 fields via `namedTupleGetterCompat`,
-  *   - there is deliberately NO `ProductTypeOps`/`SealedHierarchyOps` syntax: Hearth's built-in `TypeMethods` already
-  *     provides `tpe.isCaseClass`/`tpe.isCaseObject`/`tpe.isJavaBean`/`tpe.isSealed` (with slightly different, Hearth
-  *     semantics) and a second implicit class with the same member names would make call sites ambiguous - call
-  *     `ProductType.isX(tpe)` explicitly when this trait's semantics matter.
+  * Chimney's `Product` is a superset of Hearth's `CaseClass`/`JavaBean` views: one `Constructor` mixes primary-ctor
+  * arguments WITH Java Bean setters on the same type, and one `Getters` map classifies case fields, body vals, plain
+  * accessors and bean getters together (the RULES decide, flag-driven, which of them to use) - hence the assembly stays
+  * here while every ingredient (method listing, classification, invocation via `Method.fold`, singleton construction
+  * via `SingletonValue`) is Hearth's.
   */
 private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.MacroCommons =>
 
@@ -110,16 +101,10 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
     */
   protected def emptyNamedTupleConstructorCompat[A: Type]: Option[Product.Constructor[A]] = None
 
-  /** Scala 3-only: named-tuple element getter. The Scala 3 bridge overrides it with `in.asInstanceOf[(V1, ..., Vn)]._N`
-    * for arity < 23 (nicer bytecode AND the field labels in error messages), `productElement(idx)` + cast otherwise.
-    * The shared default uses `productElement` for every arity (never called on Scala 2 - named tuples do not exist
-    * there).
+  /** Named-tuple element getter (Scala 3-only types; never called on Scala 2). `productElement` + cast works for every
+    * arity - kept in a helper def with its own `Type` bounds (cross-quotes helper-def pattern).
     */
-  protected def namedTupleGetterCompat[A: Type, Elem: Type](
-      in: Expr[A],
-      idx: Int,
-      valueTypes: List[??]
-  ): Expr[Elem] = {
+  private def namedTupleGetter[A: Type, Elem: Type](in: Expr[A], idx: Int): Expr[Elem] = {
     val idxExpr = Expr.IntExprCodec.toExpr(idx)
     Expr.quote {
       Expr.splice(in).asInstanceOf[scala.Product].productElement(Expr.splice(idxExpr)).asInstanceOf[Elem]
@@ -165,11 +150,6 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
     private lazy val StringType: Type[String] = Type.of[String]
     private lazy val UnitType: Type[Unit] = Type.of[Unit]
     private lazy val BooleanType: Type[Boolean] = Type.of[Boolean]
-    // Wildcards inside cross-quotes `Type.of` are only safe in members without type parameters (Cross-Quotes'
-    // best-effort implicit-Type resolution is a documented limitation, see
-    // https://scala-hearth.readthedocs.io/en/stable/cross-quotes/#limitations and
-    // MacroCommonsCompat.reapplyLeadingTypeArgsCompat) - this lazy val has none, so it is fine.
-    private lazy val JavaLangEnumType: Type[java.lang.Enum[?]] = Type.of[java.lang.Enum[?]]
 
     /** The public primary constructor, or - failing that - the only public constructor. */
     private[datatypes] def unambiguousConstructorOf[A: Type]: Option[Method] =
@@ -180,36 +160,23 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
         }
       }
 
-    /** Runs a Hearth `Method` builder chain to completion, providing the instance (if needed) and the arguments.
-      *
-      * `arguments` are passed to every `ApplyValues` step - each step selects the parameters it needs by name. A
-      * `NeedsTypes` step is unexpected (Hearth resolves class type parameters against the - applied - instance type
-      * when listing methods/constructors), so it is reported as an error.
+    /** Runs a Hearth `Method` to completion via `Method.fold`, providing the instance (if needed) and the arguments
+      * (each `ApplyValues` step selects the parameters it needs by name). Callers pre-filter methods with type
+      * parameters, so a `NeedsTypes` step is a bug.
       */
-    private[datatypes] def invokeMethodChain(
-        initial: Method
-    )(instance: Option[UntypedExpr], arguments: Product.Arguments): Either[String, Expr_??] = {
-      @scala.annotation.tailrec
-      def loop(current: Method, instanceLeft: Option[UntypedExpr]): Either[String, Expr_??] = current match {
-        case oi: Method.OnInstance =>
-          instanceLeft match {
-            case Some(i) => loop(oi.applyUntyped(i), None)
-            case None    => Left(s"Method ${initial.name} unexpectedly requires an instance")
-          }
-        case _: Method.ApplyTypes =>
-          Left(s"Method ${initial.name} unexpectedly requires explicit type arguments")
-        case av: Method.ApplyValues =>
-          loop(av.apply(arguments), instanceLeft)
-        case r: Method.Result[?] =>
-          import r.Returned
-          r.build().map(_.as_??)
-      }
-      loop(initial, instance)
-    }
+    private[datatypes] def invoke(
+        method: Method
+    )(instance: Option[Expr_??], arguments: Product.Arguments): Either[String, Expr_??] =
+      method.fold(
+        onInstance =
+          _ => instance.getOrElse(assertionFailed(s"Method ${method.name} unexpectedly requires an instance")),
+        onTypes = _ => assertionFailed(s"Method ${method.name} unexpectedly requires explicit type arguments"),
+        onValues = _ => arguments
+      )
 
     /** Invokes a nullary instance method (`val`, nullary `def`, `def foo()`, ...) on the given instance. */
-    private[datatypes] def invokeNullaryInstanceMethod[A, R](method: Method)(in: Expr[A]): Expr[R] =
-      invokeMethodChain(method)(Some(UntypedExpr.fromTyped(in)), Map.empty).fold(
+    private[datatypes] def invokeNullaryInstanceMethod[A: Type, R](method: Method)(in: Expr[A]): Expr[R] =
+      invoke(method)(Some(in.as_??), Map.empty).fold(
         error => assertionFailed(s"Failed to call ${method.name}: $error"),
         result => result.value.asInstanceOf[Expr[R]]
       )
@@ -239,39 +206,14 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
       !Type.isPrimitive[A] && !(A =:= UnitType) && !(A <:< StringType) && Type.isClass[A] && !Type.isAbstract[A] &&
         unambiguousConstructorOf[A].isDefined
 
-    /** Class defined with "case class" */
-    def isCaseClass[A](implicit A0: Type[A]): Boolean = isCaseClassImpl(dealiasedType(A0))
-    private def isCaseClassImpl[A](implicit A: Type[A]): Boolean =
-      Type.isCaseClass[A] && !Type.isAbstract[A] && Type[A].primaryConstructor.exists(_.isAvailable(Everywhere))
-
-    /** Class defined with "case object" */
-    def isCaseObject[A](implicit A0: Type[A]): Boolean = isCaseObjectImpl(dealiasedType(A0))
-    private def isCaseObjectImpl[A](implicit A: Type[A]): Boolean =
-      Type.isCaseObject[A] && Type.isAvailable[A](Everywhere)
-
-    /** Scala 3 enum's case without parameters (a "val" under the hood, NOT an "object").
-      *
-      * isEnumCaseValCompat: Hearth 0.4.0's `Type.isCaseVal` misses parameterless enum cases (their `Case` flag lives on
-      * the TERM symbol, but Hearth checks the TYPE symbol which is the enum class) - see MacroCommonsCompat.
+    /** Publicly referencable singleton value (case object, plain object, parameterless Scala 3 enum case, Java enum
+      * value, Scala Enumeration value, stable term ref) - Hearth's `SingletonValue` semantics, gated on availability so
+      * that the generated reference compiles at every expansion site.
       */
-    def isCaseVal[A](implicit A0: Type[A]): Boolean = isCaseValImpl(dealiasedType(A0))
-    private def isCaseValImpl[A](implicit A: Type[A]): Boolean =
-      (Type.isCaseVal[A] || isEnumCaseValCompat[A]) && Type.isAvailable[A](Everywhere)
-
-    /** Java enum value - not the abstract enum type, but the concrete enum value.
-      *
-      * isJavaEnumValueTermCompat: on Scala 3 a plain Java enum CLASS is `final` (not abstract), so it also satisfies
-      * `<:< java.lang.Enum && !abstract` - it must NOT be classified as a value (targets that are the enum class itself
-      * have to fall through ToSingleton/ProductToProduct to the sealed-hierarchy rule).
-      */
-    def isJavaEnumValue[A](implicit A0: Type[A]): Boolean = isJavaEnumValueImpl(dealiasedType(A0))
-    private def isJavaEnumValueImpl[A](implicit A: Type[A]): Boolean =
-      (A <:< JavaLangEnumType) && !Type.isAbstract[A] && isJavaEnumValueTermCompat[A]
-
-    /** Any POJO with a public DEFAULT constructor... and at least 1 setter or var */
-    def isJavaBean[A](implicit A0: Type[A]): Boolean = isJavaBeanImpl(dealiasedType(A0))
-    private def isJavaBeanImpl[A](implicit A: Type[A]): Boolean =
-      isPOJO[A] && Type[A].defaultConstructor.exists(_.isAvailable(Everywhere)) && setterCandidatesOf[A].nonEmpty
+    private[datatypes] def parseSingleton[A](implicit A0: Type[A]): Option[SingletonValue[A]] =
+      parseSingletonImpl(dealiasedType(A0))
+    private def parseSingletonImpl[A](implicit A: Type[A]): Option[SingletonValue[A]] =
+      SingletonValue.unapply(A).filter(_ => Type.isAvailable[A](Everywhere))
 
     private type CachedExtraction[A] = Option[Product.Extraction[A]]
     private val extractionCache = new TypeCache[CachedExtraction]
@@ -350,19 +292,17 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
       ListMap.from(methodBasedGetters ++ inheritedFieldGetters)
     }
 
-    private def namedTupleGetters[A: Type](namedTuple: NamedTuple[A]): Product.Getters[A] = {
-      val valueTypes: List[??] = namedTuple.fields.map(_._2)
+    private def namedTupleGetters[A: Type](namedTuple: NamedTuple[A]): Product.Getters[A] =
       ListMap.from(namedTuple.fields.zipWithIndex.map { case ((name, tpe), idx) =>
         import tpe.Underlying as Elem
         name -> Existential[Product.Getter[A, *], Elem](
           Product.Getter[A, Elem](
             sourceType = Product.Getter.SourceType.ConstructorArgVal,
             isInherited = false,
-            get = (in: Expr[A]) => namedTupleGetterCompat[A, Elem](in, idx, valueTypes)
+            get = (in: Expr[A]) => namedTupleGetter[A, Elem](in, idx)
           )
         )
       })
-    }
 
     private def setterCandidatesOf[A: Type]: List[(String, Method)] = {
       val seen = scala.collection.mutable.Set.empty[String]
@@ -393,15 +333,9 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
       // dealiasedType: Scala 3 export aliases would otherwise report no constructors (see above).
       constructorCache(A0)(parseConstructorImpl(dealiasedType(A0)))
     private def parseConstructorImpl[A](implicit A: Type[A]): Option[Product.Constructor[A]] = {
-      if (isCaseObject[A] || isCaseVal[A] || isJavaEnumValue[A]) {
-        val singleton = SingletonValue.unapply(Type[A]).getOrElse {
-          // $COVERAGE-OFF$should never happen unless we messed up
-          assertionFailed(
-            s"Expected ${Type.prettyPrint[A]} to be a singleton (co=${isCaseObject[A]} cv=${isCaseVal[A]} cvH=${Type.isCaseVal[A]} cvC=${isEnumCaseValCompat[A]} jev=${isJavaEnumValue[A]} abs=${Type.isAbstract[A]})"
-          )
-          // $COVERAGE-ON$
-        }
-        Some(Product.Constructor[A](ListMap.empty, _ => singleton.singletonExpr))
+      val singleton = parseSingleton[A]
+      if (singleton.isDefined) {
+        singleton.map(s => Product.Constructor[A](ListMap.empty, _ => s.singletonExpr))
       } else if (isPOJO[A]) {
         val unambiguousConstructor = unambiguousConstructorOf[A].getOrElse {
           // $COVERAGE-OFF$should never happen unless we messed up
@@ -449,7 +383,7 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
         val setterCalls: Map[String, (Expr[A], ExistentialExpr) => Expr[Unit]] = setters.map { case (name, setter, _) =>
           val realParamName = setter.totalParameters.flatten.head._1
           name -> { (exprA: Expr[A], exprArg: ExistentialExpr) =>
-            invokeMethodChain(setter)(Some(UntypedExpr.fromTyped(exprA)), Map(realParamName -> exprArg)).fold(
+            invoke(setter)(Some(exprA.as_??), Map(realParamName -> exprArg)).fold(
               error => assertionFailed(s"Failed to call setter $name of ${Type.prettyPrint[A]}: $error"),
               result => {
                 import result.{Underlying as Returned, value as callExpr}
@@ -464,7 +398,7 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
         val constructor: Product.Arguments => Expr[A] = arguments => {
           val (constructorArguments, setterArguments) = checkArguments[A](parameters, arguments)
 
-          def newExpr: Expr[A] = invokeMethodChain(unambiguousConstructor)(None, constructorArguments).fold(
+          def newExpr: Expr[A] = invoke(unambiguousConstructor)(None, constructorArguments).fold(
             error => assertionFailed(s"Failed to call constructor of ${Type.prettyPrint[A]}: $error"),
             result => result.value.asInstanceOf[Expr[A]]
           )
@@ -506,7 +440,7 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
                 // found: 23") - build `Tuple.fromIArray(IArray(...)).asInstanceOf[A]` instead.
                 tupleXXLConstructorCompat[A](parameters.toList.map { case (name, _) => constructorArguments(name) })
               } else
-                invokeMethodChain(ctor)(None, constructorArguments).fold(
+                invoke(ctor)(None, constructorArguments).fold(
                   error => assertionFailed(s"Failed to construct named tuple ${Type.prettyPrint[A]}: $error"),
                   result => result.value.asInstanceOf[Expr[A]]
                 )
@@ -527,7 +461,7 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
     private def parameterDefaultValue[A: Type, ParamType: Type](name: String, param: Parameter): Expr[ParamType] =
       param.defaultValue
         .map { defaultMethod =>
-          invokeMethodChain(defaultMethod)(None, Map.empty).fold(
+          invoke(defaultMethod)(None, Map.empty).fold(
             error =>
               // $COVERAGE-OFF$should never happen unless we messed up
               assertionFailed(
@@ -567,13 +501,14 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
         val (constructorArguments, _) = checkArguments[A](parameters, arguments)
 
         val methodType: ?? = args.foldRight[??](Type[A].as_??) { (paramList, resultType) =>
-          val fnCtorUntyped = fnUntypedByArity.getOrElse(
-            paramList.size,
-            // TODO: handle FunctionXXL
+          // TODO: handle FunctionXXL
+          if (paramList.size > 22) {
             // $COVERAGE-OFF$should never happen unless we messed up
             assertionFailed(s"Expected arity between 0 and 22 into ${Type.prettyPrint[A]}, got: ${paramList.size}")
             // $COVERAGE-ON$
-          )
+          }
+          val fnCtorUntyped =
+            UntypedType.typeConstructor(UntypedType.fromClassName(s"scala.Function${paramList.size}"))
           val paramTypes = paramList.view.values.map(_.asUntyped).toList
           UntypedType.as_??(UntypedType.applyTypeArgs(fnCtorUntyped, paramTypes :+ resultType.asUntyped))
         }
@@ -604,7 +539,7 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
           // $COVERAGE-ON$
         }
       val paramNames = applyMethod.totalParameters.flatten.map(_._1)
-      invokeMethodChain(applyMethod)(Some(UntypedExpr.fromTyped(fnExpr)), paramNames.zip(arguments).toMap).fold(
+      invoke(applyMethod)(Some(fnExpr.as_??), paramNames.zip(arguments).toMap).fold(
         error =>
           // $COVERAGE-OFF$should never happen unless we messed up
           assertionFailed(s"Failed to apply ${Type.prettyPrint[Fn]}: $error"),
@@ -612,207 +547,6 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
         identity
       )
     }
-
-    // The whole applied `Type.of[FunctionN[Any, ..., Any]]` only serves as a way to obtain the untyped FunctionN
-    // type constructor in shared code.
-    private lazy val fnUntypedByArity: Map[Int, UntypedType] = Map(
-      0 -> UntypedType.typeConstructor(Type.of[scala.Function0[Any]].asUntyped),
-      1 -> UntypedType.typeConstructor(Type.of[scala.Function1[Any, Any]].asUntyped),
-      2 -> UntypedType.typeConstructor(Type.of[scala.Function2[Any, Any, Any]].asUntyped),
-      3 -> UntypedType.typeConstructor(Type.of[scala.Function3[Any, Any, Any, Any]].asUntyped),
-      4 -> UntypedType.typeConstructor(Type.of[scala.Function4[Any, Any, Any, Any, Any]].asUntyped),
-      5 -> UntypedType.typeConstructor(Type.of[scala.Function5[Any, Any, Any, Any, Any, Any]].asUntyped),
-      6 -> UntypedType.typeConstructor(Type.of[scala.Function6[Any, Any, Any, Any, Any, Any, Any]].asUntyped),
-      7 -> UntypedType.typeConstructor(Type.of[scala.Function7[Any, Any, Any, Any, Any, Any, Any, Any]].asUntyped),
-      8 -> UntypedType.typeConstructor(
-        Type.of[scala.Function8[Any, Any, Any, Any, Any, Any, Any, Any, Any]].asUntyped
-      ),
-      9 -> UntypedType.typeConstructor(
-        Type.of[scala.Function9[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]].asUntyped
-      ),
-      10 -> UntypedType.typeConstructor(
-        Type.of[scala.Function10[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]].asUntyped
-      ),
-      11 -> UntypedType.typeConstructor(
-        Type.of[scala.Function11[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]].asUntyped
-      ),
-      12 -> UntypedType.typeConstructor(
-        Type.of[scala.Function12[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]].asUntyped
-      ),
-      13 -> UntypedType.typeConstructor(
-        Type.of[scala.Function13[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]].asUntyped
-      ),
-      14 -> UntypedType.typeConstructor(
-        Type.of[scala.Function14[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]].asUntyped
-      ),
-      15 -> UntypedType.typeConstructor(
-        Type
-          .of[scala.Function15[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]]
-          .asUntyped
-      ),
-      16 -> UntypedType.typeConstructor(
-        Type
-          .of[scala.Function16[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]]
-          .asUntyped
-      ),
-      17 -> UntypedType.typeConstructor(
-        Type
-          .of[
-            scala.Function17[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]
-          ]
-          .asUntyped
-      ),
-      18 -> UntypedType.typeConstructor(
-        Type
-          .of[
-            scala.Function18[
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any
-            ]
-          ]
-          .asUntyped
-      ),
-      19 -> UntypedType.typeConstructor(
-        Type
-          .of[
-            scala.Function19[
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any
-            ]
-          ]
-          .asUntyped
-      ),
-      20 -> UntypedType.typeConstructor(
-        Type
-          .of[
-            scala.Function20[
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any
-            ]
-          ]
-          .asUntyped
-      ),
-      21 -> UntypedType.typeConstructor(
-        Type
-          .of[
-            scala.Function21[
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any
-            ]
-          ]
-          .asUntyped
-      ),
-      22 -> UntypedType.typeConstructor(
-        Type
-          .of[
-            scala.Function22[
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any,
-              Any
-            ]
-          ]
-          .asUntyped
-      )
-    )
-
-    // defaults methods are 1-indexed
-    protected def classNewDefaultScala2(idx: Int): String = "<init>$default$" + idx
-    protected def caseClassApplyDefaultScala2(idx: Int): String = "apply$default$" + idx
-    protected def caseClassApplyDefaultScala3(idx: Int): String = "$lessinit$greater$default$" + idx
 
     // skipping on setter should not create a invalid expression, whether or not is should be called depends on caller
     private val settersCanBeIgnored: ((String, Existential[Product.Parameter])) => Boolean =

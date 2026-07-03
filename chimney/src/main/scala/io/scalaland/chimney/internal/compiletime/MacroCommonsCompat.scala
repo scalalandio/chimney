@@ -34,18 +34,6 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
     */
   protected def fixJavaEnumCompat(inst: ??): ?? = inst
 
-  /** `true` for Scala 3 `enum` parameterless cases (`case Foo` - a `case val` under the hood).
-    *
-    * HEARTH 0.4.0 ISSUE WORKAROUND (hearth#311): Hearth's `Type.isCaseVal` = `isVal && isCase`, where `isCase` checks
-    * the `Case` flag ONLY on the TYPE symbol - but a parameterless enum case's type symbol is the enum CLASS itself
-    * (the case's own `Case|Enum|StableRealizable` flags live on the TERM symbol), so `Type.isCaseVal` is `false` for
-    * exactly the values it is supposed to detect. The Scala 3 `PlatformBridge` overrides this with a formula checking
-    * `Case|Enum` on type OR term symbol. The Scala 2 `PlatformBridge` overrides it too (static final module class) -
-    * `-Ytasty-reader` presents Scala 3 parameterless enum cases without the `Case` flag (sandwich scenario). Default is
-    * `false` (used only by partial cakes).
-    */
-  protected def isEnumCaseValCompat[A: Type]: Boolean = false
-
   /** `true` for accessor methods that scalac marks STABLE (`MethodSymbol.isStable`) even though Hearth's `Method.isVal`
     * is `false` - most notably `val` members of structural REFINEMENT types (e.g. a type param bounded with
     * `A <: { val value: String }`), whose member symbol is a deferred stable method with no accessed field.
@@ -58,16 +46,6 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
     * body vals - verified against chimney 1.8.2: the same shape fails with "no accessor named value" there too).
     */
   protected def isStableAccessorCompat(method: Method): Boolean = false
-
-  /** `true` when the type is backed by an actual TERM (a concrete Java enum constant), not the enum class itself.
-    *
-    * On Scala 3 a plain Java enum class is compiled `final` (NOT abstract, unlike enums with constant bodies), so the
-    * `<:< java.lang.Enum && !abstract` value-detection also fires for the CLASS - the class must fall through the
-    * singleton/product parsing to the sealed-hierarchy rule instead. The Scala 3 `PlatformBridge` overrides this with a
-    * term-symbol check; the Scala 2 default is `true` (there Hearth counts Java enum classes as abstract, so the old
-    * formula already excludes them).
-    */
-  protected def isJavaEnumValueTermCompat[A: Type]: Boolean = true
 
   /** Runs the thunk with Cross-Quotes' active context restored to the MACRO-ENTRY one (`Quotes` on Scala 3).
     *

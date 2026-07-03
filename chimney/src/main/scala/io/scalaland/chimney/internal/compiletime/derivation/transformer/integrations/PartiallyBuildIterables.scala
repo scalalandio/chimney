@@ -136,6 +136,9 @@ trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.
             def iterator(collection: Expr[Collection]): Expr[Iterator[Item]] =
               partiallyBuildIterableExpr.iterator(collection)
 
+            def foreach(collection: Expr[Collection])(f: Expr[Item] => Expr[Unit]): Expr[Unit] =
+              iteratorForeachCompat(iterator(collection))(f)
+
             def to[Collection2: Type](
                 collection: Expr[Collection],
                 factory: Expr[Factory[Item, Collection2]]
@@ -156,7 +159,7 @@ trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.
       */
     private def hearthProviderSupport[M: Type]: Option[Existential[PartiallyBuildIterable[M, *]]] = {
       ensureStandardExtensionsLoaded()
-      // Guards mirror TotallyBuildIterables.hearthProviderSupport (incl. the bottom-type provider-crash gotcha).
+      // Guards mirror TotallyBuildIterables.hearthSupport (incl. the bottom-type provider-crash gotcha).
       if (Type[M] <:< hearthFallbackNullType) None
       else if (Type[M] =:= hearthPartialFallbackStringType) None // String-as-collection excluded
       else if (Type[M] <:< hearthFallbackOptionOfAnyType || Type[M] <:< hearthFallbackEitherOfAnyType)
@@ -212,6 +215,9 @@ trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.
           def iterator(collection: Expr[M]): Expr[Iterator[Item]] =
             iterableIteratorCompat(isCollectionOf.asIterable(collection))
 
+          def foreach(collection: Expr[M])(f: Expr[Item] => Expr[Unit]): Expr[Unit] =
+            isCollectionOf.foreach(collection)(f)
+
           def to[Collection2: Type](
               collection: Expr[M],
               factory: Expr[Factory[Item, Collection2]]
@@ -253,6 +259,9 @@ trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.
               iterableIteratorCompat(isMapOf.asIterable(collection)),
               toTuple
             )
+
+          def foreach(collection: Expr[M])(f: Expr[(K, V)] => Expr[Unit]): Expr[Unit] =
+            isMapOf.foreach(collection)(pair => f(toTuple(pair)))
 
           def to[Collection2: Type](
               collection: Expr[M],

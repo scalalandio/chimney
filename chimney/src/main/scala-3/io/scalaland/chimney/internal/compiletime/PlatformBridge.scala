@@ -131,34 +131,6 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     else None
   }
 
-  /** Scala 3 override of `ProductTypes.namedTupleGetterCompat`: `in.asInstanceOf[(V1, ..., Vn)]._N` for arity < 23,
-    * `productElement(idx)` + cast for TupleXXL.
-    */
-  override protected def namedTupleGetterCompat[A: Type, Elem: Type](
-      in: Expr[A],
-      idx: Int,
-      valueTypes: List[??]
-  ): Expr[Elem] = {
-    given tA: scala.quoted.Type[A] = Type[A].asInstanceOf[scala.quoted.Type[A]]
-    given tElem: scala.quoted.Type[Elem] = Type[Elem].asInstanceOf[scala.quoted.Type[Elem]]
-    val inQ = in.asInstanceOf[scala.quoted.Expr[A]]
-    val arity = valueTypes.size
-    (if arity < 23 then {
-       // tuple._1, tuple._2, ...
-       val tupleSym = if arity == 1 then TypeRepr.of[Tuple1].classSymbol.get else defn.TupleClass(arity)
-       val tupleType =
-         tupleSym.typeRef.appliedTo(
-           valueTypes.map(vt => TypeRepr.of(using vt.Underlying.asInstanceOf[scala.quoted.Type[Any]]))
-         )
-       tupleType.asType match {
-         case '[tpe] => Select.unique('{ $inQ.asInstanceOf[tpe] }.asTerm, s"_${idx + 1}").asExprOf[Elem]
-       }
-     } else {
-       // tupleXXL.productElement(n)
-       '{ $inQ.asInstanceOf[scala.Product].productElement(${ scala.quoted.Expr(idx) }).asInstanceOf[Elem] }
-     }).asInstanceOf[Expr[Elem]]
-  }
-
   /** Scala 3 override of `ProductTypes.tupleXXLConstructorCompat` (hearth#314): Hearth 0.4.0's synthetic named-tuple
     * constructor emits an invalid application for TupleXXL arities - build
     * `Tuple.fromIArray(IArray(...)).asInstanceOf[A]` instead.
@@ -202,26 +174,6 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
   override protected def inheritedFieldGetterCompat[A: Type, Tpe: Type](in: Expr[A], name: String): Expr[Tpe] = {
     given tTpe: scala.quoted.Type[Tpe] = Type[Tpe].asInstanceOf[scala.quoted.Type[Tpe]]
     Select.unique(in.asInstanceOf[scala.quoted.Expr[A]].asTerm, name).asExprOf[Tpe].asInstanceOf[Expr[Tpe]]
-  }
-
-  /** Scala 3 override of [[MacroCommonsCompat.isEnumCaseValCompat]] (hearth#311): checks `Case|Enum` (+ static/stable)
-    * on the type symbol OR the TERM symbol (parameterless enum cases carry their flags on the term symbol; the type
-    * symbol is the enum class itself).
-    */
-  override protected def isEnumCaseValCompat[A: Type]: Boolean = {
-    def attempt(sym: Symbol): Boolean =
-      !sym.isNoSymbol && sym.flags.is(Flags.Case | Flags.Enum) &&
-        (sym.flags.is(Flags.JavaStatic) || sym.flags.is(Flags.StableRealizable))
-    val repr = TypeRepr.of[A](using Type[A].asInstanceOf[scala.quoted.Type[A]])
-    attempt(repr.typeSymbol) || attempt(repr.termSymbol)
-  }
-
-  /** Scala 3 override of [[MacroCommonsCompat.isJavaEnumValueTermCompat]]: a Java enum VALUE type is a `TermRef` (or a
-    * `JavaStatic`-flagged symbol); the enum CLASS type has neither.
-    */
-  override protected def isJavaEnumValueTermCompat[A: Type]: Boolean = {
-    val repr = TypeRepr.of[A](using Type[A].asInstanceOf[scala.quoted.Type[A]])
-    (!repr.termSymbol.isNoSymbol) || repr.typeSymbol.flags.is(Flags.JavaStatic)
   }
 
   /** Scala 3 override of [[MacroCommonsCompat.classOfExprCompat]]: a proper class LITERAL

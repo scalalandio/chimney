@@ -2,21 +2,18 @@ package io.scalaland.chimney.internal.compiletime.datatypes
 
 import io.scalaland.chimney.internal.compiletime.ChimneyDefinitions
 
-/** Built on Hearth's `Type.directChildren`.
+/** Thin view over Hearth's `Type.directChildren` (the substance of Hearth's `Enum[A]` class view).
   *
   * The view is named [[SealedEnum]] (not `Enum`) because Hearth's cake already defines `hearth.typed.Classes#Enum` -
   * mixing both into one cake would be an "inherits conflicting members" error.
   *
-  * Semantic pins:
-  *   - `parse` matches only sealed types (incl. Scala 3 enums) and Java enums - Hearth's extra `Enum` capabilities
-  *     (Scala `Enumeration`, Scala 3 union types) are deliberately NOT exposed (rules and their tests do not expect
-  *     them); TODO(hearth-migration): consider exposing them as a new, opt-in feature,
-  *   - subtypes are flattened recursively through nested sealed hierarchies in shared code (Hearth's `directChildren`
-  *     is direct-only on Scala 3, already flattened on Scala 2 - the recursion is a no-op there); abstract non-sealed
-  *     leaves are kept as elements (Hearth's own `exhaustiveChildren` would refuse them),
+  * What stays Chimney's (rule semantics, not old-engine parity):
+  *   - subtypes are flattened recursively down to LEAVES - Chimney's subtype matching is leaf-name-based across
+  *     hierarchies of different nesting (Hearth's `directChildren` is direct-only on Scala 3; `exhaustiveChildren`
+  *     would refuse abstract non-sealed leaves, which Chimney keeps as elements),
   *   - subtypes not conforming to `A` (GADTs) are filtered out,
-  *   - on Scala 2 Hearth's per-level `ListMap` may merge same-named leaves from different nested branches (Hearth
-  *     flattens before we can interleave) - same-named leaves across branches survive on Scala 3.
+  *   - `parse` matches sealed types (incl. Scala 3 enums) and Java enums; Hearth's extra `Enum` capabilities (Scala
+  *     `Enumeration` values, Scala 3 union types) are not wired into the rule yet.
   */
 private[compiletime] trait SealedHierarchies { this: ChimneyDefinitions & hearth.MacroCommons =>
 

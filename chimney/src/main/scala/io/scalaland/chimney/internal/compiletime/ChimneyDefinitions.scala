@@ -14,7 +14,6 @@ private[compiletime] trait ChimneyDefinitions
     with datatypes.ProductTypes
     with datatypes.SealedHierarchies
     with datatypes.ValueClasses
-    with datatypes.IterableOrArrays
     with datatypes.SingletonTypes
     with datatypes.StdExtensionsLoading {
   this: hearth.MacroCommons & hearth.std.StdExtensions =>

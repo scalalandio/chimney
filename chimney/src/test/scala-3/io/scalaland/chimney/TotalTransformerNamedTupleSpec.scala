@@ -128,10 +128,10 @@ class TotalTransformerNamedTupleSpec extends ChimneySpec {
             |  _2: scala.Int - can't derive transformation from _2: java.lang.String in source type scala.NamedTuple.NamedTuple[scala.Tuple2["a", "b"], scala.Tuple2[scala.Int, java.lang.String]]
             |
             |java.lang.String (transforming from: a into: _1)
-            |  derivation from namedtuple.asInstanceOf[scala.Tuple2[scala.Int, java.lang.String]]._1: scala.Int to java.lang.String is not supported in Chimney!
+            |  derivation from namedtuple.asInstanceOf[scala.Product].productElement(0).asInstanceOf[scala.Int]: scala.Int to java.lang.String is not supported in Chimney!
             |
             |scala.Int (transforming from: b into: _2)
-            |  derivation from namedtuple.asInstanceOf[scala.Tuple2[scala.Int, java.lang.String]]._2: java.lang.String to scala.Int is not supported in Chimney!
+            |  derivation from namedtuple.asInstanceOf[scala.Product].productElement(1).asInstanceOf[java.lang.String]: java.lang.String to scala.Int is not supported in Chimney!
             |
             |Consult https://chimney.readthedocs.io for usage examples.
             |""".stripMargin

@@ -3,45 +3,29 @@ package io.scalaland.chimney.internal.compiletime.datatypes
 import io.scalaland.chimney.internal.compiletime.ChimneyDefinitions
 import io.scalaland.chimney.partial
 
-/** DESIGN CHOICE: implemented as a custom parse on Hearth's `Method` API (unambiguous unary public constructor +
-  * same-named public getter) instead of Hearth's `IsValueType`:
-  *   - Hearth's built-in providers cover only `AnyVal` (and Java boxed primitives), while `WrapperClassType` matches
-  *     ANY single-public-field class with a matching constructor, so a custom provider would have been needed anyway,
-  *   - `IsValueType` does not expose `fieldName` (used by the rules for `Path` bookkeeping),
-  *   - it requires standard extensions to be loaded, which the plain-value datatypes layer should not depend on.
-  * The getter is looked up directly by the constructor argument's name (public + nullary), per the documented contract
-  * ("expose a getter of the same name and type as constructor's argument").
+/** Thin view over Hearth's `IsValueType` (built-in providers: `AnyVal`, Scala 3 opaque types, Java boxed primitives;
+  * plus ServiceLoader-registered `StandardMacroExtension`s like chimney-protobufs' `Timestamp` provider), extended with
+  * Chimney's own STRUCTURAL matching (any single-public-field class whose unambiguous unary public constructor matches
+  * a same-named public getter - the `nonAnyValWrappers` feature, which no Hearth provider covers).
   *
-  * EXTENSION FALLBACK: when the Method-based parse rejects a type, [[WrapperClassType.parse]] additionally consults
-  * Hearth's `IsValueType` providers - this is how ServiceLoader-registered `StandardMacroExtension`s (e.g.
-  * chimney-protobufs' `Timestamp` provider) plug into the value-class rules. Guards (and their rationale):
-  *   - `A <:< AnyVal` is never consulted: `IsValueTypeProviderForAnyVal` (the only built-in that can match Scala
-  *     classes) disagrees with the Method-based parse on edge cases (it uses `primaryConstructor` where we require an
-  *     UNambiguous constructor, and it doesn't require the getter NAME to match the argument), so AnyVal handling stays
-  *     100% with the Method-based parse,
-  *   - the 8 `java.lang` boxed primitives ARE consulted: Hearth's `IsValueTypeProviderForJava*` built-ins make
-  *     `Int <-> java.lang.Integer` etc. derivable with no import at all. They surface through the UNGATED
-  *     [[ValueClassType]] (not the flag-gated `WrapperClassType` - a boxed primitive is the Java spelling of an
-  *     `AnyVal`, not a "non-AnyVal wrapper"); user-provided `Transformer` implicits keep winning through rule #1 as
-  *     always. The ValueClassToType/TypeToValueClass rules use boxed matches ONLY for the exact `boxed <-> primitive`
-  *     pairs (see [[isJavaBoxedPrimitive]] - nullable boxed types must not preempt the null-safe Option rules),
-  *   - Hearth exposes no provider provenance on a successful match (only skip-reasons carry provider names,
-  *     hearth#329), so the built-in-vs-extension distinction is enforced by the type-level filters above.
-  *     TODO(hearth-extensions): re-audit this list on every Hearth version bump (e.g. newer Hearth adds an opaque-type
-  *     provider that these filters would NOT exclude),
-  *   - only `CtorLikeOf.PlainValue` wraps are accepted by `WrapperClassType` - smart-constructor (validated) value
-  *     types cannot be expressed as a total `WrapperClass`; they parse as [[PartialWrapperClassType]] instead and
-  *     surface only in PartialTransformer derivation (see [[io.scalaland.chimney.internal.compiletime.CtorLikeExprs]]
-  *     for the `CtorLike` error -> `partial.Result` mapping),
+  * Notes:
+  *   - `IsValueType` is consulted FIRST (a provider match reflects the type author's/integration's intent and wins over
+  *     structural accident); the Method-based parse remains as the structural fallback,
+  *   - only `CtorLikeOf.PlainValue` wraps become a total [[WrapperClass]]; smart-constructor (validated) value types
+  *     parse as [[PartialWrapperClass]] instead and surface only in PartialTransformer derivation (see
+  *     [[io.scalaland.chimney.internal.compiletime.CtorLikeExprs]] for the `CtorLike` error -> `partial.Result`
+  *     mapping),
   *   - `fieldName` (Path bookkeeping + error messages only) is taken from the wrap-method's parameter name when the
   *     provider supplies a `Method`, otherwise it defaults to `"value"`,
-  *   - the rules gate STRUCTURALLY matched (Method-based) `WrapperClassType`s behind the `nonAnyValWrappers` flag, but
-  *     extension-provided value types SKIP the flag (see [[WrapperClass.fromStdExtension]]): registering an
-  *     `IsValueType` provider is an explicit opt-in by the integration's author - the same trust level as an
-  *     `integrations.TotallyBuildIterable`/`OptionalValue` implicit, neither of which is flag-gated.
-  *     `PartialWrapperClassType` is by construction ALWAYS extension-provided, so it is not flag-gated at all (boxed
-  *     primitives are exempt via `ValueClassType`, see above).
-  * The fallback calls `ensureStandardExtensionsLoaded()` (idempotent; the Gateways already load at entry), so the
+  *   - `AnyVal`s and the 8 Java boxed primitives surface through the UNGATED [[ValueClassType]]; boxed primitives are
+  *     additionally pinned by the rules to their exact `boxed <-> primitive` pairs (see [[isJavaBoxedPrimitive]] - a
+  *     DELIBERATE Chimney semantics decision, NOT a Hearth workaround: boxed types are nullable and eager structural
+  *     unwrapping would preempt the null-safe Option rules),
+  *   - other provider matches (opaque types, extensions) skip the `nonAnyValWrappers` flag (see
+  *     [[WrapperClass.fromStdExtension]]): an opaque type is the Scala 3 value-type idiom and a registered provider is
+  *     an explicit opt-in by the integration's author - the same trust level as an `integrations.TotallyBuildIterable`
+  *     implicit; the flag keeps gating only the STRUCTURAL matching of arbitrary single-field classes.
+  * The provider path calls `ensureStandardExtensionsLoaded()` (idempotent; the Gateways already load at entry), so the
   * datatypes layer stays safe even if consulted from a path that skipped a Gateway.
   */
 private[compiletime] trait ValueClasses {
@@ -109,19 +93,16 @@ private[compiletime] trait ValueClasses {
     private type Cached[A] = Option[Existential[WrapperClass[A, *]]]
     private val wrapperClassCache = new TypeCache[Cached]
     def parse[A: Type]: Option[Existential[WrapperClass[A, *]]] = wrapperClassCache(Type[A]) {
-      methodBasedParse[A].orElse(hearthProviderSupport[A])
+      hearthSupport[A].orElse(methodBasedParse[A])
     }
     def unapply[A](tpe: Type[A]): Option[Existential[WrapperClass[A, *]]] = parse(using tpe)
 
-    /** Fallback consulting Hearth `IsValueType` providers registered by `StandardMacroExtension`s - see the trait's
-      * ScalaDoc for the full list of guards and their rationale.
-      */
-    private def hearthProviderSupport[A: Type]: Option[Existential[WrapperClass[A, *]]] =
-      // HEARTH GOTCHA (hearth#319): bottom types conform to everything (`Null <:< java.lang.Integer` etc.), so
-      // `<:<`-matching built-in providers match `Null`/`Nothing` and may CRASH eagerly while building their exprs.
-      // Never consult providers for bottom types.
+    /** Hearth `IsValueType` providers (built-ins AND `StandardMacroExtension`s) - see the trait's ScalaDoc. */
+    private def hearthSupport[A: Type]: Option[Existential[WrapperClass[A, *]]] =
+      // HEARTH GOTCHA (hearth#319, fixed on master): bottom types conform to everything (`Null <:< java.lang.Integer`
+      // etc.), so `<:<`-matching built-in providers match `Null`/`Nothing` and may CRASH eagerly while building their
+      // exprs. Never consult providers for bottom types.
       if (Type[A] <:< wrapperBottomType) None
-      else if (Type[A] <:< wrapperAnyValType) None // AnyVal stays with the Method-based parse (built-in excluded)
       else {
         ensureStandardExtensionsLoaded()
         IsValueType.unapply(Type[A]).flatMap { isValueType =>
@@ -137,7 +118,9 @@ private[compiletime] trait ValueClasses {
                     fieldName = fieldName,
                     unwrap = isValueTypeOf.unwrap,
                     wrap = plainValue.ctor.asInstanceOf[Expr[Inner] => Expr[A]],
-                    fromStdExtension = true
+                    // AnyVal/boxed matches flow through the ungated ValueClassType, so the flag-skipping marker is
+                    // only meaningful (and only set) for opaque types and extension-provided value types.
+                    fromStdExtension = !(Type[A] <:< wrapperAnyValType || isJavaBoxedPrimitive[A])
                   )
                 )
               )
@@ -185,7 +168,7 @@ private[compiletime] trait ValueClasses {
             unwrap = (expr: Expr[A]) => ProductType.invokeNullaryInstanceMethod[A, Inner](getter)(expr),
             wrap = (expr: Expr[Inner]) =>
               ProductType
-                .invokeMethodChain(unambiguousConstructor)(None, Map(argumentName -> expr.as_??))
+                .invoke(unambiguousConstructor)(None, Map(argumentName -> expr.as_??))
                 .fold(
                   error => assertionFailed(s"Failed to call constructor of ${Type.prettyPrint[A]}: $error"),
                   result => result.value.asInstanceOf[Expr[A]]
@@ -243,8 +226,7 @@ private[compiletime] trait ValueClasses {
     private val partialWrapperClassCache = new TypeCache[Cached]
     def parse[A: Type]: Option[Existential[PartialWrapperClass[A, *]]] = partialWrapperClassCache(Type[A]) {
       if (Type[A] <:< wrapperBottomType) None // bottom types crash eager providers - see WrapperClassType
-      else if (Type[A] <:< wrapperAnyValType) None // AnyVal stays with the Method-based parse
-      // Total wrapping wins - a type that parses as a (Method-based or provider-provided PlainValue) WrapperClass
+      // Total wrapping wins - a type that parses as a (provider-provided PlainValue or Method-based) WrapperClass
       // must keep its total expansion; smart-constructor support only ADDS types nothing else could handle.
       else if (WrapperClassType.parse[A].isDefined) None
       else {

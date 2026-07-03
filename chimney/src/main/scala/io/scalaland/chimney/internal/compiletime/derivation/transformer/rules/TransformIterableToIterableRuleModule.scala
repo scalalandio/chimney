@@ -28,11 +28,45 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
 
     private def factoryTypeCompat[A: Type, C: Type]: Type[Factory[A, C]] = Type.of[Factory[A, C]]
 
-    private def iteratorMapCompat[A: Type, B: Type](
-        it: Expr[Iterator[A]],
-        f: Expr[A => B]
-    ): Expr[Iterator[B]] = Expr.quote {
-      Expr.splice(it).map(Expr.splice(f))
+    /** Total per-item mapping as foreach+builder (Hearth `IsCollection` mechanics): `{ val f = fn; val b =
+      * factory.newBuilder; <foreach src> { item => b += f(item) }; b.result() }` - no `iterator.map` wrapper
+      * allocation, and providers with a cheaper traversal (e.g. arrays by index) skip the iterator entirely.
+      *
+      * The `f`/`b` vals are bound with `prependFreshValCompat` (hearth#317-safe on Scala 3) and the foreach body is
+      * built EAGERLY, never inside a splice of another quote - provider `foreach` implementations run Hearth-internal
+      * cross-quotes bound to the macro-entry `Quotes` and trip `-Xcheck-macros`' ScopeException when evaluated in a
+      * nested splice; `retagExprCompat` re-tags the `.use`d result on Scala 2 (hearth#308) because it flows into
+      * `TransformationExpr`'s `Expr.typeOf`.
+      */
+    @scala.annotation.nowarn("msg=is never used")
+    private def foreachToBuilderCompat[A: Type, B: Type, C: Type](
+        fn: Expr[A => B],
+        factory: Expr[Factory[B, C]],
+        foreachSrc: (Expr[A] => Expr[Unit]) => Expr[Unit]
+    ): Expr[C] = {
+      implicit val FnAB: Type[A => B] = Type.of[A => B]
+      implicit val FactoryBC: Type[Factory[B, C]] = Type.of[Factory[B, C]]
+      implicit val BuilderBC: Type[scala.collection.mutable.Builder[B, C]] =
+        Type.of[scala.collection.mutable.Builder[B, C]]
+      retagExprCompat[C](
+        prependFreshValCompat[A => B, C](fn) { fRef =>
+          prependFreshValCompat[scala.collection.mutable.Builder[B, C], C](
+            Expr.quote(Expr.splice(factory).newBuilder)
+          ) { bRef =>
+            val loop: Expr[Unit] = foreachSrc { (item: Expr[A]) =>
+              // suppressUnused (tree-level `val _ = expr; ()`): a quoted `val _`/named-val/bare-statement discard
+              // trips (respectively) a Scala 2 reify crash, unused-local warnings, or -Wnonunit-statement.
+              Expr.suppressUnused(
+                Expr.quote(Expr.splice(bRef).addOne(Expr.splice(fRef).apply(Expr.splice(item))))
+              )
+            }
+            Expr.quote {
+              Expr.splice(loop)
+              Expr.splice(bRef).result()
+            }
+          }
+        }
+      )
     }
 
     private def iteratorToCompat[A: Type, C: Type](
@@ -257,16 +291,21 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
                 case Right(partialFactory) => DerivationResult.partialExpr(srcToFactory(partialFactory))
               }
             } else {
-              def srcIteratorMapTo[ToOrPartialTo: Type](
+              def srcForeachToBuilder[ToOrPartialTo: Type](
                   factory: Expr[Factory[InnerTo, ToOrPartialTo]]
               ): Expr[ToOrPartialTo] =
                 // We're constructing
-                // '{ ${ src }.iterator.map(from2 => ${ derivedInnerTo }).to(Factory[$InnerTo, $ToOrPartialTo]) }
-                iteratorToCompat(iteratorMapCompat(fromIterable.iterator(ctx.src), totalP.build[InnerTo]), factory)
+                // '{ val f = from2 => ${ derivedInnerTo }; val b = ${ factory }.newBuilder
+                //    <foreach over src> { item => b += f(item) }; b.result() }
+                foreachToBuilderCompat[InnerFrom, InnerTo, ToOrPartialTo](
+                  totalP.build[InnerTo],
+                  factory,
+                  f => fromIterable.foreach(ctx.src)(f)
+                )
 
               toIterable.factory match {
-                case Left(totalFactory)    => DerivationResult.totalExpr(srcIteratorMapTo(totalFactory))
-                case Right(partialFactory) => DerivationResult.partialExpr(srcIteratorMapTo(partialFactory))
+                case Left(totalFactory)    => DerivationResult.totalExpr(srcForeachToBuilder(totalFactory))
+                case Right(partialFactory) => DerivationResult.partialExpr(srcForeachToBuilder(partialFactory))
               }
             }
           } { (partialP: LambdaBuilder[InnerFrom => *, Expr[partial.Result[InnerTo]]]) =>

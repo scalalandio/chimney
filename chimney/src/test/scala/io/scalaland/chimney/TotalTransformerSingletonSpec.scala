@@ -2,6 +2,11 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
 
+object TotalTransformerSingletonSpec {
+  object PlainTarget
+  object Levels extends Enumeration { val High: Value = Value }
+}
+
 class TotalTransformerSingletonSpec extends ChimneySpec {
 
   test("""transformation into Null should always be possible""") {
@@ -17,6 +22,18 @@ class TotalTransformerSingletonSpec extends ChimneySpec {
 
     Example(10, "test").transformInto[Target.type] ==> Target
     Example(10, "test").into[Target.type].transform ==> Target
+  }
+
+  test(
+    """transformation into a plain object or an Enumeration value should always be possible (Hearth SingletonValue semantics)"""
+  ) {
+    case class Example(a: Int, b: String)
+    import TotalTransformerSingletonSpec.{Levels, PlainTarget}
+
+    Example(10, "test").transformInto[PlainTarget.type] ==> PlainTarget
+    Example(10, "test").into[PlainTarget.type].transform ==> PlainTarget
+    Example(10, "test").transformInto[Levels.High.type] ==> Levels.High
+    Example(10, "test").into[Levels.High.type].transform ==> Levels.High
   }
 
   test("""transformation into literal-based singleton should always be possible""") {

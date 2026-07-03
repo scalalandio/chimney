@@ -47,7 +47,10 @@ private[compiletime] trait JavaCollectionsPlatformCompat {
   protected def isJavaEnumMapCompat[M: Type]: Boolean = classOfTypeHasSuperclass[M]("java.util.EnumMap")
 
   private def classOfTypeHasSuperclass[M: Type](name: String): Boolean =
-    Type.classOfType[M].exists { cls =>
+    // Try (hearth#333): Hearth 0.4.0's `Type.classOfType[IArray[...]]` THROWS a Hearth assertion ("recognized as
+    // built-in type, but is not handled by a built-in branch") instead of returning None; any non-answer means
+    // "not an EnumSet/EnumMap" here.
+    scala.util.Try(Type.classOfType[M]).toOption.flatten.exists { cls =>
       Iterator
         .iterate[java.lang.Class[?]](cls)(_.getSuperclass)
         .takeWhile(_ != null)

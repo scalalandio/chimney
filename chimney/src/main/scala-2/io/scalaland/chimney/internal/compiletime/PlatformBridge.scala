@@ -109,20 +109,6 @@ abstract private[compiletime] class PlatformBridge(val c: scala.reflect.macros.b
     } else inst
   }
 
-  /** Scala 2 override of [[MacroCommonsCompat.isEnumCaseValCompat]] (hearth#311):
-    * `isPublic && isModuleClass && isStatic && isFinal` ("parameterless case in S3 cannot be checked for 'case'").
-    *
-    * Needed for the SANDWICH scenario: under `-Ytasty-reader` a Scala 3 parameterless enum case (e.g. `Foo.A` of
-    * `enum Foo { case A }`) is seen by scalac as a static final module class WITHOUT the `Case` flag, so Hearth's
-    * `Type.isCaseVal` is `false` - the type would then parse as a POJO and the engine would emit uncompilable
-    * `new Foo.A.type()` instead of referencing the singleton. (This also classifies plain static final `object`s as
-    * singleton "case vals" - intentional.)
-    */
-  override protected def isEnumCaseValCompat[A: Type]: Boolean = {
-    val sym = Type[A].tpe.typeSymbol
-    sym.isPublic && sym.isModuleClass && sym.isStatic && sym.isFinal
-  }
-
   /** Scala 2 override of [[MacroCommonsCompat.isStableAccessorCompat]] (hearth#326): `field.isStable` on the accessor's
     * `MethodSymbol`. Catches `val` members of structural refinement types (`A <: { val value: String }`) - deferred
     * stable methods with no accessed field, which Hearth 0.4.0's `Method.isVal` misses - so they classify as
