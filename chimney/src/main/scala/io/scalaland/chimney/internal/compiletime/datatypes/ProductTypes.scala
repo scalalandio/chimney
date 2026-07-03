@@ -145,6 +145,30 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
     assertionFailed(s"Cannot construct 23+-arity named tuple ${Type.prettyPrint[A]} on this platform")
   // $COVERAGE-ON$
 
+  /** Scala 3-only: Hearth 0.4.0's `Type[A].methods` enumerates `typeSymbol.methodMembers ++ typeSymbol.fieldMembers`,
+    * but on Scala 3 `fieldMembers` does NOT return `val` fields inherited from parent classes (e.g. constructor `val`s
+    * of abstract parents) - such members are neither methods nor own fields, so they vanish entirely. The old engine
+    * fixed the same issue by walking `A.baseClasses` (scalalandio/chimney-macro-commons#85, chimney issue #835).
+    *
+    * Returns `(name, field type)` for PUBLIC non-synthetic fields found on base classes but absent from
+    * `existingNames`; the Scala 3 bridge overrides it (the shared default is empty - Scala 2's `member` walk already
+    * sees inherited fields).
+    *
+    * TODO(hearth-migration): remove once fixed upstream (report to https://github.com/kubuszok/hearth/issues).
+    */
+  protected def inheritedFieldGettersCompat[A: Type](existingNames: Set[String]): List[(String, ??)] = {
+    val _ = existingNames
+    List.empty
+  }
+
+  /** Scala 3-only: the getter expr (`in.field` selection) for a field returned by [[inheritedFieldGettersCompat]]. */
+  protected def inheritedFieldGetterCompat[A: Type, Tpe: Type](in: Expr[A], name: String): Expr[Tpe] = {
+    // $COVERAGE-OFF$should never happen - inheritedFieldGettersCompat is empty wherever this is not overridden
+    val _ = in
+    assertionFailed(s"No platform override for inherited field getter $name of ${Type.prettyPrint[A]}")
+    // $COVERAGE-ON$
+  }
+
   protected object ProductType {
 
     private[datatypes] lazy val AnyType: Type[Any] = Type.of[Any]
@@ -297,7 +321,7 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
       val seen = scala.collection.mutable.Set.empty[String]
       val deduplicated = (sortedArgVals ++ bodyVals ++ accessorsAndGetters).filter(m => seen.add(m.name.trim))
 
-      ListMap.from(deduplicated.map { method =>
+      val methodBasedGetters = deduplicated.map { method =>
         val name = method.name.trim
         val returned: ?? = method.knownReturning.getOrElse {
           // $COVERAGE-OFF$should never happen unless we messed up
@@ -318,7 +342,24 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
             get = (in: Expr[A]) => invokeNullaryInstanceMethod[A, Tpe](method)(in)
           )
         )
-      })
+      }
+
+      // inheritedFieldGettersCompat: Scala 3 `val` fields inherited from parent classes are invisible to Hearth's
+      // `Type[A].methods` (issue #835) - restore them as inherited body vals (flag-gated by enableInheritedAccessors).
+      val inheritedFieldGetters = inheritedFieldGettersCompat[A](candidates.map(_.name.trim).toSet)
+        .filterNot { case (name, _) => ProductTypes.isGarbageName(name) }
+        .map { case (name, returned) =>
+          import returned.Underlying as Tpe
+          name -> Existential[Product.Getter[A, *], Tpe](
+            Product.Getter[A, Tpe](
+              sourceType = Product.Getter.SourceType.ConstructorBodyVal,
+              isInherited = true,
+              get = (in: Expr[A]) => inheritedFieldGetterCompat[A, Tpe](in, name)
+            )
+          )
+        }
+
+      ListMap.from(methodBasedGetters ++ inheritedFieldGetters)
     }
 
     private def namedTupleGetters[A: Type](namedTuple: NamedTuple[A]): Product.Getters[A] = {

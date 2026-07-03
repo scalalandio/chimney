@@ -193,6 +193,27 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
           ]
         )
 
+      lazy val ComputedPartialFailFast: Type.Ctor3.UpperBounded[
+        runtime.Path,
+        runtime.Path,
+        runtime.TransformerOverrides,
+        runtime.TransformerOverrides.ComputedPartialFailFast
+      ] =
+        ctor3UpperBoundedCompat[
+          runtime.Path,
+          runtime.Path,
+          runtime.TransformerOverrides,
+          runtime.TransformerOverrides.ComputedPartialFailFast
+        ](
+          Type.of[
+            runtime.TransformerOverrides.ComputedPartialFailFast[
+              runtime.Path,
+              runtime.Path,
+              runtime.TransformerOverrides
+            ]
+          ]
+        )
+
       lazy val ConstructorPartial: Type.Ctor3.UpperBounded[
         runtime.ArgumentLists,
         runtime.Path,
@@ -214,6 +235,27 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
           ]
         )
 
+      lazy val ConstructorPartialFailFast: Type.Ctor3.UpperBounded[
+        runtime.ArgumentLists,
+        runtime.Path,
+        runtime.TransformerOverrides,
+        runtime.TransformerOverrides.ConstructorPartialFailFast
+      ] =
+        ctor3UpperBoundedCompat[
+          runtime.ArgumentLists,
+          runtime.Path,
+          runtime.TransformerOverrides,
+          runtime.TransformerOverrides.ConstructorPartialFailFast
+        ](
+          Type.of[
+            runtime.TransformerOverrides.ConstructorPartialFailFast[
+              runtime.ArgumentLists,
+              runtime.Path,
+              runtime.TransformerOverrides
+            ]
+          ]
+        )
+
       lazy val Renamed: Type.Ctor3.UpperBounded[
         runtime.Path,
         runtime.Path,
@@ -228,6 +270,44 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
         ](
           Type.of[runtime.TransformerOverrides.Renamed[runtime.Path, runtime.Path, runtime.TransformerOverrides]]
         )
+
+      // ForAll has 2 unbounded + 2 upper-bounded params, which does not fit the Type.CtorN(.UpperBounded) shapes -
+      // a hand-rolled extractor on the untyped API (same exact-ctor matching as ctorNUpperBoundedCompat).
+      object ForAll {
+        private lazy val untypedCtor: UntypedType =
+          UntypedType.typeConstructor(
+            Type
+              .of[
+                runtime.TransformerOverrides.ForAll[
+                  Any,
+                  Any,
+                  runtime.TransformerOverrides,
+                  runtime.TransformerOverrides
+                ]
+              ]
+              .asUntyped
+          )
+
+        def unapply[A](
+            A: Type[A]
+        ): Option[(??, ??, ??<:[runtime.TransformerOverrides], ??<:[runtime.TransformerOverrides])] = {
+          val dealiased = UntypedType.dealias(A.asUntyped)
+          if (UntypedType.sameTypeConstructorAs(untypedCtor, dealiased))
+            UntypedType.typeArguments(dealiased) match {
+              case a1 :: a2 :: a3 :: a4 :: Nil =>
+                Some(
+                  (
+                    a1.asTyped[Any].as_??,
+                    a2.asTyped[Any].as_??,
+                    a3.asTyped[runtime.TransformerOverrides].as_??<:[runtime.TransformerOverrides],
+                    a4.asTyped[runtime.TransformerOverrides].as_??<:[runtime.TransformerOverrides]
+                  )
+                )
+              case _ => None
+            }
+          else None
+        }
+      }
     }
 
     object TransformerFlags {

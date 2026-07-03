@@ -93,10 +93,10 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
           Type[SomeFrom] <:< Type[From]
         }
         .filter {
-          case (_, TransformerOverride.Unused)                            => true
-          case (_, TransformerOverride.Computed(_, targetPath, _))        => targetPath == ctx.currentTgt
-          case (_, TransformerOverride.ComputedPartial(_, targetPath, _)) => targetPath == ctx.currentTgt
-          case (_, TransformerOverride.Renamed(_, targetPath))            =>
+          case (_, TransformerOverride.Unused)                               => true
+          case (_, TransformerOverride.Computed(_, targetPath, _))           => targetPath == ctx.currentTgt
+          case (_, TransformerOverride.ComputedPartial(_, targetPath, _, _)) => targetPath == ctx.currentTgt
+          case (_, TransformerOverride.Renamed(_, targetPath))               =>
             targetPath.drop(ctx.currentTgt) match {
               case Some(Path.AtSubtype(someTo, Path.Root)) => someTo.Underlying <:< Type[To]
               case _                                       => false
@@ -131,14 +131,22 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                       runtimeData.asInstanceOfExpr[From => To].apply(fromExpr)
                     )
                   )
-                case TransformerOverride.ComputedPartial(_, _, runtimeData) =>
+                case TransformerOverride.ComputedPartial(_, _, runtimeData, failFastAware) =>
                   // We're constructing:
                   // case someFromExpr: $someFrom => runtimeDataStore(${ idx }).asInstanceOf[$someFrom => partial.Result[$To]](someFromExpr)
-                  DerivationResult.pure(
-                    TransformationExpr.fromPartial(
-                      runtimeData.asInstanceOfExpr[From => partial.Result[To]].apply(fromExpr)
-                    )
-                  )
+                  val partialResult = if (failFastAware) {
+                    val failFastExpr = ctx match {
+                      case TransformationContext.ForPartial(_, failFast) => failFast
+                      case _                                             => Expr(false)
+                    }
+                    runtimeData
+                      .asInstanceOfExpr[From => Boolean => partial.Result[To]]
+                      .apply(fromExpr)
+                      .apply(failFastExpr)
+                  } else {
+                    runtimeData.asInstanceOfExpr[From => partial.Result[To]].apply(fromExpr)
+                  }
+                  DerivationResult.pure(TransformationExpr.fromPartial(partialResult))
                 case TransformerOverride.Renamed(_, targetPath) =>
                   val Some(Path.AtSubtype(someTo, _)) = targetPath.drop(ctx.currentTgt): @unchecked
                   // We're constructing:

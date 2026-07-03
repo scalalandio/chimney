@@ -46,6 +46,7 @@ private[compiletime] trait ScalaStdCompat { this: hearth.MacroCommons =>
     Type.Ctor2.fromUntyped[scala.collection.Factory](Type.Ctor2.of[scala.collection.Factory].asUntyped)
   private lazy val anyType: Type[scala.Any] = Type.of[scala.Any]
   private lazy val intType: Type[scala.Int] = Type.of[scala.Int]
+  private lazy val booleanType: Type[scala.Boolean] = Type.of[scala.Boolean]
   private lazy val unitType: Type[scala.Unit] = Type.of[scala.Unit]
   private lazy val nullType: Type[scala.Null] = Type.of[scala.Null]
   private lazy val nullExprCompat: Expr[scala.Null] = Expr.NullExprCodec.toExpr(null)
@@ -164,6 +165,7 @@ private[compiletime] trait ScalaStdCompat { this: hearth.MacroCommons =>
 
       implicit def AnyType: Type[scala.Any] = anyType
       implicit def IntType: Type[scala.Int] = intType
+      implicit def BooleanType: Type[scala.Boolean] = booleanType
       implicit def UnitType: Type[scala.Unit] = unitType
       implicit def NullType: Type[scala.Null] = nullType
     }

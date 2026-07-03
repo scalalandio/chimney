@@ -32,9 +32,9 @@ val versions = new {
   // Latest published kindlings (its 0.3.0 depends on hearth 0.4.0, same as us; publishes JVM/JS/Native x 2.13/3).
   val kindlingsCatsIntegration = "0.3.0"
   val kindProjector = "0.13.4"
-  val munit = "1.2.4"
+  val munit = "1.3.3"
   val scalaJavaCompat = "1.0.2"
-  val scalaJavaTime = "2.6.0"
+  val scalaJavaTime = "2.7.0"
   val scalapbRuntime = scalapb.compiler.Version.scalapbVersion
 
   // Explicitly handle Scala 2.13 and Scala 3 separately.
@@ -175,7 +175,10 @@ val settings = Seq(
     )
   ),
   Test / compile / scalacOptions ++= versions.fold(scalaVersion.value)(
-    for3 = Seq("-Wconf:msg=unused local definition:s"), // silence warn that appears since 3.3.7
+    for3 = Seq(
+      "-Wconf:msg=unused local definition:s", // silence warn that appears since 3.3.7
+      "-Wconf:msg=with as a type operator has been deprecated:s" // silence deprecation of `with` in Scala 3.4+
+    ),
     for2_13 = Seq.empty
   ),
   Compile / doc / scalacOptions ++= versions.fold(scalaVersion.value)(

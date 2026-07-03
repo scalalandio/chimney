@@ -36,6 +36,19 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
       .transform ==> SortedWrapper(Bar("c"))
   }
 
+  test("transform using TotalOuterTransformer with .everyItem on source path (issue #832)") {
+    import OuterTransformers.totalNonEmptyToSorted
+    import fixtures.products.Renames.*
+
+    implicit val userPlStdOrdering: Ordering[UserPLStd] = Ordering[Int].on[UserPLStd](_.id)
+
+    NonEmptyWrapper(User(1, "Kuba", Some(28)), User(2, "Artur", None))
+      .into[SortedWrapper[UserPLStd]]
+      .withFieldRenamed(_.everyItem.name, _.everyItem.imie)
+      .withFieldRenamed(_.everyItem.age, _.everyItem.wiek)
+      .transform ==> SortedWrapper(UserPLStd(1, "Kuba", Some(28)), UserPLStd(2, "Artur", None))
+  }
+
   test("transform from OptionalValue into OptionalValue") {
     Possible(Foo("a")).transformInto[Possible[Bar]] ==> Possible(Bar("a"))
     (Possible.Present(Foo("a")): Possible[Foo]).transformInto[Possible[Bar]] ==> Possible(Bar("a"))

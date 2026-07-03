@@ -82,6 +82,15 @@ class MacroCrossCompilationSpec extends ChimneySpec {
         .tap(_.c = 3.0)
     }
 
+    test("should handle case class to tuple with deterministic field ordering (issue #818)") {
+      s213.Monomorphic
+        .Foo(1, "2", 3.0, true)
+        .transformInto[(Int, String, Double, Boolean)] ==> (1, "2", 3.0, true)
+      s3.Monomorphic
+        .Foo(1, "2", 3.0, true)
+        .transformInto[(Int, String, Double, Boolean)] ==> (1, "2", 3.0, true)
+    }
+
     test("should handle reading from and writing to sealed trait/enum") {
       (s213.Sealed.Foo.A: s213.Sealed.Foo).transformInto[s3.Sealed.Foo] ==> s3.Sealed.Foo.A
       (s213.Sealed.Foo.B: s213.Sealed.Foo).transformInto[s3.Sealed.Foo] ==> s3.Sealed.Foo.B

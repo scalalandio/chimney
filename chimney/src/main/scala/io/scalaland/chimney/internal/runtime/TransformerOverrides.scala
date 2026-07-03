@@ -14,11 +14,17 @@ object TransformerOverrides {
   // Computes a value from an expr
   final class Computed[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides
   final class ComputedPartial[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides
+  // Computes a partial value from an expr with failFast flag
+  final class ComputedPartialFailFast[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides
   // Computes a value after all constructor arguments have been matched
   final class Constructor[Args <: ArgumentLists, ToPath <: Path, Tail <: Overrides] extends Overrides
   final class ConstructorPartial[Args <: ArgumentLists, ToPath <: Path, Tail <: Overrides] extends Overrides
+  // Computes a partial value after all constructor arguments have been matched, with failFast flag
+  final class ConstructorPartialFailFast[Args <: ArgumentLists, ToPath <: Path, Tail <: Overrides] extends Overrides
   // Computes a value using manually pointed value from
   final class Renamed[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides
   // Fallback value allowing merging several sources
   final class Fallback[FromFallback, ToPath <: Path, Tail <: Overrides] extends Overrides
+  // Scoped overrides that apply to all matching [FromMatch, ToMatch] derivations
+  final class ForAll[FromMatch, ToMatch, Inner <: Overrides, Tail <: Overrides] extends Overrides
 }

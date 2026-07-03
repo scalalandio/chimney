@@ -174,6 +174,40 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     '{ Tuple.fromIArray(IArray(${ scala.quoted.Varargs(argExprs) }*)).asInstanceOf[A] }.asInstanceOf[Expr[A]]
   }
 
+  /** Scala 3 override of `ProductTypes.inheritedFieldGettersCompat`: `val` fields inherited from parent classes are
+    * invisible to Hearth 0.4.0's `Type[A].methods` (`typeSymbol.fieldMembers` does not see them and they are not
+    * methods) - walk `A.baseClasses` like the old macro-commons fix did (scalalandio/chimney-macro-commons#85, chimney
+    * issue #835).
+    */
+  override protected def inheritedFieldGettersCompat[A: Type](existingNames: Set[String]): List[(String, ??)] = {
+    given tA: scala.quoted.Type[A] = Type[A].asInstanceOf[scala.quoted.Type[A]]
+    val aRepr = TypeRepr.of[A]
+    def isPublic(sym: Symbol): Boolean =
+      !sym.flags.is(Flags.Private) && !sym.flags.is(Flags.Protected) &&
+        sym.privateWithin.isEmpty && sym.protectedWithin.isEmpty
+    // NOTE: hearth defines its own `baseClasses` extension on UntypedType (= TypeRepr) returning List[UntypedType],
+    // which wins over quotes.reflect's `TypeRepr#baseClasses: List[Symbol]` - call the reflect one explicitly.
+    val bases: List[Symbol] = quotes.reflect.TypeReprMethods.baseClasses(aRepr)
+    (for {
+      base <- bases
+      field <- base.fieldMembers
+      name = field.name.trim
+      if !existingNames(name)
+      if isPublic(field) && !field.flags.is(Flags.Synthetic) && !field.flags.is(Flags.Artifact)
+    } yield {
+      val fieldType = aRepr.memberType(field).widenByName.dealias
+      name -> (fieldType.asType match {
+        case '[t] => (summon[scala.quoted.Type[t]].asInstanceOf[Type[t]]).as_??
+      })
+    }).distinctBy(_._1)
+  }
+
+  /** Scala 3 override of `ProductTypes.inheritedFieldGetterCompat`: plain field selection `in.name`. */
+  override protected def inheritedFieldGetterCompat[A: Type, Tpe: Type](in: Expr[A], name: String): Expr[Tpe] = {
+    given tTpe: scala.quoted.Type[Tpe] = Type[Tpe].asInstanceOf[scala.quoted.Type[Tpe]]
+    Select.unique(in.asInstanceOf[scala.quoted.Expr[A]].asTerm, name).asExprOf[Tpe].asInstanceOf[Expr[Tpe]]
+  }
+
   /** Scala 3 override of [[MacroCommonsCompat.isEnumCaseValCompat]]: the old macro-commons `isCaseVal` formula - checks
     * `Case|Enum` (+ static/stable) on the type symbol OR the TERM symbol (parameterless enum cases carry their flags on
     * the term symbol; the type symbol is the enum class itself).

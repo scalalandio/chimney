@@ -17,10 +17,10 @@ jobs:
     name: Check formatting
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: coursier/setup-action@v2.0.3
+      - uses: coursier/setup-action@v3.0.0
         with:
           apps: scalafmt
       - name: Check code and docs formatting
@@ -34,11 +34,11 @@ jobs:
     name: Check Scala CLI snippets from documentation
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: extractions/setup-just@v3
-      - uses: coursier/setup-action@v2.0.3
+      - uses: extractions/setup-just@v4
+      - uses: coursier/setup-action@v3.0.0
         with:
           # publish-local-for-tests builds Scala 3 artifacts with -release 17 (Scala 2.13 uses -release 11),
           # so the snippets job needs JDK 17+ - don't rely on the runner's default JVM.
@@ -72,16 +72,16 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: coursier/cache-action@v8
-      - uses: coursier/setup-action@v2.0.3
+      - uses: coursier/setup-action@v3.0.0
         with:
           jvm: ${{ matrix.jvm }}
           apps: sbt
       - name: Clean, compile, test, generate coverage report, check MiMa
         run: sbt ci-${{ matrix.platform }}-${{ matrix.scala }}
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

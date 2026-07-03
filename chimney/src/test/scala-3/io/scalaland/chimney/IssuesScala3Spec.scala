@@ -53,5 +53,46 @@ class IssuesScala3Spec extends ChimneySpec {
       )
     }
   }
+  test("fix issue #818 (deterministic case class to tuple field ordering)") {
+    case class Request(id: String, isPublic: Boolean)
+    Request("abc", true).transformInto[(String, Boolean)] ==> ("abc", true)
+  }
+
+  group("fix issue #857 (inline def reuse with enableDefaultValues)") {
+
+    test("generic inline transformer with enableDefaultValues should work") {
+      import io.scalaland.chimney.fixtures.Issue857.*
+
+      val userHydrator: EntityHydrator[CreateUser, User] = EntityHydrator.make[CreateUser, User]
+      userHydrator.touch(CreateUser("joe shmoe")) ==> User(13, "joe shmoe")
+    }
+
+    test("generic inline transformer with enableDefaultValues and default values should work") {
+      import io.scalaland.chimney.fixtures.Issue857.*
+
+      val messageHydrator: EntityHydrator[CreateMessage, Message] = EntityHydrator.make[CreateMessage, Message]
+      messageHydrator.touch(CreateMessage("awesome message")) ==> Message(13, "awesome message", None)
+    }
+  }
+
+  group("fix issue #835 (enableInheritedAccessors for scala 3)") {
+
+    test("val") {
+
+      import io.scalaland.chimney.fixtures.Issue835.*
+
+      val e = new IdStatusEntity(0, "status")
+      val a = e.into[IdStatus].enableInheritedAccessors
+      a.transform ==> IdStatus(e.id, e.status)
+    }
+
+    test("getter") {
+
+      import io.scalaland.chimney.fixtures.Issue835.*
+
+      val e = new IdStatusGetter(0, "status")
+      e.into[IdStatus].enableInheritedAccessors.enableBeanGetters.transform ==> IdStatus(e.getId, e.status)
+    }
+  }
 
 }
