@@ -1407,11 +1407,9 @@ With it on the classpath you can:
 
 !!! warning "Scala 3 status"
 
-    `kindlings-cats-integration` `{{ libraries.kindlings }}`'s Scala 3 artifacts are built with a newer Scala 3 line
-    (3.8) than Chimney (a macro extension must be **loadable by the compiler that expands the macro**, so its TASTy
-    version matters). Until Kindlings publishes artifacts built on Scala 3.3 LTS (requested upstream), this
-    integration is verified on **Scala 2.13 only**; on Scala 3 you would currently get a TASTy version error.
-    The examples below are all compiled and run on Scala 2.13.
+    A macro extension must be **loadable by the compiler that expands the macro**, so its TASTy version matters:
+    `kindlings-cats-integration` `{{ libraries.kindlings }}`'s Scala 3 artifacts are built with Scala 3.8, which is
+    why Chimney `2.0.0` itself is built with Scala 3.8.4+ - the integration works on **both** Scala 2.13 and Scala 3.
 
 !!! example "Converting from Cats collections"
 
@@ -3258,6 +3256,14 @@ to contribute to easier migration from Scala 2.13 to Scala 3.
 !!! note
 
     At the moment conversion from Scala 3 `enum` by Scala 2.13 macros is not yet handled correctly.
+
+!!! warning
+
+    The Scala-2.13-depends-on-Scala-3 direction only works for artifacts built with Scala 3 **up to 3.7**:
+    Scala 3.8 unified the `scala-library` coordinate and sbt refuses such dependencies outright
+    ([sbt#8728 "the end of Scala 2.13-3.x sandwich"](https://github.com/sbt/sbt/discussions/8728)), and
+    Scala 2.13's `-Ytasty-reader` cannot read TASTy 28.8+ anyway. Chimney's own sandwich test-suite pins its
+    Scala 3 fixture to 3.7 for that reason. The Scala-3-depends-on-Scala-2.13 direction is unaffected.
     
 !!! warning
 

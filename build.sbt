@@ -19,7 +19,10 @@ Global / resolvers += "scala-integration" at "https://scala-ci.typesafe.com/arti
 val versions = new {
   // Versions we are publishing for.
   val scala213 = "2.13.18"
-  val scala3 = "3.7.3"
+  val scala3 = "3.8.4"
+  // For chimney-sandwich-test-cases-3 ONLY: sbt forbids Scala 2.13 subprojects from depending on Scala 3.8+
+  // subprojects (sbt-8728), and 2.13's -Ytasty-reader tops out below TASTy 28.8 - see the module for details.
+  val scala3Sandwich = "3.7.3"
 
   // Which versions should be cross-compiled for publishing
   val scalas = List(scala213, scala3)
@@ -117,6 +120,7 @@ val settings = Seq(
       "-Wconf:msg=Missing symbol position:s", // suppress warning https://github.com/scala/scala3/issues/21672
       "-Wconf:msg=Implicit parameters should be provided with a `using` clause:s", // we're not rewriting this, since we are still cross-compiling with 2.13
       "-Wconf:msg=The syntax `<function> _` is no longer supported:s", // we're not rewriting this, since we are still cross-compiling with 2.13
+      "-Wconf:msg=The trailing ` _` for eta-expansion is unnecessary:s", // Scala 3.8 wording of the warning above
       "-Wconf:msg=uninitialized.:s", // we're not rewriting this, since we are still cross-compiling with 2.13
       "-Wnonunit-statement",
       // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is! probably one of https://github.com/scala/scala3/issues/: #18564, #19252, #19657, #19912
@@ -126,7 +130,7 @@ val settings = Seq(
       "-Wunused:implicits",
       "-Wunused:params",
       "-Wvalue-discard",
-      "-Xfatal-warnings",
+      "-Werror", // -Xfatal-warnings is a deprecated alias since Scala 3.8
       "-Xcheck-macros",
       "-Xkind-projector:underscores",
       "Yimplicit-to-given"
@@ -185,7 +189,7 @@ val settings = Seq(
     for3 = Seq("-Ygenerate-inkuire"), // type-based search for Scala 3, this option cannot go into compile
     for2_13 = Seq.empty
   ),
-  Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings"),
+  Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings", "-Werror"),
   Test / compile / scalacOptions --= versions.fold(scalaVersion.value)(
     for3 = Seq.empty,
     for2_13 = Seq.empty
@@ -454,16 +458,10 @@ lazy val chimneyCats = projectMatrix
     // Hearth StandardMacroExtension with IsCollection/IsMap providers for cats.data types (NonEmptyList, Chain, ...).
     // Test-scoped: it is consulted at MACRO-EXPANSION time of the TEST sources (ServiceLoader on the compile
     // classpath of the code being derived) - the specs prove cats collections derive WITHOUT chimney-cats implicits.
-    // SCALA 2.13 ONLY: kindlings publishes all platforms (JVM/JS/Native) for BOTH Scala versions, but its Scala 3
-    // artifacts are built with Scala 3.8.4 (TASTy 28.8) - our 3.7.3 cannot even LOAD such an extension (hearth's
-    // ensureStandardExtensionsLoaded throws "Forward incompatible TASTy file has version 28.8", verified 2026-07,
-    // which poisons EVERY derivation in the module, not just the cats ones). Until kindlings publishes 3.3-LTS-built
-    // artifacts (like hearth does) or chimney bumps to Scala 3.8+, the extension proof runs on 2.13 only
-    // (src/test/scala-2/.../CatsDataSpec.scala; the scala-3 twin pins the gap).
-    libraryDependencies ++= versions.fold(scalaVersion.value)(
-      for2_13 = Seq("com.kubuszok" %%% "kindlings-cats-integration" % versions.kindlingsCatsIntegration % Test),
-      for3 = Seq.empty
-    )
+    // NOTE: kindlings' Scala 3 artifacts are built with Scala 3.8.x (TASTy 28.8) - loading them requires chimney to
+    // build with Scala 3.8+ (older compilers throw "Forward incompatible TASTy file" from hearth's extension loading,
+    // poisoning EVERY derivation in the module).
+    libraryDependencies += "com.kubuszok" %%% "kindlings-cats-integration" % versions.kindlingsCatsIntegration % Test
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 
@@ -562,6 +560,12 @@ lazy val chimneySandwichTestCases3 = projectMatrix
     name := "chimney-sandwich-test-cases-3",
     description := "Tests cases compiled with Scala 3 to test macros in 2.13x3 cross-compilation",
     mimaFailOnNoPrevious := false, // this module is not published
+    // PINNED to the newest Scala 3 line a Scala 2.13 subproject can still consume: since Scala 3.8 the
+    // scala-library coordinate was unified and sbt REFUSES 2.13-depends-on-3.8+ sandwiches outright
+    // ("[sbt-8728] Smorrebrod - the end of Scala 2.13-3.x sandwich", resolution asks for the nonexistent
+    // org.scala-lang:scala-compiler:3.8.x) - and Scala 2.13's -Ytasty-reader cannot read TASTy 28.8 anyway.
+    // This mirrors what real 2.13x3 sandwich users can do, so the fixture stays on 3.7.
+    scalaVersion := versions.scala3Sandwich,
     // Unpublished fixture: don't force the JDK 17 bytecode floor - the Scala 2.13 CI job (temurin:11) compiles
     // this module for the 2.13x3 sandwich tests, and -release 17 cannot be honored by a compiler running on JDK 11.
     scalacOptions --= Seq("-release", "17")

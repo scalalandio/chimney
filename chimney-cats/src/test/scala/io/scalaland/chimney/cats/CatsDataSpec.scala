@@ -24,9 +24,8 @@ import io.scalaland.chimney.utils.OptionUtils.*
   *   - `NonEmptyMap`/`NonEmptySet` require `cats.Order` of the key/element to be summonable at MACRO-EXPANSION time
   *     (1.x required `Ordering` at implicit-summoning time - same effective requirement, different mechanism).
   *
-  * SCALA 2.13 ONLY: kindlings' Scala 3 artifacts are built with Scala 3.8.4 (TASTy 28.8) which chimney's Scala 3.7.3
-  * cannot load (hearth's extension loading throws, poisoning every derivation in the module) - see the scala-3 twin of
-  * this spec for the pinned gap and build.sbt for the full story.
+  * Kindlings' Scala 3 artifacts are built with Scala 3.8.x (TASTy 28.8) - readable now that chimney builds with Scala
+  * 3.8.4+, so this spec is SHARED between both Scala versions.
   */
 class CatsDataSpec extends ChimneySpec {
 

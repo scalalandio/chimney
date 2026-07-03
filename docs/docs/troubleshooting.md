@@ -44,6 +44,9 @@ If you:
 
 Scala 2.12 support was dropped, so if you want to migrate to 2.x, we recommend migrating to 1.x before.
 
+On Scala 3 the minimal supported compiler version was raised from 3.3 (LTS) to **3.8.4** - the artifacts are built
+with Scala 3.8.4 (TASTy 28.8), so older Scala 3 compilers cannot consume them.
+
 On the JVM, JDK requirements were raised: Scala 2.13 artifacts require **JDK 11+** and Scala 3 artifacts require
 **JDK 17+** (Chimney's macros are built on top of [Hearth](https://scala-hearth.readthedocs.io/), which is JDK 11+).
 
@@ -76,8 +79,7 @@ Breaking changes in API:
      [`com.kubuszok::kindlings-cats-integration`](cookbook.md#conversions-tofrom-cats-collections) to the classpath
      instead (no import needed); note [the behavior changes](cookbook.md#conversions-tofrom-cats-collections):
      same-type `NonEmpty*` conversions (except `NonEmptyList`) are `PartialTransformer`-only now, the empty-input
-     error message changed, `NonEmptySeq`/`NonEmptyLazyList` are not covered yet, and on Scala 3 the integration
-     currently awaits upstream artifacts
+     error message changed, and `NonEmptySeq`/`NonEmptyLazyList` are not covered yet
    - the `Traverse`/`~>` (FunctionK)-based outer transformers were **removed** without replacement - if you relied
      on them, define your own [`TotalOuterTransformer`/`PartialOuterTransformer`](cookbook.md#custom-outer-type-conversion)
    - the type class instances for Chimney's types and the `Validated` <-> `partial.Result` conversions stay in

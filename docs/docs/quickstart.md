@@ -1,10 +1,10 @@
 # Quick Start
 
-Chimney is supported for Scala **2.13**, **3.3+** on [**JVM**](https://www.scala-lang.org/),
+Chimney is supported for Scala **2.13**, **3.8.4+** on [**JVM**](https://www.scala-lang.org/),
 [**Scala.js**](https://www.scala-js.org/) and [**Scala Native**](https://scala-native.org/) with full feature parity
 between each version.
 
-(Scala **2.12** was supported for whole `1.x` line, and **2.11** on `0.5.x` line)
+(Scala **3.3+** was supported on the `1.x` line, **2.12** for whole `1.x` line, and **2.11** on `0.5.x` line)
 
 !!! warning "JDK requirements"
 
@@ -164,8 +164,7 @@ libraryDependencies += "com.kubuszok" %%% "kindlings-cats-integration" % "{{ lib
 
 !!! tip
 
-    See [Cats integration cookbook](cookbook.md#cats-integration) for more information (including the current
-    Scala 3 status of the Kindlings integration).
+    See [Cats integration cookbook](cookbook.md#cats-integration) for more information.
 
 ## Protocol Buffers integration
 
