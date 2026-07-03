@@ -96,6 +96,7 @@ extra:
     3: "3.7.3"
   libraries:
     cats: "2.13.0"
+    kindlings: "0.3.0"
     scala_automapper: "0.7.0"
     henkan: "0.6.5"
     ducktape: "0.2.9"

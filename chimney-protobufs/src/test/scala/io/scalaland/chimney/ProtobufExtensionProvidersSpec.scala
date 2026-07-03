@@ -190,7 +190,10 @@ object ProtobufExtensionProvidersSpec {
 
   /** Scoped to a single test - ambient it would override the extension support everywhere in this spec. */
   object ReversingSupport {
+    // scalafmt would rewrite `._` to `.*`, but this module compiles without -Xsource:3 (see build.sbt)
+    // format: off
     import io.scalaland.chimney.integrations._
+    // format: on
 
     import scala.collection.mutable
 

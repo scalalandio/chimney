@@ -1119,24 +1119,72 @@ Both `Iso` and `Codec` are only available through semiautomatic derivation. Curr
 
 ## Java collections' integration
 
-If you need support for:
+Since `2.0.0` Java's types are supported out of the box on the JVM - no extra dependency, no import
+(the `chimney-java-collections` artifact and the `import io.scalaland.chimney.javacollections._` from `1.x`
+are gone; the support is provided by [Hearth](https://scala-hearth.readthedocs.io/)'s standard macro extensions,
+which Chimney's derivation consults as [one of its fallback layers](#hearth-macro-extensions)).
 
-  - `java.util.Optional` and convert to/from it as if it was `scala.Option`
-  - `java.util.Collection`/`java.lang.Iterable`/`java.util.Enumerable` and convert to/from it as if it was
-    `scala.collection.IterableOnce` with a dedicated `Factory` (or `CanBuildFrom`)
-  - `java.util.Map`/`java.util.Dictionary`/`java.util.Properties` and convert to/from `scala.collection.Map`
-  - `java.util.stream`s and convert them to/from all sorts of Scala collections
-  - `java.lang.Boolean`/`java.lang.Byte`/`java.lang.Char`/`java.lang.Int`/`java.lang.Long`/`java.lang.Long`/
-    `java.lang.Short`/`java.lang.Float`/`java.lang.Double` and convert to/from its `scala` counterpart
+This built-in support covers:
 
-then you can use one simple import to enable it:
+  - `java.util.Optional` - converted to/from it as if it was `scala.Option` (including safe unwrapping with
+    `PartialTransformer`s)
+  - `java.util.Collection`/`java.lang.Iterable`/`java.util.Iterator`/`java.util.Enumeration` and the whole
+    collection zoo: `List`s (`ArrayList`, `LinkedList`, `Vector`, `Stack`, ...), `Deque`s/`Queue`s (`ArrayDeque`,
+    `PriorityQueue`, ...), `Set`s (`HashSet`, `LinkedHashSet`, `SortedSet`/`NavigableSet`/`TreeSet`, ...),
+    `BitSet`, `EnumSet` - converted to/from Scala collections (and any other supported collection)
+  - `java.util.Map`s (`HashMap`, `LinkedHashMap`, `SortedMap`/`NavigableMap`/`TreeMap`, `WeakHashMap`,
+    `IdentityHashMap`, `EnumMap`, ...) and `java.util.Dictionary`/`Hashtable`/`Properties` - converted to/from
+    `scala.collection.Map`s
+  - `java.util.stream.Stream`/`IntStream`/`LongStream`/`DoubleStream` - converted to/from all sorts of Scala
+    collections
+  - Java boxed primitives: `java.lang.Boolean`/`java.lang.Byte`/`java.lang.Character`/`java.lang.Integer`/
+    `java.lang.Long`/`java.lang.Short`/`java.lang.Float`/`java.lang.Double` - converted to/from their `scala`
+    counterparts
 
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney-java-collections::{{ chimney_version() }}
-    import io.scalaland.chimney.javacollections._
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+    // look, no separate dependency nor import needed!
+
+    pprint.pprintln(
+      List(1, 2, 3).transformInto[java.util.List[Integer]].toString
+    )
+    pprint.pprintln(
+      Map("a" -> 1).transformInto[java.util.Map[String, Int]].toString
+    )
+    pprint.pprintln(
+      java.util.Optional.of("test").transformInto[Option[String]]
+    )
+    pprint.pprintln(
+      Option(10).transformInto[java.util.Optional[Integer]].toString
+    )
+    // expected output:
+    // "[1, 2, 3]"
+    // "{a=1}"
+    // Some(value = "test")
+    // "Optional[10]"
     ```
+
+As with every [Hearth provider-based support](#hearth-macro-extensions), your own `implicit`s - whether
+`Transformer`s/`PartialTransformer`s or `io.scalaland.chimney.integrations` type classes - always take precedence
+over the built-in Java support.
+
+!!! warning
+
+    Support for Java's types is provided by the macros only for Scala on the JVM - on Scala.js and Scala Native
+    these types are (mostly) absent, so there is nothing to support there.
+
+!!! warning
+
+    There is one known limitation: converting **into** a `java.util.EnumMap` of a Scala/Java enum that is being
+    compiled in the **same compilation unit** as the transformation is not supported (Hearth's `EnumMap` provider
+    needs to load the enum's `Class` at macro-expansion time, which is only possible for already-compiled enums,
+    e.g. coming from a dependency or the JDK). You will get a regular "Chimney can't derive" error - if you hit it,
+    either move the enum to a separate module or provide your own
+    [`TotallyBuildMap`](#custom-collection-types) implicit. `java.util.EnumSet` does not have this limitation.
 
 !!! warning
 
@@ -1181,27 +1229,22 @@ Cats integration module contains the following utilities:
      - for `Iso` type class:
         - `Category[Iso]`
         - `InvariantSemigroupal[Iso[First, *]]` (implementing also `Invariant`, `Semigroupal`)
-  - instances for `cats.data` types allowing Chimney to recognize them as collections:
-    - `cats.data.Chain` (transformation _from_ and _to_ always available)
-    - `cats.data.NonEmptyChain` (transformations: _from_ always available, _to_ only with `PartialTransformer`
-      or to another `NonEmptyChain`)
-    - `cats.data.NonEmptyLazyList` (transformation: _from_ always available, _to_ only with `PartialTransformer`
-      or to another `NonEmptyLazyList`, the type is only defined on 2.13+)
-    - `cats.data.NonEmptyList` (transformation: _from_ always available, _to_ only with `PartialTransformer`
-      or to another `NonEmptyList`)
-    - `cats.data.NonEmptyMap` (transformation: _from_ always available, _to_ only with `PartialTransformer`
-      or to another `NonEmptyMap`)
-    - `cats.data.NonEmptySeq` (transformation: _from_ always available, _to_ only with `PartialTransformer`
-      or to another `NonEmptySeq`)
-    - `cats.data.NonEmptySet` (transformation: _from_ always available, _to_ only with `PartialTransformer`
-      or to another `NonEmptySet`)
-    - `cats.data.NonEmptyVector` (transformation: _from_ always available, _to_ only with `PartialTransformer`
-      or to another `NonEmptyVector`)
-  - transforming `F[A]` to `G[B]` if implicit `F ~> G` and `Traverse[F]` are present
 
 !!! important
 
     You need to import ``io.scalaland.chimney.cats._`` to have all of the above in scope.
+
+!!! warning "Changed in 2.0.0"
+
+    Up to Chimney `1.x` the `chimney-cats` module also contained `io.scalaland.chimney.integrations` instances
+    letting Chimney recognize `cats.data` types (`Chain`, `NonEmptyList`, ...) as collections, plus
+    `Traverse`/`~>`-based outer transformers. These were **removed** in `2.0.0`:
+
+      - conversions to/from `cats.data` collections are now served by
+        [Kindlings' `kindlings-cats-integration`](#conversions-tofrom-cats-collections) (classpath-only, no import)
+      - transforming `F[A]` to `G[B]` given implicit `F ~> G` and `Traverse[F]` is **no longer supported** - if you
+        relied on it, define your own
+        [`TotalOuterTransformer`/`PartialOuterTransformer`](#custom-outer-type-conversion)
 
 ### Conversion from/into Cats `Validated`
 
@@ -1322,35 +1365,65 @@ new extension methods: `asValidatedNec`, `asValidatedNel`, `asValidatedChain` an
 
 ### Conversions to/from Cats collections
 
-If you want to convert between Scala collections and Cats collections, or between 2 Cats collections
-(or between Cats collections and some other collection whose support was provided via integration e.g. Java
-collection), then you can:
+Since `2.0.0`, conversions between Scala collections and Cats collections (or between 2 Cats collections, or between
+Cats collections and some other supported collection, e.g. a Java collection) are **not** provided by `chimney-cats` -
+they are served by [Kindlings](https://github.com/kubuszok/kindlings)' `cats-integration` module, a
+[Hearth macro extension](#hearth-macro-extensions) that Chimney's derivation discovers on the classpath
+(via `ServiceLoader`) - **no import needed**, it only has to be on the compile classpath:
 
- * convert *from* `Chain`, `NonEmptyChain`, `NonEmptyList`, `NonEmptyLazyList`, `NonEmptyMap`, `NonEmptySeq`,
-   `NonEmptySet` and `NonEmptyVector` with *both* `Transformer`s and `PartialTransformer`s (since iterating over
-   a collection is always possible)
+```scala
+libraryDependencies += "com.kubuszok" %%% "kindlings-cats-integration" % "{{ libraries.kindlings }}"
+```
+
+With it on the classpath you can:
+
+ * convert *from* `Chain`, `NonEmptyChain`, `NonEmptyList`, `NonEmptyMap`, `NonEmptySet` and `NonEmptyVector` with
+   *both* `Transformer`s and `PartialTransformer`s (since iterating over a collection is always possible)
  * convert *into* `Chain` with *both* `Transformer`s and `PartialTransformer`s (since `Chain` can always be created)
- * convert *into* `NonEmptyChain`, `NonEmptyList`, `NonEmptyLazyList`, `NonEmptyMap`, `NonEmptySeq` and `NonEmptySeq`,
-   and `NonEmptySet` and `NonEmptyVector` with *only* `PartialTransformer`s (since their constructor performs
-   validation), except when you try to
- * convert *between* `NonEmptyChain` and another `NonEmptyChain`, `NonEmptyList` and another `NonEmptyList`,
-   `NonEmptyLazyList` and another `NonEmptyLazyList`, `NonEmptyMap` and another `NonEmptyMap`,
-   `NonEmptySeq` and another `NonEmptySeq`, `NonEmptyVector` and another `NonEmptyVector`,
-    and any other `F[A]` into `F[B]` which has `Traverse` instance, with *both* `Transformer`s and `PartialTransformer`s
-    (since we can use `.traverseWithIndexM` and avoid running that validation again)
- * convert any collection `F[_]` that has `Traverse[F]` and between any 2 collections `F[_]`, `G[_]` if implicit
-   `Traverse[F]` and `F ~> G` exist
+ * convert *into* `NonEmptyChain`, `NonEmptyList`, `NonEmptyMap`, `NonEmptySet` and `NonEmptyVector` with *only*
+   `PartialTransformer`s - their smart constructors perform validation, and an empty input fails the transformation
+   with a `"Cannot create <TypeName> from empty collection"` error
+ * convert `NonEmptyList` into another `NonEmptyList` also with *total* `Transformer`s - not through the collection
+   support, but because `NonEmptyList` is a plain `case class (head, tail)` which Chimney can rewrite field-by-field
+
+!!! note
+
+    `NonEmptySet`/`NonEmptyMap` support requires a `cats.Order` of the element/key type to be summonable at the
+    place where the transformation is derived (in `1.x` the implicits required an `Ordering` instead).
+
+!!! warning "Changed in 2.0.0"
+
+    In `1.x` (with `import io.scalaland.chimney.cats._`) converting between two `NonEmptyChain`s (`NonEmptyMap`s,
+    `NonEmptySet`s, `NonEmptyVector`s, ...) of different element types was possible with a total `Transformer`.
+    With the smart-constructor-based detection these conversions are `PartialTransformer`-only now (except
+    `NonEmptyList` - see above). Also, the empty-input error message changed from `"empty value"` to
+    `"Cannot create <TypeName> from empty collection"`.
+
+!!! warning
+
+    `NonEmptySeq` and `NonEmptyLazyList` are **not** (yet) covered by `kindlings-cats-integration` `{{ libraries.kindlings }}` -
+    support for them was requested upstream. Until then you can provide your own
+    [`PartiallyBuildIterable`](#custom-collection-types) implicits for them.
+
+!!! warning "Scala 3 status"
+
+    `kindlings-cats-integration` `{{ libraries.kindlings }}`'s Scala 3 artifacts are built with a newer Scala 3 line
+    (3.8) than Chimney (a macro extension must be **loadable by the compiler that expands the macro**, so its TASTy
+    version matters). Until Kindlings publishes artifacts built on Scala 3.3 LTS (requested upstream), this
+    integration is verified on **Scala 2.13 only**; on Scala 3 you would currently get a TASTy version error.
+    The examples below are all compiled and run on Scala 2.13.
 
 !!! example "Converting from Cats collections"
 
-   ```scala
+    ```scala
     //> using dep org.typelevel::cats-core::{{ libraries.cats }}
-    //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.kubuszok::kindlings-cats-integration::{{ libraries.kindlings }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import cats.data._
     import cats.Order
     import io.scalaland.chimney.dsl._
-    import io.scalaland.chimney.cats._
+    // no import needed for the Cats collections support!
 
     case class Foo(a: Int)
     case class Bar(a: Int)
@@ -1384,11 +1457,12 @@ collection), then you can:
 
     ```scala
     //> using dep org.typelevel::cats-core::{{ libraries.cats }}
-    //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.kubuszok::kindlings-cats-integration::{{ libraries.kindlings }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import cats.data._
     import io.scalaland.chimney.dsl._
-    import io.scalaland.chimney.cats._
+    // no import needed for the Cats collections support!
 
     case class Foo(a: Int)
     case class Bar(a: Int)
@@ -1402,12 +1476,16 @@ collection), then you can:
     pprint.pprintln(
       List(Foo(10)).transformIntoPartial[NonEmptyList[Bar]].asOption
     )
-    implicit val barOrdering: Ordering[Bar] = Ordering.by[Bar, Int](_.a) // required by NonEmptySet integration!!!
+    implicit val barOrder: cats.Order[Bar] = cats.Order.by[Bar, Int](_.a) // required by NonEmptySet integration!!!
     pprint.pprintln(
       List(Foo(10)).transformIntoPartial[NonEmptySet[Bar]].asOption
     )
     pprint.pprintln(
       List(Foo(10)).transformIntoPartial[NonEmptyVector[Bar]].asOption
+    )
+    // an empty input fails the partial transformation:
+    pprint.pprintln(
+      List.empty[Foo].transformIntoPartial[NonEmptyList[Bar]].asEitherErrorPathMessageStrings
     )
     // expected output:
     // Singleton(a = Bar(a = 10))
@@ -1415,17 +1493,19 @@ collection), then you can:
     // Some(value = NonEmptyList(head = Bar(a = 10), tail = List()))
     // Some(value = TreeSet(Bar(a = 10)))
     // Some(value = NonEmptyVector(Bar(10)))
+    // Left(value = List(("", "Cannot create NonEmptyList from empty collection")))
     ```
 
 !!! example "Converting between Cats collections of the same type"
 
-   ```scala
+    ```scala
     //> using dep org.typelevel::cats-core::{{ libraries.cats }}
-    //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.kubuszok::kindlings-cats-integration::{{ libraries.kindlings }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import cats.data._
     import io.scalaland.chimney.dsl._
-    import io.scalaland.chimney.cats._
+    // no import needed for the Cats collections support!
 
     case class Foo(a: Int)
     case class Bar(a: Int)
@@ -1434,42 +1514,19 @@ collection), then you can:
       Chain.one(Foo(10)).transformInto[Chain[Bar]]
     )
     pprint.pprintln(
-      NonEmptyChain.one(Foo(10)).transformInto[NonEmptyChain[Bar]]
+      NonEmptyList.one(Foo(10)).transformInto[NonEmptyList[Bar]] // still total - NonEmptyList is a case class
     )
     pprint.pprintln(
-      NonEmptyList.one(Foo(10)).transformInto[NonEmptyList[Bar]]
+      NonEmptyChain.one(Foo(10)).transformIntoPartial[NonEmptyChain[Bar]].asOption
     )
     pprint.pprintln(
-      NonEmptyVector.one(Foo(10)).transformInto[NonEmptyVector[Bar]]
+      NonEmptyVector.one(Foo(10)).transformIntoPartial[NonEmptyVector[Bar]].asOption
     )
     // expected output:
-    // Singleton(a = Bar(a = 10))
     // Singleton(a = Bar(a = 10))
     // NonEmptyList(head = Bar(a = 10), tail = List())
-    // NonEmptyVector(Bar(10))
-    ```
-
-!!! example "Converting using implicit ~> (FunctionK)"
-
-   ```scala
-    //> using dep org.typelevel::cats-core::{{ libraries.cats }}
-    //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
-    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
-    import cats.~>
-    import io.scalaland.chimney.Transformer
-    import io.scalaland.chimney.dsl._
-    import io.scalaland.chimney.cats._
-
-    implicit val intToStr: Transformer[Int, String] = _.toString
-    implicit val listToOption: List ~> Option = new (List ~> Option) {
-      def apply[A](fa: List[A]): Option[A] = fa.headOption
-    }
-
-    pprint.pprintln(
-      List(1, 2, 3).transformInto[Option[String]]
-    )
-    // expected output:
-    // Some(value = "1")
+    // Some(value = Singleton(a = Bar(a = 10)))
+    // Some(value = NonEmptyVector(Bar(10)))
     ```
 
 ### Cats instances
@@ -1870,6 +1927,16 @@ domain objects into protobufs and `PartialTransformer`s could decode them.
 However, there are 2 concepts specific to PBs and their implementation in
 ScalaPB: storing unencoded values in an additional case class field and
 wrapping done by sealed traits' cases in `oneof` values.
+
+!!! note "Changed in 2.0.0"
+
+    Since `2.0.0` the `chimney-protobufs` artifact ships a [Hearth macro extension](#hearth-macro-extensions)
+    (discovered via `ServiceLoader`), so support for the ScalaPB well-known types - the `wrappers.*Value` types,
+    `ByteString` and `Timestamp` - works as soon as the artifact is **on the compile classpath**, without any import.
+
+    The `import io.scalaland.chimney.protobufs._` is still needed for: `Empty`, the `Duration` family, empty
+    `oneof` handling (`GeneratedOneof`/`GeneratedSealedOneof`), `UnrecognizedEnum` handling and
+    `DefaultValue[UnknownFieldSet]` - see [Built-in ScalaPB types](#build-in-scalapb-types) for the exact split.
 
 ### `UnknownFieldSet`
 
@@ -2396,24 +2463,75 @@ could be done
 ### Build-in ScalaPB types
 
 There are several datatypes provided by ScalaBP (or Google PB) which are not automatically converted into Scala's types,
-that Chimney could convert for you:
+that Chimney could convert for you.
 
-  - `com.google.protobuf.empty.Empty` into `scala.Unit`
-  - anything into `com.google.protobuf.empty.Empty`
-  - `com.google.protobuf.duration.Duration` from/into `java.time.Duration`/`java.time.FiniteDuration`
+Since `2.0.0`, for most of them it is enough to have `chimney-protobufs` **on the compile classpath** - the artifact
+ships a [Hearth macro extension](#hearth-macro-extensions) (registered via `ServiceLoader`) whose providers Chimney's
+derivation consults out of the box, **without any import**:
+
+  - `com.google.protobuf.ByteString` from/to any Scala (or otherwise supported) collection of `Byte`s
   - `com.google.protobuf.timestamp.Timestamp` from/to `java.time.Instant`
-  - `com.google.protobuf.ByteString` from/to any Scala collections of `Byte`s
-  - wrapping/unwrapping Scala primitives with/from: 
+  - wrapping/unwrapping with/from:
     - `com.google.protobuf.wrappers.BoolValue` (`Boolean`)
-    - `com.google.protobuf.wrappers.BytesValue` (collection of `Byte`s)
+    - `com.google.protobuf.wrappers.BytesValue` (`ByteString`)
     - `com.google.protobuf.wrappers.DoubleValue` (`Double`)
+    - `com.google.protobuf.wrappers.FloatValue` (`Float`)
     - `com.google.protobuf.wrappers.Int32Value` (`Int`)
     - `com.google.protobuf.wrappers.Int64Value` (`Long`)
     - `com.google.protobuf.wrappers.UInt32Value` (`Int`)
     - `com.google.protobuf.wrappers.UInt64Value` (`Long`)
     - `com.google.protobuf.wrappers.StringValue` (`String`)
 
-Each of these transformations is provided by the same import:
+!!! example "No import needed for the well-known types"
+
+    ```scala
+    //> using dep io.scalaland::chimney-protobufs::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+    // chimney-protobufs is only on the classpath - no import!
+
+    pprint.pprintln(
+      10.transformInto[com.google.protobuf.wrappers.Int32Value].value
+    )
+    pprint.pprintln(
+      com.google.protobuf.wrappers.StringValue.of("test").transformInto[String]
+    )
+    pprint.pprintln(
+      List[Byte](1, 2, 3).transformInto[com.google.protobuf.ByteString].toByteArray.toList
+    )
+    pprint.pprintln(
+      java.time.Instant.ofEpochSecond(1234567890L)
+        .transformInto[com.google.protobuf.timestamp.Timestamp]
+        .seconds
+    )
+    // the BytesValue support composes TRANSITIVELY with the ByteString collection support,
+    // so byte collections convert to/from BytesValue too:
+    pprint.pprintln(
+      List[Byte](1, 2, 3).transformInto[com.google.protobuf.wrappers.BytesValue].value.toByteArray.toList
+    )
+    // expected output:
+    // 10
+    // "test"
+    // List(1, 2, 3)
+    // 1234567890L
+    // List(1, 2, 3)
+    ```
+
+As with every [Hearth provider-based support](#hearth-macro-extensions), your own `implicit`s - whether
+`Transformer`s/`PartialTransformer`s or `io.scalaland.chimney.integrations` type classes - take precedence over
+these providers.
+
+The remaining conversions are provided as `implicit`s by the import `import io.scalaland.chimney.protobufs._`
+(they hook into implicit resolution for whole type families or have several conversion partners, which cannot be
+expressed as macro-extension providers):
+
+  - `com.google.protobuf.empty.Empty` into `scala.Unit`
+  - anything into `com.google.protobuf.empty.Empty`
+  - `com.google.protobuf.duration.Duration` from/into `java.time.Duration`/`scala.concurrent.duration.FiniteDuration`
+    (and into `scala.concurrent.duration.Duration`, plus a `PartialTransformer` from `Duration` rejecting infinities)
+  - empty `oneof` handling (`GeneratedOneof`/`GeneratedSealedOneof` - see the sections above)
+  - `UnrecognizedEnum` handling (see [enum fields](#enum-fields))
+  - `DefaultValue[UnknownFieldSet]` (see [`UnknownFieldSet`](#unknownfieldset))
 
 !!! example
 
@@ -3184,10 +3302,27 @@ such generic `implicit` would:
 Similarly, newtypes/refined types would require dedicated pair of implicits for wrapping/unwrapping if we went with
 a naive approach, custom optional types would not behave like `Option`s, etc.
 
-To make integration with libraries easier we prepared this section as well as a dedicated package in Chimney
-namespace: `io.scalaland.chimney.integrations`. Examples of integrations provided this way are
-[Cats](#cats-integration), [Java collections](#java-collections-integration) and [Protobufs](#protocol-buffers-integration)
-modules.
+Since `2.0.0` there are **two mechanisms** for providing such integrations:
+
+ 1. **`implicit` type classes** from the dedicated package in Chimney namespace: `io.scalaland.chimney.integrations`
+    (`TotallyBuildIterable`, `PartiallyBuildIterable`, `TotallyBuildMap`, `PartiallyBuildMap`, `OptionalValue`,
+    `TotalOuterTransformer`, `PartialOuterTransformer`, `DefaultValue`) - described in the following subsections.
+    These remain **fully supported**, **take precedence** over the second mechanism during derivation, and are the
+    right tool when you want to define the support **in the same compilation unit** that uses it (or in the same
+    project, without publishing a separate artifact).
+ 2. **[Hearth macro extensions](#hearth-macro-extensions)** - `hearth.std.StandardMacroExtension`s registered via
+    `ServiceLoader`, which Chimney's derivation consults as a fallback layer. This is the **preferred mechanism for
+    library maintainers**: it is more performant (the generated code participates in Chimney's built-in rules
+    directly - e.g. wrapping becomes a plain constructor call and collections use their `Factory` inline, with no
+    type-class instantiation and no indirection through implicit calls in the generated code) and requires no import
+    from your users - being on the classpath is enough. The price: the extension must live in a **separate,
+    pre-compiled artifact** (the `ServiceLoader` loads compiled classes at macro-expansion time).
+
+Examples of integrations provided via `implicit` type classes are the `Duration`/`Empty`/`oneof` parts of the
+[Protobufs module](#protocol-buffers-integration); examples of Hearth macro extensions are the
+[built-in Java collections support](#java-collections-integration), the well-known-types part of the
+[Protobufs module](#protocol-buffers-integration) and
+[Kindlings' cats-integration](#conversions-tofrom-cats-collections).
 
 ### Libraries with smart constructors
 
@@ -3552,14 +3687,15 @@ As you can see, once you provide 1 implicit your custom optional type:
  * can automatically unwrap value in `PartialTransformer`s
  * can be used with `matchingSome` path in `withFieldConst`/`withFieldComputed`/etc
 
-An example of such optional type is `java.util.Optional` for which support is provided via `OptionalValue` in
-[Java collections' integration](#java-collections-integration).
+An example of such optional type is `java.util.Optional` - although since `2.0.0` its support is
+[built-in](#java-collections-integration) (provided via a [Hearth provider](#hearth-macro-extensions) rather than
+an `OptionalValue` implicit - your own `OptionalValue` would take precedence over it).
 
 ### Custom collection types
 
 In case your library/domain defines custom collections - which are:
 
- * NOT providing `scala.collection.Factory` (2.13/3) or `scala.collection.genric.CanBuildFrom` (2.12)
+ * NOT providing `scala.collection.Factory`
  * or NOT extending `Iterable`
 
 you have to provide some configuration to help Chimney work with them.
@@ -3592,7 +3728,7 @@ Most of the time a collection doesn't perform any sort of validations, and you c
     
     // ...you can provide Chimney support for it...
     import io.scalaland.chimney.integrations.{ FactoryCompat, TotallyBuildIterable }
-    import scala.collection.compat._
+    import scala.collection.Factory
     import scala.collection.mutable
 
     implicit def myCollectionIsTotallyBuildIterable[A]: TotallyBuildIterable[MyCollection[A], A] =
@@ -3678,7 +3814,7 @@ If your collection performs some sort of validation, you can integrate it with C
     // ...you can provide Chimney support for it...
     import io.scalaland.chimney.integrations.{ FactoryCompat, PartiallyBuildIterable }
     import io.scalaland.chimney.partial
-    import scala.collection.compat._
+    import scala.collection.Factory
     import scala.collection.mutable
 
     implicit def nonEmptyCollectionIsPartiallyBuildIterable[A]: PartiallyBuildIterable[NonEmptyCollection[A], A] =
@@ -3728,7 +3864,7 @@ For map types there are specialized versions of these type classes:
     
     import io.scalaland.chimney.integrations._
     import io.scalaland.chimney.partial
-    import scala.collection.compat._
+    import scala.collection.Factory
     import scala.collection.mutable
 
     class MyMap[+K, +V] private (private val impl: Vector[(K, V)]) {
@@ -3814,9 +3950,12 @@ The only 2 difference they make is that:
    conversion failed for `myKey` key, instead of `(0)._1` or `(0)._2`)
  - they allow usage of `everyMapKey` and `everyMapValue` in paths, just like with standard library's `Maps`.
 
-An example of such collections are `java.util` collections for which support is provided via `TotallyBuildIterable` 
-and `TotallyBuildMap` in [Java collections' integration](#java-collections-integration), or `cats.data` types
-provided in [Cats integration](#cats-integration).
+Examples of such collections are `java.util` collections and `cats.data` types - although since `2.0.0` their
+support comes from [Hearth providers](#hearth-macro-extensions)
+([built-in Java support](#java-collections-integration),
+[Kindlings' cats-integration](#conversions-tofrom-cats-collections)) rather than from these type classes - your own
+`TotallyBuildIterable`/`PartiallyBuildIterable`/`TotallyBuildMap`/`PartiallyBuildMap` implicits would take precedence
+over them.
 
 ### Custom outer type conversion
 
@@ -4089,6 +4228,117 @@ requires a normal extension methods provided by the user.
     // MyErrorType(value = Right(value = "value"))
     ```
 
+### Hearth macro extensions
+
+Since `2.0.0` Chimney's macros are built on top of [Hearth](https://scala-hearth.readthedocs.io/). Hearth defines
+a set of "standard" macro-level abstractions - `IsValueType`, `IsOption`, `IsCollection`, `IsMap`, ... - with
+**providers** that can recognize types and describe (at macro-expansion time) how to construct/deconstruct them.
+Providers come from two places:
+
+  - Hearth's own built-ins (this is e.g. how [Java collections work out of the box](#java-collections-integration)
+    on the JVM),
+  - third-party `hearth.std.StandardMacroExtension`s, registered via
+    `META-INF/services/hearth.std.StandardMacroExtension` and loaded with `ServiceLoader` from the compile classpath
+    of the code being derived.
+
+Chimney's derivation consults these providers as its **built-in fallback layer**. The precedence during derivation is:
+
+ 1. user-provided `implicit` `Transformer`s/`PartialTransformer`s (always win),
+ 2. `io.scalaland.chimney.integrations` `implicit`s (the type classes described in the previous sections),
+ 3. Chimney's own hardcoded support (Scala's `Option`s, `Either`s, collections, `AnyVal`s, ...),
+ 4. Hearth providers (built-ins and `ServiceLoader`-registered extensions).
+
+For a **library maintainer** shipping a Chimney (and not only Chimney - any Hearth-based macro library!) integration,
+a macro extension is the preferred mechanism:
+
+  - no import needed by your users - your artifact on the classpath is enough,
+  - the generated code is leaner: it participates in Chimney's built-in rules directly (wrapping becomes a plain
+    constructor/method call, collections use their `Factory` inline), with no type-class allocation nor implicit
+    method call indirection,
+  - one provider can serve _every_ Hearth-based macro library, not only Chimney,
+  - smart constructors are supported: a provider whose "constructor" returns e.g. `Either[String, A]` gets picked up
+    by Chimney's `PartialTransformer` derivation (with the error message mapped into `partial.Result`), while plain
+    constructors serve total `Transformer`s,
+  - value types registered this way do not require the
+    [`.enableNonAnyValWrappers` flag](supported-transformations.md#frominto-a-wrapper-type) - registering a provider
+    is an explicit opt-in by the integration author, so Chimney treats it like an `integrations` implicit.
+
+A minimal `IsValueType` extension (making `MyWrapper` wrap/unwrap like an `AnyVal`) could look like this (Hearth's
+cross-platform `Type`/`Expr`/`Expr.quote` API - see
+[Hearth's documentation](https://scala-hearth.readthedocs.io/) for details):
+
+!!! example
+
+    ```scala
+    // Somewhere in your library's runtime:
+    final case class MyWrapper(unwrap: String)
+    
+    // In a SEPARATE, pre-compiled module (ServiceLoader loads compiled classes at macro-expansion time):
+    import hearth.MacroCommons
+    import hearth.fp.data.NonEmptyList
+    import hearth.std.{ProviderResult, StandardMacroExtension, StdExtensions}
+
+    final class MyLibraryMacroExtension extends StandardMacroExtension {
+
+      override def extend(ctx: MacroCommons with StdExtensions): Unit = {
+        import ctx._
+
+        IsValueType.registerProvider(new IsValueType.Provider {
+
+          override def name: String = "MyLibraryMacroExtension#MyWrapper"
+
+          private lazy val MyWrapperType = Type.of[MyWrapper]
+
+          private def myWrapperSupport: IsValueType[MyWrapper] = {
+            implicit val A: Type[MyWrapper] = MyWrapperType
+            implicit val S: Type[String] = Type.of[String]
+            // how to construct the wrapper (a smart constructor returning Either[String, MyWrapper]
+            // would use CtorLikeOf.EitherStringOrValue instead, serving PartialTransformers):
+            val plainValue = CtorLikeOf.PlainValue[String, MyWrapper](
+              ctor = (inner: Expr[String]) => Expr.quote(MyWrapper(Expr.splice(inner))),
+              method = None
+            )
+            Existential[IsValueTypeOf[MyWrapper, *], String](new IsValueTypeOf[MyWrapper, String] {
+              // how to deconstruct the wrapper:
+              override val unwrap: Expr[MyWrapper] => Expr[String] =
+                wrapped => Expr.quote(Expr.splice(wrapped).unwrap)
+              override val wrap: CtorLikeOf[String, MyWrapper] = plainValue
+              override lazy val ctors: CtorLikes[MyWrapper] =
+                NonEmptyList.one(Existential[CtorLikeOf[*, MyWrapper], String](plainValue))
+            })
+          }
+
+          override def parse[A](tpe: Type[A]): ProviderResult[IsValueType[A]] =
+            if (tpe =:= MyWrapperType) ProviderResult.Matched(myWrapperSupport.asInstanceOf[IsValueType[A]])
+            else skipped(s"${tpe.prettyPrint} is not MyWrapper")
+        })
+      }
+    }
+    ```
+
+    plus a `src/main/resources/META-INF/services/hearth.std.StandardMacroExtension` file containing the
+    fully-qualified class name of the extension.
+
+With such an artifact on the classpath, `"test".transformInto[MyWrapper]` and `MyWrapper("test").transformInto[String]`
+(and any transformation reaching these types recursively) work with no import - and your users can still override the
+behavior for any concrete pair of types with their own `implicit`s.
+
+!!! tip
+
+    Real-world examples to crib from: Chimney's own
+    [`ProtobufsMacroExtension`](https://github.com/scalalandio/chimney/blob/master/chimney-protobufs/src/main/scala/io/scalaland/chimney/protobufs/internal/compiletime/ProtobufsMacroExtension.scala)
+    (value types with computed conversions + a collection provider) and
+    [Kindlings' `CatsCollectionAndMapProviders`](https://github.com/kubuszok/kindlings)
+    (collections/maps with smart constructors).
+
+!!! warning
+
+    If your extension is compiled with Scala 2, remember that quotes referencing companion objects of classes from
+    your module may not resolve correctly at the downstream macro-expansion site - route such calls through a plain
+    (companion-less) helper `object`, fully qualified inside the quote. Scala 3 is unaffected. Also remember that
+    on Scala 3 the artifact must be **loadable by your users' compiler** - build it on the oldest Scala 3 (LTS)
+    version you want to support.
+
 ### Third-party integrations
 
 Some libraries already provided support for Chimney, and you don't have to provide it yourself:
@@ -4143,6 +4393,13 @@ we developed:
 
 For now there aren't many people interested in them, so comments and Chimney-code-as-examples is the only documentation
 available.
+
+!!! tip
+
+    If you are starting a new macro library today, take a look at [Hearth](https://scala-hearth.readthedocs.io/) -
+    the spiritual successor of `chimney-macro-commons` (and the toolkit Chimney's own macros are built on since
+    `2.0.0`), with proper documentation, cross-quotes, `MIO` and the
+    [standard-extension mechanism](#hearth-macro-extensions).
 
 ### `chimney-macro-commons`
 

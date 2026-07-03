@@ -37,7 +37,10 @@ import hearth.std.{ProviderResult, StandardMacroExtension, StdExtensions}
 final class ProtobufsMacroExtension extends StandardMacroExtension { loader =>
 
   override def extend(ctx: MacroCommons with StdExtensions): Unit = {
+    // scalafmt would rewrite `._` to `.*`, but this module compiles without -Xsource:3 (see build.sbt)
+    // format: off
     import ctx._
+    // format: on
 
     // --- com.google.protobuf.ByteString as a collection of Byte ---
 

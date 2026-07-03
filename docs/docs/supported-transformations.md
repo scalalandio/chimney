@@ -2721,6 +2721,13 @@ when the whole type `extends AnyVal`. What if we have a type which wraps a singl
 Such cases are often when we use ScalaPB, so it would be useful to automatically handle such cases. It's possible with
 a flag:
 
+!!! note
+
+    The flag guards only the **structural** matching described in this section (any single-public-`val` class).
+    Wrapper types registered via a [Hearth macro extension](cookbook.md#hearth-macro-extensions) - like the ScalaPB
+    well-known types from `chimney-protobufs` - do **not** need this flag: registering the provider was already an
+    explicit opt-in by the integration's author.
+
 !!! example
 
     ```scala
@@ -4012,10 +4019,8 @@ automatically only with `PartialTransformer`:
 
 !!! tip
 
-    Out of the box, Chimney supports only Scala's build-in `Option`s.
-    
-    If you need to integrate with Java's `Optional`, please, read about
-    [Java's collections integration](cookbook.md#java-collections-integration).
+    Out of the box, Chimney supports Scala's build-in `Option`s and (on the JVM, since 2.0.0) `java.util.Optional`
+    (see [Java's collections integration](cookbook.md#java-collections-integration)).
     
     If you need to provide support for your optional types, please, read about
     [custom optional types](cookbook.md#custom-optional-types).
@@ -4244,7 +4249,7 @@ know for sure is inside to their corresponding type in target `Either`:
 Every `Array`/every collection extending `scala.collection.Iterable` can be used as a source value for a collection's
 transformation.
 
-Every `Array`/every collection provided with `scala.collection.compat.Factory` can be used as a target type for a
+Every `Array`/every collection provided with `scala.collection.Factory` can be used as a target type for a
 collection's transformation.
 
 The requirement for a collection's transformation is that both source's and target's conditions are met and that
@@ -4320,13 +4325,12 @@ With `PartialTransformer`s ware able to handle fallible conversions, tracing at 
 
 !!! tip
 
-    Out of the box, Chimney supports only Scala's build-in collections, which are extending `Iterable` and have
-    `scala.collection.compat.Factory` provided as an implicit.
+    Out of the box, Chimney supports Scala's build-in collections, which are extending `Iterable` and have
+    `scala.collection.Factory` provided as an implicit, `Array`s and (on the JVM, since 2.0.0) `java.util`
+    collections (see [Java's collections integration](cookbook.md#java-collections-integration)).
     
-    If you need to integrate with Java's collections, please, read about
-    [Java's collections integration](cookbook.md#java-collections-integration).
-    
-    If you need to provide support for your collection types, you have to write your own implicit methods.
+    If you need to provide support for your collection types, please, read about
+    [custom collection types](cookbook.md#custom-collection-types).
 
 !!! tip
 

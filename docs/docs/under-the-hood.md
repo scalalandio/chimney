@@ -407,6 +407,21 @@ there are some intuitions about the order in which `Rule`s are tried, which shou
     either by Scala or Java, so that includes `sealed trait`s, `sealed abstract class`es, Scala 3's `enum`s, and Java's
     `enum`s)
 
+Additionally, since `2.0.0`, several of the specialized rules (those recognizing optional types, value/wrapper types,
+collections and maps) look for the types they support in layers. E.g. when checking if a type is "a collection",
+the rule tests:
+
+ 1. whether the user provided an `io.scalaland.chimney.integrations` `implicit` for it (`TotallyBuildIterable`,
+    `PartiallyBuildIterable`, ... - these always win),
+ 2. whether it is one of the types supported by Chimney itself (Scala's collections, `Array`s, ...),
+ 3. whether one of [Hearth's providers](cookbook.md#hearth-macro-extensions) recognizes it - either Hearth's built-in
+    ones (e.g. `java.util` collections on the JVM) or ones registered by a `ServiceLoader`-loaded
+    `StandardMacroExtension` found on the compile classpath (e.g. `chimney-protobufs`' well-known-types support or
+    Kindlings' `cats-integration`).
+
+And, of course, an `implicit` `Transformer`/`PartialTransformer` provided by the user is checked by the very first
+rule, before any of these layers is consulted.
+
 A bit more information about each of these `Rule`s (without getting into details that could change over time) is
 presented below.
 
@@ -610,11 +625,27 @@ on a server that only sends you "proper" logs from the compilation).
 
 Meanwhile, Chimney users should receive a list of all aggregated errors that failed the derivation. The only way we
 could do it (considering the above) is by gathering all the information to log with something similar to `WriterT` and
-collect all the errors with something similar to `EitherT` of some error semigroup. Internally there is a structure
-called `DerivationResult` which does exactly that and also stores logs in a structured way. 
+collect all the errors with something similar to `EitherT` of some error semigroup.
+
+Since `2.0.0` the whole derivation runs inside [Hearth](https://scala-hearth.readthedocs.io/)'s `MIO` - a small,
+stack-safe, macro-oriented IO monad which provides exactly that:
+
+  - **error accumulation** - alternatives (`orElse`) and "parallel" compositions (`parMap2`, `parTraverse`) aggregate
+    the errors of *all* failed branches, so a failed derivation can report every reason at once instead of just the
+    first one; non-fatal exceptions thrown inside the macro are caught and turned into regular errors as well
+  - **structured logging** - logs are collected into named, nested scopes as the derivation recurses; at the end of
+    the expansion the whole journal is rendered at once (that is what you see with
+    [`.enableMacrosLogging`](troubleshooting.md#debugging-macros))
+
+Internally Chimney's old `DerivationResult` is now a thin alias over `MIO`, so the behavior described above
+(all-errors-at-once messages, the structured log) is the same one Hearth offers to any macro library built on it.
 
 Thanks to that, we can both print error information about each tested failed derivation with an exact cause, and
 print a structured log of the whole derivation process.
+
+One consequence worth knowing: `MIO` is **lazy** - nothing is computed until the final expression is requested at the
+very end of the macro expansion (in Chimney's "gateway"), which is also where the log journal gets rendered and where
+fatal errors (like `StackOverflowError` on deeply recursive types) are caught and turned into readable messages.
 
 ### Scala 2 vs Scala 3 in derivation
 
@@ -622,102 +653,30 @@ As much code as possible (but not more) is shared between Scala 2 and Scala 3. T
 codebases that would inevitably diverge through time, with different conventions, trade-offs, etc. Differences in
 behavior between 2 and 3 should be justifiable and documented, and never accidental.
 
-The way we achieved this is by using a similar pattern to
+Historically (from `0.8.0` until `1.x`) Chimney achieved this with its own abstraction layer - a cake-pattern
+codebase where every macro concept (`Type[A]`, `Expr[A]`, product/sealed-hierarchy parsing, ...) was an abstract
+interface implemented twice: once with `scala.reflect` (Scala 2) and once with `scala.quoted` (Scala 3), following
+a pattern similar to
 [C. Hofer et al. **Polymorphic Embedding of DSLs**, GPCE, 2008](https://www.informatik.uni-marburg.de/~rendel/hofer08polymorphic.pdf)
-used in Endpoints4s and Endless4s:
+used in Endpoints4s and Endless4s. That layer was extracted as `chimney-macro-commons`
+(still [maintained as a standalone library](cookbook.md#chimney-macro-commons)).
 
-!!! example "Shared codebase"
+Since `2.0.0` this role is played by [Hearth](https://scala-hearth.readthedocs.io/) - a general-purpose toolkit for
+writing cross-compiled macros (grown out of, among others, Chimney's experience). The building blocks:
 
-    ```scala
-    trait Definitions extends Types with Exprs
-    ```
-    
-    ```scala
-    trait Types {
-      type Type[A] // abstract type
-
-      val Type: TypeModule
-      trait TypeModule { this: Type.type =>
-        // abstract companion object
-      }
-    }
-    ```
-    
-    ```scala
-    trait Exprs { this: Types =>
-      type Expr[A] // abstract type
-
-      val Expr: ExprModule
-      trait ExprModule { this: Expr.type =>
-        // abstract companion object
-      }
-    }
-    ```
- 
-!!! example "Scala 2-only codebase"
-
-    ```scala
-    trait DefinitionsPlatform
-        extends Definitions
-        with TypesPlatform
-        with ExprsPlatform {
-      val c: scala.reflect.macros.blackbox.Context
-    }
-    ```
-    
-    ```scala
-    trait TypesPlatform { this: DefinitionsPlatform =>
-      type Type[A] = c.WeakTypeTag[A]
-
-      object Type extends TypeModule {
-        // ...
-      }
-    }
-    ```
-    
-    ```scala
-    trait Exprs { this: Types =>
-      type Expr[A] = c.Expr[A]
-
-      object Expr extends ExprModule {
-        // ...
-      }
-    }
-    ```
- 
-!!! example "Scala 3-only codebase"
-
-    ```scala
-    abstract class DefinitionsPlatform(using val quotes: scala.quoted.Quotes)
-        extends Definitions
-        with TypesPlatform
-        with ExprsPlatform
-    ```
-    
-    ```scala
-    trait TypesPlatform { this: DefinitionsPlatform =>
-      type Type[A] = scala.quoted.Type[A]
-
-      object Type extends TypeModule {
-        // ...
-      }
-    }
-    ```
-    
-    ```scala
-    trait Exprs { this: Types =>
-      type Expr[A] = scala.quoted.Expr[A]
-
-      object Expr extends ExprModule {
-        // ...
-      }
-    }
-    ```
-
-This simplified code shows the general idea behind Chimney's multiplatform architecture. For every feature we needed
-in macros, we had to create an interface and then 2 platform-specific implementations. The biggest challenge was getting
-abstractions right enough, but that was done iteratively. However, those are implementation details that shouldn't
-matter to the user.
+  - **`hearth.MacroCommons`** - the same cake idea: platform-agnostic `Type[A]`/`Expr[A]` abstractions with rich
+    utilities for parsing classes (constructors, getters, setters, defaults), sealed hierarchies, singletons, etc.
+    Chimney's whole derivation engine (rules, configuration parsing, error rendering) is written against it **once**,
+    in shared sources - only a thin "platform bridge" and the macro entrypoints exist per Scala version
+  - **cross-quotes** - instead of implementing every expression-building operation twice, Hearth allows writing
+    `Expr.quote { ... Expr.splice(inner) ... }` directly in the **shared** sources: on Scala 3 it is rewritten (by a
+    compiler plugin) to native `'{ ... ${ inner } ... }` quotes and on Scala 2 it is implemented with the macro
+    reflection API. This removed most of the per-platform expression code that `1.x` had to maintain
+  - **`MIO` with error accumulation and logging** - see [Error handling and logging](#error-handling-and-logging)
+    above
+  - **standard extensions** - the provider mechanism ([`IsValueType`/`IsOption`/`IsCollection`/`IsMap`](cookbook.md#hearth-macro-extensions))
+    with built-in providers (e.g. `java.util` types on the JVM) and `ServiceLoader`-loaded third-party extensions,
+    consulted by Chimney's rules as their built-in fallback layer
 
 After defining the macro's logic with platform-independent code the only platform-specific code that has to be written
 for each platform separately is plugging in the platform-specific implementations and the entrypoint to the macro:
@@ -728,3 +687,26 @@ for each platform separately is plugging in the platform-specific implementation
 
 These adjustments are required to extract `source: From`, possibly `failFast: Boolean` and `RuntimeDataStore`, to be
 able to pass them into macro.
+
+!!! note "Building Chimney from source"
+
+    Because of cross-quotes, compiling Chimney's (or any Hearth-based) Scala 3 sources requires Hearth's
+    `hearth-cross-quotes` **compiler plugin** (Chimney's `build.sbt` already configures it - this only matters if
+    you vendor the sources into your own build). Hearth also sets the JDK baseline: **JDK 11+** for Scala 2.13
+    and **JDK 17+** for Scala 3 artifacts.
+
+### Debugging and profiling the macros
+
+Chimney's own debugging tooling is described in [Debugging macros](troubleshooting.md#debugging-macros)
+(`.enableMacrosLogging` flag) and in
+[Changing the flags for every derivation in the project](cookbook.md#changing-the-flags-for-every-derivation-in-the-project)
+(`-Xmacro-settings:chimney.*` scalac options - unchanged in `2.0.0`).
+
+On top of that, Hearth has debugging/profiling facilities of its own, controlled with `-Xmacro-settings:hearth.*`
+options - e.g. `MIO` scope benchmarking and [speedscope](https://www.speedscope.app/)-compatible flame graphs of
+macro expansions (`-Xmacro-settings:hearth.mioBenchmarkScopes=true` +
+`-Xmacro-settings:hearth.mioBenchmarkFlameGraphDir=...`) for macros run through Hearth's standard runner - see
+[Hearth's documentation](https://scala-hearth.readthedocs.io/). Chimney currently runs its derivation through its own
+runner (to keep the `1.x` log and error-message format byte-compatible), so these particular options do not affect
+Chimney expansions yet - but they will be useful for any Hearth-based macros of your own, and Chimney may adopt them
+in future releases.

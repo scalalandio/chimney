@@ -6,6 +6,12 @@ between each version.
 
 (Scala **2.12** was supported for whole `1.x` line, and **2.11** on `0.5.x` line)
 
+!!! warning "JDK requirements"
+
+    On the JVM, since `2.0.0`, Chimney's Scala **2.13** artifacts require **JDK 11+** and Scala **3** artifacts require
+    **JDK 17+** (the macros are built on top of [Hearth](https://scala-hearth.readthedocs.io/), which is JDK 11+).
+    Scala.js and Scala Native are unaffected (but compilation still happens on a JVM meeting these requirements).
+
 The newest stable versions on each platform are:
 
 [![Chimney JVM versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=jvm)](https://search.maven.org/artifact/io.scalaland/chimney_2.13) <br>
@@ -123,27 +129,19 @@ or whe the targeted type has a private constructor. Out of the box, it supports:
 
 ## Java collections integration
 
-If you are interested in using `java.util.Optional`, `java.util.Collection`s, `java.util.Map`s, `java.util.streams` and
-other Java's types, you need to add integration to your project:
-
-```scala
-// Java collections integrations is released only on JVM Scala!
-libraryDependencies += "io.scalaland" %% "chimney-java-collections" % "{{ chimney_version() }}"
-```
-
-and then import:
-
-```scala
-import io.scalaland.chimney.javacollections._
-```
+If you are interested in using `java.util.Optional`, `java.util.Collection`s, `java.util.Map`s, `java.util.stream`s,
+Java boxed primitives (`java.lang.Integer` and friends) and other Java's types - since `2.0.0` they are supported
+out of the box on the JVM. No extra dependency, no import needed (the `chimney-java-collections` artifact is gone).
 
 !!! tip
 
-    See [Java collections integration cookbook](cookbook.md#java-collections-integration) for more information.
+    See [Java collections integration cookbook](cookbook.md#java-collections-integration) for more information
+    (including one known limitation around `java.util.EnumMap`).
 
 ## Cats integration
 
-If you are interested in Cats integrations for Partial Transformers, you need to add to your project:
+If you are interested in Cats type class instances for Chimney's types (and conversions between `partial.Result`
+and `Validated`), you need to add to your project:
 
 ```scala
 // if you use Scala on JVM-only
@@ -156,9 +154,18 @@ libraryDependencies += "io.scalaland" %%% "chimney-cats" % "{{ chimney_version()
 import io.scalaland.chimney.cats._
 ```
 
+Conversions to/from `cats.data` collections (`NonEmptyList`, `Chain`, ...) are since `2.0.0` served by a separate
+library - [Kindlings](https://github.com/kubuszok/kindlings)' `kindlings-cats-integration` - which only needs
+to be added to the classpath (no import):
+
+```scala
+libraryDependencies += "com.kubuszok" %%% "kindlings-cats-integration" % "{{ libraries.kindlings }}"
+```
+
 !!! tip
 
-    See [Cats integration cookbook](cookbook.md#cats-integration) for more information.
+    See [Cats integration cookbook](cookbook.md#cats-integration) for more information (including the current
+    Scala 3 status of the Kindlings integration).
 
 ## Protocol Buffers integration
 
@@ -171,9 +178,15 @@ libraryDependencies += "io.scalaland" %% "chimney-protobufs" % "{{ chimney_versi
 libraryDependencies += "io.scalaland" %%% "chimney-protobufs" % "{{ chimney_version() }}"
 ```
 
+Since `2.0.0` having the artifact on the classpath is enough for the ScalaPB well-known types (`wrappers.*Value`,
+`ByteString`, `Timestamp`). The import:
+
 ```scala
 import io.scalaland.chimney.protobufs._
 ```
+
+is only needed for the remaining utilities (`Empty`, the `Duration` family, empty `oneof` handling,
+`UnrecognizedEnum`, `DefaultValue[UnknownFieldSet]`).
 
 !!! tip
 
