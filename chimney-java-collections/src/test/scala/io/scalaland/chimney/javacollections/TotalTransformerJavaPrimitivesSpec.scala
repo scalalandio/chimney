@@ -3,6 +3,10 @@ package io.scalaland.chimney.javacollections
 import io.scalaland.chimney.ChimneySpec
 import io.scalaland.chimney.dsl.*
 
+/** Since 2.0.0 there are NO `io.scalaland.chimney.javacollections` implicits - this suite proves that all 8 Java boxed
+  * primitive <-> Scala primitive conversions (previously `JavaPrimitivesImplicits`) are served by Hearth's built-in
+  * `IsValueType` std-extension providers, WITHOUT any import and WITHOUT any flag.
+  */
 class TotalTransformerJavaPrimitivesSpec extends ChimneySpec {
 
   group("conversion between java.lang.Boolean and scala.Boolean") {

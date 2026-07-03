@@ -9,6 +9,10 @@ import scala.collection.immutable.{ListMap, ListSet, SortedMap}
 import scala.jdk.CollectionConverters.*
 import scala.jdk.StreamConverters.*
 
+/** Since 2.0.0 there are NO `io.scalaland.chimney.javacollections` implicits - this suite proves that every `java.util`
+  * type they used to provide is served by Hearth's built-in std-extension providers through the engine's
+  * extension-fallback layer, WITHOUT any import (including the partial-transformation error paths).
+  */
 class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
   implicit private val stringToInt: PartialTransformer[String, Int] = PartialTransformer.fromFunction(_.toInt)
@@ -193,6 +197,8 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       input.transformIntoPartial[ju.SortedMap[Int, Int]].asOption.get.asScala.toList ==> outputSorted
       input.transformIntoPartial[ju.NavigableMap[Int, Int]].asOption.get.asScala.toList ==> outputSorted
       input.transformIntoPartial[ju.HashMap[Int, Int]].asOption.get.asScala ==> outputUnstable
+      input.transformIntoPartial[ju.IdentityHashMap[Int, Int]].asOption.get.asScala.toMap ==> outputUnstable
+      input.transformIntoPartial[ju.WeakHashMap[Int, Int]].asOption.get.asScala.toMap ==> outputUnstable
       input.transformIntoPartial[ju.LinkedHashMap[Int, Int]].asOption.get.asScala.toList ==> outputStable
       input.transformIntoPartial[ju.TreeMap[Int, Int]].asOption.get.asScala.toList ==> outputSorted
 
@@ -209,6 +215,8 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
     }
 
     test("to java.lang.Enum-supporting types") {
+      import java.util.concurrent.TimeUnit
+
       Set(JavaEnum.Blue, JavaEnum.Green, JavaEnum.Red)
         .transformIntoPartial[ju.EnumSet[JavaEnum]]
         .asOption
@@ -219,30 +227,48 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
         JavaEnum.Red
       )
 
+      // NOTE: TimeUnit instead of JavaEnum - Hearth's EnumMap provider only matches ALREADY-COMPILED enums (see the
+      // same-compilation-unit pin below).
+
       // identity transformation of inner type:
 
-      Map(JavaEnum.Blue -> "3", JavaEnum.Green -> "2", JavaEnum.Red -> "1")
-        .transformIntoPartial[ju.EnumMap[JavaEnum, String]]
+      Map(TimeUnit.SECONDS -> "3", TimeUnit.MINUTES -> "2", TimeUnit.HOURS -> "1")
+        .transformIntoPartial[ju.EnumMap[TimeUnit, String]]
         .asOption
         .get
-        .asScala ==> Map(JavaEnum.Blue -> "3", JavaEnum.Green -> "2", JavaEnum.Red -> "1")
+        .asScala ==> Map(TimeUnit.SECONDS -> "3", TimeUnit.MINUTES -> "2", TimeUnit.HOURS -> "1")
 
       // provided transformation of inner type:
 
-      Map(JavaEnum.Blue -> "3", JavaEnum.Green -> "2", JavaEnum.Red -> "1")
-        .transformIntoPartial[ju.EnumMap[JavaEnum, Int]]
+      Map(TimeUnit.SECONDS -> "3", TimeUnit.MINUTES -> "2", TimeUnit.HOURS -> "1")
+        .transformIntoPartial[ju.EnumMap[TimeUnit, Int]]
         .asOption
         .get
-        .asScala ==> Map(JavaEnum.Blue -> 3, JavaEnum.Green -> 2, JavaEnum.Red -> 1)
+        .asScala ==> Map(TimeUnit.SECONDS -> 3, TimeUnit.MINUTES -> 2, TimeUnit.HOURS -> 1)
 
       // failed parsing of inner type:
 
-      ListMap(JavaEnum.Red -> "a", JavaEnum.Green -> "b", JavaEnum.Blue -> "c")
-        .transformIntoPartial[ju.EnumMap[JavaEnum, Int]]
+      ListMap(TimeUnit.SECONDS -> "a", TimeUnit.MINUTES -> "b", TimeUnit.HOURS -> "c")
+        .transformIntoPartial[ju.EnumMap[TimeUnit, Int]]
         .asErrorPathMessageStrings ==> Iterable(
-        "(Red)" -> "For input string: \"a\"",
-        "(Green)" -> "For input string: \"b\"",
-        "(Blue)" -> "For input string: \"c\""
+        "(SECONDS)" -> "For input string: \"a\"",
+        "(MINUTES)" -> "For input string: \"b\"",
+        "(HOURS)" -> "For input string: \"c\""
+      )
+    }
+
+    test("to java.util.EnumMap of a SAME-COMPILATION-UNIT enum stays unsupported (Hearth limitation, pinned)") {
+      // HEARTH 0.4.0 LIMITATION (report upstream): the EnumMap branch of IsCollectionProviderForJavaMap requires
+      // `Type.classOfType[Key]`, which `Class.forName`s the enum - impossible for an enum compiled in the SAME run
+      // (JavaEnum here). See TotalTransformerJavaCollectionsConversionsSpec for the full explanation.
+      compileErrors(
+        """
+        import io.scalaland.chimney.dsl.*
+        import io.scalaland.chimney.fixtures.JavaEnum
+        Map(JavaEnum.Red -> 1).transformIntoPartial[java.util.EnumMap[JavaEnum, Int]]
+        """
+      ).check(
+        "Chimney can't derive transformation from"
       )
     }
 
@@ -583,38 +609,44 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
     }
 
     test("from java.lang.Enum-supporting type") {
+      import java.util.concurrent.TimeUnit
+
       val enumSet = ju.EnumSet.allOf(classOf[JavaEnum])
       enumSet.transformIntoPartial[Set[JavaEnum]].asOption.get ==> Set(JavaEnum.Red, JavaEnum.Green, JavaEnum.Blue)
 
-      val enumMap = new ju.EnumMap[JavaEnum, String](classOf[JavaEnum])
-      JavaEnum.values().foreach(e => enumMap.put(e, e.ordinal().toString))
+      // NOTE: TimeUnit instead of JavaEnum - Hearth's EnumMap provider only matches ALREADY-COMPILED enums (see the
+      // same-compilation-unit pin in the first group).
+      val enumMap = new ju.EnumMap[TimeUnit, String](classOf[TimeUnit])
+      enumMap.put(TimeUnit.SECONDS, "0")
+      enumMap.put(TimeUnit.MINUTES, "1")
+      enumMap.put(TimeUnit.HOURS, "2")
 
       // identity transformation of inner type:
 
-      enumMap.transformIntoPartial[Map[JavaEnum, String]].asOption.get ==> Map(
-        JavaEnum.Red -> "0",
-        JavaEnum.Green -> "1",
-        JavaEnum.Blue -> "2"
+      enumMap.transformIntoPartial[Map[TimeUnit, String]].asOption.get ==> Map(
+        TimeUnit.SECONDS -> "0",
+        TimeUnit.MINUTES -> "1",
+        TimeUnit.HOURS -> "2"
       )
 
       // provided transformation of inner type:
 
       enumMap
-        .transformIntoPartial[Map[JavaEnum, Int]]
+        .transformIntoPartial[Map[TimeUnit, Int]]
         .asOption
-        .get ==> Map(JavaEnum.Red -> 0, JavaEnum.Green -> 1, JavaEnum.Blue -> 2)
+        .get ==> Map(TimeUnit.SECONDS -> 0, TimeUnit.MINUTES -> 1, TimeUnit.HOURS -> 2)
 
       // failed parsing of inner type:
 
-      val enumMap2 = new ju.EnumMap[JavaEnum, String](classOf[JavaEnum])
-      enumMap2.put(JavaEnum.Red, "a")
-      enumMap2.put(JavaEnum.Green, "1")
-      enumMap2.put(JavaEnum.Blue, "b")
+      val enumMap2 = new ju.EnumMap[TimeUnit, String](classOf[TimeUnit])
+      enumMap2.put(TimeUnit.SECONDS, "a")
+      enumMap2.put(TimeUnit.MINUTES, "1")
+      enumMap2.put(TimeUnit.HOURS, "b")
       enumMap2
-        .transformIntoPartial[Map[JavaEnum, Int]]
+        .transformIntoPartial[Map[TimeUnit, Int]]
         .asErrorPathMessageStrings ==> Iterable(
-        "(Red)" -> "For input string: \"a\"",
-        "(Blue)" -> "For input string: \"b\""
+        "(SECONDS)" -> "For input string: \"a\"",
+        "(HOURS)" -> "For input string: \"b\""
       )
     }
 

@@ -2,9 +2,9 @@ package io.scalaland.chimney.internal.compiletime
 
 import scala.collection.Factory
 
-/** JVM implementation of the `java.util.EnumSet`/`java.util.EnumMap` compat for the Hearth-provider fallback layer
-  * (see the JS/Native sources of the same name for the no-op stubs - Hearth ships its Java providers only on the JVM,
-  * so the fallback can never match these types there).
+/** JVM implementation of the `java.util.EnumSet`/`java.util.EnumMap` compat for the Hearth-provider fallback layer (see
+  * the JS/Native sources of the same name for the no-op stubs - Hearth ships its Java providers only on the JVM, so the
+  * fallback can never match these types there).
   *
   * HEARTH 0.4.0 BUG WORKAROUND (report upstream): `IsCollectionProviderForJavaCollection`'s EnumSet branch and
   * `IsCollectionProviderForJavaMap`'s EnumMap branch embed the enum's `java.lang.Class` token into their `factory`
@@ -26,13 +26,13 @@ import scala.collection.Factory
   * RELATED HEARTH 0.4.0 LIMITATIONS discovered while fixing this (report upstream, pinned in HearthStdJavaTypesSpec):
   *   - the providers' EnumSet/EnumMap branches gate on `Type.classOfType[Item/Key]` (a macro-time `Class.forName` of
   *     the ENUM class), so they only match enums that are ALREADY COMPILED (dependency/JDK enums) - for an enum
-  *     compiled in the same run they skip. Chimney's class-literal replacement would not need the runtime class at
-  *     all, but it can only replace a factory of a provider that MATCHED,
+  *     compiled in the same run they skip. Chimney's class-literal replacement would not need the runtime class at all,
+  *     but it can only replace a factory of a provider that MATCHED,
   *   - when the EnumSet branch skips, `IsCollectionProviderForJavaIterable` still matches (EnumSet <:
-  *     `java.lang.Iterable`), but its factory does `iterable.upcast[A]` which ASSERTS at expr-build time for any
-  *     proper subtype of `java.lang.Iterable` - the replacement below is what makes same-unit-enum EnumSet targets
-  *     work at all. EnumMap has no such second provider, so same-unit-enum EnumMap targets stay unsupported (the
-  *     regular "Chimney can't derive" error).
+  *     `java.lang.Iterable`), but its factory does `iterable.upcast[A]` which ASSERTS at expr-build time for any proper
+  *     subtype of `java.lang.Iterable` - the replacement below is what makes same-unit-enum EnumSet targets work at
+  *     all. EnumMap has no such second provider, so same-unit-enum EnumMap targets stay unsupported (the regular
+  *     "Chimney can't derive" error).
   */
 private[compiletime] trait JavaCollectionsPlatformCompat {
   this: ChimneyDefinitions & hearth.MacroCommons =>
@@ -86,8 +86,8 @@ private[compiletime] trait JavaCollectionsPlatformCompat {
     }
   }
 
-  /** `Factory[Item, M]` for an `M =:= java.util.EnumSet[Item]` target - replacement for the provider's poisoned
-    * factory (see the trait ScalaDoc). Mirrors Hearth's generated code shape.
+  /** `Factory[Item, M]` for an `M =:= java.util.EnumSet[Item]` target - replacement for the provider's poisoned factory
+    * (see the trait ScalaDoc). Mirrors Hearth's generated code shape.
     */
   @scala.annotation.nowarn("msg=is never used")
   protected def javaEnumSetFactoryCompat[Item: Type, M: Type](

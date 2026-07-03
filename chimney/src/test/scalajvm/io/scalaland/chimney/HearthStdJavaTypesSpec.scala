@@ -11,8 +11,8 @@ import io.scalaland.chimney.utils.OptionUtils.*
   *     this replaces chimney-java-collections' `JavaPrimitivesImplicits`),
   *   - `java.util.EnumSet`/`java.util.EnumMap` via the java-collection providers + the engine's class-token compat
   *     (`JavaCollectionsPlatformCompat` - Hearth 0.4.0's own factory exprs fail Scala 2 re-typecheck),
-  *   - `java.util.Map` targets, whose provider emits JDK 9+ `java.util.Map.entry` - only compilable on Scala 2.13
-  *     since the `-release 11` baseline bump.
+  *   - `java.util.Map` targets, whose provider emits JDK 9+ `java.util.Map.entry` - only compilable on Scala 2.13 since
+  *     the `-release 11` baseline bump.
   */
 class HearthStdJavaTypesSpec extends ChimneySpec {
 

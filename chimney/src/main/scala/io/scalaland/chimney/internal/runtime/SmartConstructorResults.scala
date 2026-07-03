@@ -37,7 +37,7 @@ object SmartConstructorResults {
 
   /** Maps `hearth.std.CtorLikeOf.EitherIterableThrowableOrValue`'s result to [[partial.Result]]. */
   def fromEitherThrowables[A](result: Either[Iterable[Throwable], A]): partial.Result[A] = result match {
-    case Right(value) => partial.Result.fromValue(value)
+    case Right(value)     => partial.Result.fromValue(value)
     case Left(throwables) =>
       throwables.toList match {
         case head :: tail =>

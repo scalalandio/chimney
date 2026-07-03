@@ -156,7 +156,8 @@ You can check its name in:
 If you want to test changes that were not merged to `master` you can publish them you for yourself locally. For that
 open sbt and run `publishLocal` task for every artifact that you want to publish as a snapshot. Keep in mind that:
 
- * `chimney-cats`, `chimney-java-collections` and `chimney-protobufs` rely on `chimney`
+ * `chimney-cats` and `chimney-protobufs` rely on `chimney` (`chimney-java-collections` is a test-only module since
+   2.0.0 - `java.util` types are supported out of the box and there is nothing to publish)
  * `chimney`, `chimneyCats`, etc. are versions with Scala 2.13 on JVM
  * versions for Scala Scala 3, Scala.js and Scala Native are NOT published by prepending `++` but by
    using a different suffix (`3`, `JS`, `Native`, see `projects` task to get a full list of projects) 

@@ -45,7 +45,7 @@ private[compiletime] trait CtorLikeExprs {
   protected def ctorLikeToPartialResultExpr[Input, Output: Type](
       ctorLike: CtorLikeOf[Input, Output]
   ): Option[Expr[Input] => Expr[partial.Result[Output]]] = ctorLike match {
-    case _: CtorLikeOf.PlainValue[?, ?] => None
+    case _: CtorLikeOf.PlainValue[?, ?]                                           => None
     case esv: CtorLikeOf.EitherStringOrValue[Input @unchecked, Output @unchecked] =>
       Some(input => eitherStringToPartialResultExpr[Output](esv.ctor(input)))
     case eisv: CtorLikeOf.EitherIterableStringOrValue[Input @unchecked, Output @unchecked] =>

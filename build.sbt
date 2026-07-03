@@ -243,7 +243,7 @@ val publishSettings = Seq(
 val mimaSettings = Seq(
   mimaPreviousArtifacts := {
     val previousVersions = moduleName.value match {
-      case "chimney" | "chimney-cats" | "chimney-java-collections" | "chimney-protobufs" => Set()
+      case "chimney" | "chimney-cats" | "chimney-protobufs" => Set()
       // TODO: restore after 2.0.0 release
       case _ => Set()
     }
@@ -289,7 +289,7 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
 
 val publishLocalForTests = {
   val jvm = for {
-    module <- Vector("chimney", "chimneyCats", "chimneyProtobufs", "chimneyJavaCollections")
+    module <- Vector("chimney", "chimneyCats", "chimneyProtobufs")
     moduleVersion <- Vector(module, module + "3")
   } yield moduleVersion + "/publishLocal"
   val js = for {
@@ -333,7 +333,7 @@ lazy val root = project
          |
          |If you need to test library locally in a different project, use publish-local-for-tests or manually publishLocal:
          | - chimney
-         | - cats/java-collections/protobufs integration (optional)
+         | - cats/protobufs integration (optional)
          |for the right Scala version and platform (see projects task).
          |""".stripMargin,
     usefulTasks := Seq(
@@ -449,6 +449,10 @@ lazy val chimneyCats = projectMatrix
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 
+// Since 2.0.0 this module is NOT published and contains NO implicits: Hearth's built-in std-extension providers
+// (consulted by the engine's extension-fallback layer) support java.util collections, java.util.Optional and Java
+// boxed primitives out of the box, without any import. The module remains as a test-only proof of that coverage
+// (every type previously served by JavaCollectionsImplicits/JavaPrimitivesImplicits is still asserted here).
 lazy val chimneyJavaCollections = projectMatrix
   .in(file("chimney-java-collections"))
   .someVariations(versions.scalas, List(VirtualAxis.jvm))(only1VersionInIDE *)
@@ -457,14 +461,13 @@ lazy val chimneyJavaCollections = projectMatrix
   .settings(
     moduleName := "chimney-java-collections",
     name := "chimney-java-collections",
-    description := "Integrations with selected Java collections"
+    description := "Tests proving that java.util types are supported by Chimney out of the box (via Hearth std extensions)"
   )
   .settings(settings *)
-  .settings(versionSchemeSettings *)
   .settings(publishSettings *)
-  .settings(mimaSettings *)
+  .settings(noPublishSettings *)
   .settings(
-    Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*, io.scalaland.chimney.javacollections.*"
+    mimaFailOnNoPrevious := false // this module is not published
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 
