@@ -79,6 +79,20 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
     */
   protected def isEnumCaseValCompat[A: Type]: Boolean = false
 
+  /** `true` for accessor methods that scalac marks STABLE (`MethodSymbol.isStable`) even though Hearth's `Method.isVal`
+    * is `false` - most notably `val` members of structural REFINEMENT types (e.g. a type param bounded with
+    * `A <: { val value: String }`), whose member symbol is a deferred stable method with no accessed field.
+    *
+    * The pre-Hearth Scala 2 engine classified getters with `isBodyField(field) = field.isStable` ->
+    * `ConstructorBodyVal` (an always-available accessor, no `.enableMethodAccessors` needed); Hearth 0.4.0's `isVal`
+    * (`symbol.isVal || accessed-field-isVal || isLazy`) misses these, silently demoting them to flag-gated
+    * `AccessorMethod`s (regression vs 1.x, caught by the docs "Parametric types" snippet). The Scala 2 `PlatformBridge`
+    * overrides this with the old `isStable` formula; the Scala 3 default `false` is 1.x parity (the old Scala 3 engine
+    * extracted body vals from `fieldMembers`, which never listed refinement members - verified against chimney 1.8.2:
+    * the same shape fails with "no accessor named value" there too).
+    */
+  protected def isStableAccessorCompat(method: Method): Boolean = false
+
   /** `true` when the type is backed by an actual TERM (a concrete Java enum constant), not the enum class itself.
     *
     * On Scala 3 a plain Java enum class is compiled `final` (NOT abstract, unlike enums with constant bodies), so the

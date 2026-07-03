@@ -129,6 +129,16 @@ abstract private[compiletime] class PlatformBridge(val c: scala.reflect.macros.b
     sym.isPublic && sym.isModuleClass && sym.isStatic && sym.isFinal
   }
 
+  /** Scala 2 override of [[MacroCommonsCompat.isStableAccessorCompat]]: the old macro-commons Scala 2 `isBodyField`
+    * formula (`field.isStable` on the accessor's `MethodSymbol`). Catches `val` members of structural refinement types
+    * (`A <: { val value: String }`) - deferred stable methods with no accessed field, which Hearth 0.4.0's
+    * `Method.isVal` misses - so they classify as always-available `ConstructorBodyVal` getters like in 1.x.
+    */
+  override protected def isStableAccessorCompat(method: Method): Boolean = {
+    val sym = method.asUntyped.symbol
+    sym.isMethod && sym.asMethod.isStable
+  }
+
   /** Scala 2 override of [[MacroCommonsCompat.retagExprCompat]]: re-wraps the tree with the precise `WeakTypeTag`
     * (hearth's `Type[A]` IS `c.WeakTypeTag[A]` on Scala 2), replacing the unresolved tag materialized by
     * `ValDefs.closeScope[A]` (no `Type` bound in Hearth 0.4.0).

@@ -40,6 +40,9 @@ jobs:
       - uses: extractions/setup-just@v3
       - uses: coursier/setup-action@v2.0.3
         with:
+          # publish-local-for-tests builds Scala 3 artifacts with -release 17 (Scala 2.13 uses -release 11),
+          # so the snippets job needs JDK 17+ - don't rely on the runner's default JVM.
+          jvm: 'temurin:17'
           apps: scala-cli sbt
       - name: Run snippets from documentation
         working-directory: docs

@@ -22,9 +22,10 @@ import scala.collection.immutable.ListMap
   *   - `exprAsInstanceOfMethod` (powers `.withConstructor` DSL) is implemented by building `FunctionN[...] => ...`
   *     types with the untyped API, casting the expr to them (runtime `.asInstanceOf`) and applying the `apply` methods
   *     via the `Method` chain (arguments re-keyed positionally to `v1..vN`),
-  *   - named tuples (Scala 3.7+): construction goes through Hearth's `NamedTuple` view; extraction uses
-  *     `productElement(idx)` + cast for ALL arities where macro-commons used `_N` selection below 23 fields
-  *     (semantically identical, slightly less direct bytecode). TODO(hearth-migration): validate with Scala 3.7 tests.
+  *   - named tuples (Scala 3.7+): construction goes through Hearth's `NamedTuple` view (with `NamedTuple.Empty` and
+  *     23+-arity workarounds - see `emptyNamedTupleConstructorCompat`/`tupleXXLConstructorCompat`); extraction restores
+  *     macro-commons' `._N` selection below 23 fields via `namedTupleGetterCompat` (validated by the
+  *     Total/Partial/Patcher named-tuple specs on Scala 3.7),
   *   - `ProductTypeOps`/`SealedHierarchyOps` implicit classes are NOT ported: Hearth's built-in `TypeMethods` already
   *     provides `tpe.isCaseClass`/`tpe.isCaseObject`/`tpe.isJavaBean`/`tpe.isSealed` (with slightly different, Hearth
   *     semantics) and a second implicit class with the same member names would make call sites ambiguous. Ported rules
@@ -284,8 +285,12 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
       val ctorParamOrder: Map[String, Int] = Type[A].primaryConstructor.fold(Map.empty[String, Int]) { ctor =>
         ctor.totalParameters.flatten.map(_._1.trim).zipWithIndex.toMap
       }
+      // isStableAccessorCompat: Scala 2 refinement-type `val` members are stable deferred methods that Hearth's
+      // `isVal` misses - the old engine classified them (`field.isStable`) as always-available body vals (see
+      // MacroCommonsCompat).
+      def isBodyVal(m: Method): Boolean = m.isVal || m.isVar || m.isLazy || isStableAccessorCompat(m)
       val (argVals, rest) = candidates.partition(_.isConstructorArgument)
-      val (bodyVals, accessorsAndGetters) = rest.partition(m => m.isVal || m.isVar || m.isLazy)
+      val (bodyVals, accessorsAndGetters) = rest.partition(isBodyVal)
       val sortedArgVals = argVals.sortBy(m => ctorParamOrder.getOrElse(m.name.trim, Int.MaxValue))
 
       // Hearth may expose the same member twice (e.g. val + its accessor def) - keep the first occurrence.
@@ -307,7 +312,7 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
               if (method.isConstructorArgument) Product.Getter.SourceType.ConstructorArgVal
               else if (ProductTypes.BeanAware.isGetterName(name) && conformToIsGetters)
                 Product.Getter.SourceType.JavaBeanGetter
-              else if (method.isVal || method.isVar || method.isLazy) Product.Getter.SourceType.ConstructorBodyVal
+              else if (isBodyVal(method)) Product.Getter.SourceType.ConstructorBodyVal
               else Product.Getter.SourceType.AccessorMethod,
             isInherited = method.isInherited,
             get = (in: Expr[A]) => invokeNullaryInstanceMethod[A, Tpe](method)(in)
