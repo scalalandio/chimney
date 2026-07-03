@@ -40,10 +40,13 @@ import io.scalaland.chimney.partial
   *     mapping),
   *   - `fieldName` (Path bookkeeping + error messages only) is taken from the wrap-method's parameter name when the
   *     provider supplies a `Method`, otherwise it defaults to `"value"`,
-  *   - note that the rules gate `WrapperClassType`/`PartialWrapperClassType` matches behind the `nonAnyValWrappers`
-  *     flag - extension-provided value types currently require `.enableNonAnyValWrappers` like any other non-AnyVal
-  *     wrapper (boxed primitives are exempt via `ValueClassType`, see above). TODO(hearth-extensions): Phase 5 should
-  *     decide whether extension-registered types skip the flag.
+  *   - the rules gate STRUCTURALLY matched (Method-based) `WrapperClassType`s behind the `nonAnyValWrappers` flag, but
+  *     extension-provided value types SKIP the flag (Phase 5 decision, see [[WrapperClass.fromStdExtension]]):
+  *     registering an `IsValueType` provider is an explicit opt-in by the integration's author - the same trust level
+  *     as an `integrations.TotallyBuildIterable`/`OptionalValue` implicit, neither of which is flag-gated - and it is
+  *     what makes e.g. chimney-protobufs' `Timestamp`/`wrappers.*Value` support work without any flag (like the
+  *     implicits it replaced). `PartialWrapperClassType` is by construction ALWAYS extension-provided, so it is not
+  *     flag-gated at all (boxed primitives are exempt via `ValueClassType`, see above).
   * The fallback calls `ensureStandardExtensionsLoaded()` (idempotent; the Gateways already load at entry), so the
   * datatypes layer stays safe even if consulted from a path that skipped a Gateway.
   *
@@ -65,11 +68,19 @@ private[compiletime] trait ValueClasses {
     * Basically, it is a value class without the need to extends AnyVal. This is useful since sometimes we have a type
     * which is basically a wrapper but not an `AnyVal` and we would like to unwrap it and attempt to derive code as if
     * it was `AnyVal`. Since it is very contextual, we need to have a separate utility for that.
+    *
+    * @param fromStdExtension
+    *   `true` when this wrapper was provided by a Hearth `IsValueType` extension provider (rather than matched
+    *   STRUCTURALLY by the Method-based parse). The rules use it to skip the `nonAnyValWrappers` flag for
+    *   extension-provided types: registering an `IsValueType` is an explicit opt-in by the integration's author
+    *   (exactly like an `integrations.TotallyBuildIterable` implicit, which needs no flag either), while the flag
+    *   guards the STRUCTURAL matching of arbitrary single-field classes (which could be surprising).
     */
   final protected case class WrapperClass[Outer, Inner](
       fieldName: String,
       unwrap: Expr[Outer] => Expr[Inner],
-      wrap: Expr[Inner] => Expr[Outer]
+      wrap: Expr[Inner] => Expr[Outer],
+      fromStdExtension: Boolean = false
   )
 
   /** Let us unwrap and wrap value in `AnyVal` value class */
@@ -136,7 +147,8 @@ private[compiletime] trait ValueClasses {
                   WrapperClass[A, Inner](
                     fieldName = fieldName,
                     unwrap = isValueTypeOf.unwrap,
-                    wrap = plainValue.ctor.asInstanceOf[Expr[Inner] => Expr[A]]
+                    wrap = plainValue.ctor.asInstanceOf[Expr[Inner] => Expr[A]],
+                    fromStdExtension = true
                   )
                 )
               )
@@ -211,7 +223,7 @@ private[compiletime] trait ValueClasses {
           // The cast is a macro-commons-inherited lie: the Inner type of an AnyVal does not have to be <: AnyVal
           // (e.g. a String field) - existing rules rely on this loose upper bound the same way macro-commons did.
           _.asInstanceOf[Existential.UpperBounded[AnyVal, WrapperClass[A, *]]].mapK[ValueClass[A, *]] { _ =>
-            { case WrapperClass(fieldName, unwrap, wrap) =>
+            { case WrapperClass(fieldName, unwrap, wrap, _) =>
               ValueClass(fieldName, unwrap, wrap)
             }
           }

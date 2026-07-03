@@ -30,35 +30,42 @@ class HearthStdExtensionsIntegrationsSpec extends ChimneySpec {
 
   group("IsValueType extension providers (WrapperClassType fallback)") {
 
-    test("transform into and from extension-provided value type, given the nonAnyValWrappers flag (total)") {
-      "abc".into[TestWrapper].enableNonAnyValWrappers.transform ==> TestWrapper.wrap("abc")
-      TestWrapper.wrap("abc").into[String].enableNonAnyValWrappers.transform ==> "abc"
+    test("transform into and from extension-provided value type, without any flag (total)") {
+      // Phase 5 decision (see ValueClasses.WrapperClass.fromStdExtension): extension-provided value types skip the
+      // nonAnyValWrappers flag - registering an IsValueType provider is an explicit opt-in by the integration author,
+      // like an integrations.TotallyBuildIterable implicit (which needs no flag either).
+      "abc".transformInto[TestWrapper] ==> TestWrapper.wrap("abc")
+      TestWrapper.wrap("abc").transformInto[String] ==> "abc"
 
-      Plain("abc").into[Wrapped].enableNonAnyValWrappers.transform ==> Wrapped(TestWrapper.wrap("abc"))
-      Wrapped(TestWrapper.wrap("abc")).into[Plain].enableNonAnyValWrappers.transform ==> Plain("abc")
+      Plain("abc").transformInto[Wrapped] ==> Wrapped(TestWrapper.wrap("abc"))
+      Wrapped(TestWrapper.wrap("abc")).transformInto[Plain] ==> Plain("abc")
+
+      // the (now redundant) flag stays harmless
+      "abc".into[TestWrapper].enableNonAnyValWrappers.transform ==> TestWrapper.wrap("abc")
     }
 
-    test("transform into and from extension-provided value type, given the nonAnyValWrappers flag (partial)") {
-      "abc".intoPartial[TestWrapper].enableNonAnyValWrappers.transform.asOption ==> Some(TestWrapper.wrap("abc"))
-      TestWrapper.wrap("abc").intoPartial[String].enableNonAnyValWrappers.transform.asOption ==> Some("abc")
+    test("transform into and from extension-provided value type, without any flag (partial)") {
+      "abc".transformIntoPartial[TestWrapper].asOption ==> Some(TestWrapper.wrap("abc"))
+      TestWrapper.wrap("abc").transformIntoPartial[String].asOption ==> Some("abc")
 
-      Plain("abc").intoPartial[Wrapped].enableNonAnyValWrappers.transform.asOption ==> Some(
+      Plain("abc").transformIntoPartial[Wrapped].asOption ==> Some(
         Wrapped(TestWrapper.wrap("abc"))
       )
     }
 
     test(
-      "extension-provided value type stays gated behind the nonAnyValWrappers flag (like every non-AnyVal wrapper)"
+      "structurally matched (Method-based) non-AnyVal wrappers stay gated behind the nonAnyValWrappers flag"
     ) {
-      compileErrors(""""abc".transformInto[TestWrapper]""").arePresent()
-      compileErrors("""TestWrapper.wrap("abc").transformInto[String]""").arePresent()
+      // Only EXTENSION-provided value types skip the flag; the structural single-field-class matching remains opt-in.
+      compileErrors(""""abc".transformInto[io.scalaland.chimney.HearthStdExtensionsIntegrationsSpec.Plain]""")
+        .arePresent()
+      "abc"
+        .into[Plain]
+        .enableNonAnyValWrappers
+        .transform ==> Plain("abc")
     }
 
     test("user-provided implicit Transformer overrides the extension-provided value type support") {
-      // The flag comes from the implicit config, NOT from the DSL: local DSL overrides suspend the Implicit rule
-      // (by design), so the precedence claim is only provable with an override-free configuration.
-      @scala.annotation.unused
-      implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
       implicit val marker: Transformer[String, TestWrapper] = (src: String) => TestWrapper.wrap(src + "!custom")
 
       "abc".transformInto[TestWrapper] ==> TestWrapper.wrap("abc!custom")
@@ -245,56 +252,52 @@ class HearthStdExtensionsIntegrationsSpec extends ChimneySpec {
 
   group("smart-constructor IsValueType extension providers (PartialWrapperClassType fallback)") {
 
-    test("wrap into smart-constructor value type (partial), given the nonAnyValWrappers flag") {
-      "abc".intoPartial[TestSmartWrapper].enableNonAnyValWrappers.transform.asOption ==> Some(
+    test("wrap into smart-constructor value type (partial), without any flag") {
+      // Smart-constructor value types are by construction ALWAYS extension-provided, so they are never gated behind
+      // the nonAnyValWrappers flag - see ValueClasses.WrapperClass.fromStdExtension.
+      "abc".transformIntoPartial[TestSmartWrapper].asOption ==> Some(
         TestSmartWrapper.unsafe("abc")
       )
-      "".intoPartial[TestSmartWrapper].enableNonAnyValWrappers.transform.asOption ==> None
-      "".intoPartial[TestSmartWrapper].enableNonAnyValWrappers.transform.asErrorPathMessageStrings ==> Iterable(
+      "".transformIntoPartial[TestSmartWrapper].asOption ==> None
+      "".transformIntoPartial[TestSmartWrapper].asErrorPathMessageStrings ==> Iterable(
         "" -> "TestSmartWrapper cannot be empty"
+      )
+      // the (now redundant) flag stays harmless
+      "abc".intoPartial[TestSmartWrapper].enableNonAnyValWrappers.transform.asOption ==> Some(
+        TestSmartWrapper.unsafe("abc")
       )
     }
 
     test("every smart-constructor error shape maps onto partial.Result") {
       // EitherIterableStringOrValue
-      "ab".intoPartial[TestSmartWrapperMulti].enableNonAnyValWrappers.transform.asOption ==> Some(
+      "ab".transformIntoPartial[TestSmartWrapperMulti].asOption ==> Some(
         TestSmartWrapperMulti.unsafe("ab")
       )
-      "1".intoPartial[TestSmartWrapperMulti].enableNonAnyValWrappers.transform.asErrorPathMessageStrings ==> Iterable(
+      "1".transformIntoPartial[TestSmartWrapperMulti].asErrorPathMessageStrings ==> Iterable(
         "" -> "TestSmartWrapperMulti is too short",
         "" -> "TestSmartWrapperMulti contains digits"
       )
       // EitherThrowableOrValue
-      "abc".intoPartial[TestSmartWrapperThrowable].enableNonAnyValWrappers.transform.asOption ==> Some(
+      "abc".transformIntoPartial[TestSmartWrapperThrowable].asOption ==> Some(
         TestSmartWrapperThrowable.unsafe("abc")
       )
-      "".intoPartial[TestSmartWrapperThrowable]
-        .enableNonAnyValWrappers
-        .transform
-        .asErrorPathMessageStrings ==> Iterable(
+      "".transformIntoPartial[TestSmartWrapperThrowable].asErrorPathMessageStrings ==> Iterable(
         "" -> "TestSmartWrapperThrowable cannot be empty"
       )
       // EitherIterableThrowableOrValue
-      "ab".intoPartial[TestSmartWrapperThrowables].enableNonAnyValWrappers.transform.asOption ==> Some(
+      "ab".transformIntoPartial[TestSmartWrapperThrowables].asOption ==> Some(
         TestSmartWrapperThrowables.unsafe("ab")
       )
-      "1"
-        .intoPartial[TestSmartWrapperThrowables]
-        .enableNonAnyValWrappers
-        .transform
-        .asErrorPathMessageStrings ==> Iterable(
+      "1".transformIntoPartial[TestSmartWrapperThrowables].asErrorPathMessageStrings ==> Iterable(
         "" -> "TestSmartWrapperThrowables is too short",
         "" -> "TestSmartWrapperThrowables contains digits"
       )
     }
 
     test("smart-constructor value type inside a product reports errors at the field's path") {
-      // NOTE: two-field products - a single-field case class would itself parse as a WrapperClass under the
-      // nonAnyValWrappers flag and short-circuit through TypeToValueClass (with a path-less error at the value
-      // itself), never reaching ProductToProduct's per-field path prepending.
-      @scala.annotation.unused
-      implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
-
+      // NOTE: two-field products - a single-field case class target would itself be checked by TypeToValueClass
+      // first (with a path-less error at the value itself), never reaching ProductToProduct's per-field path
+      // prepending.
       Plain2("abc", 1).transformIntoPartial[SmartWrapped2].asOption ==> Some(
         SmartWrapped2(TestSmartWrapper.unsafe("abc"), 1)
       )
@@ -304,19 +307,22 @@ class HearthStdExtensionsIntegrationsSpec extends ChimneySpec {
     }
 
     test("unwrap smart-constructor value type as a source (total + partial)") {
-      TestSmartWrapper.unsafe("abc").into[String].enableNonAnyValWrappers.transform ==> "abc"
-      TestSmartWrapper.unsafe("abc").intoPartial[String].enableNonAnyValWrappers.transform.asOption ==> Some("abc")
+      TestSmartWrapper.unsafe("abc").transformInto[String] ==> "abc"
+      TestSmartWrapper.unsafe("abc").transformIntoPartial[String].asOption ==> Some("abc")
     }
 
     test("Total transformer into smart-constructor value type fails compilation informatively") {
-      compileErrors(""""abc".into[TestSmartWrapper].enableNonAnyValWrappers.transform""").check(
+      compileErrors(""""abc".transformInto[TestSmartWrapper]""").check(
         "Chimney can't derive transformation from",
         "TestSmartWrapper"
       )
     }
 
-    test("smart-constructor value type stays gated behind the nonAnyValWrappers flag") {
-      compileErrors(""""abc".transformIntoPartial[TestSmartWrapper]""").arePresent()
+    test("user-provided implicit PartialTransformer overrides the extension-provided smart-constructor support") {
+      implicit val marker: PartialTransformer[String, TestSmartWrapper] =
+        PartialTransformer.fromFunction((src: String) => TestSmartWrapper.unsafe(src + "!custom"))
+
+      "abc".transformIntoPartial[TestSmartWrapper].asOption ==> Some(TestSmartWrapper.unsafe("abc!custom"))
     }
   }
 }

@@ -12,8 +12,11 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivati
   * derivation: the inner value is derived recursively (like for any wrapper) and then passed through the provider's
   * validating constructor, whose error channel maps onto `partial.Result`
   * ([[io.scalaland.chimney.internal.compiletime.CtorLikeExprs]]). In a TOTAL context the rule yields with an
-  * attempt-next reason, so Total derivation fails with the usual meaningful "Chimney can't derive ..." error. Gated
-  * behind the `nonAnyValWrappers` flag like every other non-AnyVal wrapper.
+  * attempt-next reason, so Total derivation fails with the usual meaningful "Chimney can't derive ..." error.
+  *
+  * Flag gating (Phase 5 decision, see `ValueClasses.WrapperClass.fromStdExtension`): only STRUCTURALLY matched
+  * (Method-based) wrappers require the `nonAnyValWrappers` flag; extension-provided value types (Hearth `IsValueType`
+  * providers - both the total and the smart-constructor ones) skip it, like the `integrations` implicits they replace.
   */
 private[compiletime] trait TransformTypeToValueClassRuleModule {
   this: Derivation & TransformProductToProductRuleModule & hearth.MacroCommons =>
@@ -35,26 +38,27 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
           } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
         case WrapperClassType(to2) =>
           if (ctx.config.areOverridesEmpty) {
-            if (ctx.config.flags.nonAnyValWrappers) {
-              import to2.{Underlying as InnerTo, value as valueTo}
+            import to2.{Underlying as InnerTo, value as valueTo}
+            // Extension-provided value types skip the flag - see ValueClasses.WrapperClass.fromStdExtension.
+            if (ctx.config.flags.nonAnyValWrappers || valueTo.fromStdExtension) {
               transformToInnerToAndWrap[From, To, InnerTo](valueTo.fieldName, valueTo.wrap)
             } else
               DerivationResult.attemptNextRuleBecause("Wrapping in non-AnyVal wrapper types was disabled by a flag")
           } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
         case PartialWrapperClassType(to2) =>
+          // Smart-constructor value types are by construction ALWAYS extension-provided (only Hearth IsValueType
+          // providers can supply a validating CtorLike), so they are never gated behind the nonAnyValWrappers flag -
+          // see ValueClasses.WrapperClass.fromStdExtension for the rationale.
           if (ctx.config.areOverridesEmpty) {
-            if (ctx.config.flags.nonAnyValWrappers) {
-              ctx match {
-                case TransformationContext.ForPartial(_, _) =>
-                  import to2.{Underlying as InnerTo, value as valueTo}
-                  transformToInnerToAndWrapPartially[From, To, InnerTo](valueTo.fieldName, valueTo.partialWrap)
-                case TransformationContext.ForTotal(_) =>
-                  DerivationResult.attemptNextRuleBecause(
-                    s"Only smart-constructor (partial) wrapping available for ${Type.prettyPrint[To]}, in total context"
-                  )
-              }
-            } else
-              DerivationResult.attemptNextRuleBecause("Wrapping in non-AnyVal wrapper types was disabled by a flag")
+            ctx match {
+              case TransformationContext.ForPartial(_, _) =>
+                import to2.{Underlying as InnerTo, value as valueTo}
+                transformToInnerToAndWrapPartially[From, To, InnerTo](valueTo.fieldName, valueTo.partialWrap)
+              case TransformationContext.ForTotal(_) =>
+                DerivationResult.attemptNextRuleBecause(
+                  s"Only smart-constructor (partial) wrapping available for ${Type.prettyPrint[To]}, in total context"
+                )
+            }
           } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
         case _ => DerivationResult.attemptNextRule
       }

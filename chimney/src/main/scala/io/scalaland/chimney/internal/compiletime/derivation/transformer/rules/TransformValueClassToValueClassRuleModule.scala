@@ -24,8 +24,13 @@ private[compiletime] trait TransformValueClassToValueClassRuleModule { this: Der
           } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
         case (WrapperClassType(from2), WrapperClassType(to2)) =>
           if (ctx.config.areOverridesEmpty) {
-            if (ctx.config.flags.nonAnyValWrappers) {
-              import from2.{Underlying as InnerFrom, value as valueFrom}, to2.{Underlying as InnerTo, value as valueTo}
+            import from2.{Underlying as InnerFrom, value as valueFrom}, to2.{Underlying as InnerTo, value as valueTo}
+            // Each side independently skips the flag when extension-provided - see
+            // ValueClasses.WrapperClass.fromStdExtension (structurally matched wrappers stay flag-gated).
+            if (
+              (ctx.config.flags.nonAnyValWrappers || valueFrom.fromStdExtension) &&
+              (ctx.config.flags.nonAnyValWrappers || valueTo.fromStdExtension)
+            ) {
               unwrapTransformAndWrapAgain[From, To, InnerFrom, InnerTo](
                 valueFrom.fieldName,
                 valueFrom.unwrap,
@@ -51,7 +56,8 @@ private[compiletime] trait TransformValueClassToValueClassRuleModule { this: Der
             case ValueClassType(fallback2) =>
               import fallback2.Underlying as InnerFallback
               fallback2.value.unwrap(fallbackExpr).as_??
-            case WrapperClassType(fallback2) if ctx.config.flags.nonAnyValWrappers =>
+            case WrapperClassType(fallback2)
+                if ctx.config.flags.nonAnyValWrappers || fallback2.value.fromStdExtension =>
               import fallback2.Underlying as InnerFallback
               fallback2.value.unwrap(fallbackExpr).as_??
             case _ =>

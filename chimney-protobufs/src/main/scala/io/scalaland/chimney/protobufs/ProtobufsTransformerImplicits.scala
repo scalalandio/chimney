@@ -1,14 +1,30 @@
 package io.scalaland.chimney.protobufs
 
 import io.scalaland.chimney.Transformer
-// format: off
-import io.scalaland.chimney.integrations._
-// format: on
 
-import scala.collection.Factory
-import scala.collection.mutable
-
-/** @since 0.8.0 */
+/** Since 2.0.0 this trait contains ONLY the implicits that std-extension providers cannot express - everything else was
+  * fix-by-deletion replaced by the Hearth `StandardMacroExtension` shipped in this jar (see
+  * [[io.scalaland.chimney.protobufs.internal.compiletime.ProtobufsMacroExtension]]), which requires NO import at all:
+  *
+  *   - `com.google.protobuf.ByteString` <-> collections of `Byte` -> `IsCollection` provider (was a
+  *     `TotallyBuildIterable` implicit),
+  *   - `com.google.protobuf.wrappers.*Value` <-> their unwrapped values -> `IsValueType` providers (were 16
+  *     `Transformer` implicits + a `TotallyBuildIterable` for `BytesValue`; `BytesValue`'s inner type is `ByteString`,
+  *     which composes transitively with the `ByteString` collection support),
+  *   - `com.google.protobuf.timestamp.Timestamp` <-> `java.time.Instant` -> `IsValueType` provider (were 2
+  *     `Transformer` implicits; the "inner type" is a computed conversion, which Hearth's contract permits).
+  *
+  * What stays here and WHY it cannot be a provider:
+  *
+  *   - `com.google.protobuf.duration.Duration`: `IsValueType` allows exactly ONE inner type per outer type, but proto
+  *     `Duration` has THREE conversion partners (`java.time.Duration`, `scala.concurrent.duration.FiniteDuration`,
+  *     `scala.concurrent.duration.Duration`) with a total/partial asymmetry on the last one (`Duration.Infinite` cannot
+  *     be encoded - see [[ProtobufsPartialTransformerImplicits]]). Whichever partner became the provider's inner type
+  *     would orphan the other two as implicits anyway, splitting one type's support across two mechanisms with
+  *     confusing precedence - so ALL `Duration` conversions stay implicits,
+  *   - `com.google.protobuf.empty.Empty`: `Transformer[A, Empty]` works for ANY `A` - an `IsValueType[Empty]` (inner
+  *     `Unit`) could only wrap from types transformable to `Unit`, which is strictly weaker.
+  */
 trait ProtobufsTransformerImplicits extends ProtobufsTransformerImplicitsLowPriorityImplicits1 {}
 
 private[protobufs] trait ProtobufsTransformerImplicitsLowPriorityImplicits1 { this: ProtobufsTransformerImplicits =>
@@ -54,136 +70,4 @@ private[protobufs] trait ProtobufsTransformerImplicitsLowPriorityImplicits1 { th
   implicit val totalTransformerFromDurationToScalaDurationInstance
       : Transformer[com.google.protobuf.duration.Duration, scala.concurrent.duration.Duration] =
     totalTransformerFromDurationToScalaFiniteDurationInstance.transform(_) // upcast
-
-  // com.google.protobuf.timestamp.Timestamp
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromTimestampToJavaInstantInstance
-      : Transformer[com.google.protobuf.timestamp.Timestamp, java.time.Instant] =
-    timestamp => java.time.Instant.ofEpochSecond(timestamp.seconds, timestamp.nanos.toLong)
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromJavaInstantToTimestampInstance
-      : Transformer[java.time.Instant, com.google.protobuf.timestamp.Timestamp] =
-    instant => com.google.protobuf.timestamp.Timestamp.of(instant.getEpochSecond, instant.getNano)
-
-  // com.google.protobuf.ByteString
-
-  /** @since 2.0.0 */
-  implicit val protobufByteStringIsTotallyBuildIterable: TotallyBuildIterable[com.google.protobuf.ByteString, Byte] =
-    new TotallyBuildIterable[com.google.protobuf.ByteString, Byte] {
-      def totalFactory: Factory[Byte, com.google.protobuf.ByteString] =
-        new FactoryCompat[Byte, com.google.protobuf.ByteString] {
-          def newBuilder: mutable.Builder[Byte, com.google.protobuf.ByteString] =
-            new FactoryCompat.Builder[Byte, com.google.protobuf.ByteString] {
-              private val impl = mutable.ListBuffer.empty[Byte]
-              def clear(): Unit = impl.clear()
-              def result(): com.google.protobuf.ByteString =
-                com.google.protobuf.ByteString.copyFrom(impl.iterator.toArray)
-              def addOne(elem: Byte): this.type = { impl += elem; this }
-            }
-        }
-      def iterator(byteString: com.google.protobuf.ByteString): Iterator[Byte] = byteString.toByteArray().iterator
-    }
-
-  // com.google.protobuf.wrappers.BoolValue
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromBoolValueToBoolean: Transformer[com.google.protobuf.wrappers.BoolValue, Boolean] =
-    wrapper => wrapper.value
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromBooleanToBoolValue: Transformer[Boolean, com.google.protobuf.wrappers.BoolValue] =
-    bool => com.google.protobuf.wrappers.BoolValue.of(bool)
-
-  // com.google.protobuf.wrappers.BytesValue
-
-  /** @since 2.0.0 */
-  implicit val protobufBytesValueIsTotallyBuildIterable
-      : TotallyBuildIterable[com.google.protobuf.wrappers.BytesValue, Byte] =
-    new TotallyBuildIterable[com.google.protobuf.wrappers.BytesValue, Byte] {
-      def totalFactory: Factory[Byte, com.google.protobuf.wrappers.BytesValue] =
-        new FactoryCompat[Byte, com.google.protobuf.wrappers.BytesValue] {
-          def newBuilder: mutable.Builder[Byte, com.google.protobuf.wrappers.BytesValue] =
-            new FactoryCompat.Builder[Byte, com.google.protobuf.wrappers.BytesValue] {
-              private val impl = protobufByteStringIsTotallyBuildIterable.totalFactory.newBuilder
-              def clear(): Unit = impl.clear()
-              def result(): com.google.protobuf.wrappers.BytesValue =
-                com.google.protobuf.wrappers.BytesValue.of(impl.result())
-              def addOne(elem: Byte): this.type = { impl += elem; this }
-            }
-        }
-      def iterator(byteValue: com.google.protobuf.wrappers.BytesValue): Iterator[Byte] =
-        protobufByteStringIsTotallyBuildIterable.iterator(byteValue.value)
-    }
-
-  // com.google.protobuf.wrappers.DoubleValue
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromDoubleValueToDouble: Transformer[com.google.protobuf.wrappers.DoubleValue, Double] =
-    wrapper => wrapper.value
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromDoubleToDoubleValue: Transformer[Double, com.google.protobuf.wrappers.DoubleValue] =
-    double => com.google.protobuf.wrappers.DoubleValue.of(double)
-
-  // com.google.protobuf.wrappers.FloatValue
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromFloatValueToFloat: Transformer[com.google.protobuf.wrappers.FloatValue, Float] =
-    wrapper => wrapper.value
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromFloatToFloatValue: Transformer[Float, com.google.protobuf.wrappers.FloatValue] =
-    float => com.google.protobuf.wrappers.FloatValue.of(float)
-
-  // com.google.protobuf.wrappers.Int32Value
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromInt32ValueToInt: Transformer[com.google.protobuf.wrappers.Int32Value, Int] =
-    wrapper => wrapper.value
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromIntToInt32Value: Transformer[Int, com.google.protobuf.wrappers.Int32Value] =
-    int => com.google.protobuf.wrappers.Int32Value.of(int)
-
-  // com.google.protobuf.wrappers.Int64Value
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromInt64ValueToLong: Transformer[com.google.protobuf.wrappers.Int64Value, Long] =
-    wrapper => wrapper.value
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromLongToInt64Value: Transformer[Long, com.google.protobuf.wrappers.Int64Value] =
-    long => com.google.protobuf.wrappers.Int64Value.of(long)
-
-  // com.google.protobuf.wrappers.UInt32Value
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromUInt32ValueToInt: Transformer[com.google.protobuf.wrappers.UInt32Value, Int] =
-    wrapper => wrapper.value
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromIntToUInt32Value: Transformer[Int, com.google.protobuf.wrappers.UInt32Value] =
-    int => com.google.protobuf.wrappers.UInt32Value.of(int)
-
-  // com.google.protobuf.wrappers.Int64Value
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromUInt64ValueToLong: Transformer[com.google.protobuf.wrappers.UInt64Value, Long] =
-    wrapper => wrapper.value
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromLongToUInt64Value: Transformer[Long, com.google.protobuf.wrappers.UInt64Value] =
-    long => com.google.protobuf.wrappers.UInt64Value.of(long)
-
-  // com.google.protobuf.wrappers.StringValue
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromStringValueToString: Transformer[com.google.protobuf.wrappers.StringValue, String] =
-    wrapper => wrapper.value
-
-  /** @since 0.8.0 */
-  implicit val totalTransformerFromStringToStringValue: Transformer[String, com.google.protobuf.wrappers.StringValue] =
-    string => com.google.protobuf.wrappers.StringValue.of(string)
 }

@@ -2,7 +2,21 @@ package io.scalaland.chimney.protobufs
 
 import io.scalaland.chimney.{partial, PartialTransformer}
 
-/** @since 0.8.0 */
+/** Kept as implicits in 2.0.0 (NOT replaced by the std-extension providers of
+  * [[io.scalaland.chimney.protobufs.internal.compiletime.ProtobufsMacroExtension]]) because none of them is expressible
+  * through a provider:
+  *
+  *   - the empty `GeneratedOneof`/`SealedOneof` and `UnrecognizedEnum` instances match a BOUNDED `From` for ANY `To` -
+  *     they hook the Implicit rule for whole type families, which no `IsValueType`/`IsCollection`/`IsOption` shape can
+  *     express,
+  *   - `PartialTransformer[Empty, A]` for ANY `A` - same reason,
+  *   - `scala.concurrent.duration.Duration` -> proto `Duration` (rejecting `Duration.Infinite`) COULD in isolation be a
+  *     smart-constructor `IsValueType` (`EitherStringOrValue` wrap), but `IsValueType` allows only ONE inner type per
+  *     outer type and proto `Duration`'s other conversion partners (`java.time.Duration`, `FiniteDuration`) must stay
+  *     total implicits anyway - see the [[ProtobufsTransformerImplicits]] ScalaDoc for the full verdict.
+  *
+  * @since 0.8.0
+  */
 trait ProtobufsPartialTransformerImplicits extends ProtobufsPartialTransformerImplicitsLowPriorityImplicits1 {
 
   /** @since 0.8.0 */

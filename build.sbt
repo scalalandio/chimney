@@ -511,9 +511,23 @@ lazy val chimneyProtobufs = projectMatrix
   .settings(
     Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*, io.scalaland.chimney.protobufs.*",
     scalacOptions := {
-      // protobufs Compile contains only generated classes, and scalacOptions from settings:* breaks Scala 3 compilation
+      // protobufs Compile mixes scalapb-generated classes with hand-written sources, and the strict scalacOptions
+      // from settings:* break the generated code - keep the options minimal (compiler-plugin flags like -Xplugin/
+      // -scalajs are injected by sbt AFTER this setting, so cross-quotes/Scala.js keep working); the hand-written
+      // sources are therefore written in the -Xsource:3-free common syntax subset (see ProtobufsMacroExtension).
       if (scalacOptions.value.contains("-scalajs")) Seq("-scalajs") else Seq.empty
     },
+    // Since 2.0.0 chimney-protobufs also ships a Hearth StandardMacroExtension (ServiceLoader-registered, see
+    // src/main/resources/META-INF/services): std-extension providers for ByteString/wrappers.*Value/Timestamp
+    // replaced the corresponding implicits, so those conversions work WITHOUT any import once this jar is on the
+    // classpath. The providers use Hearth's API + cross-quotes directly, hence the explicit dependencies below
+    // (hearth itself already comes transitively through the chimney module).
+    libraryDependencies += "com.kubuszok" %%% "hearth" % versions.hearth,
+    // Cross-quotes: on Scala 2 they are macros (part of hearth), on Scala 3 they are a compiler plugin.
+    libraryDependencies ++= versions.fold(scalaVersion.value)(
+      for2_13 = Seq.empty,
+      for3 = Seq(compilerPlugin("com.kubuszok" %% "hearth-cross-quotes" % versions.hearth))
+    ),
     Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
     Test / PB.protoSources += PB.externalSourcePath.value,
     Test / PB.targets := Seq(scalapb.gen() -> (Test / sourceManaged).value / "scalapb"),

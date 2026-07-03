@@ -9,8 +9,11 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivati
   *
   * Phase 5 addition: SMART-CONSTRUCTOR value types (`datatypes.ValueClasses.PartialWrapperClassType`) can be UNWRAPPED
   * as sources in both total and partial derivation (only their CONSTRUCTION is partial-only - see
-  * [[TransformTypeToValueClassRuleModule]]). Gated behind the `nonAnyValWrappers` flag like every other non-AnyVal
-  * wrapper.
+  * [[TransformTypeToValueClassRuleModule]]).
+  *
+  * Flag gating (Phase 5 decision, see `ValueClasses.WrapperClass.fromStdExtension`): only STRUCTURALLY matched
+  * (Method-based) wrappers require the `nonAnyValWrappers` flag; extension-provided value types (Hearth `IsValueType`
+  * providers - both the total and the smart-constructor ones) skip it, like the `integrations` implicits they replace.
   */
 private[compiletime] trait TransformValueClassToTypeRuleModule {
   this: Derivation & TransformProductToProductRuleModule & TransformValueClassToValueClassRuleModule &
@@ -34,20 +37,20 @@ private[compiletime] trait TransformValueClassToTypeRuleModule {
           } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
         case WrapperClassType(from2) =>
           if (ctx.config.areOverridesEmpty) {
-            if (ctx.config.flags.nonAnyValWrappers) {
-              import from2.{Underlying as InnerFrom, value as valueFrom}
+            import from2.{Underlying as InnerFrom, value as valueFrom}
+            // Extension-provided value types skip the flag - see ValueClasses.WrapperClass.fromStdExtension.
+            if (ctx.config.flags.nonAnyValWrappers || valueFrom.fromStdExtension) {
               unwrapAndTransform[From, To, InnerFrom](valueFrom.fieldName, valueFrom.unwrap)
             } else
               DerivationResult.attemptNextRuleBecause("Unwrapping from non-AnyVal wrapper types was disabled by a flag")
           } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
         case PartialWrapperClassType(from2) =>
           // Smart-constructor value types: only their CONSTRUCTION is partial; unwrapping is total like any wrapper.
+          // They are by construction ALWAYS extension-provided, so they are never gated behind the nonAnyValWrappers
+          // flag - see ValueClasses.WrapperClass.fromStdExtension for the rationale.
           if (ctx.config.areOverridesEmpty) {
-            if (ctx.config.flags.nonAnyValWrappers) {
-              import from2.{Underlying as InnerFrom, value as valueFrom}
-              unwrapAndTransform[From, To, InnerFrom](valueFrom.fieldName, valueFrom.unwrap)
-            } else
-              DerivationResult.attemptNextRuleBecause("Unwrapping from non-AnyVal wrapper types was disabled by a flag")
+            import from2.{Underlying as InnerFrom, value as valueFrom}
+            unwrapAndTransform[From, To, InnerFrom](valueFrom.fieldName, valueFrom.unwrap)
           } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
         case _ => DerivationResult.attemptNextRule
       }
