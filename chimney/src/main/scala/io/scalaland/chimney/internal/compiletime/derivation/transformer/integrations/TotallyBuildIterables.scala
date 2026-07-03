@@ -30,10 +30,13 @@ import scala.collection.Factory
   *   - any type that Hearth's `IsOption` matches is filtered out (e.g. `java.util.Optional`, which Hearth's built-ins
   *     model BOTH as an option and as a collection): optional semantics win, mirroring the OptionToOption-before-
   *     IterableToIterable rule order; such types go through [[OptionalValues]]' own fallback instead,
-  *   - only "total-shaped" providers are accepted: `build` must be a `CtorLikeOf.PlainValue` with `CtorResult =:= M`
-  *     (all Hearth built-in scala/java collection providers are of this shape). Smart-constructor providers (e.g.
-  *     Kindlings' NonEmptyList with `EitherStringOrValue`) cannot be a TOTAL factory - they surface through
-  *     [[PartiallyBuildIterables]]' twin fallback instead (Phase 5 smart-constructor support),
+  *   - only "total-shaped" providers are accepted: `build` must be a `CtorLikeOf.PlainValue`. Smart-constructor
+  *     providers (e.g. Kindlings' NonEmptyList with `EitherStringOrValue`) cannot be a TOTAL factory - they surface
+  *     through [[PartiallyBuildIterables]]' twin fallback instead (Phase 5 smart-constructor support). When
+  *     `CtorResult =:= M` (all Hearth built-in scala/java collection providers) the provider's factory is used AS-IS
+  *     (byte-identical trees to the pre-Phase-5b behavior); when `CtorResult != M` (e.g. Kindlings' `Chain`, which
+  *     accumulates into a `List[E]` and converts at the end) the intermediate `Factory[Item, CtorResult]` is wrapped
+  *     into a generated `Factory[Item, M]` whose `result()` applies the provider's total constructor,
   *   - `java.util.EnumSet`/`java.util.EnumMap` targets get their PROVIDER factory expr replaced with a Chimney-built
   *     equivalent - a Hearth 0.4.0 provider bug workaround, see [[JavaCollectionsPlatformCompat]],
   *   - it is SKIPPED when a `PartiallyBuildIterable`/`OptionalValue` implicit exists for the type: integrations
@@ -108,6 +111,66 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
             override def result(): M = impl.result()
             override def addOne(elem: (K, V)): this.type = {
               impl.addOne(Expr.splice(fromTuple(Expr.quote(elem))))
+              this
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Twins of PartiallyBuildIterables' partialFactoryFromBuilderCompat/partialTupleFactoryFromPairBuilderCompat for
+  // TOTAL PlainValue providers whose CtorResult != M (e.g. Kindlings' Chain accumulating into a List[E]): the
+  // provider's intermediate factory accumulates, result() applies the provider's total constructor.
+
+  @scala.annotation.nowarn("msg=is never used")
+  private def totalFactoryFromBuilderCompat[Item: Type, CtorResult0: Type, M: Type](
+      underlyingFactory: Expr[Factory[Item, CtorResult0]],
+      buildToValue: Expr[scala.collection.mutable.Builder[Item, CtorResult0]] => Expr[M]
+  ): Expr[Factory[Item, M]] = {
+    implicit val FactoryItemCtorResult: Type[Factory[Item, CtorResult0]] = ScalaType.Factory[Item, CtorResult0]
+    implicit val FactoryItemM: Type[Factory[Item, M]] = ScalaType.Factory[Item, M]
+    implicit val BuilderItemCtorResult: Type[scala.collection.mutable.Builder[Item, CtorResult0]] =
+      Type.of[scala.collection.mutable.Builder[Item, CtorResult0]]
+    Expr.quote {
+      new scala.collection.Factory[Item, M] {
+        override def fromSpecific(it: IterableOnce[Item]): M = newBuilder.addAll(it).result()
+        override def newBuilder: scala.collection.mutable.Builder[Item, M] = {
+          val impl = Expr.splice(underlyingFactory).newBuilder
+          new scala.collection.mutable.Builder[Item, M] {
+            override def clear(): Unit = impl.clear()
+            override def result(): M = Expr.splice(buildToValue(Expr.quote(impl)))
+            override def addOne(elem: Item): this.type = {
+              val _ = impl.addOne(elem)
+              this
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @scala.annotation.nowarn("msg=is never used")
+  private def totalTupleFactoryFromPairBuilderCompat[Pair: Type, K: Type, V: Type, CtorResult0: Type, M: Type](
+      underlyingFactory: Expr[Factory[Pair, CtorResult0]],
+      fromTuple: Expr[(K, V)] => Expr[Pair],
+      buildToValue: Expr[scala.collection.mutable.Builder[Pair, CtorResult0]] => Expr[M]
+  ): Expr[Factory[(K, V), M]] = {
+    implicit val TupleKV: Type[(K, V)] = ScalaType.Tuple2[K, V]
+    implicit val FactoryPairCtorResult: Type[Factory[Pair, CtorResult0]] = ScalaType.Factory[Pair, CtorResult0]
+    implicit val FactoryKVM: Type[Factory[(K, V), M]] = ScalaType.Factory[(K, V), M]
+    implicit val BuilderPairCtorResult: Type[scala.collection.mutable.Builder[Pair, CtorResult0]] =
+      Type.of[scala.collection.mutable.Builder[Pair, CtorResult0]]
+    Expr.quote {
+      new scala.collection.Factory[(K, V), M] {
+        override def fromSpecific(it: IterableOnce[(K, V)]): M = newBuilder.addAll(it).result()
+        override def newBuilder: scala.collection.mutable.Builder[(K, V), M] = {
+          val impl = Expr.splice(underlyingFactory).newBuilder
+          new scala.collection.mutable.Builder[(K, V), M] {
+            override def clear(): Unit = impl.clear()
+            override def result(): M = Expr.splice(buildToValue(Expr.quote(impl)))
+            override def addOne(elem: (K, V)): this.type = {
+              val _ = impl.addOne(Expr.splice(fromTuple(Expr.quote(elem))))
               this
             }
           }
@@ -234,30 +297,55 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
       else
         IsCollection.unapply(Type[M]).flatMap { isCollection =>
           import isCollection.{Underlying as Item, value as isCollectionOf}
-          val isTotalShaped = (isCollectionOf.build match {
-            case _: CtorLikeOf.PlainValue[?, ?] => true
-            case _                              => false // smart-constructor providers are not TOTAL - see ScalaDoc
-          }) && (isCollectionOf.CtorResult =:= Type[M])
-          if (!isTotalShaped) None
-          // Integrations implicits beat extension providers - only summoned when a provider actually matched.
-          else if (summonPartiallyBuildIterable[M].isDefined || summonOptionalValue[M].isDefined) None
-          else
-            isCollectionOf.asMap match {
-              case Some(isMapOf) =>
-                val key = isMapOf.Key.as_??
-                val value = isMapOf.Value.as_??
-                import key.Underlying as K, value.Underlying as V
-                Some(mkHearthMapSupport[M, Item, K, V](isMapOf))
-              case None =>
-                Some(mkHearthIterableSupport[M, Item](isCollectionOf))
-            }
+          (isCollectionOf.build match {
+            case pv: CtorLikeOf.PlainValue[?, ?] =>
+              // build is CtorLikeOf[Builder[Item, CtorResult], M] - re-establishing the erased type params.
+              Some(
+                pv.asInstanceOf[
+                  CtorLikeOf.PlainValue[scala.collection.mutable.Builder[Item, isCollectionOf.CtorResult], M]
+                ]
+              )
+            case _ => None // smart-constructor providers are not TOTAL - see ScalaDoc
+          }) match {
+            case None             => None
+            case Some(plainValue) =>
+              // Integrations implicits beat extension providers - only summoned when a provider actually matched.
+              if (summonPartiallyBuildIterable[M].isDefined || summonOptionalValue[M].isDefined) None
+              else {
+                implicit val CtorResult0: Type[isCollectionOf.CtorResult] = isCollectionOf.CtorResult
+                // None = provider builds M directly, use its factory AS-IS (byte-identical to pre-Phase-5b trees,
+                // incl. all Hearth built-ins); Some = CtorResult != M, wrap the intermediate factory so that
+                // result() applies the provider's total constructor (e.g. Kindlings' Chain builds a List[E] first).
+                val buildToValue
+                    : Option[Expr[scala.collection.mutable.Builder[Item, isCollectionOf.CtorResult]] => Expr[M]] =
+                  if (isCollectionOf.CtorResult =:= Type[M]) None
+                  else
+                    Some(
+                      // Identity cast - Scala 2 refuses to unify the dependent prefixes (isCollection.value vs the
+                      // isCollectionOf import alias) even though the types are the same.
+                      plainValue.ctor.asInstanceOf[
+                        Expr[scala.collection.mutable.Builder[Item, isCollectionOf.CtorResult]] => Expr[M]
+                      ]
+                    )
+                isCollectionOf.asMap match {
+                  case Some(isMapOf) =>
+                    val key = isMapOf.Key.as_??
+                    val value = isMapOf.Value.as_??
+                    import key.Underlying as K, value.Underlying as V
+                    Some(mkHearthMapSupport[M, Item, K, V, isCollectionOf.CtorResult](isMapOf, buildToValue))
+                  case None =>
+                    Some(mkHearthIterableSupport[M, Item, isCollectionOf.CtorResult](isCollectionOf, buildToValue))
+                }
+              }
+          }
         }
     }
 
     // Kept in separate methods (regular type parameters) - the cross-quotes helper-def pattern.
 
-    private def mkHearthIterableSupport[M: Type, Item: Type](
-        isCollectionOf: IsCollectionOf[M, Item]
+    private def mkHearthIterableSupport[M: Type, Item: Type, CtorResult0: Type](
+        isCollectionOf: IsCollectionOf[M, Item],
+        buildToValue: Option[Expr[scala.collection.mutable.Builder[Item, CtorResult0]] => Expr[M]]
     ): Existential[TotallyBuildIterable[M, *]] = {
       // HEARTH 0.4.0 BUG WORKAROUND (detected at parse level, never inside splices): the provider's EnumSet branch
       // embeds a class token (factory) and inline-quoted trees (asIterable) that do not survive Chimney's Scala 2
@@ -269,8 +357,18 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
           def totalFactory: Expr[Factory[Item, M]] =
             if (isEnumSet) javaEnumSetFactoryCompat[Item, M](classOfExprCompat[Item])
             else
-              // CtorResult =:= M was checked by the caller - same runtime value, equivalent tree type.
-              isCollectionOf.factory.asInstanceOf[Expr[Factory[Item, M]]]
+              buildToValue match {
+                case None =>
+                  // CtorResult =:= M was checked by the caller - same runtime value, equivalent tree type.
+                  isCollectionOf.factory.asInstanceOf[Expr[Factory[Item, M]]]
+                case Some(build) =>
+                  totalFactoryFromBuilderCompat[Item, CtorResult0, M](
+                    // CtorResult0 IS isCollectionOf.CtorResult (passed by the caller) - identity cast bridging the
+                    // path-dependent type to the regular type parameter.
+                    isCollectionOf.factory.asInstanceOf[Expr[Factory[Item, CtorResult0]]],
+                    build
+                  )
+              }
 
           def iterator(collection: Expr[M]): Expr[Iterator[Item]] =
             if (isEnumSet) javaCollectionIteratorCompat[Item, M](collection)
@@ -289,8 +387,9 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
       )
     }
 
-    private def mkHearthMapSupport[M: Type, Pair: Type, K: Type, V: Type](
-        isMapOf: IsMapOf[M, Pair]
+    private def mkHearthMapSupport[M: Type, Pair: Type, K: Type, V: Type, CtorResult0: Type](
+        isMapOf: IsMapOf[M, Pair],
+        buildToValue: Option[Expr[scala.collection.mutable.Builder[Pair, CtorResult0]] => Expr[M]]
     ): Existential[TotallyBuildIterable[M, *]] = {
       implicit val TupleKV: Type[(K, V)] = ScalaType.Tuple2[K, V]
       // K/V are exactly isMapOf.Key/isMapOf.Value (extracted by the caller) - the casts below are identities that
@@ -313,11 +412,20 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
           def totalFactory: Expr[Factory[(K, V), M]] =
             if (isEnumMap) javaEnumMapFactoryCompat[K, V, M](classOfExprCompat[K])
             else
-              tupleFactoryFromPairFactoryCompat[Pair, K, V, M](
-                // CtorResult =:= M was checked by the caller - same runtime value, equivalent tree type.
-                isMapOf.factory.asInstanceOf[Expr[Factory[Pair, M]]],
-                fromTuple
-              )
+              buildToValue match {
+                case None =>
+                  tupleFactoryFromPairFactoryCompat[Pair, K, V, M](
+                    // CtorResult =:= M was checked by the caller - same runtime value, equivalent tree type.
+                    isMapOf.factory.asInstanceOf[Expr[Factory[Pair, M]]],
+                    fromTuple
+                  )
+                case Some(build) =>
+                  totalTupleFactoryFromPairBuilderCompat[Pair, K, V, CtorResult0, M](
+                    isMapOf.factory.asInstanceOf[Expr[Factory[Pair, CtorResult0]]],
+                    fromTuple,
+                    build
+                  )
+              }
 
           def iterator(collection: Expr[M]): Expr[Iterator[(K, V)]] =
             if (isEnumMap) javaMapIteratorCompat[K, V, M](collection)

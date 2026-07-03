@@ -29,6 +29,8 @@ val versions = new {
   // Dependencies.
   val hearth = "0.4.0"
   val cats = "2.13.0"
+  // Latest published kindlings (its 0.3.0 depends on hearth 0.4.0, same as us; publishes JVM/JS/Native x 2.13/3).
+  val kindlingsCatsIntegration = "0.3.0"
   val kindProjector = "0.13.4"
   val munit = "1.2.4"
   val scalaJavaCompat = "1.0.2"
@@ -445,7 +447,20 @@ lazy val chimneyCats = projectMatrix
   .settings(
     Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*, io.scalaland.chimney.cats.*",
     libraryDependencies += "org.typelevel" %%% "cats-core" % versions.cats,
-    libraryDependencies += "org.typelevel" %%% "cats-laws" % versions.cats % Test
+    libraryDependencies += "org.typelevel" %%% "cats-laws" % versions.cats % Test,
+    // Hearth StandardMacroExtension with IsCollection/IsMap providers for cats.data types (NonEmptyList, Chain, ...).
+    // Test-scoped: it is consulted at MACRO-EXPANSION time of the TEST sources (ServiceLoader on the compile
+    // classpath of the code being derived) - the specs prove cats collections derive WITHOUT chimney-cats implicits.
+    // SCALA 2.13 ONLY: kindlings publishes all platforms (JVM/JS/Native) for BOTH Scala versions, but its Scala 3
+    // artifacts are built with Scala 3.8.4 (TASTy 28.8) - our 3.7.3 cannot even LOAD such an extension (hearth's
+    // ensureStandardExtensionsLoaded throws "Forward incompatible TASTy file has version 28.8", verified 2026-07,
+    // which poisons EVERY derivation in the module, not just the cats ones). Until kindlings publishes 3.3-LTS-built
+    // artifacts (like hearth does) or chimney bumps to Scala 3.8+, the extension proof runs on 2.13 only
+    // (src/test/scala-2/.../CatsDataSpec.scala; the scala-3 twin pins the gap).
+    libraryDependencies ++= versions.fold(scalaVersion.value)(
+      for2_13 = Seq("com.kubuszok" %%% "kindlings-cats-integration" % versions.kindlingsCatsIntegration % Test),
+      for3 = Seq.empty
+    )
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 

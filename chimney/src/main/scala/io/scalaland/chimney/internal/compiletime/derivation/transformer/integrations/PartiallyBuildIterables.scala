@@ -30,9 +30,9 @@ import scala.collection.Factory
   * derivation fails with the usual "Only PartiallyBuildIterable available ... in total context" -> "Chimney can't
   * derive ..." error.
   *
-  * NOT COVERED (deliberately, Phase 5b's business): providers with `CtorLikeOf.PlainValue` but `CtorResult != M` (e.g.
-  * Kindlings' `Chain`, which builds a `List[E]` and converts totally) are total-capable but match neither fallback -
-  * TODO(hearth-extensions): teach [[TotallyBuildIterables]] to wrap such factories.
+  * Providers with `CtorLikeOf.PlainValue` but `CtorResult != M` (e.g. Kindlings' `Chain`, which builds a `List[E]` and
+  * converts totally) are total-capable and handled by [[TotallyBuildIterables]]' fallback, which wraps their
+  * intermediate factory (Phase 5b).
   */
 trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.std.StdExtensions =>
 
