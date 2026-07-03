@@ -136,6 +136,17 @@ abstract private[compiletime] class PlatformBridge(val c: scala.reflect.macros.b
   override protected def retagExprCompat[A: Type](expr: Expr[A]): Expr[A] =
     c.Expr[A](expr.tree)(Type[A])
 
+  /** Scala 2 override of [[MacroCommonsCompat.classOfExprCompat]]: a proper class LITERAL (`Literal(Constant(tpe))`),
+    * which `showCode`/re-typecheck render as plain `classOf[fqcn.Type]` - unlike Hearth 0.4.0's `Expr.ClassExprCodec`
+    * quasiquote whose type splice does not survive Chimney's re-typecheck (see [[JavaCollectionsPlatformCompat]]).
+    */
+  override protected def classOfExprCompat[A: Type]: Expr[java.lang.Class[A]] = {
+    import c.universe.*
+    implicit val classOfA: c.WeakTypeTag[java.lang.Class[A]] =
+      c.WeakTypeTag(appliedType(typeOf[java.lang.Class[Unit]].typeConstructor, Type[A].tpe.dealias))
+    c.Expr[java.lang.Class[A]](Literal(Constant(Type[A].tpe.dealias)))
+  }
+
   /** macro-commons `Expr.nowarn` (Scala 2) - Hearth has no annotation-attaching API, so the old quasiquote-based
     * implementation lives here (see [[MacroCommonsCompat.nowarnExpr]]).
     */

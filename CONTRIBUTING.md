@@ -86,8 +86,9 @@ Additionally, we would like to:
 ### How to start working on Chimney
 
 The first 2 things you need are JVM and sbt installed. There are many ways to manage their installations (jEnv, Sdkman,
-package managers) and we didn't impose any of them since, as a library, Chimney should work with any supported JDK,
-and sbt runner should fetch the right versions for the project on its own.
+package managers) and we didn't impose any of them since sbt runner should fetch the right versions for the project on
+its own. Mind the JDK baselines though: Chimney 2.x's Scala 2.13 artifacts target JDK 11+ (`-release 11`) and its
+Scala 3 artifacts target JDK 17+ (`-release 17`), so to build both you need at least JDK 17.
 
 Then you need to set up project in an IDE. We are using Intellij, and are using these two settings (`dev.properties`)
 to control which version we are working on currently:

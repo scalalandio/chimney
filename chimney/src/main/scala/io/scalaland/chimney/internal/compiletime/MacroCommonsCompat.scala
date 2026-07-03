@@ -135,6 +135,21 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
     */
   protected def retagExprCompat[A: Type](expr: Expr[A]): Expr[A] = expr
 
+  /** Builds a `classOf[A]` class-literal expression for a CONCRETE class type `A`.
+    *
+    * Both `PlatformBridge`s override this with the platform's class-literal tree (`Literal(Constant(tpe))` on Scala 2,
+    * `Literal(ClassOfConstant(tpe))` on Scala 3). It exists because Hearth 0.4.0's `Expr.ClassExprCodec` on Scala 2
+    * lifts the token through a quasiquote whose type splice does not survive Chimney's re-typecheck (the
+    * `java.util.EnumSet`/`EnumMap` provider bug - see [[JavaCollectionsPlatformCompat]]), while a class LITERAL of a
+    * concrete type prints as plain `classOf[fqcn.Type]` and re-typechecks fine.
+    *
+    * The shared default should never be called - every concrete cake goes through a `PlatformBridge`.
+    */
+  protected def classOfExprCompat[A: Type]: Expr[java.lang.Class[A]] =
+    // $COVERAGE-OFF$should never happen unless a partial cake without PlatformBridge calls it
+    assertionFailed(s"classOfExprCompat is platform-specific, got no override for ${Type.prettyPrint[A]}")
+  // $COVERAGE-ON$
+
   /** Safe replacement for `list.traverse[ValDefs, B](f)`.
     *
     * HEARTH 0.4.0 BUG WORKAROUND: `Applicative[ValDefs].map2(fa, fb)(f)` reads its BY-NAME `fb` twice (`fb.definitions`

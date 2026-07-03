@@ -32,8 +32,10 @@ import scala.collection.Factory
   *     IterableToIterable rule order; such types go through [[OptionalValues]]' own fallback instead,
   *   - only "total-shaped" providers are accepted: `build` must be a `CtorLikeOf.PlainValue` with `CtorResult =:= M`
   *     (all Hearth built-in scala/java collection providers are of this shape). Smart-constructor providers (e.g.
-  *     Kindlings' NonEmptyList with `EitherStringOrValue`) cannot be a TOTAL factory; TODO(hearth-extensions): map
-  *     those onto [[PartiallyBuildIterables]] in Phase 5 proper,
+  *     Kindlings' NonEmptyList with `EitherStringOrValue`) cannot be a TOTAL factory - they surface through
+  *     [[PartiallyBuildIterables]]' twin fallback instead (Phase 5 smart-constructor support),
+  *   - `java.util.EnumSet`/`java.util.EnumMap` targets get their PROVIDER factory expr replaced with a Chimney-built
+  *     equivalent - a Hearth 0.4.0 provider bug workaround, see [[JavaCollectionsPlatformCompat]],
   *   - it is SKIPPED when a `PartiallyBuildIterable`/`OptionalValue` implicit exists for the type: integrations
   *     implicits must beat extension providers ([[TotallyOrPartiallyBuildIterable]] tries Totally BEFORE Partially, and
   *     MapToMap/IterableToIterable run before ToOption, so without these guards an extension match would shadow the
@@ -58,18 +60,19 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
 
   // Cross-quotes helpers for the Hearth-provider fallback - hoisted to the (unshadowed) trait level and kept in
   // methods with regular type parameters (the cross-quotes helper-def pattern; see ScalaStdCompat's GOTCHA).
+  // `protected` (not `private`) - PartiallyBuildIterables' twin fallback reuses them through the cake.
 
   private lazy val hearthFallbackStringType: Type[String] = Type.of[String]
 
   @scala.annotation.nowarn("msg=is never used")
-  private def iterableIteratorCompat[A: Type](iterable: Expr[Iterable[A]]): Expr[Iterator[A]] = {
+  protected def iterableIteratorCompat[A: Type](iterable: Expr[Iterable[A]]): Expr[Iterator[A]] = {
     implicit val IterableA: Type[Iterable[A]] = Type.of[Iterable[A]]
     implicit val IteratorA: Type[Iterator[A]] = ScalaType.Iterator[A]
     Expr.quote(Expr.splice(iterable).iterator)
   }
 
   @scala.annotation.nowarn("msg=is never used")
-  private def pairIteratorToTupleIteratorCompat[Pair: Type, K: Type, V: Type](
+  protected def pairIteratorToTupleIteratorCompat[Pair: Type, K: Type, V: Type](
       iterator: Expr[Iterator[Pair]],
       toTuple: Expr[Pair] => Expr[(K, V)]
   ): Expr[Iterator[(K, V)]] = {
@@ -114,13 +117,13 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
   }
 
   @scala.annotation.nowarn("msg=is never used")
-  private def tupleFirstCompat[A: Type, B: Type](tuple: Expr[(A, B)]): Expr[A] = {
+  protected def tupleFirstCompat[A: Type, B: Type](tuple: Expr[(A, B)]): Expr[A] = {
     implicit val TupleAB: Type[(A, B)] = ScalaType.Tuple2[A, B]
     Expr.quote(Expr.splice(tuple)._1)
   }
 
   @scala.annotation.nowarn("msg=is never used")
-  private def tupleSecondCompat[A: Type, B: Type](tuple: Expr[(A, B)]): Expr[B] = {
+  protected def tupleSecondCompat[A: Type, B: Type](tuple: Expr[(A, B)]): Expr[B] = {
     implicit val TupleAB: Type[(A, B)] = ScalaType.Tuple2[A, B]
     Expr.quote(Expr.splice(tuple)._2)
   }
@@ -255,16 +258,23 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
 
     private def mkHearthIterableSupport[M: Type, Item: Type](
         isCollectionOf: IsCollectionOf[M, Item]
-    ): Existential[TotallyBuildIterable[M, *]] =
+    ): Existential[TotallyBuildIterable[M, *]] = {
+      // HEARTH 0.4.0 BUG WORKAROUND (detected at parse level, never inside splices): the provider's EnumSet branch
+      // embeds a class token (factory) and inline-quoted trees (asIterable) that do not survive Chimney's Scala 2
+      // re-typecheck - replace both exprs with Chimney-built equivalents (see JavaCollectionsPlatformCompat).
+      val isEnumSet = isJavaEnumSetCompat[M]
       Existential[TotallyBuildIterable[M, *], Item](
         new TotallyBuildIterable[M, Item] {
 
           def totalFactory: Expr[Factory[Item, M]] =
-            // CtorResult =:= M was checked by the caller - same runtime value, equivalent tree type.
-            isCollectionOf.factory.asInstanceOf[Expr[Factory[Item, M]]]
+            if (isEnumSet) javaEnumSetFactoryCompat[Item, M](classOfExprCompat[Item])
+            else
+              // CtorResult =:= M was checked by the caller - same runtime value, equivalent tree type.
+              isCollectionOf.factory.asInstanceOf[Expr[Factory[Item, M]]]
 
           def iterator(collection: Expr[M]): Expr[Iterator[Item]] =
-            iterableIteratorCompat(isCollectionOf.asIterable(collection))
+            if (isEnumSet) javaCollectionIteratorCompat[Item, M](collection)
+            else iterableIteratorCompat(isCollectionOf.asIterable(collection))
 
           def to[Collection2: Type](
               collection: Expr[M],
@@ -277,6 +287,7 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
             s"support provided by Hearth extension IsCollection for ${Type.prettyPrint[M]}"
         }
       )
+    }
 
     private def mkHearthMapSupport[M: Type, Pair: Type, K: Type, V: Type](
         isMapOf: IsMapOf[M, Pair]
@@ -291,21 +302,30 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
           tupleFirstCompat(tuple).asInstanceOf[Expr[isMapOf.Key]],
           tupleSecondCompat(tuple).asInstanceOf[Expr[isMapOf.Value]]
         )
+      // HEARTH 0.4.0 BUG WORKAROUND (detected at parse level, never inside splices): the provider's EnumMap branch
+      // embeds a class token (factory) and inline-quoted trees (asIterable/key/value) that do not survive Chimney's
+      // Scala 2 re-typecheck - replace both the (tuple-level) factory and the iterator with Chimney-built equivalents
+      // (see JavaCollectionsPlatformCompat for the full story).
+      val isEnumMap = isJavaEnumMapCompat[M]
       Existential[TotallyBuildIterable[M, *], (K, V)](
         new TotallyBuildIterable[M, (K, V)] {
 
           def totalFactory: Expr[Factory[(K, V), M]] =
-            tupleFactoryFromPairFactoryCompat[Pair, K, V, M](
-              // CtorResult =:= M was checked by the caller - same runtime value, equivalent tree type.
-              isMapOf.factory.asInstanceOf[Expr[Factory[Pair, M]]],
-              fromTuple
-            )
+            if (isEnumMap) javaEnumMapFactoryCompat[K, V, M](classOfExprCompat[K])
+            else
+              tupleFactoryFromPairFactoryCompat[Pair, K, V, M](
+                // CtorResult =:= M was checked by the caller - same runtime value, equivalent tree type.
+                isMapOf.factory.asInstanceOf[Expr[Factory[Pair, M]]],
+                fromTuple
+              )
 
           def iterator(collection: Expr[M]): Expr[Iterator[(K, V)]] =
-            pairIteratorToTupleIteratorCompat[Pair, K, V](
-              iterableIteratorCompat(isMapOf.asIterable(collection)),
-              toTuple
-            )
+            if (isEnumMap) javaMapIteratorCompat[K, V, M](collection)
+            else
+              pairIteratorToTupleIteratorCompat[Pair, K, V](
+                iterableIteratorCompat(isMapOf.asIterable(collection)),
+                toTuple
+              )
 
           def to[Collection2: Type](
               collection: Expr[M],

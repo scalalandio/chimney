@@ -34,8 +34,8 @@ object TestCollection {
   def fromVector[A](values: Vector[A]): TestCollection[A] = new TestCollection(values)
 }
 
-/** Custom pair type (deliberately NOT `Tuple2` - mirrors `java.util.Map.Entry` so the engine's pair-to-tuple
-  * adaptation in the IsMap fallback is exercised).
+/** Custom pair type (deliberately NOT `Tuple2` - mirrors `java.util.Map.Entry` so the engine's pair-to-tuple adaptation
+  * in the IsMap fallback is exercised).
   */
 final class TestEntry[K, V](val key: K, val value: V) {
   override def equals(obj: Any): Boolean = obj match {
@@ -59,6 +59,119 @@ object TestDict {
     pairs.toVector.map(pair => new TestEntry(pair._1, pair._2))
   )
   def fromEntryVector[K, V](entries: Vector[TestEntry[K, V]]): TestDict[K, V] = new TestDict(entries)
+}
+
+/** Non-empty collection supported EXCLUSIVELY through a SMART-CONSTRUCTOR `IsCollection` provider whose shape mirrors
+  * Kindlings cats-integration's `NonEmptyList` provider 1:1 (`CtorResult = List[A]`, `build` =
+  * `CtorLikeOf.EitherStringOrValue` returning `Left("Cannot create ... from empty collection")`).
+  */
+final class TestNonEmptyCollection[A] private (val toList: List[A]) {
+  override def equals(obj: Any): Boolean = obj match {
+    case other: TestNonEmptyCollection[?] => other.toList == toList
+    case _                                => false
+  }
+  override def hashCode: Int = toList.hashCode
+  override def toString: String = toList.mkString("TestNonEmptyCollection(", ", ", ")")
+}
+object TestNonEmptyCollection {
+  def of[A](head: A, tail: A*): TestNonEmptyCollection[A] = new TestNonEmptyCollection(head :: tail.toList)
+  def fromList[A](values: List[A]): Either[String, TestNonEmptyCollection[A]] =
+    if (values.nonEmpty) Right(new TestNonEmptyCollection(values))
+    else Left("Cannot create TestNonEmptyCollection from empty collection")
+}
+
+/** Non-empty dictionary supported EXCLUSIVELY through a SMART-CONSTRUCTOR `IsMap` provider (mirrors Kindlings'
+  * `NonEmptyMap` shape but with the custom [[TestEntry]] pair type, so the partial pair-to-tuple adaptation is
+  * exercised too).
+  */
+final class TestNonEmptyDict[K, V] private (val toEntryList: List[TestEntry[K, V]]) {
+  override def equals(obj: Any): Boolean = obj match {
+    case other: TestNonEmptyDict[?, ?] => other.toEntryList == toEntryList
+    case _                             => false
+  }
+  override def hashCode: Int = toEntryList.hashCode
+  override def toString: String = toEntryList.mkString("TestNonEmptyDict(", ", ", ")")
+}
+object TestNonEmptyDict {
+  def of[K, V](head: (K, V), tail: (K, V)*): TestNonEmptyDict[K, V] = new TestNonEmptyDict(
+    (head +: tail.toList).map(pair => new TestEntry(pair._1, pair._2))
+  )
+  def fromEntryList[K, V](entries: List[TestEntry[K, V]]): Either[String, TestNonEmptyDict[K, V]] =
+    if (entries.nonEmpty) Right(new TestNonEmptyDict(entries))
+    else Left("Cannot create TestNonEmptyDict from empty collection")
+}
+
+/** Smart-constructor value types - one per validated `CtorLikeOf` shape (their `IsValueType` providers' `wrap` uses
+  * `EitherStringOrValue`/`EitherIterableStringOrValue`/`EitherThrowableOrValue`/`EitherIterableThrowableOrValue`
+  * respectively). All wrap a `String` that must be non-empty (the `Multi`/`Throwables` ones additionally reject digits,
+  * so a single input can produce MULTIPLE errors).
+  */
+final class TestSmartWrapper private (val value: String) {
+  override def equals(obj: Any): Boolean = obj match {
+    case other: TestSmartWrapper => other.value == value
+    case _                       => false
+  }
+  override def hashCode: Int = value.hashCode
+  override def toString: String = s"TestSmartWrapper($value)"
+}
+object TestSmartWrapper {
+  def parse(value: String): Either[String, TestSmartWrapper] =
+    if (value.nonEmpty) Right(new TestSmartWrapper(value)) else Left("TestSmartWrapper cannot be empty")
+  def unsafe(value: String): TestSmartWrapper = new TestSmartWrapper(value)
+}
+
+final class TestSmartWrapperMulti private (val value: String) {
+  override def equals(obj: Any): Boolean = obj match {
+    case other: TestSmartWrapperMulti => other.value == value
+    case _                            => false
+  }
+  override def hashCode: Int = value.hashCode
+  override def toString: String = s"TestSmartWrapperMulti($value)"
+}
+object TestSmartWrapperMulti {
+  def parse(value: String): Either[Iterable[String], TestSmartWrapperMulti] = {
+    val errors = List(
+      if (value.length < 2) List("TestSmartWrapperMulti is too short") else Nil,
+      if (value.exists(_.isDigit)) List("TestSmartWrapperMulti contains digits") else Nil
+    ).flatten
+    if (errors.isEmpty) Right(new TestSmartWrapperMulti(value)) else Left(errors)
+  }
+  def unsafe(value: String): TestSmartWrapperMulti = new TestSmartWrapperMulti(value)
+}
+
+final class TestSmartWrapperThrowable private (val value: String) {
+  override def equals(obj: Any): Boolean = obj match {
+    case other: TestSmartWrapperThrowable => other.value == value
+    case _                                => false
+  }
+  override def hashCode: Int = value.hashCode
+  override def toString: String = s"TestSmartWrapperThrowable($value)"
+}
+object TestSmartWrapperThrowable {
+  def parse(value: String): Either[Throwable, TestSmartWrapperThrowable] =
+    if (value.nonEmpty) Right(new TestSmartWrapperThrowable(value))
+    else Left(new IllegalArgumentException("TestSmartWrapperThrowable cannot be empty"))
+  def unsafe(value: String): TestSmartWrapperThrowable = new TestSmartWrapperThrowable(value)
+}
+
+final class TestSmartWrapperThrowables private (val value: String) {
+  override def equals(obj: Any): Boolean = obj match {
+    case other: TestSmartWrapperThrowables => other.value == value
+    case _                                 => false
+  }
+  override def hashCode: Int = value.hashCode
+  override def toString: String = s"TestSmartWrapperThrowables($value)"
+}
+object TestSmartWrapperThrowables {
+  def parse(value: String): Either[Iterable[Throwable], TestSmartWrapperThrowables] = {
+    val errors = List(
+      if (value.length < 2) List(new IllegalArgumentException("TestSmartWrapperThrowables is too short")) else Nil,
+      if (value.exists(_.isDigit)) List(new IllegalArgumentException("TestSmartWrapperThrowables contains digits"))
+      else Nil
+    ).flatten
+    if (errors.isEmpty) Right(new TestSmartWrapperThrowables(value)) else Left(errors)
+  }
+  def unsafe(value: String): TestSmartWrapperThrowables = new TestSmartWrapperThrowables(value)
 }
 
 final class TestPossible[A] private (val toOption: Option[A]) {
@@ -107,4 +220,34 @@ object testsupport {
   def testPossiblePresent[A](value: A): TestPossible[A] = TestPossible.present(value)
   def testPossibleAbsent[A]: TestPossible[A] = TestPossible.absent[A]
   def testPossibleFromOption[A](option: Option[A]): TestPossible[A] = TestPossible.fromOption(option)
+
+  // Smart-constructor helpers (companion calls routed through this companion-less object - Scala 2 gotcha above).
+
+  def listFactory[A]: scala.collection.Factory[A, List[A]] =
+    new scala.collection.Factory[A, List[A]] {
+      def fromSpecific(it: IterableOnce[A]): List[A] = List.from(it)
+      def newBuilder: scala.collection.mutable.Builder[A, List[A]] = List.newBuilder[A]
+    }
+
+  def entryListFactory[K, V]: scala.collection.Factory[TestEntry[K, V], List[TestEntry[K, V]]] =
+    new scala.collection.Factory[TestEntry[K, V], List[TestEntry[K, V]]] {
+      def fromSpecific(it: IterableOnce[TestEntry[K, V]]): List[TestEntry[K, V]] = List.from(it)
+      def newBuilder: scala.collection.mutable.Builder[TestEntry[K, V], List[TestEntry[K, V]]] =
+        List.newBuilder[TestEntry[K, V]]
+    }
+
+  def buildTestNonEmptyCollection[A](values: List[A]): Either[String, TestNonEmptyCollection[A]] =
+    TestNonEmptyCollection.fromList(values)
+
+  def buildTestNonEmptyDict[K, V](entries: List[TestEntry[K, V]]): Either[String, TestNonEmptyDict[K, V]] =
+    TestNonEmptyDict.fromEntryList(entries)
+
+  def parseTestSmartWrapper(value: String): Either[String, TestSmartWrapper] =
+    TestSmartWrapper.parse(value)
+  def parseTestSmartWrapperMulti(value: String): Either[Iterable[String], TestSmartWrapperMulti] =
+    TestSmartWrapperMulti.parse(value)
+  def parseTestSmartWrapperThrowable(value: String): Either[Throwable, TestSmartWrapperThrowable] =
+    TestSmartWrapperThrowable.parse(value)
+  def parseTestSmartWrapperThrowables(value: String): Either[Iterable[Throwable], TestSmartWrapperThrowables] =
+    TestSmartWrapperThrowables.parse(value)
 }

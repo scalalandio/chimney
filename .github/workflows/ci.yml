@@ -56,7 +56,16 @@ jobs:
       matrix:
         scala: ["2_13", "3"]
         platform: ["jvm", "js", "native"]
-        jvm: ['temurin:1.8.0-392', 'temurin:1.21.0.1']
+        # Chimney 2.x JDK baselines: Scala 2.13 targets JDK 11+ (-release 11), Scala 3 targets JDK 17+ (-release 17) -
+        # each Scala version is tested on its minimum plus the latest LTS.
+        jvm: ['temurin:11', 'temurin:1.21.0.1']
+        exclude:
+          - scala: "3"
+            jvm: 'temurin:11'
+        include:
+          - { scala: "3", platform: "jvm", jvm: 'temurin:17' }
+          - { scala: "3", platform: "js", jvm: 'temurin:17' }
+          - { scala: "3", platform: "native", jvm: 'temurin:17' }
       fail-fast: false
 
     steps:

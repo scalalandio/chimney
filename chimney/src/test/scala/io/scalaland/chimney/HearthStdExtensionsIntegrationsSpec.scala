@@ -1,7 +1,18 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
-import io.scalaland.chimney.enginetestextension.{TestCollection, TestDict, TestPossible, TestWrapper}
+import io.scalaland.chimney.enginetestextension.{
+  TestCollection,
+  TestDict,
+  TestNonEmptyCollection,
+  TestNonEmptyDict,
+  TestPossible,
+  TestSmartWrapper,
+  TestSmartWrapperMulti,
+  TestSmartWrapperThrowable,
+  TestSmartWrapperThrowables,
+  TestWrapper
+}
 import io.scalaland.chimney.partial.syntax.*
 import io.scalaland.chimney.utils.OptionUtils.*
 
@@ -10,8 +21,8 @@ import io.scalaland.chimney.utils.OptionUtils.*
   *   - `IsValueType` plugs into the ValueClassToType/TypeToValueClass rules (via `WrapperClassType`),
   *   - `IsCollection`/`IsMap` plug into the IterableToIterable/MapToMap rules (via `TotallyBuildIterable`),
   *   - `IsOption` plugs into the OptionToOption/ToOption/PartialOptionToNonOption rules (via `OptionalValue`),
-  * and that the documented precedence holds: user implicits (rule #1) and `io.scalaland.chimney.integrations`
-  * implicits both OVERRIDE extension-provided support.
+  * and that the documented precedence holds: user implicits (rule #1) and `io.scalaland.chimney.integrations` implicits
+  * both OVERRIDE extension-provided support.
   */
 class HearthStdExtensionsIntegrationsSpec extends ChimneySpec {
 
@@ -36,7 +47,9 @@ class HearthStdExtensionsIntegrationsSpec extends ChimneySpec {
       )
     }
 
-    test("extension-provided value type stays gated behind the nonAnyValWrappers flag (like every non-AnyVal wrapper)") {
+    test(
+      "extension-provided value type stays gated behind the nonAnyValWrappers flag (like every non-AnyVal wrapper)"
+    ) {
       compileErrors(""""abc".transformInto[TestWrapper]""").arePresent()
       compileErrors("""TestWrapper.wrap("abc").transformInto[String]""").arePresent()
     }
@@ -44,7 +57,8 @@ class HearthStdExtensionsIntegrationsSpec extends ChimneySpec {
     test("user-provided implicit Transformer overrides the extension-provided value type support") {
       // The flag comes from the implicit config, NOT from the DSL: local DSL overrides suspend the Implicit rule
       // (by design), so the precedence claim is only provable with an override-free configuration.
-      @scala.annotation.unused implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
+      @scala.annotation.unused
+      implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
       implicit val marker: Transformer[String, TestWrapper] = (src: String) => TestWrapper.wrap(src + "!custom")
 
       "abc".transformInto[TestWrapper] ==> TestWrapper.wrap("abc!custom")
@@ -150,12 +164,169 @@ class HearthStdExtensionsIntegrationsSpec extends ChimneySpec {
       Option("a").transformInto[TestPossible[String]] ==> TestPossible.present("a!custom")
     }
   }
+
+  group("smart-constructor IsCollection extension providers (PartiallyBuildIterable fallback)") {
+
+    test("transform into extension-provided non-empty collection (partial)") {
+      List(1, 2, 3).transformIntoPartial[TestNonEmptyCollection[Int]].asOption ==> Some(
+        TestNonEmptyCollection.of(1, 2, 3)
+      )
+      Vector("a").transformIntoPartial[TestNonEmptyCollection[String]].asOption ==> Some(
+        TestNonEmptyCollection.of("a")
+      )
+
+      // with element transformation - failure is reported at the failing index
+      implicit val intParserOpt: PartialTransformer[String, Int] = PartialTransformer(_.parseInt.asResult)
+      List("1", "2").transformIntoPartial[TestNonEmptyCollection[Int]].asOption ==> Some(
+        TestNonEmptyCollection.of(1, 2)
+      )
+      List("1", "x").transformIntoPartial[TestNonEmptyCollection[Int]].asErrorPathMessageStrings ==> Iterable(
+        "(1)" -> "empty value"
+      )
+    }
+
+    test("failed smart constructor maps onto partial.Result like an integrations implicit would") {
+      List.empty[Int].transformIntoPartial[TestNonEmptyCollection[Int]].asOption ==> None
+      List.empty[Int].transformIntoPartial[TestNonEmptyCollection[Int]].asErrorPathMessageStrings ==> Iterable(
+        "" -> "Cannot create TestNonEmptyCollection from empty collection"
+      )
+    }
+
+    test("transform from extension-provided non-empty collection (total + partial)") {
+      TestNonEmptyCollection.of(1, 2, 3).transformInto[List[Int]] ==> List(1, 2, 3)
+      TestNonEmptyCollection.of(1, 2, 3).transformIntoPartial[Vector[Int]].asOption ==> Some(Vector(1, 2, 3))
+    }
+
+    test("Total transformer into smart-constructor collection fails compilation informatively") {
+      compileErrors("""List(1, 2, 3).transformInto[TestNonEmptyCollection[Int]]""").check(
+        "Chimney can't derive transformation from",
+        "TestNonEmptyCollection"
+      )
+    }
+  }
+
+  group("smart-constructor IsMap extension providers (PartiallyBuildIterable fallback, pair-to-tuple adaptation)") {
+
+    test("transform into extension-provided non-empty map (partial)") {
+      Map("a" -> 1, "b" -> 2).transformIntoPartial[TestNonEmptyDict[String, Int]].asOption ==> Some(
+        TestNonEmptyDict.of("a" -> 1, "b" -> 2)
+      )
+
+      // with value transformation - failure is reported at the failing key
+      implicit val intParserOpt: PartialTransformer[String, Int] = PartialTransformer(_.parseInt.asResult)
+      Map("a" -> "1").transformIntoPartial[TestNonEmptyDict[String, Int]].asOption ==> Some(
+        TestNonEmptyDict.of("a" -> 1)
+      )
+      Map("a" -> "x").transformIntoPartial[TestNonEmptyDict[String, Int]].asErrorPathMessageStrings ==> Iterable(
+        "(a)" -> "empty value"
+      )
+    }
+
+    test("failed smart constructor maps onto partial.Result like an integrations implicit would") {
+      Map.empty[String, Int].transformIntoPartial[TestNonEmptyDict[String, Int]].asOption ==> None
+      Map.empty[String, Int].transformIntoPartial[TestNonEmptyDict[String, Int]].asErrorPathMessageStrings ==> Iterable(
+        "" -> "Cannot create TestNonEmptyDict from empty collection"
+      )
+    }
+
+    test("transform from extension-provided non-empty map (total)") {
+      TestNonEmptyDict.of("a" -> 1).transformInto[Map[String, Int]] ==> Map("a" -> 1)
+      // extension-provided maps are also collections of pairs
+      TestNonEmptyDict.of("a" -> 1).transformInto[List[(String, Int)]] ==> List("a" -> 1)
+    }
+
+    test("Total transformer into smart-constructor map fails compilation informatively") {
+      compileErrors("""Map("a" -> 1).transformInto[TestNonEmptyDict[String, Int]]""").check(
+        "Chimney can't derive transformation from",
+        "TestNonEmptyDict"
+      )
+    }
+  }
+
+  group("smart-constructor IsValueType extension providers (PartialWrapperClassType fallback)") {
+
+    test("wrap into smart-constructor value type (partial), given the nonAnyValWrappers flag") {
+      "abc".intoPartial[TestSmartWrapper].enableNonAnyValWrappers.transform.asOption ==> Some(
+        TestSmartWrapper.unsafe("abc")
+      )
+      "".intoPartial[TestSmartWrapper].enableNonAnyValWrappers.transform.asOption ==> None
+      "".intoPartial[TestSmartWrapper].enableNonAnyValWrappers.transform.asErrorPathMessageStrings ==> Iterable(
+        "" -> "TestSmartWrapper cannot be empty"
+      )
+    }
+
+    test("every smart-constructor error shape maps onto partial.Result") {
+      // EitherIterableStringOrValue
+      "ab".intoPartial[TestSmartWrapperMulti].enableNonAnyValWrappers.transform.asOption ==> Some(
+        TestSmartWrapperMulti.unsafe("ab")
+      )
+      "1".intoPartial[TestSmartWrapperMulti].enableNonAnyValWrappers.transform.asErrorPathMessageStrings ==> Iterable(
+        "" -> "TestSmartWrapperMulti is too short",
+        "" -> "TestSmartWrapperMulti contains digits"
+      )
+      // EitherThrowableOrValue
+      "abc".intoPartial[TestSmartWrapperThrowable].enableNonAnyValWrappers.transform.asOption ==> Some(
+        TestSmartWrapperThrowable.unsafe("abc")
+      )
+      "".intoPartial[TestSmartWrapperThrowable]
+        .enableNonAnyValWrappers
+        .transform
+        .asErrorPathMessageStrings ==> Iterable(
+        "" -> "TestSmartWrapperThrowable cannot be empty"
+      )
+      // EitherIterableThrowableOrValue
+      "ab".intoPartial[TestSmartWrapperThrowables].enableNonAnyValWrappers.transform.asOption ==> Some(
+        TestSmartWrapperThrowables.unsafe("ab")
+      )
+      "1"
+        .intoPartial[TestSmartWrapperThrowables]
+        .enableNonAnyValWrappers
+        .transform
+        .asErrorPathMessageStrings ==> Iterable(
+        "" -> "TestSmartWrapperThrowables is too short",
+        "" -> "TestSmartWrapperThrowables contains digits"
+      )
+    }
+
+    test("smart-constructor value type inside a product reports errors at the field's path") {
+      // NOTE: two-field products - a single-field case class would itself parse as a WrapperClass under the
+      // nonAnyValWrappers flag and short-circuit through TypeToValueClass (with a path-less error at the value
+      // itself), never reaching ProductToProduct's per-field path prepending.
+      @scala.annotation.unused
+      implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
+
+      Plain2("abc", 1).transformIntoPartial[SmartWrapped2].asOption ==> Some(
+        SmartWrapped2(TestSmartWrapper.unsafe("abc"), 1)
+      )
+      Plain2("", 1).transformIntoPartial[SmartWrapped2].asErrorPathMessageStrings ==> Iterable(
+        "value" -> "TestSmartWrapper cannot be empty"
+      )
+    }
+
+    test("unwrap smart-constructor value type as a source (total + partial)") {
+      TestSmartWrapper.unsafe("abc").into[String].enableNonAnyValWrappers.transform ==> "abc"
+      TestSmartWrapper.unsafe("abc").intoPartial[String].enableNonAnyValWrappers.transform.asOption ==> Some("abc")
+    }
+
+    test("Total transformer into smart-constructor value type fails compilation informatively") {
+      compileErrors(""""abc".into[TestSmartWrapper].enableNonAnyValWrappers.transform""").check(
+        "Chimney can't derive transformation from",
+        "TestSmartWrapper"
+      )
+    }
+
+    test("smart-constructor value type stays gated behind the nonAnyValWrappers flag") {
+      compileErrors(""""abc".transformIntoPartial[TestSmartWrapper]""").arePresent()
+    }
+  }
 }
 object HearthStdExtensionsIntegrationsSpec {
 
   case class Plain(value: String)
   case class PlainCopy(value: String)
   case class Wrapped(value: TestWrapper)
+  case class Plain2(value: String, another: Int)
+  case class SmartWrapped2(value: TestSmartWrapper, another: Int)
 
   /** Scoped to single tests - ambient it would override the extension support everywhere in this spec. */
   object ReversingSupport {

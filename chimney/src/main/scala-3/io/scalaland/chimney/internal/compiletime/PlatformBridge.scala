@@ -194,6 +194,14 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     (!repr.termSymbol.isNoSymbol) || repr.typeSymbol.flags.is(Flags.JavaStatic)
   }
 
+  /** Scala 3 override of [[MacroCommonsCompat.classOfExprCompat]]: a proper class LITERAL
+    * (`Literal(ClassOfConstant(tpe))` - what `classOf[A]` elaborates to).
+    */
+  override protected def classOfExprCompat[A: Type]: Expr[java.lang.Class[A]] = {
+    given aType: scala.quoted.Type[A] = Type[A].asInstanceOf[scala.quoted.Type[A]]
+    Literal(ClassOfConstant(TypeRepr.of[A].dealias)).asExprOf[java.lang.Class[A]]
+  }
+
   /** Scala 3 override of [[MacroCommonsCompat.withMacroEntryCtxCompat]]: restores the macro-entry `Quotes` as
     * Cross-Quotes' active context for the duration of the thunk (no-op when it is already active).
     */

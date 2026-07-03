@@ -14,6 +14,8 @@ private[compiletime] trait ChimneyDefinitions
     with ResultSyntax
     with ChimneyTypes
     with ChimneyExprs
+    with CtorLikeExprs
+    with JavaCollectionsPlatformCompat
     with datatypes.ProductTypes
     with datatypes.SealedHierarchies
     with datatypes.ValueClasses

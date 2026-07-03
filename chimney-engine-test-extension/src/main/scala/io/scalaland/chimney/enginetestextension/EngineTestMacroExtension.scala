@@ -36,7 +36,8 @@ final class EngineTestMacroExtension extends StandardMacroExtension { loader =>
         implicit val S: Type[String] = StringType
         val plainValue = CtorLikeOf.PlainValue[String, TestWrapper](
           // Companion calls go through `testsupport` - see its ScalaDoc (Scala 2 companion-reference gotcha).
-          ctor = (inner: Expr[String]) => Expr.quote(io.scalaland.chimney.enginetestextension.testsupport.wrapTestWrapper(Expr.splice(inner))),
+          ctor = (inner: Expr[String]) =>
+            Expr.quote(io.scalaland.chimney.enginetestextension.testsupport.wrapTestWrapper(Expr.splice(inner))),
           method = None
         )
         Existential[IsValueTypeOf[TestWrapper, *], String](new IsValueTypeOf[TestWrapper, String] {
@@ -89,8 +90,8 @@ final class EngineTestMacroExtension extends StandardMacroExtension { loader =>
             override type CtorResult = TestCollection[Item0]
             implicit override val CtorResult: Type[CtorResult] = Coll
             override def factory: Expr[scala.collection.Factory[Item0, CtorResult]] = factoryExpr
-            override def build
-                : CtorLikeOf[scala.collection.mutable.Builder[Item0, CtorResult], TestCollection[Item0]] = buildCtor
+            override def build: CtorLikeOf[scala.collection.mutable.Builder[Item0, CtorResult], TestCollection[Item0]] =
+              buildCtor
           }
         )
       }
@@ -139,7 +140,10 @@ final class EngineTestMacroExtension extends StandardMacroExtension { loader =>
         val keyFn: Expr[TestEntry[K0, V0]] => Expr[K0] = entry => Expr.quote(Expr.splice(entry).key)
         val valueFn: Expr[TestEntry[K0, V0]] => Expr[V0] = entry => Expr.quote(Expr.splice(entry).value)
         val pairFn: (Expr[K0], Expr[V0]) => Expr[TestEntry[K0, V0]] =
-          (key, value) => Expr.quote(io.scalaland.chimney.enginetestextension.testsupport.testEntry(Expr.splice(key), Expr.splice(value)))
+          (key, value) =>
+            Expr.quote(
+              io.scalaland.chimney.enginetestextension.testsupport.testEntry(Expr.splice(key), Expr.splice(value))
+            )
         Existential[IsCollectionOf[TestDict[K0, V0], *], TestEntry[K0, V0]](
           new IsMapOf[TestDict[K0, V0], TestEntry[K0, V0]] {
             override def asIterable(value: Expr[TestDict[K0, V0]]): Expr[Iterable[TestEntry[K0, V0]]] =
@@ -168,6 +172,263 @@ final class EngineTestMacroExtension extends StandardMacroExtension { loader =>
           ProviderResult.Matched(testDictSupport[K0, V0](K0, V0).asInstanceOf[IsCollection[A]])
         case _ => skipped(s"${tpe.prettyPrint} is not TestDict[_, _]")
       }
+    })
+
+    // --- Smart-constructor providers (Phase 5: CtorLikeOf.Either*OrValue shapes) ---
+
+    // Mirrors Kindlings cats-integration's NonEmptyList provider 1:1: CtorResult is an intermediate List[Item],
+    // `build` is CtorLikeOf.EitherStringOrValue applying the validating constructor to the builder's result.
+    IsCollection.registerProvider(new IsCollection.Provider {
+
+      override def name: String = s"${loader.getClass.getName}#TestNonEmptyCollection"
+
+      private lazy val TestNonEmptyCollectionCtor =
+        Type.Ctor1.fromUntyped[TestNonEmptyCollection](Type.Ctor1.of[TestNonEmptyCollection].asUntyped)
+
+      @scala.annotation.nowarn("msg=is never used")
+      private def testNonEmptyCollectionSupport[Item0](
+          item: Type[Item0]
+      ): IsCollection[TestNonEmptyCollection[Item0]] = {
+        implicit val Item: Type[Item0] = item
+        implicit val Coll: Type[TestNonEmptyCollection[Item0]] = TestNonEmptyCollectionCtor[Item0]
+        implicit val ListItem: Type[List[Item0]] = Type.of[List[Item0]]
+        implicit val IterableItem: Type[Iterable[Item0]] = Type.of[Iterable[Item0]]
+        implicit val FactoryType: Type[scala.collection.Factory[Item0, List[Item0]]] =
+          Type.of[scala.collection.Factory[Item0, List[Item0]]]
+        implicit val BuilderType: Type[scala.collection.mutable.Builder[Item0, List[Item0]]] =
+          Type.of[scala.collection.mutable.Builder[Item0, List[Item0]]]
+        implicit val EitherType: Type[Either[String, TestNonEmptyCollection[Item0]]] =
+          Type.of[Either[String, TestNonEmptyCollection[Item0]]]
+        // All quotes are prepared OUTSIDE the anonymous class - see testCollectionSupport for the rationale.
+        val asIterableFn: Expr[TestNonEmptyCollection[Item0]] => Expr[Iterable[Item0]] =
+          value => Expr.quote(Expr.splice(value).toList)
+        val factoryExpr: Expr[scala.collection.Factory[Item0, List[Item0]]] =
+          Expr.quote(io.scalaland.chimney.enginetestextension.testsupport.listFactory[Item0])
+        val buildCtor: CtorLikeOf[scala.collection.mutable.Builder[Item0, List[Item0]], TestNonEmptyCollection[Item0]] =
+          CtorLikeOf.EitherStringOrValue(
+            (builder: Expr[scala.collection.mutable.Builder[Item0, List[Item0]]]) =>
+              Expr.quote(
+                io.scalaland.chimney.enginetestextension.testsupport
+                  .buildTestNonEmptyCollection(Expr.splice(builder).result())
+              ),
+            None
+          )
+        Existential[IsCollectionOf[TestNonEmptyCollection[Item0], *], Item0](
+          new IsCollectionOf[TestNonEmptyCollection[Item0], Item0] {
+            override def asIterable(value: Expr[TestNonEmptyCollection[Item0]]): Expr[Iterable[Item0]] =
+              asIterableFn(value)
+            override type CtorResult = List[Item0]
+            implicit override val CtorResult: Type[CtorResult] = ListItem
+            override def factory: Expr[scala.collection.Factory[Item0, CtorResult]] = factoryExpr
+            override def build: CtorLikeOf[
+              scala.collection.mutable.Builder[Item0, CtorResult],
+              TestNonEmptyCollection[Item0]
+            ] = buildCtor
+          }
+        )
+      }
+
+      override def parse[A](tpe: Type[A]): ProviderResult[IsCollection[A]] = tpe match {
+        case TestNonEmptyCollectionCtor(item) if !(item.Underlying =:= Type.of[Nothing]) =>
+          import item.Underlying as Item
+          ProviderResult.Matched(testNonEmptyCollectionSupport[Item](Item).asInstanceOf[IsCollection[A]])
+        case _ => skipped(s"${tpe.prettyPrint} is not TestNonEmptyCollection[_]")
+      }
+    })
+
+    // Smart-constructor Map (mirrors Kindlings' NonEmptyMap shape, but with the custom TestEntry pair type).
+    IsCollection.registerProvider(new IsCollection.Provider {
+
+      override def name: String = s"${loader.getClass.getName}#TestNonEmptyDict"
+
+      private lazy val TestNonEmptyDictCtor =
+        Type.Ctor2.fromUntyped[TestNonEmptyDict](Type.Ctor2.of[TestNonEmptyDict].asUntyped)
+      private lazy val TestEntryCtor2 =
+        Type.Ctor2.fromUntyped[TestEntry](Type.Ctor2.of[TestEntry].asUntyped)
+
+      @scala.annotation.nowarn("msg=is never used")
+      private def testNonEmptyDictSupport[K0, V0](
+          keyType: Type[K0],
+          valueType: Type[V0]
+      ): IsCollection[TestNonEmptyDict[K0, V0]] = {
+        implicit val K: Type[K0] = keyType
+        implicit val V: Type[V0] = valueType
+        implicit val Entry: Type[TestEntry[K0, V0]] = TestEntryCtor2[K0, V0]
+        implicit val Dict: Type[TestNonEmptyDict[K0, V0]] = TestNonEmptyDictCtor[K0, V0]
+        implicit val ListEntry: Type[List[TestEntry[K0, V0]]] = Type.of[List[TestEntry[K0, V0]]]
+        implicit val IterableEntry: Type[Iterable[TestEntry[K0, V0]]] = Type.of[Iterable[TestEntry[K0, V0]]]
+        implicit val FactoryType: Type[scala.collection.Factory[TestEntry[K0, V0], List[TestEntry[K0, V0]]]] =
+          Type.of[scala.collection.Factory[TestEntry[K0, V0], List[TestEntry[K0, V0]]]]
+        implicit val BuilderType: Type[scala.collection.mutable.Builder[TestEntry[K0, V0], List[TestEntry[K0, V0]]]] =
+          Type.of[scala.collection.mutable.Builder[TestEntry[K0, V0], List[TestEntry[K0, V0]]]]
+        implicit val EitherType: Type[Either[String, TestNonEmptyDict[K0, V0]]] =
+          Type.of[Either[String, TestNonEmptyDict[K0, V0]]]
+        // All quotes are prepared OUTSIDE the anonymous class - see testCollectionSupport for the rationale.
+        val asIterableFn: Expr[TestNonEmptyDict[K0, V0]] => Expr[Iterable[TestEntry[K0, V0]]] =
+          dict => Expr.quote(Expr.splice(dict).toEntryList)
+        val factoryExpr: Expr[scala.collection.Factory[TestEntry[K0, V0], List[TestEntry[K0, V0]]]] =
+          Expr.quote(io.scalaland.chimney.enginetestextension.testsupport.entryListFactory[K0, V0])
+        val buildCtor: CtorLikeOf[
+          scala.collection.mutable.Builder[TestEntry[K0, V0], List[TestEntry[K0, V0]]],
+          TestNonEmptyDict[K0, V0]
+        ] = CtorLikeOf.EitherStringOrValue(
+          (builder: Expr[scala.collection.mutable.Builder[TestEntry[K0, V0], List[TestEntry[K0, V0]]]]) =>
+            Expr.quote(
+              io.scalaland.chimney.enginetestextension.testsupport
+                .buildTestNonEmptyDict(Expr.splice(builder).result())
+            ),
+          None
+        )
+        val keyFn: Expr[TestEntry[K0, V0]] => Expr[K0] = entry => Expr.quote(Expr.splice(entry).key)
+        val valueFn: Expr[TestEntry[K0, V0]] => Expr[V0] = entry => Expr.quote(Expr.splice(entry).value)
+        val pairFn: (Expr[K0], Expr[V0]) => Expr[TestEntry[K0, V0]] =
+          (key, value) =>
+            Expr.quote(
+              io.scalaland.chimney.enginetestextension.testsupport.testEntry(Expr.splice(key), Expr.splice(value))
+            )
+        Existential[IsCollectionOf[TestNonEmptyDict[K0, V0], *], TestEntry[K0, V0]](
+          new IsMapOf[TestNonEmptyDict[K0, V0], TestEntry[K0, V0]] {
+            override def asIterable(value: Expr[TestNonEmptyDict[K0, V0]]): Expr[Iterable[TestEntry[K0, V0]]] =
+              asIterableFn(value)
+            override type CtorResult = List[TestEntry[K0, V0]]
+            implicit override val CtorResult: Type[CtorResult] = ListEntry
+            override def factory: Expr[scala.collection.Factory[TestEntry[K0, V0], CtorResult]] = factoryExpr
+            override def build: CtorLikeOf[
+              scala.collection.mutable.Builder[TestEntry[K0, V0], CtorResult],
+              TestNonEmptyDict[K0, V0]
+            ] = buildCtor
+            override type Key = K0
+            implicit override val Key: Type[Key] = keyType
+            override type Value = V0
+            implicit override val Value: Type[Value] = valueType
+            override def key(pair: Expr[TestEntry[K0, V0]]): Expr[Key] = keyFn(pair)
+            override def value(pair: Expr[TestEntry[K0, V0]]): Expr[Value] = valueFn(pair)
+            override def pair(key: Expr[Key], value: Expr[Value]): Expr[TestEntry[K0, V0]] = pairFn(key, value)
+          }
+        )
+      }
+
+      override def parse[A](tpe: Type[A]): ProviderResult[IsCollection[A]] = tpe match {
+        case TestNonEmptyDictCtor(k, v) =>
+          import k.Underlying as K0, v.Underlying as V0
+          ProviderResult.Matched(testNonEmptyDictSupport[K0, V0](K0, V0).asInstanceOf[IsCollection[A]])
+        case _ => skipped(s"${tpe.prettyPrint} is not TestNonEmptyDict[_, _]")
+      }
+    })
+
+    // Smart-constructor value types - one per validated CtorLikeOf shape.
+    IsValueType.registerProvider(new IsValueType.Provider {
+
+      override def name: String = s"${loader.getClass.getName}#TestSmartWrappers"
+
+      private lazy val StringT = Type.of[String]
+      private lazy val TestSmartWrapperType = Type.of[TestSmartWrapper]
+      private lazy val TestSmartWrapperMultiType = Type.of[TestSmartWrapperMulti]
+      private lazy val TestSmartWrapperThrowableType = Type.of[TestSmartWrapperThrowable]
+      private lazy val TestSmartWrapperThrowablesType = Type.of[TestSmartWrapperThrowables]
+
+      @scala.annotation.nowarn("msg=is never used")
+      private def smartWrapperSupport: IsValueType[TestSmartWrapper] = {
+        implicit val A: Type[TestSmartWrapper] = TestSmartWrapperType
+        implicit val S: Type[String] = StringT
+        implicit val E: Type[Either[String, TestSmartWrapper]] = Type.of[Either[String, TestSmartWrapper]]
+        val smartCtor = CtorLikeOf.EitherStringOrValue[String, TestSmartWrapper](
+          ctor = (inner: Expr[String]) =>
+            Expr.quote(
+              io.scalaland.chimney.enginetestextension.testsupport.parseTestSmartWrapper(Expr.splice(inner))
+            ),
+          method = None
+        )
+        Existential[IsValueTypeOf[TestSmartWrapper, *], String](new IsValueTypeOf[TestSmartWrapper, String] {
+          override val unwrap: Expr[TestSmartWrapper] => Expr[String] =
+            wrapped => Expr.quote(Expr.splice(wrapped).value)
+          override val wrap: CtorLikeOf[String, TestSmartWrapper] = smartCtor
+          override lazy val ctors: CtorLikes[TestSmartWrapper] =
+            NonEmptyList.one(Existential[CtorLikeOf[*, TestSmartWrapper], String](smartCtor))
+        })
+      }
+
+      @scala.annotation.nowarn("msg=is never used")
+      private def smartWrapperMultiSupport: IsValueType[TestSmartWrapperMulti] = {
+        implicit val A: Type[TestSmartWrapperMulti] = TestSmartWrapperMultiType
+        implicit val S: Type[String] = StringT
+        implicit val E: Type[Either[Iterable[String], TestSmartWrapperMulti]] =
+          Type.of[Either[Iterable[String], TestSmartWrapperMulti]]
+        val smartCtor = CtorLikeOf.EitherIterableStringOrValue[String, TestSmartWrapperMulti](
+          ctor = (inner: Expr[String]) =>
+            Expr.quote(
+              io.scalaland.chimney.enginetestextension.testsupport.parseTestSmartWrapperMulti(Expr.splice(inner))
+            ),
+          method = None
+        )
+        Existential[IsValueTypeOf[TestSmartWrapperMulti, *], String](
+          new IsValueTypeOf[TestSmartWrapperMulti, String] {
+            override val unwrap: Expr[TestSmartWrapperMulti] => Expr[String] =
+              wrapped => Expr.quote(Expr.splice(wrapped).value)
+            override val wrap: CtorLikeOf[String, TestSmartWrapperMulti] = smartCtor
+            override lazy val ctors: CtorLikes[TestSmartWrapperMulti] =
+              NonEmptyList.one(Existential[CtorLikeOf[*, TestSmartWrapperMulti], String](smartCtor))
+          }
+        )
+      }
+
+      @scala.annotation.nowarn("msg=is never used")
+      private def smartWrapperThrowableSupport: IsValueType[TestSmartWrapperThrowable] = {
+        implicit val A: Type[TestSmartWrapperThrowable] = TestSmartWrapperThrowableType
+        implicit val S: Type[String] = StringT
+        implicit val E: Type[Either[Throwable, TestSmartWrapperThrowable]] =
+          Type.of[Either[Throwable, TestSmartWrapperThrowable]]
+        val smartCtor = CtorLikeOf.EitherThrowableOrValue[String, TestSmartWrapperThrowable](
+          ctor = (inner: Expr[String]) =>
+            Expr.quote(
+              io.scalaland.chimney.enginetestextension.testsupport.parseTestSmartWrapperThrowable(Expr.splice(inner))
+            ),
+          method = None
+        )
+        Existential[IsValueTypeOf[TestSmartWrapperThrowable, *], String](
+          new IsValueTypeOf[TestSmartWrapperThrowable, String] {
+            override val unwrap: Expr[TestSmartWrapperThrowable] => Expr[String] =
+              wrapped => Expr.quote(Expr.splice(wrapped).value)
+            override val wrap: CtorLikeOf[String, TestSmartWrapperThrowable] = smartCtor
+            override lazy val ctors: CtorLikes[TestSmartWrapperThrowable] =
+              NonEmptyList.one(Existential[CtorLikeOf[*, TestSmartWrapperThrowable], String](smartCtor))
+          }
+        )
+      }
+
+      @scala.annotation.nowarn("msg=is never used")
+      private def smartWrapperThrowablesSupport: IsValueType[TestSmartWrapperThrowables] = {
+        implicit val A: Type[TestSmartWrapperThrowables] = TestSmartWrapperThrowablesType
+        implicit val S: Type[String] = StringT
+        implicit val E: Type[Either[Iterable[Throwable], TestSmartWrapperThrowables]] =
+          Type.of[Either[Iterable[Throwable], TestSmartWrapperThrowables]]
+        val smartCtor = CtorLikeOf.EitherIterableThrowableOrValue[String, TestSmartWrapperThrowables](
+          ctor = (inner: Expr[String]) =>
+            Expr.quote(
+              io.scalaland.chimney.enginetestextension.testsupport.parseTestSmartWrapperThrowables(Expr.splice(inner))
+            ),
+          method = None
+        )
+        Existential[IsValueTypeOf[TestSmartWrapperThrowables, *], String](
+          new IsValueTypeOf[TestSmartWrapperThrowables, String] {
+            override val unwrap: Expr[TestSmartWrapperThrowables] => Expr[String] =
+              wrapped => Expr.quote(Expr.splice(wrapped).value)
+            override val wrap: CtorLikeOf[String, TestSmartWrapperThrowables] = smartCtor
+            override lazy val ctors: CtorLikes[TestSmartWrapperThrowables] =
+              NonEmptyList.one(Existential[CtorLikeOf[*, TestSmartWrapperThrowables], String](smartCtor))
+          }
+        )
+      }
+
+      override def parse[A](tpe: Type[A]): ProviderResult[IsValueType[A]] =
+        if (tpe =:= TestSmartWrapperType) ProviderResult.Matched(smartWrapperSupport.asInstanceOf[IsValueType[A]])
+        else if (tpe =:= TestSmartWrapperMultiType)
+          ProviderResult.Matched(smartWrapperMultiSupport.asInstanceOf[IsValueType[A]])
+        else if (tpe =:= TestSmartWrapperThrowableType)
+          ProviderResult.Matched(smartWrapperThrowableSupport.asInstanceOf[IsValueType[A]])
+        else if (tpe =:= TestSmartWrapperThrowablesType)
+          ProviderResult.Matched(smartWrapperThrowablesSupport.asInstanceOf[IsValueType[A]])
+        else skipped(s"${tpe.prettyPrint} is not one of the TestSmartWrapper* types")
     })
 
     IsOption.registerProvider(new IsOption.Provider {

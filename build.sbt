@@ -101,6 +101,7 @@ val settings = Seq(
     for3 = Seq(
       // format: off
       "-encoding", "UTF-8",
+      "-release", "17", // Chimney 2.x baseline: Scala 3 artifacts target JDK 17+ (Hearth itself requires JDK 11+)
       // "-rewrite", // in tests removes case classe used for error message testing
       // "-source", "3.3-migration",
       // format: on
@@ -131,7 +132,7 @@ val settings = Seq(
     for2_13 = Seq(
       // format: off
       "-encoding", "UTF-8",
-      "-release", "8",
+      "-release", "11", // Chimney 2.x baseline: Scala 2.13 artifacts target JDK 11+ (Hearth built-ins emit JDK 9+ APIs like java.util.Map.entry)
       // format: on
       "-unchecked",
       "-deprecation",
