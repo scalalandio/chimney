@@ -139,11 +139,6 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
         JavaEnum.Red
       )
 
-      // NOTE: Hearth's EnumMap provider branch reads the enum's runtime Class at MACRO time (Type.classOfType), so it
-      // only matches enums that are ALREADY COMPILED - JavaEnum, compiled in the same run as this spec, cannot be
-      // used here (see the same-compilation-unit pin below). Real-world enums live in separate modules, so a JDK enum
-      // is representative.
-
       // identity transformation of inner type:
 
       Map(TimeUnit.SECONDS -> 3, TimeUnit.MINUTES -> 2, TimeUnit.HOURS -> 1)
@@ -157,22 +152,10 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
         .asScala ==> Map(TimeUnit.SECONDS -> "3", TimeUnit.MINUTES -> "2", TimeUnit.HOURS -> "1")
     }
 
-    test("to java.util.EnumMap of a SAME-COMPILATION-UNIT enum stays unsupported (Hearth limitation, pinned)") {
-      // HEARTH 0.4.0 LIMITATION (report upstream): the EnumMap branch of IsCollectionProviderForJavaMap requires
-      // `Type.classOfType[Key]`, which `Class.forName`s the enum - impossible for an enum compiled in the SAME run
-      // (JavaEnum here). The provider then skips and NOTHING else can serve java.util.EnumMap, so the user gets the
-      // regular "Chimney can't derive" error. (EnumSet is luckier: IsCollectionProviderForJavaIterable matches any
-      // `<: java.lang.Iterable` and chimney's JavaCollectionsPlatformCompat replaces its factory with a proper
-      // class-literal-based EnumSet factory, so same-unit EnumSet works - see the test above.)
-      compileErrors(
-        """
-        import io.scalaland.chimney.dsl.*
-        import io.scalaland.chimney.fixtures.JavaEnum
-        Map(JavaEnum.Red -> 1).transformInto[java.util.EnumMap[JavaEnum, Int]]
-        """
-      ).check(
-        "Chimney can't derive transformation from"
-      )
+    test("to java.util.EnumMap of a SAME-COMPILATION-UNIT enum works (hearth#323 fixed: symbolic enum detection)") {
+      // Used to be a pinned Hearth 0.4.0 limitation (macro-time `Class.forName` gating of the EnumMap provider
+      // branch); since hearth#323 the detection is symbolic, so same-unit enums work like pre-compiled ones.
+      Map(JavaEnum.Red -> 1).transformInto[ju.EnumMap[JavaEnum, Int]].asScala ==> Map(JavaEnum.Red -> 1)
     }
 
     test("to java.util.BitSet type") {

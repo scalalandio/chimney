@@ -18,8 +18,8 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
 
     private lazy val Tuple2Ctor: Type.Ctor2[Tuple2] = Type.Ctor2.of[Tuple2]
 
-    // hearth#316: NOT implicit - implicit Type vals with cross-quoted initializers deadlock lazy-val init at macro
-    // runtime on Scala 3; re-exposed as a method-local implicit val where needed.
+    // Not implicit, re-exposed as a method-local implicit val where needed (the hearth#316 sibling-implicit-lazy-Type
+    // deadlock this guarded against is fixed since 0.4.1 - kept explicit to avoid ambient-implicit ambiguity).
     private lazy val AnyType: Type[Any] = Type.of[Any]
 
     // Cross-quotes helpers in methods with regular type parameters (the cross-quotes helper-def pattern).
@@ -35,8 +35,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
       * The `f`/`b` vals are bound with `prependFreshValCompat` (hearth#317-safe on Scala 3) and the foreach body is
       * built EAGERLY, never inside a splice of another quote - provider `foreach` implementations run Hearth-internal
       * cross-quotes bound to the macro-entry `Quotes` and trip `-Xcheck-macros`' ScopeException when evaluated in a
-      * nested splice; `retagExprCompat` re-tags the `.use`d result on Scala 2 (hearth#308) because it flows into
-      * `TransformationExpr`'s `Expr.typeOf`.
+      * nested splice.
       */
     @scala.annotation.nowarn("msg=is never used")
     private def foreachToBuilderCompat[A: Type, B: Type, C: Type](
@@ -48,25 +47,23 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
       implicit val FactoryBC: Type[Factory[B, C]] = Type.of[Factory[B, C]]
       implicit val BuilderBC: Type[scala.collection.mutable.Builder[B, C]] =
         Type.of[scala.collection.mutable.Builder[B, C]]
-      retagExprCompat[C](
-        prependFreshValCompat[A => B, C](fn) { fRef =>
-          prependFreshValCompat[scala.collection.mutable.Builder[B, C], C](
-            Expr.quote(Expr.splice(factory).newBuilder)
-          ) { bRef =>
-            val loop: Expr[Unit] = foreachSrc { (item: Expr[A]) =>
-              // suppressUnused (tree-level `val _ = expr; ()`): a quoted `val _`/named-val/bare-statement discard
-              // trips (respectively) a Scala 2 reify crash, unused-local warnings, or -Wnonunit-statement.
-              Expr.suppressUnused(
-                Expr.quote(Expr.splice(bRef).addOne(Expr.splice(fRef).apply(Expr.splice(item))))
-              )
-            }
-            Expr.quote {
-              Expr.splice(loop)
-              Expr.splice(bRef).result()
-            }
+      prependFreshValCompat[A => B, C](fn) { fRef =>
+        prependFreshValCompat[scala.collection.mutable.Builder[B, C], C](
+          Expr.quote(Expr.splice(factory).newBuilder)
+        ) { bRef =>
+          val loop: Expr[Unit] = foreachSrc { (item: Expr[A]) =>
+            // suppressUnused (tree-level `val _ = expr; ()`): a quoted `val _`/named-val/bare-statement discard
+            // trips (respectively) a Scala 2 reify crash, unused-local warnings, or -Wnonunit-statement.
+            Expr.suppressUnused(
+              Expr.quote(Expr.splice(bRef).addOne(Expr.splice(fRef).apply(Expr.splice(item))))
+            )
+          }
+          Expr.quote {
+            Expr.splice(loop)
+            Expr.splice(bRef).result()
           }
         }
-      )
+      }
     }
 
     private def iteratorToCompat[A: Type, C: Type](

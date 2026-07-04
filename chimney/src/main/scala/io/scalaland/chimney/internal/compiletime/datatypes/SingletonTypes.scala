@@ -23,8 +23,8 @@ private[compiletime] trait SingletonTypes { this: ChimneyDefinitions & hearth.Ma
 
   protected object SingletonType {
 
-    // hearth#316: implicit Type vals with cross-quoted initializers deadlock lazy-val init at macro runtime on
-    // Scala 3 - keep these NON-implicit (object-level lazies with no implicit-Type-val siblings are safe).
+    // Not implicit (the hearth#316 sibling-implicit-lazy-Type deadlock this guarded against is fixed since
+    // 0.4.1 - kept explicit to avoid ambient-implicit ambiguity).
     private lazy val UnitType: Type[Unit] = Type.of[Unit]
     private lazy val NullType: Type[Null] = Type.of[Null]
     private lazy val unitExpr: Expr[Unit] = Expr.UnitExprCodec.toExpr(())

@@ -118,20 +118,15 @@ trait OptionalValues { this: Derivation & hearth.MacroCommons & hearth.std.StdEx
     /** Fallback consulting Hearth `IsOption` providers - see the trait's ScalaDoc for guards and their rationale. */
     private def hearthProviderSupport[Optional: Type]: Option[Existential[OptionalValue[Optional, *]]] = {
       ensureStandardExtensionsLoaded()
-      // HEARTH GOTCHA (hearth#319): bottom types conform to everything (`Null <:< java.util.Optional[?]`), so
-      // `<:<`-matching built-in providers (e.g. IsOptionProviderForJavaOptional) match `Null`/`Nothing` and then CRASH
-      // eagerly while building their exprs (upcast assertion). Never consult providers for bottom types.
-      if (Type[Optional] <:< hearthFallbackNullType) None
-      else
-        IsOption.unapply(Type[Optional]).flatMap { isOption =>
-          // Integrations implicits beat extension providers (see the trait's ScalaDoc) - only summoned when a provider
-          // actually matched, so the extra implicit searches don't slow down the common (non-optional-type) path.
-          if (summonTotallyBuildIterable[Optional].isDefined || summonPartiallyBuildIterable[Optional].isDefined) None
-          else {
-            import isOption.{Underlying as Value, value as isOptionOf}
-            Some(mkHearthOptionSupport[Optional, Value](isOptionOf))
-          }
+      IsOption.unapply(Type[Optional]).flatMap { isOption =>
+        // Integrations implicits beat extension providers (see the trait's ScalaDoc) - only summoned when a provider
+        // actually matched, so the extra implicit searches don't slow down the common (non-optional-type) path.
+        if (summonTotallyBuildIterable[Optional].isDefined || summonPartiallyBuildIterable[Optional].isDefined) None
+        else {
+          import isOption.{Underlying as Value, value as isOptionOf}
+          Some(mkHearthOptionSupport[Optional, Value](isOptionOf))
         }
+      }
     }
 
     // Kept in a separate method (regular type parameters) for the same cross-quotes reason as mkBuildInOptionSupport.

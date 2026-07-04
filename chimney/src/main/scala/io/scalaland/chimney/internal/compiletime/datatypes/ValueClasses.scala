@@ -76,7 +76,6 @@ private[compiletime] trait ValueClasses {
   // Hoisted to the (unshadowed) trait level - Scala 2 cross-quotes expansions must not run inside scopes that shadow
   // the bare names the generated code references.
   private lazy val wrapperAnyValType: Type[AnyVal] = Type.of[AnyVal]
-  private lazy val wrapperBottomType: Type[Null] = Type.of[Null]
   private lazy val javaBoxedPrimitiveTypes: List[??] = List(
     Type.of[java.lang.Boolean].as_??,
     Type.of[java.lang.Byte].as_??,
@@ -98,37 +97,32 @@ private[compiletime] trait ValueClasses {
     def unapply[A](tpe: Type[A]): Option[Existential[WrapperClass[A, *]]] = parse(using tpe)
 
     /** Hearth `IsValueType` providers (built-ins AND `StandardMacroExtension`s) - see the trait's ScalaDoc. */
-    private def hearthSupport[A: Type]: Option[Existential[WrapperClass[A, *]]] =
-      // HEARTH GOTCHA (hearth#319, fixed on master): bottom types conform to everything (`Null <:< java.lang.Integer`
-      // etc.), so `<:<`-matching built-in providers match `Null`/`Nothing` and may CRASH eagerly while building their
-      // exprs. Never consult providers for bottom types.
-      if (Type[A] <:< wrapperBottomType) None
-      else {
-        ensureStandardExtensionsLoaded()
-        IsValueType.unapply(Type[A]).flatMap { isValueType =>
-          import isValueType.{Underlying as Inner, value as isValueTypeOf}
-          isValueTypeOf.wrap match {
-            case plainValue: CtorLikeOf.PlainValue[?, ?] =>
-              val fieldName = plainValue.method
-                .flatMap(method => method.parameters.flatten.headOption.map(_._1))
-                .getOrElse("value")
-              Some(
-                Existential[WrapperClass[A, *], Inner](
-                  WrapperClass[A, Inner](
-                    fieldName = fieldName,
-                    unwrap = isValueTypeOf.unwrap,
-                    wrap = plainValue.ctor.asInstanceOf[Expr[Inner] => Expr[A]],
-                    // AnyVal/boxed matches flow through the ungated ValueClassType, so the flag-skipping marker is
-                    // only meaningful (and only set) for opaque types and extension-provided value types.
-                    fromStdExtension = !(Type[A] <:< wrapperAnyValType || isJavaBoxedPrimitive[A])
-                  )
+    private def hearthSupport[A: Type]: Option[Existential[WrapperClass[A, *]]] = {
+      ensureStandardExtensionsLoaded()
+      IsValueType.unapply(Type[A]).flatMap { isValueType =>
+        import isValueType.{Underlying as Inner, value as isValueTypeOf}
+        isValueTypeOf.wrap match {
+          case plainValue: CtorLikeOf.PlainValue[?, ?] =>
+            val fieldName = plainValue.method
+              .flatMap(method => method.parameters.flatten.headOption.map(_._1))
+              .getOrElse("value")
+            Some(
+              Existential[WrapperClass[A, *], Inner](
+                WrapperClass[A, Inner](
+                  fieldName = fieldName,
+                  unwrap = isValueTypeOf.unwrap,
+                  wrap = plainValue.ctor.asInstanceOf[Expr[Inner] => Expr[A]],
+                  // AnyVal/boxed matches flow through the ungated ValueClassType, so the flag-skipping marker is
+                  // only meaningful (and only set) for opaque types and extension-provided value types.
+                  fromStdExtension = !(Type[A] <:< wrapperAnyValType || isJavaBoxedPrimitive[A])
                 )
               )
-            // Smart-constructor (validated) value types cannot become a total WrapperClass - see the trait's ScalaDoc.
-            case _ => None
-          }
+            )
+          // Smart-constructor (validated) value types cannot become a total WrapperClass - see the trait's ScalaDoc.
+          case _ => None
         }
       }
+    }
 
     private def methodBasedParse[A: Type]: Option[Existential[WrapperClass[A, *]]] =
       for {
@@ -225,10 +219,9 @@ private[compiletime] trait ValueClasses {
     private type Cached[A] = Option[Existential[PartialWrapperClass[A, *]]]
     private val partialWrapperClassCache = new TypeCache[Cached]
     def parse[A: Type]: Option[Existential[PartialWrapperClass[A, *]]] = partialWrapperClassCache(Type[A]) {
-      if (Type[A] <:< wrapperBottomType) None // bottom types crash eager providers - see WrapperClassType
       // Total wrapping wins - a type that parses as a (provider-provided PlainValue or Method-based) WrapperClass
       // must keep its total expansion; smart-constructor support only ADDS types nothing else could handle.
-      else if (WrapperClassType.parse[A].isDefined) None
+      if (WrapperClassType.parse[A].isDefined) None
       else {
         ensureStandardExtensionsLoaded()
         IsValueType.unapply(Type[A]).flatMap { isValueType =>

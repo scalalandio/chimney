@@ -21,7 +21,6 @@ import scala.collection.Factory
   *   - any type that Hearth's `IsOption` matches is filtered out (e.g. `java.util.Optional`, which Hearth's built-ins
   *     model BOTH as an option and as a collection): optional semantics win, mirroring the OptionToOption-before-
   *     IterableToIterable rule order,
-  *   - bottom types are never consulted (hearth#319, fixed on master - 0.4.0 providers crash eagerly on them),
   *   - a `PartiallyBuildIterable`/`OptionalValue` IMPLICIT for the type wins over the `IsCollection` match
   *     (integrations implicits beat provider-based support; [[TotallyOrPartiallyBuildIterable]] tries Totally BEFORE
   *     Partially, and MapToMap/IterableToIterable run before ToOption, so without this guard a provider match would
@@ -39,9 +38,6 @@ import scala.collection.Factory
   *     providers) no adaptation is emitted; provider-specific pair types (e.g. `java.util.Map.Entry`) are adapted to
   *     chimney's `Item =:= (K, V)` contract by mapping the pair iterator to tuples and wrapping the provider's
   *     `Factory[Pair, M]` in a generated `Factory[(K, V), M]`,
-  *   - `java.util.EnumSet`/`java.util.EnumMap` get their PROVIDER factory/iteration exprs replaced with Chimney-built
-  *     equivalents - Hearth 0.4.0 provider bug workarounds (hearth#321/#322/#324), see
-  *     [[JavaCollectionsPlatformCompat]].
   *
   * KNOWN SEMANTICS (Hearth's, embraced): providers gate on `Factory`/`ClassTag` summonability at PARSE time - e.g.
   * transforming FROM `Array[T]` with an abstract `T` requires a `ClassTag[T]` even though only iteration is needed, and
@@ -53,9 +49,8 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
   // cross-quotes helper-def pattern). `protected` (not `private`) - PartiallyBuildIterables' twin reuses them.
 
   private lazy val hearthFallbackStringType: Type[String] = Type.of[String]
-  // hearth#316: NOT implicit - implicit Type vals with cross-quoted initializers deadlock lazy-val init at macro
-  // runtime on Scala 3.
-  protected lazy val hearthFallbackNullType: Type[Null] = Type.of[Null]
+  // Deliberately NOT implicit (they are only pattern-matching keys; hearth#316 - the sibling-implicit-lazy-Type
+  // deadlock - is fixed since 0.4.1, so this is a style choice now, not a workaround).
   protected lazy val hearthFallbackOptionOfAnyType: Type[Option[Any]] = Type.of[Option[Any]]
   protected lazy val hearthFallbackEitherOfAnyType: Type[Either[Any, Any]] = Type.of[Either[Any, Any]]
 
@@ -196,6 +191,65 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
     }
   }
 
+  // HEARTH ISSUE WORKAROUND (hearth#321 leftover, Scala 2 re-typecheck): the EnumSet provider's `factory` quote
+  // contains WILDCARD class literals (`classOf[java.util.EnumSet[?]]`, `classOf[java.lang.Class[?]]`), which print
+  // RAW (`classOf[java.util.EnumSet]`) after Chimney's Scala 2 `c.untypecheck` + re-typecheck and fail with
+  // "class EnumSet takes type parameters". (The 0.4.1 fixes cover the rest: the CONCRETE enum token is a literal
+  // since hearth#321, `asIterable` quotes are helper-routed since hearth#322, detection is symbolic since
+  // hearth#323 - and EnumMap's factory has no wildcard literals, so it needs no replacement at all.) Only the
+  // factory is replaced, with the same reflective construction except through `Class.forName` STRINGS, which
+  // re-typecheck fine. Applied on both Scala versions so both test suites exercise the single code path.
+  // Detection deliberately avoids `Type.classOfType` (hearth#333 - throws on IArray - stays unfixed).
+  private lazy val juEnumSetTypeCtorCompat: Option[UntypedType] =
+    // Try: java.util.EnumSet is absent from the Scala.js/Native compilation classpaths (where Hearth ships no Java
+    // providers anyway, so the compat can never trigger).
+    scala.util.Try(UntypedType.fromClassName("java.util.EnumSet")).toOption
+
+  private def isJavaEnumSetCompat[M: Type]: Boolean =
+    juEnumSetTypeCtorCompat.exists(ctor =>
+      UntypedType.sameTypeConstructorAs(ctor, UntypedType.dealias(Type[M].asUntyped))
+    )
+
+  private def enumClassExprCompat[Item: Type]: Expr[java.lang.Class[Item]] =
+    // ClassExprCodec's Liftable ignores the passed value and lifts a class literal from Type[Item] (hearth#321).
+    Expr.ClassExprCodec[Item].toExpr(classOf[Any].asInstanceOf[java.lang.Class[Item]])
+
+  /** `Factory[Item, M]` for an `M =:= java.util.EnumSet[Item]` target - see [[juEnumSetTypeCtorCompat]]. Mirrors the
+    * provider's generated code shape (reflective `EnumSet.noneOf` bypassing the `E <: Enum[E]` bound that an unbounded
+    * macro type parameter cannot satisfy).
+    */
+  @scala.annotation.nowarn("msg=is never used")
+  private def javaEnumSetFactoryCompat[Item: Type, M: Type](
+      itemClass: Expr[java.lang.Class[Item]]
+  ): Expr[Factory[Item, M]] = {
+    implicit val FactoryItemM: Type[Factory[Item, M]] = Type.of[Factory[Item, M]]
+    Expr.quote {
+      new scala.collection.Factory[Item, M] {
+        override def fromSpecific(it: IterableOnce[Item]): M = newBuilder.addAll(it).result()
+        override def newBuilder: scala.collection.mutable.Builder[Item, M] =
+          new scala.collection.mutable.Builder[Item, M] {
+            private val impl: java.util.EnumSet[?] = {
+              // Bypass EnumSet.noneOf's `E <: Enum[E]` bound (not satisfiable by an unbounded Item) via reflection -
+              // the same trick as Hearth's own provider, except with `Class.forName` instead of `classOf[Generic[?]]`
+              // literals (see the compat's rationale above).
+              val cls: java.lang.Class[?] = Expr.splice(itemClass)
+              java.lang.Class
+                .forName("java.util.EnumSet")
+                .getMethod("noneOf", java.lang.Class.forName("java.lang.Class"))
+                .invoke(null, cls)
+                .asInstanceOf[java.util.EnumSet[?]]
+            }
+            override def clear(): Unit = impl.clear()
+            override def result(): M = impl.asInstanceOf[M]
+            override def addOne(elem: Item): this.type = {
+              val _ = impl.asInstanceOf[java.util.Set[AnyRef]].add(elem.asInstanceOf[AnyRef])
+              this
+            }
+          }
+      }
+    }
+  }
+
   @scala.annotation.nowarn("msg=is never used")
   protected def tupleFirstCompat[A: Type, B: Type](tuple: Expr[(A, B)]): Expr[A] = {
     implicit val TupleAB: Type[(A, B)] = Type.of[(A, B)]
@@ -266,11 +320,7 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
       */
     private def hearthSupport[M: Type]: Option[Existential[TotallyBuildIterable[M, *]]] = {
       ensureStandardExtensionsLoaded()
-      // HEARTH GOTCHA (hearth#319, fixed on master): bottom types conform to everything, so `<:<`-matching built-in
-      // providers match `Null`/`Nothing` and then CRASH eagerly while building their exprs. Never consult providers
-      // for bottom types.
-      if (Type[M] <:< hearthFallbackNullType) None
-      else if (Type[M] =:= hearthFallbackStringType) None // String-as-collection excluded
+      if (Type[M] =:= hearthFallbackStringType) None // String-as-collection excluded
       else if (Type[M] <:< hearthFallbackOptionOfAnyType || Type[M] <:< hearthFallbackEitherOfAnyType)
         None // Option/Either-as-collection excluded
       else if (IsOption.unapply(Type[M]).isDefined) None // optional semantics win (handled by OptionalValues)
@@ -326,17 +376,14 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
     private def mkHearthIterableSupport[M: Type, Item: Type, CtorResult0: Type](
         isCollectionOf: IsCollectionOf[M, Item],
         buildToValue: Option[Expr[scala.collection.mutable.Builder[Item, CtorResult0]] => Expr[M]]
-    ): Existential[TotallyBuildIterable[M, *]] = {
-      // HEARTH 0.4.0 BUG WORKAROUND (hearth#321/#322/#324, detected at parse level, never inside splices): the
-      // provider's EnumSet branch embeds a class token (factory) and inline-quoted trees (asIterable) that do not
-      // survive Chimney's Scala 2 re-typecheck - replace the poisoned exprs with Chimney-built equivalents (see
-      // JavaCollectionsPlatformCompat).
-      val isEnumSet = isJavaEnumSetCompat[M]
+    ): Existential[TotallyBuildIterable[M, *]] =
       Existential[TotallyBuildIterable[M, *], Item](
         new TotallyBuildIterable[M, Item] {
 
           def totalFactory: Expr[Factory[Item, M]] =
-            if (isEnumSet) javaEnumSetFactoryCompat[Item, M](classOfExprCompat[Item])
+            // The provider's EnumSet factory quote does not survive Chimney's Scala 2 re-typecheck - see
+            // juEnumSetTypeCtorCompat above.
+            if (isJavaEnumSetCompat[M]) javaEnumSetFactoryCompat[Item, M](enumClassExprCompat[Item])
             else
               buildToValue match {
                 case None =>
@@ -352,19 +399,16 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
               }
 
           def iterator(collection: Expr[M]): Expr[Iterator[Item]] =
-            if (isEnumSet) javaCollectionIteratorCompat[Item, M](collection)
-            else iterableIteratorCompat(isCollectionOf.asIterable(collection))
+            iterableIteratorCompat(isCollectionOf.asIterable(collection))
 
           def foreach(collection: Expr[M])(f: Expr[Item] => Expr[Unit]): Expr[Unit] =
-            if (isEnumSet) iteratorForeachCompat(iterator(collection))(f)
-            else isCollectionOf.foreach(collection)(f)
+            isCollectionOf.foreach(collection)(f)
 
           def to[Collection2: Type](
               collection: Expr[M],
               factory: Expr[Factory[Item, Collection2]]
           ): Expr[Collection2] =
-            if (isEnumSet) iteratorToCompat(iterator(collection), factory)
-            else iterableToCompat(isCollectionOf.asIterable(collection), factory)
+            iterableToCompat(isCollectionOf.asIterable(collection), factory)
 
           val asMap: Option[(ExistentialType, ExistentialType)] = None
 
@@ -372,7 +416,6 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
             s"support provided by Hearth IsCollection for ${Type.prettyPrint[M]}"
         }
       )
-    }
 
     private def mkHearthMapSupport[M: Type, Pair: Type, K: Type, V: Type, CtorResult0: Type](
         isMapOf: IsMapOf[M, Pair],
@@ -391,37 +434,29 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
           tupleFirstCompat(tuple).asInstanceOf[Expr[isMapOf.Key]],
           tupleSecondCompat(tuple).asInstanceOf[Expr[isMapOf.Value]]
         )
-      // HEARTH 0.4.0 BUG WORKAROUND (hearth#321/#322/#323, detected at parse level, never inside splices): the
-      // provider's EnumMap branch embeds a class token (factory) and inline-quoted trees (asIterable/key/value) that
-      // do not survive Chimney's Scala 2 re-typecheck - replace the poisoned exprs with Chimney-built equivalents
-      // (see JavaCollectionsPlatformCompat for the full story).
-      val isEnumMap = isJavaEnumMapCompat[M]
       Existential[TotallyBuildIterable[M, *], (K, V)](
         new TotallyBuildIterable[M, (K, V)] {
 
           def totalFactory: Expr[Factory[(K, V), M]] =
-            if (isEnumMap) javaEnumMapFactoryCompat[K, V, M](classOfExprCompat[K])
-            else
-              buildToValue match {
-                case None if pairIsTuple =>
-                  // CtorResult =:= M and Pair =:= (K, V) were checked - same runtime value, equivalent tree type.
-                  isMapOf.factory.asInstanceOf[Expr[Factory[(K, V), M]]]
-                case None =>
-                  tupleFactoryFromPairFactoryCompat[Pair, K, V, M](
-                    isMapOf.factory.asInstanceOf[Expr[Factory[Pair, M]]],
-                    fromTuple
-                  )
-                case Some(build) =>
-                  totalTupleFactoryFromPairBuilderCompat[Pair, K, V, CtorResult0, M](
-                    isMapOf.factory.asInstanceOf[Expr[Factory[Pair, CtorResult0]]],
-                    fromTuple,
-                    build
-                  )
-              }
+            buildToValue match {
+              case None if pairIsTuple =>
+                // CtorResult =:= M and Pair =:= (K, V) were checked - same runtime value, equivalent tree type.
+                isMapOf.factory.asInstanceOf[Expr[Factory[(K, V), M]]]
+              case None =>
+                tupleFactoryFromPairFactoryCompat[Pair, K, V, M](
+                  isMapOf.factory.asInstanceOf[Expr[Factory[Pair, M]]],
+                  fromTuple
+                )
+              case Some(build) =>
+                totalTupleFactoryFromPairBuilderCompat[Pair, K, V, CtorResult0, M](
+                  isMapOf.factory.asInstanceOf[Expr[Factory[Pair, CtorResult0]]],
+                  fromTuple,
+                  build
+                )
+            }
 
           def iterator(collection: Expr[M]): Expr[Iterator[(K, V)]] =
-            if (isEnumMap) javaMapIteratorCompat[K, V, M](collection)
-            else if (pairIsTuple)
+            if (pairIsTuple)
               iterableIteratorCompat(isMapOf.asIterable(collection)).asInstanceOf[Expr[Iterator[(K, V)]]]
             else
               pairIteratorToTupleIteratorCompat[Pair, K, V](
@@ -430,15 +465,14 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
               )
 
           def foreach(collection: Expr[M])(f: Expr[(K, V)] => Expr[Unit]): Expr[Unit] =
-            if (isEnumMap) iteratorForeachCompat(iterator(collection))(f)
-            else if (pairIsTuple) isMapOf.foreach(collection)(f.asInstanceOf[Expr[Pair] => Expr[Unit]])
+            if (pairIsTuple) isMapOf.foreach(collection)(f.asInstanceOf[Expr[Pair] => Expr[Unit]])
             else isMapOf.foreach(collection)(pair => f(toTuple(pair)))
 
           def to[Collection2: Type](
               collection: Expr[M],
               factory: Expr[Factory[(K, V), Collection2]]
           ): Expr[Collection2] =
-            if (pairIsTuple && !isEnumMap)
+            if (pairIsTuple)
               iterableToCompat(
                 isMapOf.asIterable(collection).asInstanceOf[Expr[Iterable[(K, V)]]],
                 factory

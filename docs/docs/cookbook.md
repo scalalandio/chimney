@@ -1179,15 +1179,6 @@ over the built-in Java support.
 
 !!! warning
 
-    There is one known limitation: converting **into** a `java.util.EnumMap` of a Scala/Java enum that is being
-    compiled in the **same compilation unit** as the transformation is not supported (Hearth's `EnumMap` provider
-    needs to load the enum's `Class` at macro-expansion time, which is only possible for already-compiled enums,
-    e.g. coming from a dependency or the JDK). You will get a regular "Chimney can't derive" error - if you hit it,
-    either move the enum to a separate module or provide your own
-    [`TotallyBuildMap`](#custom-collection-types) implicit. `java.util.EnumSet` does not have this limitation.
-
-!!! warning
-
     There is an important performance difference between Chimney conversion and `scala.jdk.converions`.
     
     While `asJava` and `asScala` attempt to be O(1) operations, by creating a cheap wrapper around the original

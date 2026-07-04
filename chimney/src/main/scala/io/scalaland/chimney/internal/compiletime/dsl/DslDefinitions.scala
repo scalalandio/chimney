@@ -5,10 +5,10 @@ import io.scalaland.chimney.internal.runtime
 
 /** Shared (Scala 2 + Scala 3) parsing of DSL lambdas into type-level representations.
   *
-  * Selector lambdas (`_.foo.matching[A].everyItem`) become `runtime.Path` types and constructor lambdas
-  * (`(a: Int)(b: String) => ...`) become `runtime.ArgumentLists` types, both parsed through Hearth's
-  * [[DestructuredExpr]] - the platform-specific tree differences (Scala 2 implicit-class wrappers vs Scala 3 extension
-  * methods, `Function` vs `DefDef`+`Closure` lambdas) are already normalized by Hearth.
+  * Selector lambdas (`_.foo.matching[A].everyItem`) become `runtime.Path` types and constructor lambdas (`(a: Int)(b:
+  * String) => ...`) become `runtime.ArgumentLists` types, both parsed through Hearth's [[DestructuredExpr]] - the
+  * platform-specific tree differences (Scala 2 implicit-class wrappers vs Scala 3 extension methods, `Function` vs
+  * `DefDef`+`Closure` lambdas) are already normalized by Hearth.
   */
 private[compiletime] trait DslDefinitions { this: ChimneyDefinitions & hearth.MacroCommons =>
 
@@ -61,7 +61,7 @@ private[compiletime] trait DslDefinitions { this: ChimneyDefinitions & hearth.Ma
     // A plain member access (a field named e.g. `everyItem` must not be mistaken for the marker, which always
     // carries an implicit wrapper/evidence/type arguments on top).
     val isPlainAccess = mc.applied match {
-      case List(_: DestructuredExpr.MethodCall.AppliedInstance)                                              => true
+      case List(_: DestructuredExpr.MethodCall.AppliedInstance)                                                => true
       case List(_: DestructuredExpr.MethodCall.AppliedInstance, av: DestructuredExpr.MethodCall.AppliedValues) =>
         av.args.isEmpty
       case _ => false
@@ -137,8 +137,8 @@ private[compiletime] trait DslDefinitions { this: ChimneyDefinitions & hearth.Ma
     * `NamedTuple.apply[Names, Values](subject)(nameIdx)`. Never matches on Scala 2.
     */
   private def namedTupleField(mc: DestructuredExpr.MethodCall): Option[(DestructuredExpr, String)] = {
-    val isNamedTupleModule = mc.applied.collectFirst {
-      case ai: DestructuredExpr.MethodCall.AppliedInstance => ai.value
+    val isNamedTupleModule = mc.applied.collectFirst { case ai: DestructuredExpr.MethodCall.AppliedInstance =>
+      ai.value
     } match {
       case Some(singleton: DestructuredExpr.Singleton) => singleton.tpe.plainPrint == "scala.NamedTuple.type"
       case _                                           => false
@@ -151,8 +151,8 @@ private[compiletime] trait DslDefinitions { this: ChimneyDefinitions & hearth.Ma
           .collectFirst { case at: DestructuredExpr.MethodCall.AppliedTypes => at.typeArgs }
           .flatMap(_.headOption)
         subject <- valueClauses.headOption.flatMap(_.headOption)
-        index <- valueClauses.lift(1).flatMap(_.headOption).collect {
-          case literal: DestructuredExpr.Literal => literal.value
+        index <- valueClauses.lift(1).flatMap(_.headOption).collect { case literal: DestructuredExpr.Literal =>
+          literal.value
         } match {
           case Some(i: Int) => Some(i)
           case _            => None

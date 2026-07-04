@@ -23,8 +23,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
     private type PartialExpr[A] = Expr[partial.Result[A]]
 
-    // hearth#316: NOT implicit - implicit Type vals with cross-quoted initializers deadlock lazy-val init at macro
-    // runtime on Scala 3; provided locally/explicitly where needed.
+    // Not implicit, provided locally/explicitly where needed (the hearth#316 sibling-implicit-lazy-Type deadlock
+    // this guarded against is fixed since 0.4.1 - kept explicit to avoid ambient-implicit ambiguity).
     private lazy val UnitType: Type[Unit] = Type.of[Unit]
     private lazy val NullType: Type[Null] = Type.of[Null]
     private lazy val NoneType: Type[None.type] = Type.of[None.type]
@@ -806,12 +806,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           //   }
           // }
           TransformationExpr.fromPartial(
-            // retagExprCompat: `.use` (closeScope) junk-tags its result on Scala 2, and this expr later flows
-            // into `Expr.typeOf` via TransformationExpr's implicit `Type[A]` (see MacroCommonsCompat).
-            // traverseValDefsCompat and not .traverse[ValDefs, ...]: Hearth 0.4.0's Applicative[ValDefs].map2
-            // re-evaluates its by-name argument, which would re-mint the fresh names (see MacroCommonsCompat).
-            retagExprCompat(
-              traverseValDefsCompat(partialConstructorArguments) {
+            partialConstructorArguments
+              .traverse[ValDefs, (String, Existential[PartialExpr])] {
                 case (name: String, expr: Existential[PartialExpr]) =>
                   // We start by building this initial block of '{ lazy val resN = ${ derivedResultTo } }
                   import expr.{Underlying as Res, value as partialResultExpr}
@@ -821,118 +817,117 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                       name -> Existential[PartialExpr, Res](inner)
                     }
               }
-                .use { (partialsAsLazy: List[(String, Existential[PartialExpr])]) =>
-                  val failFastBranch: Expr[partial.Result[ToOrPartialTo]] = {
-                    // Here, we're building:
-                    // '{
-                    //   res1.flatMap { $name1 =>
-                    //     res2.flatMap { $name2 =>
-                    //       res3.flatMap { $name3 =>
-                    //         ...
-                    //          resN.map { $nameN => ${ constructor } }
-                    //       }
-                    //     }
-                    // } }
-                    def nestFlatMaps(
-                        unusedPartials: List[(String, Existential[PartialExpr])],
-                        constructorArguments: Product.Arguments
-                    ): Expr[partial.Result[ToOrPartialTo]] = unusedPartials match {
-                      // Should never happen
-                      case Nil => ???
-                      // last result to compose in - use .map instead of .flatMap
-                      case (name, res) :: Nil =>
-                        import res.{Underlying as Res, value as resultToMap}
-                        resultToMap.map(LambdaBuilder.of1[Res]().buildWith { (innerExpr: Expr[Res]) =>
-                          constructor(constructorArguments + (name -> innerExpr.as_??))
-                        })
-                      // use .flatMap
-                      case (name, res) :: tail =>
-                        import res.{Underlying as Res, value as resultToFlatMap}
-                        resultToFlatMap.flatMap(
-                          LambdaBuilder.of1[Res]().buildWith { (innerExpr: Expr[Res]) =>
-                            nestFlatMaps(tail, constructorArguments + (name -> innerExpr.as_??))
-                          }
+              .use { (partialsAsLazy: List[(String, Existential[PartialExpr])]) =>
+                val failFastBranch: Expr[partial.Result[ToOrPartialTo]] = {
+                  // Here, we're building:
+                  // '{
+                  //   res1.flatMap { $name1 =>
+                  //     res2.flatMap { $name2 =>
+                  //       res3.flatMap { $name3 =>
+                  //         ...
+                  //          resN.map { $nameN => ${ constructor } }
+                  //       }
+                  //     }
+                  // } }
+                  def nestFlatMaps(
+                      unusedPartials: List[(String, Existential[PartialExpr])],
+                      constructorArguments: Product.Arguments
+                  ): Expr[partial.Result[ToOrPartialTo]] = unusedPartials match {
+                    // Should never happen
+                    case Nil => ???
+                    // last result to compose in - use .map instead of .flatMap
+                    case (name, res) :: Nil =>
+                      import res.{Underlying as Res, value as resultToMap}
+                      resultToMap.map(LambdaBuilder.of1[Res]().buildWith { (innerExpr: Expr[Res]) =>
+                        constructor(constructorArguments + (name -> innerExpr.as_??))
+                      })
+                    // use .flatMap
+                    case (name, res) :: tail =>
+                      import res.{Underlying as Res, value as resultToFlatMap}
+                      resultToFlatMap.flatMap(
+                        LambdaBuilder.of1[Res]().buildWith { (innerExpr: Expr[Res]) =>
+                          nestFlatMaps(tail, constructorArguments + (name -> innerExpr.as_??))
+                        }
+                      )
+                  }
+
+                  nestFlatMaps(partialsAsLazy.toList, totalConstructorArguments)
+                }
+
+                val fullErrorBranch: Expr[partial.Result[ToOrPartialTo]] =
+                  // Here, we're building:
+                  // '{
+                  //   var allerrors: Errors = null
+                  //   allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ res1 })
+                  //   allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ res2 })
+                  //   allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ res3 })
+                  //   ...
+                  //   if (allerrors == null) {
+                  //     partial.Result.Value(${ constructor }) // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
+                  //   } else {
+                  //     allerrors
+                  //   }
+                  // }
+                  ValDefs
+                    .createVar[partial.Result.Errors](
+                      nullExpr.asInstanceOfExpr[partial.Result.Errors](using NullType, implicitly),
+                      FreshName.FromPrefix("allerrors")
+                    )
+                    .use { case (allerrors, setAllErrors) =>
+                      val mergeErrorsStatements = partialsAsLazy.map { case (_, result) =>
+                        import result.{Underlying, value as expr}
+                        // Here, we're building:
+                        // '{ allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ resN }) }
+                        setAllErrors(ChimneyExpr.PartialResult.Errors.mergeResultNullable(allerrors, expr))
+                      }
+                      // Here, we're building:
+                      // '{ partial.Result.Value(${ constructor }) } // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
+                      // (hoisted before the quote - Scala 2 cross-quotes cannot reify splices referencing cake members)
+                      val constructedExpr: Expr[partial.Result[ToOrPartialTo]] = ChimneyExpr.PartialResult
+                        .Value[ToOrPartialTo](
+                          constructor(
+                            totalConstructorArguments ++ partialsAsLazy.map { case (name, result) =>
+                              import result.Underlying as Res
+                              name -> result.mapK[Expr] { _ => (expr: Expr[partial.Result[Res]]) =>
+                                expr.asInstanceOfExpr[partial.Result.Value[Res]].value
+                              }
+                            }
+                          )
                         )
+                        .upcast[partial.Result[ToOrPartialTo]]
+                      val allErrorsExpr: Expr[partial.Result[ToOrPartialTo]] =
+                        allerrors.upcast[partial.Result[ToOrPartialTo]]
+                      // Here, we're building:
+                      // '{ if (allerrors == null) $ifBlock else $elseBock }
+                      val checkErrorsExpr: Expr[partial.Result[ToOrPartialTo]] = Expr.quote {
+                        if (Expr.splice(allerrors) == null) Expr.splice(constructedExpr)
+                        else Expr.splice(allErrorsExpr)
+                      }
+                      mergeErrorsStatements.foldRight(checkErrorsExpr) { (statement, acc) =>
+                        Expr.quote {
+                          Expr.splice(statement)
+                          Expr.splice(acc)
+                        }
+                      }
                     }
 
-                    nestFlatMaps(partialsAsLazy.toList, totalConstructorArguments)
-                  }
-
-                  val fullErrorBranch: Expr[partial.Result[ToOrPartialTo]] =
-                    // Here, we're building:
-                    // '{
-                    //   var allerrors: Errors = null
-                    //   allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ res1 })
-                    //   allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ res2 })
-                    //   allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ res3 })
-                    //   ...
-                    //   if (allerrors == null) {
-                    //     partial.Result.Value(${ constructor }) // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
-                    //   } else {
-                    //     allerrors
-                    //   }
+                ctx match {
+                  // $COVERAGE-OFF$should never happen unless we messed up
+                  case TransformationContext.ForTotal(_) =>
+                    assertionFailed("Expected partial, got total")
+                  // $COVERAGE-ON$
+                  case TransformationContext.ForPartial(_, failFast) =>
+                    // Finally, we are combining:
+                    // if (${ failFast }) {
+                    //   ${ failFastBranch }
+                    // } else {
+                    //   ${ fullErrorBranch }
                     // }
-                    ValDefs
-                      .createVar[partial.Result.Errors](
-                        nullExpr.asInstanceOfExpr[partial.Result.Errors](using NullType, implicitly),
-                        FreshName.FromPrefix("allerrors")
-                      )
-                      .use { case (allerrors, setAllErrors) =>
-                        val mergeErrorsStatements = partialsAsLazy.map { case (_, result) =>
-                          import result.{Underlying, value as expr}
-                          // Here, we're building:
-                          // '{ allerrors = io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable(allerrors, ${ resN }) }
-                          setAllErrors(ChimneyExpr.PartialResult.Errors.mergeResultNullable(allerrors, expr))
-                        }
-                        // Here, we're building:
-                        // '{ partial.Result.Value(${ constructor }) } // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
-                        // (hoisted before the quote - Scala 2 cross-quotes cannot reify splices referencing cake members)
-                        val constructedExpr: Expr[partial.Result[ToOrPartialTo]] = ChimneyExpr.PartialResult
-                          .Value[ToOrPartialTo](
-                            constructor(
-                              totalConstructorArguments ++ partialsAsLazy.map { case (name, result) =>
-                                import result.Underlying as Res
-                                name -> result.mapK[Expr] { _ => (expr: Expr[partial.Result[Res]]) =>
-                                  expr.asInstanceOfExpr[partial.Result.Value[Res]].value
-                                }
-                              }
-                            )
-                          )
-                          .upcast[partial.Result[ToOrPartialTo]]
-                        val allErrorsExpr: Expr[partial.Result[ToOrPartialTo]] =
-                          allerrors.upcast[partial.Result[ToOrPartialTo]]
-                        // Here, we're building:
-                        // '{ if (allerrors == null) $ifBlock else $elseBock }
-                        val checkErrorsExpr: Expr[partial.Result[ToOrPartialTo]] = Expr.quote {
-                          if (Expr.splice(allerrors) == null) Expr.splice(constructedExpr)
-                          else Expr.splice(allErrorsExpr)
-                        }
-                        mergeErrorsStatements.foldRight(checkErrorsExpr) { (statement, acc) =>
-                          Expr.quote {
-                            Expr.splice(statement)
-                            Expr.splice(acc)
-                          }
-                        }
-                      }
-
-                  ctx match {
-                    // $COVERAGE-OFF$should never happen unless we messed up
-                    case TransformationContext.ForTotal(_) =>
-                      assertionFailed("Expected partial, got total")
-                    // $COVERAGE-ON$
-                    case TransformationContext.ForPartial(_, failFast) =>
-                      // Finally, we are combining:
-                      // if (${ failFast }) {
-                      //   ${ failFastBranch }
-                      // } else {
-                      //   ${ fullErrorBranch }
-                      // }
-                      Expr.quote {
-                        if (Expr.splice(failFast)) Expr.splice(failFastBranch) else Expr.splice(fullErrorBranch)
-                      }
-                  }
+                    Expr.quote {
+                      if (Expr.splice(failFast)) Expr.splice(failFastBranch) else Expr.splice(fullErrorBranch)
+                    }
                 }
-            )
+              }
           )
       }
     }

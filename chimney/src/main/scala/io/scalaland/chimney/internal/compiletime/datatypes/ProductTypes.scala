@@ -95,12 +95,6 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
     }
   }
 
-  /** Scala 3-only (hearth#313): `Some(constructor)` when `A` is the EMPTY named tuple (`NamedTuple.Empty`); `None`
-    * (default) otherwise - see the workaround note in `ProductType.parseConstructor` (overridable trait member because
-    * object members cannot be overridden by the platform bridge).
-    */
-  protected def emptyNamedTupleConstructorCompat[A: Type]: Option[Product.Constructor[A]] = None
-
   /** Named-tuple element getter (Scala 3-only types; never called on Scala 2). `productElement` + cast works for every
     * arity - kept in a helper def with its own `Type` bounds (cross-quotes helper-def pattern).
     */
@@ -111,25 +105,15 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
     }
   }
 
-  /** Scala 3-only (hearth#314): constructs a named tuple of arity >= 23 (`Tuple.fromIArray(...)`) - see the workaround
-    * note in `ProductType.parseConstructor`. Never called on Scala 2 (named tuples do not exist there).
-    */
-  protected def tupleXXLConstructorCompat[A: Type](args: List[ExistentialExpr]): Expr[A] =
-    // $COVERAGE-OFF$should never happen - named tuples are Scala 3-only and the bridge overrides this
-    assertionFailed(s"Cannot construct 23+-arity named tuple ${Type.prettyPrint[A]} on this platform")
-  // $COVERAGE-ON$
-
-  /** Scala 3-only (hearth#327): Hearth 0.4.0's `Type[A].methods` enumerates
-    * `typeSymbol.methodMembers ++ typeSymbol.fieldMembers`, but on Scala 3 `fieldMembers` does NOT return `val` fields
-    * inherited from parent classes (e.g. constructor `val`s of abstract parents) - such members are neither methods nor
-    * own fields, so they vanish entirely. Fixed by walking `A.baseClasses` (same approach as
-    * scalalandio/chimney-macro-commons#85, chimney issue #835).
+  /** Scala 3-only (hearth#327 leftover): since 0.4.1 Hearth's `Type[A].methods` DOES list `val` fields inherited from
+    * parent classes, but with wrong metadata - `isAvailable(Everywhere)` is `false` (they get dropped by the
+    * availability filter) and `isInherited` is `false` (they would bypass the `enableInheritedAccessors` gate if
+    * accepted) - so Chimney keeps its own base-class walk until the metadata is right (verified empirically against
+    * 0.4.0-9-g8153a5e-SNAPSHOT; see the follow-up comment on hearth#327).
     *
     * Returns `(name, field type)` for PUBLIC non-synthetic fields found on base classes but absent from
     * `existingNames`; the Scala 3 bridge overrides it (the shared default is empty - Scala 2's `member` walk already
-    * sees inherited fields).
-    *
-    * TODO(hearth-migration): remove once fixed upstream.
+    * sees inherited fields with correct metadata).
     */
   protected def inheritedFieldGettersCompat[A: Type](existingNames: Set[String]): List[(String, ??)] = {
     val _ = existingNames
@@ -148,7 +132,6 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
 
     private[datatypes] lazy val AnyType: Type[Any] = Type.of[Any]
     private lazy val StringType: Type[String] = Type.of[String]
-    private lazy val UnitType: Type[Unit] = Type.of[Unit]
     private lazy val BooleanType: Type[Boolean] = Type.of[Boolean]
 
     /** The public primary constructor, or - failing that - the only public constructor. */
@@ -188,22 +171,20 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
 
     /** Dealiases the type before symbol-based Hearth lookups.
       *
-      * HEARTH 0.4.0 ISSUE WORKAROUND (hearth#315): Hearth's `primaryConstructor`/`constructors`/flag checks read
-      * symbols off the type AS GIVEN - on Scala 3 an `export`-created type alias (e.g. `export Inner.Foo`) then reports
-      * no constructors/flags at all and the type fails to parse as a product (issue 758 regression). Scala 2's
-      * `typeSymbol` auto-dealiases, so this is a no-op there.
+      * HEARTH ISSUE WORKAROUND (hearth#315 leftover): since 0.4.1 Hearth's `primaryConstructor`/`constructors` DO
+      * dealias `export`-created aliases, but the FLAG checks (`Type.isClass`/`Type.isAbstract`) still read the alias
+      * symbol as given and return `false` for e.g. `export Inner.Foo` - the type then fails `isPOJO` and does not parse
+      * as a product (issue 758 regression; verified empirically against 0.4.0-9-g8153a5e-SNAPSHOT, see the follow-up
+      * comment on hearth#315). Scala 2's `typeSymbol` auto-dealiases, so this is a no-op there.
       */
     private def dealiasedType[A](A: Type[A]): Type[A] =
       UntypedType.toTyped[A](UntypedType.dealias(UntypedType.fromTyped[A](using A)))
 
-    /** Any class with a public constructor... explicitly excluding: primitives, String and Java enums.
-      *
-      * `Unit` is excluded explicitly (hearth#310): Hearth's `Type.isPrimitive` only counts the 8 JVM value types -
-      * without this check `Unit` would parse as a POJO and the engine would emit uncompilable `new Unit()`.
+    /** Any class with a public constructor... explicitly excluding: primitives (incl. `Unit`), String and Java enums.
       */
     def isPOJO[A](implicit A0: Type[A]): Boolean = isPOJOImpl(dealiasedType(A0))
     private def isPOJOImpl[A](implicit A: Type[A]): Boolean =
-      !Type.isPrimitive[A] && !(A =:= UnitType) && !(A <:< StringType) && Type.isClass[A] && !Type.isAbstract[A] &&
+      !Type.isPrimitive[A] && !(A <:< StringType) && Type.isClass[A] && !Type.isAbstract[A] &&
         unambiguousConstructorOf[A].isDefined
 
     /** Publicly referencable singleton value (case object, plain object, parameterless Scala 3 enum case, Java enum
@@ -240,9 +221,7 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
       val ctorParamOrder: Map[String, Int] = Type[A].primaryConstructor.fold(Map.empty[String, Int]) { ctor =>
         ctor.totalParameters.flatten.map(_._1.trim).zipWithIndex.toMap
       }
-      // isStableAccessorCompat (hearth#326): Scala 2 refinement-type `val` members are stable deferred methods that
-      // Hearth's `isVal` misses - they must classify as always-available body vals (see MacroCommonsCompat).
-      def isBodyVal(m: Method): Boolean = m.isVal || m.isVar || m.isLazy || isStableAccessorCompat(m)
+      def isBodyVal(m: Method): Boolean = m.isVal || m.isVar || m.isLazy
       val (argVals, rest) = candidates.partition(_.isConstructorArgument)
       val (bodyVals, accessorsAndGetters) = rest.partition(isBodyVal)
       val sortedArgVals = argVals.sortBy(m => ctorParamOrder.getOrElse(m.name.trim, Int.MaxValue))
@@ -274,8 +253,9 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
         )
       }
 
-      // inheritedFieldGettersCompat: Scala 3 `val` fields inherited from parent classes are invisible to Hearth's
-      // `Type[A].methods` (issue #835) - restore them as inherited body vals (flag-gated by enableInheritedAccessors).
+      // inheritedFieldGettersCompat: Scala 3 `val` fields inherited from parent classes carry wrong
+      // availability/inheritance metadata in Hearth (issue #835 / hearth#327) - restore them as inherited body vals
+      // (flag-gated by enableInheritedAccessors).
       val inheritedFieldGetters = inheritedFieldGettersCompat[A](candidates.map(_.name.trim).toSet)
         .filterNot { case (name, _) => ProductTypes.isGarbageName(name) }
         .map { case (name, returned) =>
@@ -330,7 +310,7 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
     private type CachedConstructor[A] = Option[Product.Constructor[A]]
     private val constructorCache = new TypeCache[CachedConstructor]
     def parseConstructor[A](implicit A0: Type[A]): Option[Product.Constructor[A]] =
-      // dealiasedType: Scala 3 export aliases would otherwise report no constructors (see above).
+      // dealiasedType: Scala 3 export aliases would otherwise fail the isPOJO flag checks (see above).
       constructorCache(A0)(parseConstructorImpl(dealiasedType(A0)))
     private def parseConstructorImpl[A](implicit A: Type[A]): Option[Product.Constructor[A]] = {
       val singleton = parseSingleton[A]
@@ -406,9 +386,7 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
           if (setterArguments.isEmpty) {
             newExpr
           } else {
-            // retagExprCompat: `.use` (closeScope) junk-tags its result on Scala 2, and constructor results
-            // flow into `Expr.typeOf` via TransformationExpr's implicit `Type[A]` (see MacroCommonsCompat).
-            retagExprCompat[A](ValDefs.createVal[A](newExpr, FreshName.FromType).use { exprA =>
+            ValDefs.createVal[A](newExpr, FreshName.FromType).use { exprA =>
               setterArguments.toList.foldRight(exprA) { case ((name, exprArg), acc) =>
                 val call = setterCalls(name)(exprA, exprArg)
                 Expr.quote {
@@ -416,7 +394,7 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
                   Expr.splice(acc)
                 }
               }
-            })
+            }
           }
         }
 
@@ -434,23 +412,14 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
             })
             val constructor: Product.Arguments => Expr[A] = arguments => {
               val (constructorArguments, _) = checkArguments[A](parameters, arguments)
-              if (parameters.sizeIs >= 23) {
-                // HEARTH 0.4.0 ISSUE WORKAROUND (hearth#314): Hearth's synthetic named-tuple constructor emits an
-                // invalid application for TupleXXL arities ("wrong number of arguments at inlining ... expected: 0,
-                // found: 23") - build `Tuple.fromIArray(IArray(...)).asInstanceOf[A]` instead.
-                tupleXXLConstructorCompat[A](parameters.toList.map { case (name, _) => constructorArguments(name) })
-              } else
-                invoke(ctor)(None, constructorArguments).fold(
-                  error => assertionFailed(s"Failed to construct named tuple ${Type.prettyPrint[A]}: $error"),
-                  result => result.value.asInstanceOf[Expr[A]]
-                )
+              invoke(ctor)(None, constructorArguments).fold(
+                error => assertionFailed(s"Failed to construct named tuple ${Type.prettyPrint[A]}: $error"),
+                result => result.value.asInstanceOf[Expr[A]]
+              )
             }
             Product.Constructor(parameters, constructor)
           }
-          // HEARTH 0.4.0 ISSUE WORKAROUND (hearth#313): Hearth's NamedTuple view does not handle the EMPTY named
-          // tuple (`NamedTuple.Empty`) - it is constructed as `EmptyTuple` directly.
-          .orElse(emptyNamedTupleConstructorCompat[A])
-      } else emptyNamedTupleConstructorCompat[A]
+      } else None
     }
 
     final def parse[A: Type]: Option[Product[A]] = parseExtraction[A].zip(parseConstructor[A]).headOption.map {

@@ -14,6 +14,10 @@ val mavenCentralSnapshots = "Maven Central Snapshots" at "https://central.sonaty
 // TODO: remove this once we have a release of Scala 2.13.17
 Global / resolvers += "scala-integration" at "https://scala-ci.typesafe.com/artifactory/scala-integration/"
 
+// TODO(hearth-migration): REMOVE once versions.hearth is back on a release (see the LOUD WARNING at versions.hearth).
+// Global so that both library dependencies AND the Scala 3 hearth-cross-quotes compilerPlugin resolve the SNAPSHOT.
+Global / resolvers += mavenCentralSnapshots
+
 // Versions:
 
 val versions = new {
@@ -30,7 +34,12 @@ val versions = new {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Dependencies.
-  val hearth = "0.4.0"
+  // !!! TODO(hearth-migration) LOUD WARNING !!! -----------------------------------------------------------------
+  // !!! SNAPSHOT PIN: 0.4.0-9-g8153a5e-SNAPSHOT is a MOVING TARGET from Maven Central Snapshots (resolver below).
+  // !!! It MUST be replaced by a proper hearth RELEASE (and the snapshots resolver removed again)
+  // !!! BEFORE merging PR #903. Do NOT release/merge with a -SNAPSHOT hearth dependency.
+  // !!! -----------------------------------------------------------------------------------------------------------
+  val hearth = "0.4.0-9-g8153a5e-SNAPSHOT"
   val cats = "2.13.0"
   // Latest published kindlings (its 0.3.0 depends on hearth 0.4.0, same as us; publishes JVM/JS/Native x 2.13/3).
   val kindlingsCatsIntegration = "0.3.0"
@@ -138,7 +147,7 @@ val settings = Seq(
     for2_13 = Seq(
       // format: off
       "-encoding", "UTF-8",
-      "-release", "11", // Chimney 2.x baseline: Scala 2.13 artifacts target JDK 11+ (Hearth built-ins emit JDK 9+ APIs like java.util.Map.entry)
+      "-release", "11", // Chimney 2.x baseline: Scala 2.13 artifacts target JDK 11+ (Hearth built-ins emit JDK 9+ APIs like java.util.Map.entry - documented upstream since hearth#330)
       // format: on
       "-unchecked",
       "-deprecation",
@@ -461,8 +470,9 @@ lazy val chimneyCats = projectMatrix
     // Test-scoped: it is consulted at MACRO-EXPANSION time of the TEST sources (ServiceLoader on the compile
     // classpath of the code being derived) - the specs prove cats collections derive WITHOUT chimney-cats implicits.
     // NOTE: kindlings' Scala 3 artifacts are built with Scala 3.8.x (TASTy 28.8) - loading them requires chimney to
-    // build with Scala 3.8+ (older compilers throw "Forward incompatible TASTy file" from hearth's extension loading,
-    // poisoning EVERY derivation in the module).
+    // build with Scala 3.8+ (older compilers throw "Forward incompatible TASTy file" from hearth's extension loading).
+    // Since hearth#325 (0.4.1) an unloadable extension jar is SKIPPED gracefully instead of poisoning every derivation
+    // in the module - but the specs here obviously still need the extension to actually load.
     libraryDependencies += "com.kubuszok" %%% "kindlings-cats-integration" % versions.kindlingsCatsIntegration % Test
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")

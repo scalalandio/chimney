@@ -135,8 +135,7 @@ out of the box on the JVM. No extra dependency, no import needed (the `chimney-j
 
 !!! tip
 
-    See [Java collections integration cookbook](cookbook.md#java-collections-integration) for more information
-    (including one known limitation around `java.util.EnumMap`).
+    See [Java collections integration cookbook](cookbook.md#java-collections-integration) for more information.
 
 ## Cats integration
 

@@ -69,8 +69,7 @@ Breaking changes in API:
  - the Java collections integration module (`chimney-java-collections`) was **removed** - `java.util.Optional`,
    `java.util` collections/maps, `java.util.stream`s and Java boxed primitives are
    [supported out of the box](cookbook.md#java-collections-integration) on the JVM now; drop the dependency and the
-   `import io.scalaland.chimney.javacollections._` and everything should keep working (with one
-   [known `EnumMap` limitation](cookbook.md#java-collections-integration); also, if you used the generic
+   `import io.scalaland.chimney.javacollections._` and everything should keep working (if you used the generic
    `javaEnumSet`/`javaEnumMap` implicits with an abstract `E <: Enum[E]` type parameter, you now need to provide
    your own `integrations.TotallyBuildIterable`/`TotallyBuildMap` for that use case)
  - in Cats integration module:

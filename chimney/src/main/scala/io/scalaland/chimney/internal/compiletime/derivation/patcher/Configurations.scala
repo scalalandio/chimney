@@ -6,8 +6,8 @@ import io.scalaland.chimney.internal.runtime
 
 private[compiletime] trait Configurations { this: Derivation & hearth.MacroCommons =>
 
-  // hearth#316: not implicit - an implicit Type val with a cross-quoted initializer deadlocks lazy-val init at macro
-  // runtime on Scala 3; passed explicitly at the call sites that need it.
+  // Not implicit, passed explicitly at the call sites that need it (the hearth#316 sibling-implicit-lazy-Type
+  // deadlock this guarded against is fixed since 0.4.1 - kept explicit to avoid ambient-implicit ambiguity).
   private lazy val AnyType: Type[Any] = Type.of[Any]
 
   final protected case class PatcherFlags(

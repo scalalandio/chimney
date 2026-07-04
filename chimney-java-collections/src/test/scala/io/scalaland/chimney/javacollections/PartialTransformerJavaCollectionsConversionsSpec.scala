@@ -257,19 +257,14 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       )
     }
 
-    test("to java.util.EnumMap of a SAME-COMPILATION-UNIT enum stays unsupported (Hearth limitation, pinned)") {
-      // HEARTH 0.4.0 LIMITATION (report upstream): the EnumMap branch of IsCollectionProviderForJavaMap requires
-      // `Type.classOfType[Key]`, which `Class.forName`s the enum - impossible for an enum compiled in the SAME run
-      // (JavaEnum here). See TotalTransformerJavaCollectionsConversionsSpec for the full explanation.
-      compileErrors(
-        """
-        import io.scalaland.chimney.dsl.*
-        import io.scalaland.chimney.fixtures.JavaEnum
-        Map(JavaEnum.Red -> 1).transformIntoPartial[java.util.EnumMap[JavaEnum, Int]]
-        """
-      ).check(
-        "Chimney can't derive transformation from"
-      )
+    test("to java.util.EnumMap of a SAME-COMPILATION-UNIT enum works (hearth#323 fixed: symbolic enum detection)") {
+      // Used to be a pinned Hearth 0.4.0 limitation (macro-time `Class.forName` gating of the EnumMap provider
+      // branch); since hearth#323 the detection is symbolic, so same-unit enums work like pre-compiled ones.
+      Map(JavaEnum.Red -> 1)
+        .transformIntoPartial[ju.EnumMap[JavaEnum, Int]]
+        .asOption
+        .get
+        .asScala ==> Map(JavaEnum.Red -> 1)
     }
 
     test("to java.util.BitSet type") {

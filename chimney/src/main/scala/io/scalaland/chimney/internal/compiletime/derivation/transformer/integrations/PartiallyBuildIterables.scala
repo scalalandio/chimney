@@ -12,9 +12,9 @@ import scala.collection.Factory
   * [[TotallyBuildIterables]]' fallback, which accepts only `CtorLikeOf.PlainValue` providers - the two are disjoint by
   * construction, and rules try Totally BEFORE Partially ([[TotallyOrPartiallyBuildIterable]]). Precedence and guards
   * mirror the total fallback (see its ScalaDoc for the full rationale): ranks below `providedSupport` (the
-  * [[io.scalaland.chimney.integrations.PartiallyBuildIterable]] implicit); bottom types / `String` / `Option`/`Either`
-  * shapes / `IsOption` matches are filtered out; it is SKIPPED when a `TotallyBuildIterable`/`OptionalValue` implicit
-  * exists for the type (integrations implicits beat extension providers); map-ness detected via `asMap` with the same
+  * [[io.scalaland.chimney.integrations.PartiallyBuildIterable]] implicit); `String` / `Option`/`Either` shapes /
+  * `IsOption` matches are filtered out; it is SKIPPED when a `TotallyBuildIterable`/`OptionalValue` implicit exists for
+  * the type (integrations implicits beat extension providers); map-ness detected via `asMap` with the same
   * pair-to-tuple adaptation.
   *
   * The generated `partialFactory` delegates to the provider's `factory` (an intermediate `Factory[Item, CtorResult]`,
@@ -159,9 +159,8 @@ trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.
       */
     private def hearthProviderSupport[M: Type]: Option[Existential[PartiallyBuildIterable[M, *]]] = {
       ensureStandardExtensionsLoaded()
-      // Guards mirror TotallyBuildIterables.hearthSupport (incl. the bottom-type provider-crash gotcha).
-      if (Type[M] <:< hearthFallbackNullType) None
-      else if (Type[M] =:= hearthPartialFallbackStringType) None // String-as-collection excluded
+      // Guards mirror TotallyBuildIterables.hearthSupport.
+      if (Type[M] =:= hearthPartialFallbackStringType) None // String-as-collection excluded
       else if (Type[M] <:< hearthFallbackOptionOfAnyType || Type[M] <:< hearthFallbackEitherOfAnyType)
         None // Option/Either-as-collection excluded
       else if (IsOption.unapply(Type[M]).isDefined) None // optional semantics win (handled by OptionalValues)

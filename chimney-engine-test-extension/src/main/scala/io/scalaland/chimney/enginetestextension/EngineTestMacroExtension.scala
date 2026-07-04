@@ -35,9 +35,13 @@ final class EngineTestMacroExtension extends StandardMacroExtension { loader =>
         implicit val A: Type[TestWrapper] = TestWrapperType
         implicit val S: Type[String] = StringType
         val plainValue = CtorLikeOf.PlainValue[String, TestWrapper](
-          // Companion calls go through `testsupport` - see its ScalaDoc (Scala 2 companion-reference gotcha).
+          // DIRECT companion call - deliberately NOT routed through `testsupport`: this site verifies the hearth#320
+          // fix (Scala 2 cross-unit quotes now resolve companion-object references; 0.4.0 failed with "value wrap is
+          // not a member of ...TestWrapper"). The other quotes keep the `testsupport` runtime-helper pattern by style.
           ctor = (inner: Expr[String]) =>
-            Expr.quote(io.scalaland.chimney.enginetestextension.testsupport.wrapTestWrapper(Expr.splice(inner))),
+            Expr.quote(
+              io.scalaland.chimney.enginetestextension.TestWrapper.wrap(Expr.splice(inner))
+            ),
           method = None
         )
         Existential[IsValueTypeOf[TestWrapper, *], String](new IsValueTypeOf[TestWrapper, String] {

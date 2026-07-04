@@ -118,34 +118,11 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     }
   }
 
-  /** Scala 3 override of `ProductTypes.emptyNamedTupleConstructorCompat` (hearth#313): Hearth 0.4.0's NamedTuple view
-    * does not recognize `NamedTuple.Empty` - construct it as `EmptyTuple` directly.
-    */
-  override protected def emptyNamedTupleConstructorCompat[A: Type]: Option[Product.Constructor[A]] = {
-    given tA: scala.quoted.Type[A] = Type[A].asInstanceOf[scala.quoted.Type[A]]
-    if TypeRepr.of[A].dealias =:= TypeRepr.of[scala.NamedTuple.Empty].dealias then Some(
-      Product.Constructor[A](
-        scala.collection.immutable.ListMap.empty,
-        _ => '{ EmptyTuple }.asExprOf[A].asInstanceOf[Expr[A]]
-      )
-    )
-    else None
-  }
-
-  /** Scala 3 override of `ProductTypes.tupleXXLConstructorCompat` (hearth#314): Hearth 0.4.0's synthetic named-tuple
-    * constructor emits an invalid application for TupleXXL arities - build
-    * `Tuple.fromIArray(IArray(...)).asInstanceOf[A]` instead.
-    */
-  override protected def tupleXXLConstructorCompat[A: Type](args: List[ExistentialExpr]): Expr[A] = {
-    given tA: scala.quoted.Type[A] = Type[A].asInstanceOf[scala.quoted.Type[A]]
-    val argExprs = args.map(_.value.asInstanceOf[scala.quoted.Expr[Any]])
-    '{ Tuple.fromIArray(IArray(${ scala.quoted.Varargs(argExprs) }*)).asInstanceOf[A] }.asInstanceOf[Expr[A]]
-  }
-
-  /** Scala 3 override of `ProductTypes.inheritedFieldGettersCompat` (hearth#327): `val` fields inherited from parent
-    * classes are invisible to Hearth 0.4.0's `Type[A].methods` (`typeSymbol.fieldMembers` does not see them and they
-    * are not methods) - walk `A.baseClasses` (same approach as scalalandio/chimney-macro-commons#85, chimney issue
-    * #835).
+  /** Scala 3 override of `ProductTypes.inheritedFieldGettersCompat` (hearth#327 leftover): since 0.4.1 Hearth's
+    * `Type[A].methods` lists inherited parent-class `val` fields, but with `isAvailable(Everywhere) = false` and
+    * `isInherited = false` - the former drops them from Chimney's candidate filter, the latter would bypass the
+    * `enableInheritedAccessors` gate. Until the metadata is right, keep walking `A.baseClasses` (same approach as
+    * scalalandio/chimney-macro-commons#85, chimney issue #835).
     */
   override protected def inheritedFieldGettersCompat[A: Type](existingNames: Set[String]): List[(String, ??)] = {
     given tA: scala.quoted.Type[A] = Type[A].asInstanceOf[scala.quoted.Type[A]]
@@ -153,9 +130,9 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     def isPublic(sym: Symbol): Boolean =
       !sym.flags.is(Flags.Private) && !sym.flags.is(Flags.Protected) &&
         sym.privateWithin.isEmpty && sym.protectedWithin.isEmpty
-    // NOTE (hearth#328): hearth defines its own `baseClasses` extension on UntypedType (= TypeRepr) returning
-    // List[UntypedType], which wins over quotes.reflect's `TypeRepr#baseClasses: List[Symbol]` - call the reflect one
-    // explicitly.
+    // NOTE (hearth#328, fixed in 0.4.1 by the `baseClassTypes` alias): hearth's own `baseClasses` extension on
+    // UntypedType (= TypeRepr) returns List[UntypedType] and wins over quotes.reflect's
+    // `TypeRepr#baseClasses: List[Symbol]` - call the reflect one explicitly.
     val bases: List[Symbol] = quotes.reflect.TypeReprMethods.baseClasses(aRepr)
     (for {
       base <- bases
@@ -175,14 +152,6 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
   override protected def inheritedFieldGetterCompat[A: Type, Tpe: Type](in: Expr[A], name: String): Expr[Tpe] = {
     given tTpe: scala.quoted.Type[Tpe] = Type[Tpe].asInstanceOf[scala.quoted.Type[Tpe]]
     Select.unique(in.asInstanceOf[scala.quoted.Expr[A]].asTerm, name).asExprOf[Tpe].asInstanceOf[Expr[Tpe]]
-  }
-
-  /** Scala 3 override of [[MacroCommonsCompat.classOfExprCompat]]: a proper class LITERAL
-    * (`Literal(ClassOfConstant(tpe))` - what `classOf[A]` elaborates to).
-    */
-  override protected def classOfExprCompat[A: Type]: Expr[java.lang.Class[A]] = {
-    given aType: scala.quoted.Type[A] = Type[A].asInstanceOf[scala.quoted.Type[A]]
-    Literal(ClassOfConstant(TypeRepr.of[A].dealias)).asExprOf[java.lang.Class[A]]
   }
 
   /** Scala 3 override of [[MacroCommonsCompat.withMacroEntryCtxCompat]]: restores the macro-entry `Quotes` as

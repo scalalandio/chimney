@@ -9,8 +9,8 @@ import io.scalaland.chimney.utils.OptionUtils.*
   * layer WITHOUT any import and WITHOUT any flag:
   *   - the 8 Java boxed primitives via `IsValueTypeProviderForJava*` (surfaced through the ungated `ValueClassType` -
   *     this replaces chimney-java-collections' `JavaPrimitivesImplicits`),
-  *   - `java.util.EnumSet`/`java.util.EnumMap` via the java-collection providers + the engine's class-token compat
-  *     (`JavaCollectionsPlatformCompat` - Hearth 0.4.0's own factory exprs fail Scala 2 re-typecheck),
+  *   - `java.util.EnumSet`/`java.util.EnumMap` via the java-collection providers (served directly by Hearth since the
+  *     hearth#321/#322/#323/#324 fixes - the engine's `JavaCollectionsPlatformCompat` replacement layer is gone),
   *   - `java.util.Map` targets, whose provider emits JDK 9+ `java.util.Map.entry` - only compilable on Scala 2.13 since
   *     the `-release 11` baseline bump.
   */
@@ -84,7 +84,7 @@ class HearthStdJavaTypesSpec extends ChimneySpec {
     }
   }
 
-  group("java.util.EnumSet/EnumMap via Hearth IsCollection built-ins (provider class-token compat)") {
+  group("java.util.EnumSet/EnumMap via Hearth IsCollection built-ins") {
 
     test("transform into and from java.util.EnumSet") {
       Set(jcolors1.Color.Red, jcolors1.Color.Blue)
@@ -106,10 +106,6 @@ class HearthStdJavaTypesSpec extends ChimneySpec {
     }
 
     test("transform into and from java.util.EnumMap (pre-compiled enum)") {
-      // NOTE: Hearth's EnumMap provider branch reads the enum's runtime Class at MACRO time (Type.classOfType), so it
-      // only matches enums that are ALREADY COMPILED (a dependency/JDK enum) - jcolors1.Color, compiled in the same
-      // run as this spec, cannot be used here (see the same-compilation-unit pin below). Real-world enums live in
-      // separate modules, so a JDK enum is representative.
       import java.util.concurrent.TimeUnit
 
       val expected = new java.util.EnumMap[TimeUnit, Int](classOf[TimeUnit])
@@ -133,22 +129,17 @@ class HearthStdJavaTypesSpec extends ChimneySpec {
       java.util.EnumSet.of(TimeUnit.SECONDS).transformInto[List[TimeUnit]] ==> List(TimeUnit.SECONDS)
     }
 
-    test("java.util.EnumMap of a SAME-COMPILATION-UNIT enum stays unsupported (Hearth limitation, pinned)") {
-      // HEARTH 0.4.0 LIMITATION (report upstream): the EnumMap branch of IsCollectionProviderForJavaMap requires
-      // `Type.classOfType[Key]`, which `Class.forName`s the enum - impossible for an enum compiled in the SAME run
-      // (jcolors1.Color here). The provider then skips and NOTHING else can serve java.util.EnumMap, so the user gets
-      // the regular "Chimney can't derive" error. (EnumSet is luckier: IsCollectionProviderForJavaIterable matches
-      // any `<: java.lang.Iterable` and chimney's JavaCollectionsPlatformCompat replaces its factory with a proper
-      // class-literal-based EnumSet factory, so same-unit EnumSet works - see the group's other tests.)
-      compileErrors(
-        """
-        import io.scalaland.chimney.dsl.*
-        import io.scalaland.chimney.javafixtures.*
-        Map(jcolors1.Color.Red -> 1).transformInto[java.util.EnumMap[jcolors1.Color, Int]]
-        """
-      ).check(
-        "Chimney can't derive transformation from"
-      )
+    test("java.util.EnumMap of a SAME-COMPILATION-UNIT enum works (hearth#323 fixed: symbolic enum detection)") {
+      // Used to be a pinned Hearth 0.4.0 limitation: the EnumMap provider branch gated on macro-time `Class.forName`
+      // of the enum, which never matched enums compiled in the same run (jcolors1.Color here). Since hearth#323 the
+      // detection is symbolic, so same-unit enums work like pre-compiled ones.
+      val expected = new java.util.EnumMap[jcolors1.Color, Int](classOf[jcolors1.Color])
+      expected.put(jcolors1.Color.Red, 1)
+
+      Map(jcolors1.Color.Red -> 1).transformInto[java.util.EnumMap[jcolors1.Color, Int]] ==> expected
+      Map(jcolors1.Color.Red -> 1)
+        .transformIntoPartial[java.util.EnumMap[jcolors1.Color, Int]]
+        .asOption ==> Some(expected)
     }
   }
 

@@ -25,8 +25,8 @@ private[compiletime] trait TransformMapToMapRuleModule {
 
     private lazy val Tuple2Ctor: Type.Ctor2[Tuple2] = Type.Ctor2.of[Tuple2]
 
-    // hearth#316: NOT implicit - implicit Type vals with cross-quoted initializers deadlock lazy-val init at macro
-    // runtime on Scala 3; re-exposed as a method-local implicit val where needed.
+    // Not implicit, re-exposed as a method-local implicit val where needed (the hearth#316 sibling-implicit-lazy-Type
+    // deadlock this guarded against is fixed since 0.4.1 - kept explicit to avoid ambient-implicit ambiguity).
     private lazy val AnyType: Type[Any] = Type.of[Any]
 
     // Cross-quotes helpers in methods with regular type parameters (the cross-quotes helper-def pattern).

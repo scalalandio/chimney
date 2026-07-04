@@ -274,7 +274,13 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
     dsls.PatcherPatchedValueFlagsDsl.OfPatcherUsing
   ](
     Type.of[
-      dsls.PatcherPatchedValueFlagsDsl.OfPatcherUsing[Any, Any, runtime.PatcherOverrides, runtime.PatcherFlags, runtime.Path]
+      dsls.PatcherPatchedValueFlagsDsl.OfPatcherUsing[
+        Any,
+        Any,
+        runtime.PatcherOverrides,
+        runtime.PatcherFlags,
+        runtime.Path
+      ]
     ]
   )
 
@@ -440,8 +446,8 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
     (s: S) => (failFast: Boolean) => fn(s, failFast)
   }
 
-  /** Lifts an `Either`-returning override function into a `partial.Result`-returning one; the
-    * `FunctionEitherToResult` instance is summoned for the function expression's own type.
+  /** Lifts an `Either`-returning override function into a `partial.Result`-returning one; the `FunctionEitherToResult`
+    * instance is summoned for the function expression's own type.
     */
   def liftedEitherData(f: Expr[Any]): Expr[Any] = {
     val fType: Expr_?? = UntypedExpr.as_??(UntypedExpr.fromTyped(f))
@@ -450,9 +456,8 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
   }
 
   private def liftedEither[Ctor: Type](f: Expr[Ctor]): Expr[Any] = {
-    val ev = summonImplicitUnsafeOf[runtime.FunctionEitherToResult[Ctor]](using
-      Type.of[runtime.FunctionEitherToResult[Ctor]]
-    )
+    val ev =
+      summonImplicitUnsafeOf[runtime.FunctionEitherToResult[Ctor]](using Type.of[runtime.FunctionEitherToResult[Ctor]])
     Expr.quote {
       io.scalaland.chimney.internal.runtime.FunctionEitherToResult.lift[Ctor, Any](Expr.splice(f))(
         Expr
@@ -493,8 +498,10 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
     ): Expr_?? = {
       import overrideType.Underlying as O2
       implicit val ResultType: Type[W[From, To, O2, Flags]] = W[From, To, O2, Flags]
-      castToExpr[runtime.WithRuntimeDataStore, W[From, To, O2, Flags]](prefix)(using WithRuntimeDataStoreT, ResultType)
-        .as_??
+      castToExpr[runtime.WithRuntimeDataStore, W[From, To, O2, Flags]](prefix)(using
+        WithRuntimeDataStoreT,
+        ResultType
+      ).as_??
     }
 
     def withFieldConst[
@@ -530,8 +537,12 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
         To: Type,
         Overrides <: runtime.TransformerOverrides: Type,
         Flags <: runtime.TransformerFlags: Type
-    ](prefix: Expr[runtime.WithRuntimeDataStore], selectorFrom: Expr[Any], selectorTo: Expr[Any], f: Expr[Any])
-        : Expr_?? =
+    ](
+        prefix: Expr[runtime.WithRuntimeDataStore],
+        selectorFrom: Expr[Any],
+        selectorTo: Expr[Any],
+        f: Expr[Any]
+    ): Expr_?? =
       withPathTypes(selectorFrom, selectorTo)((fromPath, toPath) =>
         updated[From, To, Flags](prefix, f, DslOverride.computed[Overrides](fromPath, toPath))
       )
@@ -551,8 +562,12 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
         To: Type,
         Overrides <: runtime.TransformerOverrides: Type,
         Flags <: runtime.TransformerFlags: Type
-    ](prefix: Expr[runtime.WithRuntimeDataStore], selectorFrom: Expr[Any], selectorTo: Expr[Any], f: Expr[Any])
-        : Expr_?? =
+    ](
+        prefix: Expr[runtime.WithRuntimeDataStore],
+        selectorFrom: Expr[Any],
+        selectorTo: Expr[Any],
+        f: Expr[Any]
+    ): Expr_?? =
       withPathTypes(selectorFrom, selectorTo)((fromPath, toPath) =>
         updated[From, To, Flags](prefix, f, DslOverride.computedPartial[Overrides](fromPath, toPath))
       )
@@ -576,8 +591,12 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
         To: Type,
         Overrides <: runtime.TransformerOverrides: Type,
         Flags <: runtime.TransformerFlags: Type
-    ](prefix: Expr[runtime.WithRuntimeDataStore], selectorFrom: Expr[Any], selectorTo: Expr[Any], f: Expr[Any])
-        : Expr_?? =
+    ](
+        prefix: Expr[runtime.WithRuntimeDataStore],
+        selectorFrom: Expr[Any],
+        selectorTo: Expr[Any],
+        f: Expr[Any]
+    ): Expr_?? =
       withPathTypes(selectorFrom, selectorTo)((fromPath, toPath) =>
         updated[From, To, Flags](
           prefix,
@@ -672,8 +691,12 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
         To: Type,
         Overrides <: runtime.TransformerOverrides: Type,
         Flags <: runtime.TransformerFlags: Type
-    ](prefix: Expr[runtime.WithRuntimeDataStore], fromFallback: ??, selectorFrom: Expr[Any], fallback: Expr[Any])
-        : Expr_?? =
+    ](
+        prefix: Expr[runtime.WithRuntimeDataStore],
+        fromFallback: ??,
+        selectorFrom: Expr[Any],
+        fallback: Expr[Any]
+    ): Expr_?? =
       withPathType(selectorFrom)(fromPath =>
         updated[From, To, Flags](prefix, fallback, DslOverride.fallback[Overrides](fromFallback, fromPath))
       )
@@ -801,8 +824,10 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
     ): Expr_?? = {
       import overrideType.Underlying as O2
       implicit val ResultType: Type[W[A, Patch, O2, Flags]] = W[A, Patch, O2, Flags]
-      castToExpr[runtime.WithRuntimeDataStore, W[A, Patch, O2, Flags]](prefix)(using WithRuntimeDataStoreT, ResultType)
-        .as_??
+      castToExpr[runtime.WithRuntimeDataStore, W[A, Patch, O2, Flags]](prefix)(using
+        WithRuntimeDataStoreT,
+        ResultType
+      ).as_??
     }
 
     def withFieldConst[
@@ -830,8 +855,12 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
         Patch: Type,
         Overrides <: runtime.PatcherOverrides: Type,
         Flags <: runtime.PatcherFlags: Type
-    ](prefix: Expr[runtime.WithRuntimeDataStore], selectorPatch: Expr[Any], selectorObj: Expr[Any], f: Expr[Any])
-        : Expr_?? =
+    ](
+        prefix: Expr[runtime.WithRuntimeDataStore],
+        selectorPatch: Expr[Any],
+        selectorObj: Expr[Any],
+        f: Expr[Any]
+    ): Expr_?? =
       withPathTypes(selectorPatch, selectorObj)((patchPath, objPath) =>
         updated[A, Patch, Flags](prefix, f, DslOverride.patcherComputed[Overrides](patchPath, objPath))
       )
@@ -1097,7 +1126,11 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
         value: Expr[Any]
     ): Expr_?? =
       withPathType(selector)(toPath =>
-        make[From, To, Overrides, Flags, FromMatch, ToMatch](prefix, Some(value), DslOverride.const(toPath)(using TO.Empty))
+        make[From, To, Overrides, Flags, FromMatch, ToMatch](
+          prefix,
+          Some(value),
+          DslOverride.const(toPath)(using TO.Empty)
+        )
       )
 
     def withFieldComputed[
@@ -1213,7 +1246,11 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
         value: Expr[Any]
     ): Expr_?? =
       withPathType(selector)(toPath =>
-        make[From, To, Overrides, Flags, FromMatch, ToMatch](prefix, Some(value), DslOverride.const(toPath)(using TO.Empty))
+        make[From, To, Overrides, Flags, FromMatch, ToMatch](
+          prefix,
+          Some(value),
+          DslOverride.const(toPath)(using TO.Empty)
+        )
       )
 
     def withFieldComputed[
@@ -1309,7 +1346,11 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
         value: Expr[Any]
     ): Expr_?? =
       withPathType(selector)(toPath =>
-        make[From, To, Overrides, Flags, FromMatch, ToMatch](prefix, Some(value), DslOverride.const(toPath)(using TO.Empty))
+        make[From, To, Overrides, Flags, FromMatch, ToMatch](
+          prefix,
+          Some(value),
+          DslOverride.const(toPath)(using TO.Empty)
+        )
       )
 
     def withFieldComputed[
@@ -1369,17 +1410,15 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
       implicit val ResultType
           : Type[dsls.TransformerSourceFlagsDsl.OfTransformerDefinition[From, To, Overrides, Flags, FromPath]] =
         SourceFlagsOfTransformerDefinitionT[From, To, Overrides, Flags, FromPath]
-      Expr
-        .quote {
-          new io.scalaland.chimney.dsl.TransformerSourceFlagsDsl.OfTransformerDefinition[
-            From,
-            To,
-            Overrides,
-            Flags,
-            FromPath
-          ](Expr.splice(prefix))
-        }
-        .as_??
+      Expr.quote {
+        new io.scalaland.chimney.dsl.TransformerSourceFlagsDsl.OfTransformerDefinition[
+          From,
+          To,
+          Overrides,
+          Flags,
+          FromPath
+        ](Expr.splice(prefix))
+      }.as_??
     }
 
   def transformerDefinitionWithTargetFlag[
@@ -1396,17 +1435,15 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
       implicit val ResultType
           : Type[dsls.TransformerTargetFlagsDsl.OfTransformerDefinition[From, To, Overrides, Flags, ToPath]] =
         TargetFlagsOfTransformerDefinitionT[From, To, Overrides, Flags, ToPath]
-      Expr
-        .quote {
-          new io.scalaland.chimney.dsl.TransformerTargetFlagsDsl.OfTransformerDefinition[
-            From,
-            To,
-            Overrides,
-            Flags,
-            ToPath
-          ](Expr.splice(prefix))
-        }
-        .as_??
+      Expr.quote {
+        new io.scalaland.chimney.dsl.TransformerTargetFlagsDsl.OfTransformerDefinition[
+          From,
+          To,
+          Overrides,
+          Flags,
+          ToPath
+        ](Expr.splice(prefix))
+      }.as_??
     }
 
   def transformerIntoWithSourceFlag[
@@ -1423,13 +1460,11 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
       implicit val ResultType
           : Type[dsls.TransformerSourceFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, FromPath]] =
         SourceFlagsOfTransformerIntoT[From, To, Overrides, Flags, FromPath]
-      Expr
-        .quote {
-          new io.scalaland.chimney.dsl.TransformerSourceFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, FromPath](
-            Expr.splice(prefix)
-          )
-        }
-        .as_??
+      Expr.quote {
+        new io.scalaland.chimney.dsl.TransformerSourceFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, FromPath](
+          Expr.splice(prefix)
+        )
+      }.as_??
     }
 
   def transformerIntoWithTargetFlag[
@@ -1446,13 +1481,11 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
       implicit val ResultType
           : Type[dsls.TransformerTargetFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, ToPath]] =
         TargetFlagsOfTransformerIntoT[From, To, Overrides, Flags, ToPath]
-      Expr
-        .quote {
-          new io.scalaland.chimney.dsl.TransformerTargetFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, ToPath](
-            Expr.splice(prefix)
-          )
-        }
-        .as_??
+      Expr.quote {
+        new io.scalaland.chimney.dsl.TransformerTargetFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, ToPath](
+          Expr.splice(prefix)
+        )
+      }.as_??
     }
 
   def partialTransformerDefinitionWithSourceFlag[
@@ -1469,17 +1502,15 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
       implicit val ResultType
           : Type[dsls.TransformerSourceFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, FromPath]] =
         SourceFlagsOfPartialTransformerDefinitionT[From, To, Overrides, Flags, FromPath]
-      Expr
-        .quote {
-          new io.scalaland.chimney.dsl.TransformerSourceFlagsDsl.OfPartialTransformerDefinition[
-            From,
-            To,
-            Overrides,
-            Flags,
-            FromPath
-          ](Expr.splice(prefix))
-        }
-        .as_??
+      Expr.quote {
+        new io.scalaland.chimney.dsl.TransformerSourceFlagsDsl.OfPartialTransformerDefinition[
+          From,
+          To,
+          Overrides,
+          Flags,
+          FromPath
+        ](Expr.splice(prefix))
+      }.as_??
     }
 
   def partialTransformerDefinitionWithTargetFlag[
@@ -1496,17 +1527,15 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
       implicit val ResultType
           : Type[dsls.TransformerTargetFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, ToPath]] =
         TargetFlagsOfPartialTransformerDefinitionT[From, To, Overrides, Flags, ToPath]
-      Expr
-        .quote {
-          new io.scalaland.chimney.dsl.TransformerTargetFlagsDsl.OfPartialTransformerDefinition[
-            From,
-            To,
-            Overrides,
-            Flags,
-            ToPath
-          ](Expr.splice(prefix))
-        }
-        .as_??
+      Expr.quote {
+        new io.scalaland.chimney.dsl.TransformerTargetFlagsDsl.OfPartialTransformerDefinition[
+          From,
+          To,
+          Overrides,
+          Flags,
+          ToPath
+        ](Expr.splice(prefix))
+      }.as_??
     }
 
   def partialTransformerIntoWithSourceFlag[
@@ -1523,17 +1552,15 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
       implicit val ResultType
           : Type[dsls.TransformerSourceFlagsDsl.OfPartialTransformerInto[From, To, Overrides, Flags, FromPath]] =
         SourceFlagsOfPartialTransformerIntoT[From, To, Overrides, Flags, FromPath]
-      Expr
-        .quote {
-          new io.scalaland.chimney.dsl.TransformerSourceFlagsDsl.OfPartialTransformerInto[
-            From,
-            To,
-            Overrides,
-            Flags,
-            FromPath
-          ](Expr.splice(prefix))
-        }
-        .as_??
+      Expr.quote {
+        new io.scalaland.chimney.dsl.TransformerSourceFlagsDsl.OfPartialTransformerInto[
+          From,
+          To,
+          Overrides,
+          Flags,
+          FromPath
+        ](Expr.splice(prefix))
+      }.as_??
     }
 
   def partialTransformerIntoWithTargetFlag[
@@ -1550,17 +1577,15 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
       implicit val ResultType
           : Type[dsls.TransformerTargetFlagsDsl.OfPartialTransformerInto[From, To, Overrides, Flags, ToPath]] =
         TargetFlagsOfPartialTransformerIntoT[From, To, Overrides, Flags, ToPath]
-      Expr
-        .quote {
-          new io.scalaland.chimney.dsl.TransformerTargetFlagsDsl.OfPartialTransformerInto[
-            From,
-            To,
-            Overrides,
-            Flags,
-            ToPath
-          ](Expr.splice(prefix))
-        }
-        .as_??
+      Expr.quote {
+        new io.scalaland.chimney.dsl.TransformerTargetFlagsDsl.OfPartialTransformerInto[
+          From,
+          To,
+          Overrides,
+          Flags,
+          ToPath
+        ](Expr.splice(prefix))
+      }.as_??
     }
 
   def patcherDefinitionWithPatchedValueFlag[
@@ -1577,13 +1602,17 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
       implicit val ResultType
           : Type[dsls.PatcherPatchedValueFlagsDsl.OfPatcherDefinition[A, Patch, Overrides, Flags, ObjPath]] =
         PatchedValueFlagsOfPatcherDefinitionT[A, Patch, Overrides, Flags, ObjPath]
-      Expr
-        .quote {
-          new io.scalaland.chimney.dsl.PatcherPatchedValueFlagsDsl.OfPatcherDefinition[A, Patch, Overrides, Flags, ObjPath](
-            Expr.splice(prefix)
-          )
-        }
-        .as_??
+      Expr.quote {
+        new io.scalaland.chimney.dsl.PatcherPatchedValueFlagsDsl.OfPatcherDefinition[
+          A,
+          Patch,
+          Overrides,
+          Flags,
+          ObjPath
+        ](
+          Expr.splice(prefix)
+        )
+      }.as_??
     }
 
   def patcherUsingWithPatchedValueFlag[
@@ -1600,12 +1629,10 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
       implicit val ResultType
           : Type[dsls.PatcherPatchedValueFlagsDsl.OfPatcherUsing[A, Patch, Overrides, Flags, ObjPath]] =
         PatchedValueFlagsOfPatcherUsingT[A, Patch, Overrides, Flags, ObjPath]
-      Expr
-        .quote {
-          new io.scalaland.chimney.dsl.PatcherPatchedValueFlagsDsl.OfPatcherUsing[A, Patch, Overrides, Flags, ObjPath](
-            Expr.splice(prefix)
-          )
-        }
-        .as_??
+      Expr.quote {
+        new io.scalaland.chimney.dsl.PatcherPatchedValueFlagsDsl.OfPatcherUsing[A, Patch, Overrides, Flags, ObjPath](
+          Expr.splice(prefix)
+        )
+      }.as_??
     }
 }

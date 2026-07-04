@@ -188,14 +188,13 @@ object TestPossible {
   def fromOption[A](option: Option[A]): TestPossible[A] = new TestPossible(option)
 }
 
-/** Runtime helpers for [[EngineTestMacroExtension]]'s quotes.
+/** Runtime helpers for [[EngineTestMacroExtension]]'s quotes - the "runtime helper pattern" (multi-line factory logic
+  * lives here rather than inline in quotes).
   *
-  * HEARTH 0.4.0 BUG WORKAROUND ([[https://github.com/kubuszok/hearth/issues/320 hearth#320]], Scala 2 only): a
-  * cross-quote in a SEPARATELY COMPILED extension module that references a companion object of a class (e.g.
-  * `TestWrapper.wrap(...)`) produces a tree whose qualifier symbol resolves to the CLASS instead of the MODULE at the
-  * downstream macro-expansion site - scalac then fails with "value wrap is not a member of ...TestWrapper (did you mean
-  * unwrap?)". An object WITHOUT a companion class (like this one) is immune. (Scala 3 handles the companion references
-  * fine.)
+  * Historical note: this used to ALSO be a workaround for [[https://github.com/kubuszok/hearth/issues/320 hearth#320]]
+  * (Scala 2 cross-unit quotes mis-resolving companion-object references - "value wrap is not a member of
+  * ...TestWrapper"), fixed in Hearth 0.4.1; [[EngineTestMacroExtension]]'s `TestWrapper.wrap` quote now calls the
+  * companion DIRECTLY to pin the fix, the rest keep the helper style.
   */
 object testsupport {
   def wrapTestWrapper(value: String): TestWrapper = TestWrapper.wrap(value)

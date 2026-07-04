@@ -1,7 +1,9 @@
 package io.scalaland.chimney.internal.compiletime
 
-/** Hearth 0.4.0 workarounds and small helpers used by the derivation engine; each workaround member cites its upstream
-  * issue (https://github.com/kubuszok/hearth/issues).
+/** Hearth workarounds and small helpers used by the derivation engine; each workaround member cites its upstream issue
+  * (https://github.com/kubuszok/hearth/issues). After the 0.4.1-SNAPSHOT sweep (it.29) the surviving workarounds are:
+  * #307 (ctorN factories - upstream fix widens literal args), #317/#318 (splice-scoping, still reproducible) and the
+  * #334 annotation-attaching gap (nowarn/suppressWarnings).
   */
 private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
 
@@ -34,19 +36,6 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
     */
   protected def fixJavaEnumCompat(inst: ??): ?? = inst
 
-  /** `true` for accessor methods that scalac marks STABLE (`MethodSymbol.isStable`) even though Hearth's `Method.isVal`
-    * is `false` - most notably `val` members of structural REFINEMENT types (e.g. a type param bounded with
-    * `A <: { val value: String }`), whose member symbol is a deferred stable method with no accessed field.
-    *
-    * HEARTH 0.4.0 ISSUE WORKAROUND (hearth#326): such getters must classify as `ConstructorBodyVal` (an
-    * always-available accessor, no `.enableMethodAccessors` needed), but Hearth's `isVal` (`symbol.isVal ||
-    * accessed-field-isVal || isLazy`) misses them, silently demoting them to flag-gated `AccessorMethod`s (regression
-    * vs 1.x, caught by the docs "Parametric types" snippet). The Scala 2 `PlatformBridge` overrides this with the
-    * `isStable` formula; the Scala 3 default `false` is 1.x parity (on Scala 3 refinement members were never listed as
-    * body vals - verified against chimney 1.8.2: the same shape fails with "no accessor named value" there too).
-    */
-  protected def isStableAccessorCompat(method: Method): Boolean = false
-
   /** Runs the thunk with Cross-Quotes' active context restored to the MACRO-ENTRY one (`Quotes` on Scala 3).
     *
     * HEARTH 0.4.0 ISSUE WORKAROUND (hearth#317, Scala 3): whole derivations that run INSIDE an `Expr.splice` (the
@@ -76,56 +65,6 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
     */
   protected def prependFreshValCompat[A: Type, B: Type](value: Expr[A])(use: Expr[A] => Expr[B]): Expr[B] =
     ValDefs.createVal[A](value, FreshName.FromType).use(use)
-
-  /** Re-attaches a precise `Type[A]` to an expression whose statically-carried type information is unreliable.
-    *
-    * HEARTH 0.4.0 ISSUE WORKAROUND (hearth#308, Scala 2): `ValDefs.closeScope[A]` (which backs `.use`/`.close`) has no
-    * `Type`/`WeakTypeTag` bound, so the returned `c.Expr[A](block)` gets a compiler-materialized, UNRESOLVED
-    * `WeakTypeTag[A]` (its `tpe` is literally the abstract type param `A`). The block tree is untyped, so `Expr.typeOf`
-    * falls back to that junk tag, and everything derived from it (e.g. `TransformationExpr`'s implicit `Type[A]`,
-    * `partial.Result.Value.apply[A]` type arguments) renders an unresolvable `A` in trees - "type mismatch; found:
-    * x$macro$N.type; required: A" or `scala.MatchError: WeakTypeTag[A]`.
-    *
-    * Call this on every `.use` result that can later flow into `Expr.typeOf` (via `TransformationExpr`). The shared
-    * default is identity (on Scala 3 quoted exprs always carry their real type); the Scala 2 `PlatformBridge` overrides
-    * it to `c.Expr[A](expr.tree)(Type[A])`.
-    */
-  protected def retagExprCompat[A: Type](expr: Expr[A]): Expr[A] = expr
-
-  /** Builds a `classOf[A]` class-literal expression for a CONCRETE class type `A` (hearth#321).
-    *
-    * Both `PlatformBridge`s override this with the platform's class-literal tree (`Literal(Constant(tpe))` on Scala 2,
-    * `Literal(ClassOfConstant(tpe))` on Scala 3). It exists because Hearth 0.4.0's `Expr.ClassExprCodec` on Scala 2
-    * lifts the token through a quasiquote whose type splice does not survive Chimney's re-typecheck (the
-    * `java.util.EnumSet`/`EnumMap` provider bug - see [[JavaCollectionsPlatformCompat]]), while a class LITERAL of a
-    * concrete type prints as plain `classOf[fqcn.Type]` and re-typechecks fine.
-    *
-    * The shared default should never be called - every concrete cake goes through a `PlatformBridge`.
-    */
-  protected def classOfExprCompat[A: Type]: Expr[java.lang.Class[A]] =
-    // $COVERAGE-OFF$should never happen unless a partial cake without PlatformBridge calls it
-    assertionFailed(s"classOfExprCompat is platform-specific, got no override for ${Type.prettyPrint[A]}")
-  // $COVERAGE-ON$
-
-  /** Safe replacement for `list.traverse[ValDefs, B](f)`.
-    *
-    * HEARTH 0.4.0 BUG WORKAROUND: `Applicative[ValDefs].map2(fa, fb)(f)` reads its BY-NAME `fb` twice (`fb.definitions`
-    * and `fb.value`), so `List.traverse[ValDefs, _]` re-runs every per-element computation:
-    * `ValDefs.createVal/createLazy/...` mint a fresh name on each evaluation, and the tree ends up with the DEFINITION
-    * carrying name `x$macro$N` (first evaluation) while the REFERENCE carries `x$macro$N+1` (second evaluation) -
-    * generated code then fails to typecheck with "not found: value x$macro$N+1".
-    *
-    * This helper evaluates each per-element `ValDefs` exactly once (strict `map`), then folds with `map2` over
-    * already-constructed values, for which the double read of the by-name argument is harmless.
-    *
-    * Fixed on hearth master - TODO(hearth-migration): remove once the fix ships.
-    */
-  protected def traverseValDefsCompat[A, B](list: List[A])(f: A => ValDefs[B]): ValDefs[List[B]] = {
-    val cells: List[ValDefs[B]] = list.map(f)
-    cells.foldRight(ValDefsTraverse.pure(List.empty[B])) { (cell, acc) =>
-      ValDefsTraverse.map2(cell, acc)(_ :: _)
-    }
-  }
 
   /** `.asInstanceOfExpr[B]` syntax over [[castToExpr]]. */
   implicit final protected class CompatExprOps[A](private val expr: Expr[A]) {
@@ -197,18 +136,19 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
     */
   protected def suppressWarningsExpr[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A]
 
-  /** Workaround for a Hearth 0.4.0 bug (hearth#307): on Scala 2 `Type.CtorN.UpperBounded.of[...]` (and `Bounded.of`)
-    * with a non-`Any` upper bound expands to code that does not typecheck (the generated `matchResult` casts the
-    * extracted argument to `Type[scala.Any]` and then calls `.as_<:??<:[L, U]`, which requires `U >: Any`).
+  /** Workaround for a Hearth bug (hearth#307 leftover): on Scala 2 the 0.4.0 `Type.CtorN.UpperBounded.of[...]` (and
+    * `Bounded.of`) with a non-`Any` upper bound expanded to code that did not typecheck; 0.4.1 fixes THAT, but the
+    * generated `matchResult` now calls `.dealias.widen` on every EXTRACTED type argument, which decays literal types -
+    * Chimney's phantom-type configs carry literal `String` singletons (`Path.Select["fieldName", _]`,
+    * `ArgumentList.Argument["name", _, _]`, ...) and `extractStringSingleton` then aborts with "Invalid string literal
+    * type: java.lang.String" (verified against 0.4.0-9-g8153a5e-SNAPSHOT; see the follow-up comment on hearth#307).
     *
-    * These factories hand-build the same `Type.CtorN.UpperBounded` instances on top of Hearth's untyped API instead.
-    * `applied` is the type constructor applied to its upper bounds - it only serves as a way to obtain the untyped type
-    * constructor in shared code.
+    * These factories hand-build the same `Type.CtorN.UpperBounded` instances on top of Hearth's untyped API instead
+    * (extracted args passed through UNWIDENED). `applied` is the type constructor applied to its upper bounds - it only
+    * serves as a way to obtain the untyped type constructor in shared code.
     *
     * Semantics difference vs the cross-quotes-generated instances: `unapply` matches on the exact (dealiased) type
     * constructor, without `baseType` subtype-awareness - which is enough for Chimney's phantom-type configs.
-    *
-    * TODO(hearth-migration): remove once fixed upstream.
     */
   protected def ctor1UpperBoundedCompat[U1, HKT[_ <: U1]](applied: Type[HKT[U1]]): Type.Ctor1.UpperBounded[U1, HKT] =
     new Type.Ctor1.Bounded[Nothing, U1, HKT] {
@@ -353,28 +293,22 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
       override def asUntyped: UntypedType = untypedCtor
     }
 
-  /** Workaround for a Hearth 0.4.0 bug (hearth#312): on Scala 2 cross-quotes `Type.of[F[A, ?]]` fails to compile
-    * whenever the enclosing method has type parameters ("not found: type ?$1" - the generated workaround method loses
-    * the wildcard). `Type.of[F[Any, ?]]` in a member without type parameters expands fine, so `ChimneyType.*.inferred`
-    * captures such an example once and then replaces the leading type arguments with the actual ones.
+  /** Cross-quotes-limitation workaround: on Scala 2 cross-quotes `Type.of[F[A, ?]]` fails to compile whenever the
+    * enclosing method has type parameters ("not found: type ?$1" - the generated workaround method loses the wildcard;
+    * a documented best-effort-WeakTypeTag limitation, not a bug). `Type.of[F[Any, ?]]` in a member without type
+    * parameters expands fine, so `ChimneyType.*.inferred` captures such an example once and then replaces the leading
+    * type arguments with the actual ones.
     *
-    * The shared implementation applies the args to the TYPE CONSTRUCTOR (`UntypedType.typeConstructor`) - Hearth
-    * 0.4.0's `applyTypeArgs` takes the constructor itself on Scala 2 (`appliedType(_.typeConstructor, args)`) but
-    * `appliedTo`s the given type AS-IS on Scala 3, so applying to the already-applied wildcard example would silently
-    * produce a malformed type there (and every implicit search against it - e.g. the
-    * `TotalOuterTransformer`/`PartialOuterTransformer` integration summons - would just fail). On Scala 2 the result
-    * would additionally leave the existential's quantified symbols unbound, so [[PlatformBridge]] (Scala 2) overrides
-    * it with a version that re-quantifies via `internal.existentialAbstraction`.
-    *
-    * TODO(hearth-migration): remove once fixed upstream.
+    * Since hearth#312 (fixed in 0.4.1) `UntypedType.applyTypeArgs` applies to the type CONSTRUCTOR on BOTH platforms,
+    * so the shared implementation is a plain re-application. On Scala 2 the result would still leave the wildcard
+    * example's existentially-quantified symbols unbound, so [[PlatformBridge]] (Scala 2) overrides it with a version
+    * that re-quantifies via `internal.existentialAbstraction` (a property of Chimney's wildcard-example mechanism, not
+    * of Hearth's `applyTypeArgs`).
     */
   protected def reapplyLeadingTypeArgsCompat(wildcardExample: UntypedType, leading: List[UntypedType]): UntypedType = {
     val dealiased = UntypedType.dealias(wildcardExample)
     val existingArgs = UntypedType.typeArguments(dealiased)
-    UntypedType.applyTypeArgs(
-      UntypedType.typeConstructor(dealiased),
-      leading ++ existingArgs.drop(leading.size)
-    )
+    UntypedType.applyTypeArgs(dealiased, leading ++ existingArgs.drop(leading.size))
   }
 
   // NOTE: there are deliberately NO ambient implicit `Type`s (Int/String/Option/...) - inside `Expr.quote` the
