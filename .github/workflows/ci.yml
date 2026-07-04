@@ -46,6 +46,11 @@ jobs:
           apps: scala-cli sbt
       - name: Run snippets from documentation
         working-directory: docs
+        # TODO(hearth-release): drop COURSIER_REPOSITORIES once versions.hearth is a released Hearth. While it is a
+        # SNAPSHOT, the snippets' scala-cli builds resolve chimney -> hearth SNAPSHOT, which is not on Central releases;
+        # this points coursier at ivy2local (publish-local-for-tests) + Central releases + Central snapshots.
+        env:
+          COURSIER_REPOSITORIES: "ivy2Local|central|https://central.sonatype.com/repository/maven-snapshots"
         run: just test-snippets
 
   build:
