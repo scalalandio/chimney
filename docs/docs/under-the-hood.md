@@ -422,6 +422,18 @@ the rule tests:
 And, of course, an `implicit` `Transformer`/`PartialTransformer` provided by the user is checked by the very first
 rule, before any of these layers is consulted.
 
+Also since `2.0.0`, there is a dedicated `Rule` for
+[Chimney macro extensions](cookbook.md#chimney-macro-extensions) (`ChimneyMacroExtension`s registered via
+`ServiceLoader`). Unlike the layered fallback above - which recognizes a type's _shape_ - this rule asks each
+registered extension whether it special-cases the concrete `(From, To)` **pair**, and if so lets the extension's handler
+build the result while optionally deferring inner values back into the recursive derivation. Its position in the order
+is deliberate: it sits **after** the four implicit-summoning rules (user `implicit`s and
+`io.scalaland.chimney.integrations` implicit outer-transformers/conversions still win) and **before** all the built-in
+structural rules (so a registered handler takes precedence over Chimney's default value-class/collection/product/... 
+derivation). This is what lets `chimney-protobufs` special-case the `Duration` family and `Empty` (see
+[Build-in ScalaPB types](cookbook.md#build-in-scalapb-types)) without an import, while a user `implicit Transformer` for
+the same pair still overrides it.
+
 A bit more information about each of these `Rule`s (without getting into details that could change over time) is
 presented below.
 

@@ -6,21 +6,25 @@ import io.scalaland.chimney.dsl._
 
 import scala.collection.immutable.ArraySeq
 
-/** Proves that the Hearth `StandardMacroExtension` shipped INSIDE the chimney-protobufs jar
-  * ([[io.scalaland.chimney.protobufs.internal.compiletime.ProtobufsMacroExtension]], registered via
-  * `META-INF/services`) serves the conversions that used to be implicits - note that this file has NO
-  * `import io.scalaland.chimney.protobufs.*` at all:
+/** Proves that the two ServiceLoader-registered extensions shipped INSIDE the chimney-protobufs jar serve the
+  * conversions that used to be implicits - note that this file has NO `import io.scalaland.chimney.protobufs.*` at all.
   *
+  * Hearth `StandardMacroExtension` ([[io.scalaland.chimney.protobufs.internal.compiletime.ProtobufsMacroExtension]]):
   *   - `ByteString` <-> collections of `Byte` (`IsCollection` provider),
   *   - `wrappers.*Value` <-> unwrapped values (`IsValueType` providers, no `nonAnyValWrappers` flag needed -
   *     extension-provided value types skip it by design),
   *   - `Timestamp` <-> `java.time.Instant` (`IsValueType` provider with a COMPUTED inner-type conversion),
   *   - TRANSITIVELY: collections of `Byte` <-> `BytesValue` (TypeToValueClass/ValueClassToType over the `BytesValue`
-  *     value type composing with the `ByteString` collection),
+  *     value type composing with the `ByteString` collection).
   *
-  * that the documented precedence holds (user implicits and `integrations` implicits both OVERRIDE the providers), and
-  * that the deliberately-kept implicits (`Duration`, `Empty` - see `ProtobufsTransformerImplicits`) really do still
-  * require the import (pinned via compileErrors).
+  * Chimney `ChimneyMacroExtension`
+  * ([[io.scalaland.chimney.protobufs.internal.compiletime.ProtobufsChimneyMacroExtension]]):
+  *   - `Duration` <-> `java.time.Duration` / `FiniteDuration` / `scala.concurrent.duration.Duration` (the engine-aware,
+  *     pair-specific handlers that `IsValueType` - one inner type per outer type - could not express),
+  *   - `Empty` <-> `Unit` / any type / case objects.
+  *
+  * It also checks that the documented precedence holds (user implicits and `integrations` implicits both OVERRIDE the
+  * providers).
   */
 class ProtobufExtensionProvidersSpec extends ChimneySpec {
 
@@ -153,36 +157,45 @@ class ProtobufExtensionProvidersSpec extends ChimneySpec {
     }
   }
 
-  group("kept-implicit boundary: what providers deliberately do NOT cover still needs the import") {
+  group("without any import: Duration <-> java.time / scala.concurrent.duration (ChimneyMacroExtension handlers)") {
 
-    test("Duration conversions are NOT extension-provided (IsValueType allows only one inner type)") {
-      // With `import io.scalaland.chimney.protobufs.*` these derive through the KEPT implicits - see the
-      // ProtobufsTransformerImplicits ScalaDoc for why Duration cannot be a provider (three conversion partners,
-      // total/partial asymmetry on scala.concurrent.duration.Duration).
-      // NOTE: snippets use `._` imports (this module compiles without -Xsource:3 on 2.13) and the type-name checks
-      // avoid full prefixes (Scala 2 Hearth shortens them in error messages, Scala 3 keeps them).
-      compileErrors(
-        """
-        import io.scalaland.chimney.dsl._
-        com.google.protobuf.duration.Duration.of(10L, 0).transformInto[java.time.Duration]
-        """
-      ).check("Chimney can't derive transformation from", "Duration")
+    val protobuf = com.google.protobuf.duration.Duration.of(10L, 0)
 
-      compileErrors(
-        """
-        import io.scalaland.chimney.dsl._
-        java.time.Duration.ofSeconds(10L).transformInto[com.google.protobuf.duration.Duration]
-        """
-      ).check("Chimney can't derive transformation from", "Duration")
+    test("totally transform between proto Duration and java.time.Duration") {
+      protobuf.transformInto[java.time.Duration] ==> java.time.Duration.ofSeconds(10L)
+      java.time.Duration.ofSeconds(10L).transformInto[com.google.protobuf.duration.Duration] ==> protobuf
     }
 
-    test("Empty conversions are NOT extension-provided (Transformer[A, Empty] works for ANY A)") {
-      compileErrors(
-        """
-        import io.scalaland.chimney.dsl._
-        "anything".transformInto[com.google.protobuf.empty.Empty]
-        """
-      ).check("Chimney can't derive transformation from", "String")
+    test("totally transform between proto Duration and scala FiniteDuration / Duration") {
+      protobuf.transformInto[scala.concurrent.duration.FiniteDuration] ==>
+        scala.concurrent.duration.Duration.fromNanos(10000000000L)
+      protobuf.transformInto[scala.concurrent.duration.Duration] ==>
+        scala.concurrent.duration.Duration.fromNanos(10000000000L)
+      scala.concurrent.duration
+        .FiniteDuration(10L, scala.concurrent.duration.SECONDS)
+        .transformInto[com.google.protobuf.duration.Duration] ==> protobuf
+    }
+
+    test("partially transform scala.concurrent.duration.Duration into proto Duration (rejecting Infinite)") {
+      (scala.concurrent.duration.Duration.fromNanos(10000000000L): scala.concurrent.duration.Duration)
+        .transformIntoPartial[com.google.protobuf.duration.Duration]
+        .asOption ==> Some(protobuf)
+      (scala.concurrent.duration.Duration.Inf: scala.concurrent.duration.Duration)
+        .transformIntoPartial[com.google.protobuf.duration.Duration]
+        .asOption ==> None
+    }
+  }
+
+  group("without any import: Empty <-> Unit / any type (ChimneyMacroExtension handlers)") {
+
+    test("totally transform any value into Empty and Empty into Unit") {
+      "anything".transformInto[com.google.protobuf.empty.Empty] ==> com.google.protobuf.empty.Empty.of()
+      42.transformInto[com.google.protobuf.empty.Empty] ==> com.google.protobuf.empty.Empty.of()
+      com.google.protobuf.empty.Empty.of().transformInto[Unit] ==> (())
+    }
+
+    test("partially transform Empty into any type as an empty-value failure") {
+      com.google.protobuf.empty.Empty.of().transformIntoPartial[String].asOption ==> None
     }
   }
 }

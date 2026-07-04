@@ -5,7 +5,11 @@ import io.scalaland.chimney.partial
 private[compiletime] trait Contexts { this: Derivation & hearth.MacroCommons =>
 
   /** Stores all the "global" information that might be needed: types used, user configuration, runtime values, etc */
-  sealed protected trait TransformationContext[From, To] extends scala.Product with Serializable {
+  // Public (not `protected`): the engine-aware macro-extension SPI (ChimneyEngineExtensionApi) re-exposes this type, as
+  // `SpecialCaseContext`, to separately-compiled in-tree integration artifacts (a `private[chimney]` type member does
+  // not resolve cross-file through a path on Scala 3). It lives in the mima-excluded `internal.compiletime` package, and
+  // its members are still reached only via facade helpers (`sourceOf`/`isPartialContext`/`prefersPartialTransformer`).
+  sealed trait TransformationContext[From, To] extends scala.Product with Serializable {
     val src: Expr[From]
 
     val From: Type[From]

@@ -19,11 +19,13 @@ private[compiletime] trait Derivation
     with integrations.PartiallyBuildIterables
     with integrations.TotallyBuildIterables
     with integrations.TotallyOrPartiallyBuildIterables
+    with ChimneyEngineExtensionApi
     with rules.TransformationRules
     with rules.TransformImplicitRuleModule
     with rules.TransformImplicitPartialFallbackToTotalRuleModule
     with rules.TransformImplicitOuterTransformerRuleModule
     with rules.TransformImplicitConversionRuleModule
+    with rules.TransformSpecialCasedRuleModule
     with rules.TransformSubtypesRuleModule
     with rules.TransformTypeConstraintRuleModule
     with rules.TransformToSingletonRuleModule
@@ -45,6 +47,9 @@ private[compiletime] trait Derivation
     TransformImplicitPartialFallbackToTotalRule,
     TransformImplicitOuterTransformerRule,
     TransformImplicitConversionRule,
+    // SPI: engine-aware ChimneyMacroExtension handlers. Below the implicit rules (user/integration implicits win),
+    // above the built-in structural rules (a registered handler beats Chimney's default derivation).
+    TransformSpecialCasedRule,
     TransformSubtypesRule,
     TransformTypeConstraintRule,
     TransformToSingletonRule,

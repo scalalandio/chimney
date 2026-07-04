@@ -329,6 +329,7 @@ lazy val root = project
   .settings(noPublishSettings)
   .aggregate(chimney.projectRefs *)
   .aggregate(chimneyEngineTestExtension.projectRefs *)
+  .aggregate(chimneyChimneyExtensionTest.projectRefs *)
   .aggregate(chimneyCats.projectRefs *)
   .aggregate(chimneyJavaCollections.projectRefs *)
   .aggregate(chimneyProtobufs.projectRefs *)
@@ -446,6 +447,34 @@ lazy val chimneyEngineTestExtension = projectMatrix
       for3 = Seq(compilerPlugin("com.kubuszok" %% "hearth-cross-quotes" % versions.hearth))
     )
   )
+
+// Test-only proof of Chimney's OWN engine-aware macro-extension SPI (io.scalaland.chimney.integrations.ChimneyMacroExtension).
+// Unlike chimneyEngineTestExtension (which only implements Hearth's StdExtensions and so needs no chimney dep), this
+// module IMPLEMENTS a Chimney SPI, so it needs chimney on the Compile classpath. It therefore CANNOT be depended upon by
+// chimney (that would cycle); instead it depends on chimney and hosts its OWN specs (the chimney-protobufs pattern),
+// which prove the ServiceLoader-registered handler is consulted from a SEPARATELY-COMPILED artifact.
+lazy val chimneyChimneyExtensionTest = projectMatrix
+  .in(file("chimney-chimney-extension-test"))
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE *)
+  .enablePlugins(GitVersioning, GitBranchPrompt)
+  .disablePlugins(WelcomePlugin, ProtocPlugin)
+  .settings(settings *)
+  .settings(publishSettings *)
+  .settings(noPublishSettings *)
+  .settings(dependencies *)
+  .settings(
+    moduleName := "chimney-chimney-extension-test",
+    name := "chimney-chimney-extension-test",
+    description := "Test-only Chimney ChimneyMacroExtension used to prove the engine-aware macro-extension SPI",
+    mimaFailOnNoPrevious := false, // this module is not published
+    libraryDependencies += "com.kubuszok" %%% "hearth" % versions.hearth,
+    // Cross-quotes: on Scala 2 they are macros (part of hearth), on Scala 3 they are a compiler plugin.
+    libraryDependencies ++= versions.fold(scalaVersion.value)(
+      for2_13 = Seq.empty,
+      for3 = Seq(compilerPlugin("com.kubuszok" %% "hearth-cross-quotes" % versions.hearth))
+    )
+  )
+  .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 
 lazy val chimneyCats = projectMatrix
   .in(file("chimney-cats"))

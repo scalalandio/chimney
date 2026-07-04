@@ -2455,8 +2455,10 @@ There are several datatypes provided by ScalaBP (or Google PB) which are not aut
 that Chimney could convert for you.
 
 Since `2.0.0`, for most of them it is enough to have `chimney-protobufs` **on the compile classpath** - the artifact
-ships a [Hearth macro extension](#hearth-macro-extensions) (registered via `ServiceLoader`) whose providers Chimney's
-derivation consults out of the box, **without any import**:
+ships two `ServiceLoader`-registered extensions whose support Chimney's derivation consults out of the box, **without
+any import**.
+
+A [Hearth macro extension](#hearth-macro-extensions) covers the shape-expressible ones:
 
   - `com.google.protobuf.ByteString` from/to any Scala (or otherwise supported) collection of `Byte`s
   - `com.google.protobuf.timestamp.Timestamp` from/to `java.time.Instant`
@@ -2470,6 +2472,16 @@ derivation consults out of the box, **without any import**:
     - `com.google.protobuf.wrappers.UInt32Value` (`Int`)
     - `com.google.protobuf.wrappers.UInt64Value` (`Long`)
     - `com.google.protobuf.wrappers.StringValue` (`String`)
+
+A [Chimney macro extension](#chimney-macro-extensions) covers the engine-aware, pair-specific ones (a single type with
+several conversion partners and a total/partial asymmetry - which a Hearth `IsValueType` provider, allowing one inner
+type per outer type, could not express) - also **without any import**:
+
+  - `com.google.protobuf.duration.Duration` from/into `java.time.Duration`/`scala.concurrent.duration.FiniteDuration`
+    (total both ways) and into `scala.concurrent.duration.Duration` (total), plus a `PartialTransformer` from
+    `scala.concurrent.duration.Duration` into proto `Duration` rejecting `Duration.Infinite`
+  - `com.google.protobuf.empty.Empty` from/into `scala.Unit`, and anything (incl. case objects) into
+    `com.google.protobuf.empty.Empty`, and a `PartialTransformer` from `Empty` into any type
 
 !!! example "No import needed for the well-known types"
 
@@ -2511,13 +2523,9 @@ As with every [Hearth provider-based support](#hearth-macro-extensions), your ow
 these providers.
 
 The remaining conversions are provided as `implicit`s by the import `import io.scalaland.chimney.protobufs._`
-(they hook into implicit resolution for whole type families or have several conversion partners, which cannot be
-expressed as macro-extension providers):
+(they hook into implicit resolution for whole type families bounded on `From` but matching ANY `To`, which neither a
+Hearth provider nor a Chimney pair-specific handler can express):
 
-  - `com.google.protobuf.empty.Empty` into `scala.Unit`
-  - anything into `com.google.protobuf.empty.Empty`
-  - `com.google.protobuf.duration.Duration` from/into `java.time.Duration`/`scala.concurrent.duration.FiniteDuration`
-    (and into `scala.concurrent.duration.Duration`, plus a `PartialTransformer` from `Duration` rejecting infinities)
   - empty `oneof` handling (`GeneratedOneof`/`GeneratedSealedOneof` - see the sections above)
   - `UnrecognizedEnum` handling (see [enum fields](#enum-fields))
   - `DefaultValue[UnknownFieldSet]` (see [`UnknownFieldSet`](#unknownfieldset))
@@ -3299,27 +3307,39 @@ such generic `implicit` would:
 Similarly, newtypes/refined types would require dedicated pair of implicits for wrapping/unwrapping if we went with
 a naive approach, custom optional types would not behave like `Option`s, etc.
 
-Since `2.0.0` there are **two mechanisms** for providing such integrations:
+Since `2.0.0` there are **three mechanisms** for providing such integrations:
 
  1. **`implicit` type classes** from the dedicated package in Chimney namespace: `io.scalaland.chimney.integrations`
     (`TotallyBuildIterable`, `PartiallyBuildIterable`, `TotallyBuildMap`, `PartiallyBuildMap`, `OptionalValue`,
     `TotalOuterTransformer`, `PartialOuterTransformer`, `DefaultValue`) - described in the following subsections.
-    These remain **fully supported**, **take precedence** over the second mechanism during derivation, and are the
+    These remain **fully supported**, **take precedence** over the other two mechanisms during derivation, and are the
     right tool when you want to define the support **in the same compilation unit** that uses it (or in the same
     project, without publishing a separate artifact).
  2. **[Hearth macro extensions](#hearth-macro-extensions)** - `hearth.std.StandardMacroExtension`s registered via
     `ServiceLoader`, which Chimney's derivation consults as a fallback layer. This is the **preferred mechanism for
-    library maintainers**: it is more performant (the generated code participates in Chimney's built-in rules
-    directly - e.g. wrapping becomes a plain constructor call and collections use their `Factory` inline, with no
-    type-class instantiation and no indirection through implicit calls in the generated code) and requires no import
-    from your users - being on the classpath is enough. The price: the extension must live in a **separate,
-    pre-compiled artifact** (the `ServiceLoader` loads compiled classes at macro-expansion time).
+    library maintainers** whose types fit a Hearth _shape_ (`IsValueType`, `IsOption`, `IsCollection`, `IsMap`, ...):
+    it is more performant (the generated code participates in Chimney's built-in rules directly - e.g. wrapping becomes
+    a plain constructor call and collections use their `Factory` inline, with no type-class instantiation and no
+    indirection through implicit calls in the generated code) and requires no import from your users - being on the
+    classpath is enough. The price: the extension must live in a **separate, pre-compiled artifact** (the
+    `ServiceLoader` loads compiled classes at macro-expansion time). It is also **not Chimney-specific** - one provider
+    serves every Hearth-based macro library.
+ 3. **[Chimney macro extensions](#chimney-macro-extensions)** - `io.scalaland.chimney.integrations.ChimneyMacroExtension`s,
+    also registered via `ServiceLoader`, but **Chimney-specific and engine-aware**. Unlike a Hearth std extension (which
+    only describes a type's _shape_), a Chimney macro extension registers **pair-specific handlers** that get access to
+    the derivation engine itself - including **recursive derivation** of inner values. This is the tool when a
+    conversion is specific to a **pair of types**, needs to transform the outer layer while **deferring inner values**
+    back to Chimney, and/or has **total/partial asymmetry** or **multiple conversion partners per type** that
+    `IsValueType` (one inner type per outer type) cannot express. Like Hearth extensions it needs a separate,
+    pre-compiled artifact and no import from your users, and it sits **below** the implicit rules (so user/`integrations`
+    implicits still win).
 
-Examples of integrations provided via `implicit` type classes are the `Duration`/`Empty`/`oneof` parts of the
+Examples of integrations provided via `implicit` type classes are the `oneof` parts of the
 [Protobufs module](#protocol-buffers-integration); examples of Hearth macro extensions are the
 [built-in Java collections support](#java-collections-integration), the well-known-types part of the
 [Protobufs module](#protocol-buffers-integration) and
-[Kindlings' cats-integration](#conversions-tofrom-cats-collections).
+[Kindlings' cats-integration](#conversions-tofrom-cats-collections); an example of a Chimney macro extension is the
+`Duration`/`Empty` part of the [Protobufs module](#protocol-buffers-integration).
 
 ### Libraries with smart constructors
 
@@ -4347,6 +4367,115 @@ behavior for any concrete pair of types with their own `implicit`s.
     dependencies (e.g. protobuf classes) are unaffected, and so is Scala 3. Also remember that
     on Scala 3 the artifact must be **loadable by your users' compiler** - build it on the oldest Scala 3 (LTS)
     version you want to support.
+
+### Chimney macro extensions
+
+A [Hearth macro extension](#hearth-macro-extensions) can only describe a type's _shape_ (`IsValueType`, `IsOption`,
+`IsCollection`, `IsMap`, ...). Some conversions do not fit any shape:
+
+  - they are specific to a **pair** of types rather than one wrapper/collection type (e.g. Protobuf `Duration` `<->`
+    `java.time.Duration`),
+  - a single type has **several conversion partners** and/or a **total/partial asymmetry** (Protobuf `Duration`
+    converts to/from `java.time.Duration`, `FiniteDuration` totally but only _partially_ from
+    `scala.concurrent.duration.Duration`, which rejects `Duration.Infinite`) - `IsValueType` allows exactly one inner
+    type per outer type,
+  - the outer layer is handled by the integration, but it has **inner values** whose transformation should be
+    **deferred back to Chimney** recursively (e.g. an outer wrapper `Outer[A]` with _N_ inner elements of possibly
+    different types - more general than `TotalOuterTransformer`/`PartialOuterTransformer`, which allow a single inner
+    type).
+
+For these, Chimney `2.0.0` provides its **own** engine-aware SPI: `io.scalaland.chimney.integrations.ChimneyMacroExtension`.
+Like a Hearth std extension it is registered via `ServiceLoader` (here through
+`META-INF/services/io.scalaland.chimney.integrations.ChimneyMacroExtension`), loaded from a **separate, pre-compiled
+artifact**, and needs no import from your users. Unlike a Hearth std extension, it registers **handlers** that are asked
+whether they special-case a `(From, To)` pair, and if so are given the derivation context (`ctx`) - so a handler can:
+
+  - inspect `Type[From]`/`Type[To]` to decide whether (and how) it handles the pair,
+  - see whether it is a total or a partial derivation (and honor flags like
+    `enableImplicitConflictResolution`),
+  - build the resulting `Expr` for the **outer** layer, while calling `deriveInner[InnerFrom, InnerTo](innerExpr)` to
+    **defer inner values** to the full rule pipeline recursively (works for _N_ inner derivations, and an inner one may
+    re-hit the same handler).
+
+The owner's mental model - a handler is matched by an extractor over the type pair, then produces the transformation:
+
+```scala
+// pseudo-code of what the rule does per (From, To):
+(Type[From], Type[To]) match {
+  case IsChimneySpecialCased(handler) => handler.specialCase // rule matched -> produces the Expr
+  case _                              => // rule yields to the next rule
+}
+```
+
+A minimal extension (special-casing `Int -> MyLeaf` totally, and building an `Outer[MyLeaf]` by deferring its inner
+value to the engine) looks like this:
+
+!!! example
+
+    ```scala
+    // Somewhere in your library's runtime:
+    final case class MyLeaf(value: Int)
+    final case class MyOuter[A](inner: A)
+
+    // In a SEPARATE, pre-compiled module (ServiceLoader loads compiled classes at macro-expansion time):
+    import hearth.MacroCommons
+    import hearth.fp.effect.MIO
+    import io.scalaland.chimney.integrations.ChimneyMacroExtension
+    import io.scalaland.chimney.internal.compiletime.derivation.transformer.ChimneyEngineExtensionApi
+
+    final class MyLibraryChimneyMacroExtension extends ChimneyMacroExtension {
+
+      override def extend(ctx: MacroCommons & ChimneyEngineExtensionApi): Unit = {
+        import ctx.*
+
+        val IntType = Type.of[Int]
+        val MyLeafType = Type.of[MyLeaf]
+
+        // Int -> MyLeaf, total (a leaf: no inner derivation):
+        def intToLeaf: SpecialCasedTransformation[Int, MyLeaf] =
+          new SpecialCasedTransformation[Int, MyLeaf] {
+            override def specialCase(implicit
+                context: SpecialCaseContext[Int, MyLeaf]
+            ): MIO[Option[DerivedExpr[MyLeaf]]] =
+              specialCasedTotal(Expr.quote(MyLeaf(Expr.splice(sourceOf(context)))))
+          }
+
+        registerSpecialCase(new SpecialCaseHandler {
+          override def apply[From, To](implicit
+              From: Type[From],
+              To: Type[To]
+          ): Option[SpecialCasedTransformation[From, To]] =
+            if (From =:= IntType && To =:= MyLeafType)
+              Some(intToLeaf.asInstanceOf[SpecialCasedTransformation[From, To]])
+            else None
+        })
+      }
+    }
+    ```
+
+    plus a `src/main/resources/META-INF/services/io.scalaland.chimney.integrations.ChimneyMacroExtension` file
+    containing the fully-qualified class name of the extension. A handler yields `Some(derivedExpr)` to produce a
+    transformation, or `None` to **decline after matching by type** (e.g. no total path exists in a total context) so
+    derivation continues with the next rule. To **defer an inner value**, call `deriveInner[InnerFrom, InnerTo](expr)`
+    (returns the engine's `DerivedExpr`, which threads total/partial through its `map`/`flatMap`) and compose the
+    results into the outer `Expr`.
+
+!!! tip
+
+    Real-world example to crib from: Chimney's own
+    [`ProtobufsChimneyMacroExtension`](https://github.com/scalalandio/chimney/blob/master/chimney-protobufs/src/main/scala/io/scalaland/chimney/protobufs/internal/compiletime/ProtobufsChimneyMacroExtension.scala)
+    (the `Duration` family + `Empty`). The same cross-quotes caveats as for Hearth extensions apply (see the warning in
+    the previous section) - additionally, avoid referencing package-object/`enum` **constants** inside `Expr.quote` on
+    Scala 2 (they reify by simple name and fail to resolve downstream - use a companion **method** instead, e.g.
+    `scala.concurrent.duration.Duration.fromNanos(...)` rather than the `SECONDS` `TimeUnit` constant), and do not name
+    the implicit `SpecialCaseContext` parameter `ctx` (it would shadow the extension `ctx` that `import ctx.*` relies
+    on).
+
+!!! warning
+
+    `ChimneyMacroExtension` and `ChimneyEngineExtensionApi` are currently `private[chimney]` (usable by in-tree
+    integration modules while the shape is finalized); the SPI is expected to be promoted to a fully public, stable API
+    in a subsequent release.
 
 ### Third-party integrations
 
