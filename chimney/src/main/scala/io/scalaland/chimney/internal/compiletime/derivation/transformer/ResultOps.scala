@@ -155,13 +155,12 @@ private[compiletime] trait ResultOps { this: Derivation & hearth.MacroCommons =>
       foundToSubtypes = foundToSubtypes
         .map { foundToSubtype =>
           import foundToSubtype.Underlying as ToSubtype
-          Type.prettyPrint[ToSubtype]
-          // sortBy(color-stripped): Hearth's prettyPrint colors individual name segments, so sorting the raw
-          // colored strings would scramble the order. The ESC char is spelled \\u001b (a regex-level escape, NOT
-          // a raw byte in the source!) and must stay in the regex: a leftover ESC sorts before any letter and
-          // scrambles the order whenever a color code starts right where the two names diverge.
+          // Sort by plainPrint (machine-readable, uncolored), display prettyPrint (colored) - Hearth's prettyPrint
+          // colors individual name segments, so sorting the colored strings would scramble the order.
+          Type.plainPrint[ToSubtype] -> Type.prettyPrint[ToSubtype]
         }
-        .sortBy(s => s.replaceAll("\\u001b\\[[0-9;]*m", ""))
+        .sortBy(_._1)
+        .map(_._2)
     )
   )
 
