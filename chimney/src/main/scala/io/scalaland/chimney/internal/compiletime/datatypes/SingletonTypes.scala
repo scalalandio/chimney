@@ -27,8 +27,10 @@ private[compiletime] trait SingletonTypes { this: ChimneyDefinitions & hearth.Ma
     // 0.4.1 - kept explicit to avoid ambient-implicit ambiguity).
     private lazy val UnitType: Type[Unit] = Type.of[Unit]
     private lazy val NullType: Type[Null] = Type.of[Null]
-    private lazy val unitExpr: Expr[Unit] = Expr.UnitExprCodec.toExpr(())
-    private lazy val nullExpr: Expr[Null] = Expr.NullExprCodec.toExpr(null)
+    // defs, NOT lazy vals: a trait-level materialized Expr would be created under whichever splice touches it first
+    // and leak into later splices (cross-quotes usage contract violation, ScopeException under -Xcheck-macros).
+    private def unitExpr: Expr[Unit] = Expr.UnitExprCodec.toExpr(())
+    private def nullExpr: Expr[Null] = Expr.NullExprCodec.toExpr(null)
 
     final def parse[A: Type]: Option[Singleton[A]] =
       Type[A] match {

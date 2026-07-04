@@ -10,8 +10,8 @@ import io.scalaland.chimney.partial
 /** Every public entry point calls `ensureStandardExtensionsLoaded()` first (Hearth's `IsOption`/`IsEither`/...
   * providers return nothing until `Environment.loadStandardExtensions()` ran; the call is idempotent per bundle).
   *
-  * `direct`+`await` (in `ChimneyExprs`) is used because `ChimneyExpr.*.instance` take pure `Expr => Expr` functions, so
-  * the effect must be unwrapped inside the generated-class body (hearth#318). Fatal errors are caught at
+  * `ChimneyExpr.*.instance` take the body derivation as a lazy `MIO` and turn it into a generated def that the instance
+  * method calls (the cross-quotes usage-contract recipe - see `ChimneyExprs`). Fatal errors are caught at
   * `unsafe.runSync` in [[GatewayCommons]].
   */
 private[compiletime] trait Gateway extends GatewayCommons {
@@ -66,9 +66,8 @@ private[compiletime] trait Gateway extends GatewayCommons {
     ensureStandardExtensionsLoaded()
     suppressWarnings {
       cacheDefinition(runtimeDataStore) { runtimeDataStore =>
-        // transformerInstanceCompat: on Scala 3 the direct+await-inside-the-quote shape trips -Xcheck-macros
-        // (see ChimneyExprs, hearth#318) - the compat runs the derivation BEFORE constructing the instance quote.
-        val result = transformerInstanceCompat[From, To] { (src: Expr[From]) =>
+        // The body derivation runs as a lazy MIO into a generated def; `transform` calls it (see ChimneyExprs).
+        val result = ChimneyExpr.Transformer.instance[From, To] { (src: Expr[From]) =>
           val context = TransformationContext.ForTotal
             .create[From, To](
               src,
@@ -134,9 +133,8 @@ private[compiletime] trait Gateway extends GatewayCommons {
     ensureStandardExtensionsLoaded()
     suppressWarnings {
       cacheDefinition(runtimeDataStore) { runtimeDataStore =>
-        // partialTransformerInstanceCompat: on Scala 3 the direct+await-inside-the-quote shape trips
-        // -Xcheck-macros (see ChimneyExprs, hearth#318) - the compat runs the derivation BEFORE constructing the quote.
-        val result = partialTransformerInstanceCompat[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
+        // The body derivation runs as a lazy MIO into a generated def; `transform` calls it (see ChimneyExprs).
+        val result = ChimneyExpr.PartialTransformer.instance[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
           val context = TransformationContext.ForPartial
             .create[From, To](
               src,

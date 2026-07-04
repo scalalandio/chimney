@@ -28,7 +28,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     private lazy val UnitType: Type[Unit] = Type.of[Unit]
     private lazy val NullType: Type[Null] = Type.of[Null]
     private lazy val NoneType: Type[None.type] = Type.of[None.type]
-    private lazy val nullExpr: Expr[Null] = Expr.NullExprCodec.toExpr(null)
+    // def, NOT a lazy val: a trait-level materialized Expr would be created under whichever splice touches it first
+    // and leak into later splices (cross-quotes usage contract violation, ScopeException under -Xcheck-macros).
+    private def nullExpr: Expr[Null] = Expr.NullExprCodec.toExpr(null)
 
     // Cross-quotes helpers in methods with regular type parameters (the cross-quotes helper-def pattern).
 

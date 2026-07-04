@@ -59,9 +59,8 @@ private[compiletime] trait Gateway extends GatewayCommons {
     ensureStandardExtensionsLoaded()
     suppressWarnings {
       cacheDefinition(runtimeDataStore) { runtimeDataStore =>
-        // patcherInstanceCompat: on Scala 3 the direct+await-inside-the-quote shape trips -Xcheck-macros
-        // (see ChimneyExprs, hearth#318) - the compat runs the derivation BEFORE constructing the instance quote.
-        val result = patcherInstanceCompat[A, Patch] { (obj: Expr[A], patch: Expr[Patch]) =>
+        // The body derivation runs as a lazy MIO into a generated def; the `patch` method calls it (see ChimneyExprs).
+        val result = ChimneyExpr.Patcher.instance[A, Patch] { (obj: Expr[A], patch: Expr[Patch]) =>
           val context = PatcherContext.create[A, Patch](
             obj,
             patch,

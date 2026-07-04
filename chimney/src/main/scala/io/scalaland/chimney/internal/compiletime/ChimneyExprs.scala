@@ -1,84 +1,43 @@
 package io.scalaland.chimney.internal.compiletime
 
-import hearth.fp.DirectStyle
 import hearth.fp.effect.MIO
+import hearth.fp.syntax.*
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.integrations
 import io.scalaland.chimney.partial
 
 import scala.collection.Factory
-import scala.util.control.NonFatal
 
-/** NB: in `Transformer.instance`/`PartialTransformer.instance`/`Patcher.instance` the method parameters keep their
-  * literal names (`src`/`failFast`/`obj`/`patch`) but a `FreshName.FromType`-named val is prepended (`val int$macro$N =
-  * src`) and the derivation sees THAT reference - this keeps the type-derived names in error messages ("derivation from
-  * int: ...").
+/** NB: the `Transformer.instance`/`PartialTransformer.instance`/`Patcher.instance` builders generate the instance as
+  * {{{
+  * {
+  *   def transformbody$macro$N(int$macro$M: Int): Out = <derived body> // ValDefBuilder.ofDefN
+  *   new Transformer[Int, Out] { def transform(src: Int): Out = transformbody$macro$N(src) }
+  * }
+  * }}}
+  * The derivation sees the generated def's `FreshName.FromType`-named parameter - this keeps the type-derived names in
+  * error messages ("derivation from int: ...") - while the instance method keeps its literal parameter names
+  * (`src`/`failFast`/`obj`/`patch`).
+  *
+  * CROSS-QUOTES USAGE CONTRACT: an expr that is spliced has to be created inside the expr that is splicing it. This is
+  * Hearth's canonical `ValDefBuilder`-recipe: the body derivation runs as a lazy `MIO` value (`.traverse`) OUTSIDE any
+  * quote - under the macro-entry scope, where every helper, cache and definition it touches lives - and hearth's
+  * `ofDefN` owns/heals the body into the generated def. The only thing evaluated inside the instance-method
+  * `Expr.splice` is the def-CALL builder (a plain name application), which is invoked at splice-evaluation time and so
+  * is created inside the expr that splices it. Nothing derived under one splice is ever consumed by another.
+  *
+  * (The previous architecture - `direct`+`await` running the whole derivation inside the instance-method splice on
+  * Scala 2, and a hand-rolled "derive-first-against-a-promised-symbol + changeOwner" Scala 3 override
+  * (`prependFreshValCompat`/`withMacroEntryCtxCompat`, hearth#317/#318) - is GONE. Running whole derivations inside a
+  * splice is not supported by Hearth's published API surface: `LambdaBuilder`'s body re-owning uses the macro-entry
+  * `Symbol.spliceOwner` while `freshTerm` follows `CrossQuotes.ctx`, so rule-built lambdas mix owners under a nested
+  * ctx - and trait-level caches would additionally need per-splice scoping, see `MacroCommonsCompat.TypeCache`.)
   *
   * TODO(hearth-migration): most of this module is a layer of trivial `Expr.quote`/`Expr.splice` forwarders that the
-  * rules could inline directly. The `instance` builders (and anything else that carries real logic, like the fresh-name
-  * val prepending below) should be kept, but the rest of the module can go.
+  * rules could inline directly. The `instance` builders (and anything else that carries real logic) should be kept, but
+  * the rest of the module can go.
   */
 private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions & hearth.MacroCommons =>
-
-  /** Runs `thunk` in MIO's direct style: `await` unwraps `MIO` values inside it (needed because
-    * `ChimneyExpr.*.instance` take pure `Expr => Expr` functions).
-    *
-    * NonFatal exceptions of the block itself become failures (MIO's `scoped` lets them fly); `RunSafe`'s own
-    * error-passing uses a ControlThrowable, which NonFatal does not intercept, so awaiting failed results still works.
-    */
-  private def direct[A](thunk: DirectStyle.RunSafe[MIO] => A): MIO[A] =
-    MIO
-      .scoped { runSafe =>
-        try Right(thunk(runSafe))
-        catch { case NonFatal(error) => Left(error) }
-      }
-      .flatMap {
-        case Right(value) => MIO.pure(value)
-        case Left(error)  => MIO.fail(error)
-      }
-
-  /** Builds a `Transformer[From, To]` instance expr, running the body derivation through `deriveBody`.
-    *
-    * HEARTH 0.4.0 ISSUE WORKAROUND (hearth#318, Scala 3): the shared default (used on Scala 2) keeps the [[direct]] +
-    * `await`-inside-the-quote shape. On Scala 3 MIO's `await` hops to a `DirectStyleExecutor` thread, so exprs quoted
-    * in the instance-method splice (e.g. `failFast`) and the awaited derivation result belong to different splice
-    * evaluations and `-Xcheck-macros` aborts with "ScopeException: Expression created in a splice was used outside of
-    * that splice". The Scala 3 `PlatformBridge` overrides these three builders: mint a fresh `FromType`-named val
-    * symbol first, run the derivation against its `Ref` (plain MIO, no direct style), and only then construct the
-    * instance quote, binding the val to the method parameter inside the splice.
-    *
-    * Re-verified against 0.4.0-16-gd4adc1c-SNAPSHOT (it.30): running the WHOLE derivation inside the splice pinned via
-    * the new `withMacroEntryCtx` trades the ScopeException for owner mismatches (entry-owned Hearth defs inside
-    * nested-splice-owned quote fragments), so the derive-first overrides stay.
-    */
-  protected def transformerInstanceCompat[From: Type, To: Type](
-      deriveBody: Expr[From] => MIO[Expr[To]]
-  ): MIO[Expr[io.scalaland.chimney.Transformer[From, To]]] =
-    direct { await =>
-      ChimneyExpr.Transformer.instance[From, To] { (src: Expr[From]) =>
-        await(deriveBody(src))
-      }
-    }
-
-  /** Builds a `PartialTransformer[From, To]` instance expr - see [[transformerInstanceCompat]]. */
-  protected def partialTransformerInstanceCompat[From: Type, To: Type](
-      deriveBody: (Expr[From], Expr[Boolean]) => MIO[Expr[partial.Result[To]]]
-  ): MIO[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
-    direct { await =>
-      ChimneyExpr.PartialTransformer.instance[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
-        await(deriveBody(src, failFast))
-      }
-    }
-
-  /** Builds a `Patcher[A, Patch]` instance expr - see [[transformerInstanceCompat]]. */
-  protected def patcherInstanceCompat[A: Type, Patch: Type](
-      deriveBody: (Expr[A], Expr[Patch]) => MIO[Expr[A]]
-  ): MIO[Expr[io.scalaland.chimney.Patcher[A, Patch]]] =
-    direct { await =>
-      ChimneyExpr.Patcher.instance[A, Patch] { (obj: Expr[A], patch: Expr[Patch]) =>
-        await(deriveBody(obj, patch))
-      }
-    }
 
   protected object ChimneyExpr {
 
@@ -91,28 +50,22 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions & hearth.Macr
         Expr.splice(transformer).transform(Expr.splice(src))
       }
 
+      /** Builds a `Transformer[From, To]` instance expr - see the trait's ScalaDoc for the generated shape and the
+        * cross-quotes usage-contract rationale.
+        */
       def instance[From: Type, To: Type](
-          toExpr: Expr[From] => Expr[To]
-      ): Expr[io.scalaland.chimney.Transformer[From, To]] = Expr.quote {
-        new io.scalaland.chimney.Transformer[From, To] {
-          def transform(src: From): To = Expr.splice {
-            // Prepend a FromType-named val so that derivation/errors see e.g. `int`;
-            // suppressUnused because the derived body might not reference the source at all (e.g. singleton target);
-            // srcRef captured BEFORE withMacroEntryCtxCompat (it must be quoted in the splice's own scope), the
-            // derivation itself runs under the macro-entry ctx so nothing it creates/caches is splice-scoped and
-            // owners stay consistent - see MacroCommonsCompat for both Scala 3 -Xcheck-macros pitfalls.
-            val srcRef = Expr.quote(src)
-            withMacroEntryCtxCompat {
-              prependFreshValCompat[From, To](srcRef) { fromRef =>
-                Expr.quote {
-                  Expr.splice(Expr.suppressUnused(fromRef))
-                  Expr.splice(toExpr(fromRef))
-                }
+          deriveBody: Expr[From] => MIO[Expr[To]]
+      ): MIO[Expr[io.scalaland.chimney.Transformer[From, To]]] =
+        ValDefBuilder
+          .ofDef1[From, To](FreshName.FromPrefix("transformbody"))
+          .traverse { case (_, fromRef) => deriveBody(fromRef) }
+          .map(_.build.use { callTransformBody =>
+            Expr.quote {
+              new io.scalaland.chimney.Transformer[From, To] {
+                def transform(src: From): To = Expr.splice(callTransformBody(Expr.quote(src)))
               }
             }
-          }
-        }
-      }
+          })
     }
 
     object PartialTransformer {
@@ -125,29 +78,27 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions & hearth.Macr
         Expr.splice(transformer).transform(Expr.splice(src), Expr.splice(failFast))
       }
 
+      /** Builds a `PartialTransformer[From, To]` instance expr - see [[ChimneyExpr.Transformer.instance]]. */
       def instance[From: Type, To: Type](
-          toExpr: (Expr[From], Expr[Boolean]) => Expr[partial.Result[To]]
-      ): Expr[io.scalaland.chimney.PartialTransformer[From, To]] = Expr.quote {
-        new io.scalaland.chimney.PartialTransformer[From, To] {
-          def transform(src: From, failFast: Boolean): partial.Result[To] = Expr.splice {
-            // Prepend a FromType-named val so that derivation/errors see e.g. `int`;
-            // suppressUnused because the derived body might not reference the source at all (e.g. singleton target);
-            // srcRef/failFastRef captured BEFORE withMacroEntryCtxCompat (they must be quoted in the splice's own
-            // scope), the derivation itself runs under the macro-entry ctx so nothing it creates/caches is
-            // splice-scoped and owners stay consistent - see MacroCommonsCompat for both Scala 3 pitfalls.
-            val srcRef = Expr.quote(src)
-            val failFastRef = Expr.quote(failFast)
-            withMacroEntryCtxCompat {
-              implicit val PartialResultTo: Type[partial.Result[To]] = ChimneyType.PartialResult[To]
-              prependFreshValCompat[From, partial.Result[To]](srcRef) { fromRef =>
-                Expr.quote {
-                  Expr.splice(Expr.suppressUnused(fromRef))
-                  Expr.splice(toExpr(fromRef, failFastRef))
-                }
+          deriveBody: (Expr[From], Expr[Boolean]) => MIO[Expr[partial.Result[To]]]
+      ): MIO[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] = {
+        implicit val BooleanType: Type[Boolean] = Type.of[Boolean]
+        implicit val PartialResultTo: Type[partial.Result[To]] = ChimneyType.PartialResult[To]
+        ValDefBuilder
+          .ofDef2[From, Boolean, partial.Result[To]](
+            FreshName.FromPrefix("transformbody"),
+            FreshName.FromType,
+            FreshName.FromPrefix("failfast")
+          )
+          .traverse { case (_, (fromRef, failFastRef)) => deriveBody(fromRef, failFastRef) }
+          .map(_.build.use { callTransformBody =>
+            Expr.quote {
+              new io.scalaland.chimney.PartialTransformer[From, To] {
+                def transform(src: From, failFast: Boolean): partial.Result[To] =
+                  Expr.splice(callTransformBody(Expr.quote(src), Expr.quote(failFast)))
               }
             }
-          }
-        }
+          })
       }
     }
 
@@ -312,33 +263,20 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions & hearth.Macr
         Expr.splice(patcher).patch(Expr.splice(obj), Expr.splice(patch))
       }
 
+      /** Builds a `Patcher[A, Patch]` instance expr - see [[ChimneyExpr.Transformer.instance]]. */
       def instance[A: Type, Patch: Type](
-          f: (Expr[A], Expr[Patch]) => Expr[A]
-      ): Expr[io.scalaland.chimney.Patcher[A, Patch]] = Expr.quote {
-        new io.scalaland.chimney.Patcher[A, Patch] {
-          def patch(obj: A, patch: Patch): A = Expr.splice {
-            // Prepend FromType-named vals so that derivation/errors see e.g. `user`;
-            // suppressUnused because the derived body might not reference them at all (e.g. singleton target);
-            // objRef/patchRef captured BEFORE withMacroEntryCtxCompat (they must be quoted in the splice's own
-            // scope), the derivation itself runs under the macro-entry ctx (see MacroCommonsCompat). Nesting two
-            // prepends produces `{ val a = obj; { val p = patch; body } }` (nested, not a flat two-val block) -
-            // semantically identical.
-            val objRef = Expr.quote(obj)
-            val patchRef0 = Expr.quote(patch)
-            withMacroEntryCtxCompat {
-              prependFreshValCompat[A, A](objRef) { objRef2 =>
-                prependFreshValCompat[Patch, A](patchRef0) { patchRef2 =>
-                  Expr.quote {
-                    Expr.splice(Expr.suppressUnused(objRef2))
-                    Expr.splice(Expr.suppressUnused(patchRef2))
-                    Expr.splice(f(objRef2, patchRef2))
-                  }
-                }
+          deriveBody: (Expr[A], Expr[Patch]) => MIO[Expr[A]]
+      ): MIO[Expr[io.scalaland.chimney.Patcher[A, Patch]]] =
+        ValDefBuilder
+          .ofDef2[A, Patch, A](FreshName.FromPrefix("patchbody"))
+          .traverse { case (_, (objRef, patchRef)) => deriveBody(objRef, patchRef) }
+          .map(_.build.use { callPatchBody =>
+            Expr.quote {
+              new io.scalaland.chimney.Patcher[A, Patch] {
+                def patch(obj: A, patch: Patch): A = Expr.splice(callPatchBody(Expr.quote(obj), Expr.quote(patch)))
               }
             }
-          }
-        }
-      }
+          })
     }
 
     object PartialOuterTransformer {

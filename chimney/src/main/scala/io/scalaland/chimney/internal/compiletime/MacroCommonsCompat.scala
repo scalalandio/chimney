@@ -1,12 +1,13 @@
 package io.scalaland.chimney.internal.compiletime
 
 /** Hearth workarounds and small helpers used by the derivation engine; each workaround member cites its upstream issue
-  * (https://github.com/kubuszok/hearth/issues). After the 0.4.0-16-gd4adc1c-SNAPSHOT sweep (it.30) the surviving
-  * workarounds are: #307 (ctorN factories - the fixed codegen still fails to MATCH existentially-quantified type
-  * projections on Scala 2), #317/#318 (the derive-first `*InstanceCompat` architecture and `prependFreshValCompat`'s
-  * owner healing are still needed - `withMacroEntryCtx` pins caches but pinning a WHOLE derivation inside a splice
-  * creates entry-owned defs inside nested-splice-owned trees) and the #334 annotation-attaching gap
-  * (nowarn/suppressWarnings). `withMacroEntryCtxCompat` now delegates to Hearth's `withMacroEntryCtx` on Scala 3.
+  * (https://github.com/kubuszok/hearth/issues). After the 0.4.0-16-gd4adc1c-SNAPSHOT sweep (it.30) and the cross-quotes
+  * usage-contract refactor (it.31) the surviving workarounds are: #307 (ctorN factories - the fixed codegen still fails
+  * to MATCH existentially-quantified type projections on Scala 2) and the #334 annotation-attaching gap
+  * (nowarn/suppressWarnings). The former #317/#318 shims (`prependFreshValCompat`, `withMacroEntryCtxCompat`, the Scala
+  * 3 derive-first `*InstanceCompat` overrides) are GONE: chimney now honors the cross-quotes usage contract ("an expr
+  * that is spliced has to be created inside the expr that is splicing it") - derivations run inside the splice that
+  * consumes them (see `ChimneyExprs`) and caches never hand out `Expr`s across splices (see [[TypeCache]]).
   */
 private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
 
@@ -38,35 +39,6 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
     * Default is identity (Scala 3 DSL embeds real singleton types); the Scala 2 `PlatformBridge` overrides it.
     */
   protected def fixJavaEnumCompat(inst: ??): ?? = inst
-
-  /** Runs the thunk with Cross-Quotes' active context restored to the MACRO-ENTRY one (`Quotes` on Scala 3).
-    *
-    * Cross-platform bridge of Hearth's Scala 3-only `withMacroEntryCtx` (added in 0.4.1 as the hearth#317/#318 fix):
-    * whole derivations that run INSIDE an `Expr.splice` (the `Transformer`/`PartialTransformer`/`Patcher` `instance`
-    * builders) execute under Cross-Quotes' `nestedCtx`, so everything they create or first-touch (types, exprs, cached
-    * `SealedEnum`/`Product` views, trait-level lazy vals) would BELONG to that one splice evaluation - deriving a
-    * SECOND instance in the same expansion (Iso/Codec do exactly that) re-evaluates the same splice and
-    * `-Xcheck-macros` aborts with a ScopeException. Pinning the entry `Quotes` for the derivation makes all
-    * definitions/types/caches entry-scoped and legal in every splice.
-    *
-    * IMPORTANT: quote any splice-scoped parameters (e.g. `Expr.quote(src)`) BEFORE entering this wrapper. Identity on
-    * Scala 2 (no `Quotes` scoping); the Scala 3 `PlatformBridge` override delegates to Hearth's `withMacroEntryCtx`.
-    */
-  protected def withMacroEntryCtxCompat[T](thunk: => T): T = thunk
-
-  /** Prepends a `FreshName.FromType`-named val in front of `use`'s result - a `ValDefs.createVal(...).use(...)` that is
-    * SAFE to call inside an `Expr.splice` on Scala 3.
-    *
-    * HEARTH ISSUE WORKAROUND (hearth#317 leftover): even with 0.4.0-16-gd4adc1c's owner-following symbol creation, a
-    * plain `ValDefs.createVal(...).use(...)` under the entry-ctx pin still produces "Block contains definition with
-    * different owners" (owners `method transform`/`val macro`) - the val is entry-owned while defs created during
-    * nested `Expr.quote` splices of the derived body (e.g. `MatchCase` binds) are owned by the instance-method splice
-    * (re-verified against 0.4.0-16-gd4adc1c-SNAPSHOT in it.30). The Scala 3 `PlatformBridge` override additionally
-    * HEALS the body with `changeOwner(Symbol.spliceOwner)`, which Hearth's `closeScope` does not do. The shared default
-    * (fine on Scala 2, where there is no owner tracking) delegates to `ValDefs`.
-    */
-  protected def prependFreshValCompat[A: Type, B: Type](value: Expr[A])(use: Expr[A] => Expr[B]): Expr[B] =
-    ValDefs.createVal[A](value, FreshName.FromType).use(use)
 
   /** `.asInstanceOfExpr[B]` syntax over [[castToExpr]]. */
   implicit final protected class CompatExprOps[A](private val expr: Expr[A]) {
@@ -320,7 +292,25 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
   // with inline `Type.of[...]` (or a helper def with its own `[X: Type]` parameters when existential-imported types
   // are involved).
 
-  /** Caches a computed `F[A]` per `Type[A]` (keys compared with `=:=`). */
+  /** Identity of the Cross-Quotes scope the calling code is currently evaluated under.
+    *
+    * Scala 3 `PlatformBridge` overrides this with the ACTIVE `Quotes` (each `Expr.splice` evaluates its thunks under a
+    * fresh nested `Quotes`); on Scala 2 there is no expr scoping, so the default is a single constant token per cake
+    * instance. Used by [[TypeCache]] to keep cached values scope-local.
+    */
+  protected def cacheScopeToken: AnyRef = this
+
+  /** Caches a computed `F[A]` per `Type[A]` (keys compared with `=:=`) WITHIN a single Cross-Quotes scope.
+    *
+    * CROSS-QUOTES USAGE CONTRACT: an expr that is spliced has to be created inside the expr that is splicing it - so a
+    * cache accessed from inside an `Expr.splice` must NOT hand out values materialized during a DIFFERENT splice
+    * evaluation (deriving a second instance in one expansion - Iso/Codec - would then use the first splice's `Expr`s
+    * and `-Xcheck-macros` aborts with a ScopeException). Cached values here routinely embed materialized `Expr`s
+    * (summoned integration implicits, provider views, default-value exprs), so entries are partitioned by
+    * [[cacheScopeToken]]: within one scope the memoization is as effective as before, a new scope recomputes (fresh
+    * summons/exprs) instead of leaking foreign-scope trees. On Scala 2 the token is constant and this behaves like a
+    * plain per-expansion cache.
+    */
   final protected class TypeCache[F[_]] {
     sealed private trait Entry {
       type Underlying
@@ -331,15 +321,18 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
       def apply[A](key: Type[A], value: F[A]): Entry { type Underlying = A } = new Impl(key, value)
       final class Impl[A](val key: Type[A], val value: F[A]) extends Entry { type Underlying = A }
     }
-    private val storage = scala.collection.mutable.ListBuffer.empty[Entry]
+    private val storage =
+      scala.collection.mutable.Map.empty[AnyRef, scala.collection.mutable.ListBuffer[Entry]]
 
-    def apply[A](key: Type[A])(newValue: => F[A]): F[A] =
-      storage.find(_.key =:= key) match {
+    def apply[A](key: Type[A])(newValue: => F[A]): F[A] = {
+      val entries = storage.getOrElseUpdate(cacheScopeToken, scala.collection.mutable.ListBuffer.empty[Entry])
+      entries.find(_.key =:= key) match {
         case Some(found) => found.value.asInstanceOf[F[A]]
         case None        =>
           val value = newValue
-          storage += Entry(key, value)
+          entries += Entry(key, value)
           value
       }
+    }
   }
 }

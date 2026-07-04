@@ -95,14 +95,7 @@ private[compiletime] trait GatewayCommons {
     )
   }
 
-  /** `{ ${ statement1 }; ...; ${ expr } }` - prepends suppress-unused statements in front of the extracted expr.
-    *
-    * HEARTH 0.4.0 ISSUE WORKAROUND (hearth#317, Scala 3): keep this a def, do NOT inline the quote at call sites with
-    * the derivation call inside `Expr.splice(...)` - the splice would then run the whole derivation under the nested
-    * quote's `Quotes`, and everything it creates becomes splice-scoped (`-Xcheck-macros`: "Expression created in a
-    * splice was used outside of that splice" once Iso/Codec derive their second instance). As an argument of this def
-    * the derivation is evaluated eagerly, under the macro-entry context, before any quote is entered.
-    */
+  /** `{ ${ statement1 }; ...; ${ expr } }` - prepends suppress-unused statements in front of the extracted expr. */
   protected def prependSuppressUnused[Out: Type](statements: List[Expr[Unit]])(expr: Expr[Out]): Expr[Out] =
     statements.foldRight(expr) { (statement, acc) =>
       Expr.quote {
