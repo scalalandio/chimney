@@ -705,8 +705,9 @@ Chimney's own debugging tooling is described in [Debugging macros](troubleshooti
 On top of that, Hearth has debugging/profiling facilities of its own, controlled with `-Xmacro-settings:hearth.*`
 options - e.g. `MIO` scope benchmarking and [speedscope](https://www.speedscope.app/)-compatible flame graphs of
 macro expansions (`-Xmacro-settings:hearth.mioBenchmarkScopes=true` +
-`-Xmacro-settings:hearth.mioBenchmarkFlameGraphDir=...`) for macros run through Hearth's standard runner - see
-[Hearth's documentation](https://scala-hearth.readthedocs.io/). Chimney currently runs its derivation through its own
-runner (to keep the `1.x` log and error-message format byte-compatible), so these particular options do not affect
-Chimney expansions yet - but they will be useful for any Hearth-based macros of your own, and Chimney may adopt them
-in future releases.
+`-Xmacro-settings:hearth.mioBenchmarkFlameGraphDir=...`) - see
+[Hearth's documentation](https://scala-hearth.readthedocs.io/). Since Chimney runs its derivation through Hearth's
+standard runner, these options **work for Chimney expansions**: compiling with both set writes a
+`<source>_<line>_<column>_Chimney.speedscope.json` flame graph (openable at [speedscope.app](https://www.speedscope.app/))
+per derivation into the configured directory. The `1.x`-compatible error-message format is preserved by supplying
+Chimney's own failure renderer to that runner, so adopting Hearth's runner did not change the user-facing messages.

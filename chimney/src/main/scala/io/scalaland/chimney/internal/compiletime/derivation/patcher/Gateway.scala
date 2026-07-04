@@ -40,7 +40,7 @@ private[compiletime] trait Gateway extends GatewayCommons {
 
             prependSuppressUnused(
               List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(obj), Expr.suppressUnused(patch))
-            )(extractExprAndLog[A, Patch, A](result))
+            )(extractExprAndLog[A, Patch, A](result, context.config.flags.displayMacrosLogging))
           }
         }
       }
@@ -59,34 +59,37 @@ private[compiletime] trait Gateway extends GatewayCommons {
     ensureStandardExtensionsLoaded()
     suppressWarnings {
       cacheDefinition(runtimeDataStore) { runtimeDataStore =>
+        // Read the config once, outside the instance body, so the macro-logging flag is known before the derivation
+        // runs (the runner needs it up front to decide whether to render the journal); it is pure compile-time code.
+        val config =
+          PatcherConfigurations.readPatcherConfiguration[Overrides, Flags, ImplicitScopeFlags](runtimeDataStore)
         // The body derivation runs as a lazy MIO into a generated def; the `patch` method calls it (see ChimneyExprs).
         val result = ChimneyExpr.Patcher.instance[A, Patch] { (obj: Expr[A], patch: Expr[Patch]) =>
-          val context = PatcherContext.create[A, Patch](
-            obj,
-            patch,
-            config =
-              PatcherConfigurations.readPatcherConfiguration[Overrides, Flags, ImplicitScopeFlags](runtimeDataStore)
-          )
+          val context = PatcherContext.create[A, Patch](obj, patch, config = config)
 
           enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context)
         }
 
         prependSuppressUnused(List(Expr.suppressUnused(runtimeDataStore)))(
-          extractExprAndLog[A, Patch, Patcher[A, Patch]](result)
+          extractExprAndLog[A, Patch, Patcher[A, Patch]](result, config.flags.displayMacrosLogging)
         )
       }
     }
   }
 
-  private def enableLoggingIfFlagEnabled[A](
-      result: => MIO[A],
+  private def enableLoggingIfFlagEnabled[Out](
+      result: => MIO[Expr[Out]],
       ctx: PatcherContext[?, ?]
-  ): MIO[A] =
-    enableLoggingIfFlagEnabled[A](result, ctx.config.flags.displayMacrosLogging, ctx.derivationStartedAt)
+  ): MIO[Expr[Out]] =
+    enableLoggingIfFlagEnabled[Out](result, ctx.config.flags.displayMacrosLogging, ctx.derivationStartedAt)
 
-  private def extractExprAndLog[A: Type, Patch: Type, Out: Type](result: MIO[Expr[Out]]): Expr[Out] =
+  private def extractExprAndLog[A: Type, Patch: Type, Out: Type](
+      result: MIO[Expr[Out]],
+      isMacroLoggingEnabled: Boolean
+  ): Expr[Out] =
     extractExprAndLog[Out](
       result,
-      s"""Chimney can't derive patching for ${Type.prettyPrint[A]} with patch type ${Type.prettyPrint[Patch]}"""
+      s"""Chimney can't derive patching for ${Type.prettyPrint[A]} with patch type ${Type.prettyPrint[Patch]}""",
+      isMacroLoggingEnabled
     )
 }

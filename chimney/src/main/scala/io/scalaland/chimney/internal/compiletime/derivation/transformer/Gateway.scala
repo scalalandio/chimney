@@ -47,7 +47,7 @@ private[compiletime] trait Gateway extends GatewayCommons {
           val result = enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
 
           prependSuppressUnused(List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(src)))(
-            extractExprAndLog[From, To, To](result)
+            extractExprAndLog[From, To, To](result, context.config.flags.displayMacrosLogging)
           )
         }
       }
@@ -66,21 +66,21 @@ private[compiletime] trait Gateway extends GatewayCommons {
     ensureStandardExtensionsLoaded()
     suppressWarnings {
       cacheDefinition(runtimeDataStore) { runtimeDataStore =>
+        // Read the config once, outside the instance body, so the macro-logging flag is known before the derivation
+        // runs (the runner needs it up front to decide whether to render the journal); it is pure compile-time code.
+        val config =
+          TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
+            runtimeDataStore
+          )
         // The body derivation runs as a lazy MIO into a generated def; `transform` calls it (see ChimneyExprs).
         val result = ChimneyExpr.Transformer.instance[From, To] { (src: Expr[From]) =>
-          val context = TransformationContext.ForTotal
-            .create[From, To](
-              src,
-              TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
-                runtimeDataStore
-              )
-            )
+          val context = TransformationContext.ForTotal.create[From, To](src, config)
 
           enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
         }
 
         prependSuppressUnused(List(Expr.suppressUnused(runtimeDataStore)))(
-          extractExprAndLog[From, To, Transformer[From, To]](result)
+          extractExprAndLog[From, To, Transformer[From, To]](result, config.flags.displayMacrosLogging)
         )
       }
     }
@@ -114,7 +114,7 @@ private[compiletime] trait Gateway extends GatewayCommons {
           val result = enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
 
           prependSuppressUnused(List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(src)))(
-            extractExprAndLog[From, To, partial.Result[To]](result)
+            extractExprAndLog[From, To, partial.Result[To]](result, context.config.flags.displayMacrosLogging)
           )
         }
       }
@@ -133,22 +133,21 @@ private[compiletime] trait Gateway extends GatewayCommons {
     ensureStandardExtensionsLoaded()
     suppressWarnings {
       cacheDefinition(runtimeDataStore) { runtimeDataStore =>
+        // Read the config once, outside the instance body, so the macro-logging flag is known before the derivation
+        // runs (the runner needs it up front to decide whether to render the journal); it is pure compile-time code.
+        val config =
+          TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
+            runtimeDataStore
+          )
         // The body derivation runs as a lazy MIO into a generated def; `transform` calls it (see ChimneyExprs).
         val result = ChimneyExpr.PartialTransformer.instance[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
-          val context = TransformationContext.ForPartial
-            .create[From, To](
-              src,
-              failFast,
-              TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
-                runtimeDataStore
-              )
-            )
+          val context = TransformationContext.ForPartial.create[From, To](src, failFast, config)
 
           enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
         }
 
         prependSuppressUnused(List(Expr.suppressUnused(runtimeDataStore)))(
-          extractExprAndLog[From, To, PartialTransformer[From, To]](result)
+          extractExprAndLog[From, To, PartialTransformer[From, To]](result, config.flags.displayMacrosLogging)
         )
       }
     }
@@ -166,15 +165,19 @@ private[compiletime] trait Gateway extends GatewayCommons {
           )
         }
 
-  private def enableLoggingIfFlagEnabled[A](
-      result: => MIO[A],
+  private def enableLoggingIfFlagEnabled[Out](
+      result: => MIO[Expr[Out]],
       ctx: TransformationContext[?, ?]
-  ): MIO[A] =
-    enableLoggingIfFlagEnabled[A](result, ctx.config.flags.displayMacrosLogging, ctx.derivationStartedAt)
+  ): MIO[Expr[Out]] =
+    enableLoggingIfFlagEnabled[Out](result, ctx.config.flags.displayMacrosLogging, ctx.derivationStartedAt)
 
-  private def extractExprAndLog[From: Type, To: Type, Out: Type](result: MIO[Expr[Out]]): Expr[Out] =
+  private def extractExprAndLog[From: Type, To: Type, Out: Type](
+      result: MIO[Expr[Out]],
+      isMacroLoggingEnabled: Boolean
+  ): Expr[Out] =
     extractExprAndLog[Out](
       result,
-      s"""Chimney can't derive transformation from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]}"""
+      s"""Chimney can't derive transformation from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]}""",
+      isMacroLoggingEnabled
     )
 }

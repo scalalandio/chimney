@@ -1,15 +1,29 @@
 package io.scalaland.chimney.internal.compiletime.derivation
 
 import hearth.fp.data.NonEmptyVector
-import hearth.fp.effect.{Log, Logs, MIO, MLocal, MResult}
+import hearth.fp.effect.{DontRender, Log, MIO, RenderFrom}
 import io.scalaland.chimney.internal.compiletime.{ChimneyDefinitions, DerivationError}
+
+import scala.concurrent.duration.FiniteDuration
 
 /** Shared logic of the transformer/patcher Gateways.
   *
-  * [[extractExprAndLog]] is where the (lazy, MIO-backed) derivation program actually runs (`unsafe.runSync`). KNOWN
-  * DIVERGENCES vs the pre-Hearth journal: on the fatal-error path the logs are lost with the unwound stack, so the
-  * `MacrosLogging` journal dump is skipped; `Warn`/`Error`-level entries (emitted only by MIO internals) are not
-  * rendered (see [[renderOldJournalShape]]).
+  * [[extractExprAndLog]] runs the (lazy, MIO-backed) derivation program through Hearth's blessed
+  * [[hearth.MIOIntegrations.MioExprOps.runToExprOrFail]] runner (rather than calling `unsafe.runSync` by hand): it sets
+  * a generous timeout, wires up Hearth's benchmark/flame-graph facilities, renders the success-path journal (when
+  * `MacrosLogging` is enabled) and, on failure, hands the accumulated errors to our [[renderFailure]]-style callback so
+  * the user-facing message stays byte-identical.
+  *
+  * KNOWN DIVERGENCES vs the pre-Hearth (hand-rolled `unsafe.runSync`) journal:
+  *   - The success-path `MacrosLogging` dump is now rendered by Hearth (`state.logs.render`) in Hearth's tree shape
+  *     (`├`/`└` guides, `[Info]` prefixes, a root-scope header, scope durations) instead of the old `Log.Journal#print`
+  *     shape (`+ `/`| `). Hearth's [[hearth.fp.effect.LogRendering]] is only a level-filter (`DontRender`/`RenderFrom`/
+  *     `RenderOnly`) - the tree-rendering scheme itself is hardcoded and `private[effect]`, and `runToExprOrFail` does
+  *     not expose `state.logs` to the caller, so the old byte-exact shape cannot be reproduced through it. No test
+  *     asserts on the journal shape (the only `enableMacrosLogging` test usage is commented out), so this is a
+  *     documented, untested divergence rather than a broken contract.
+  *   - `Warn`/`Error`-level entries (emitted only by MIO internals) stay unrendered - we pass `DontRender` for both, to
+  *     match the old behavior of never surfacing them.
   */
 private[compiletime] trait GatewayCommons {
   this: ChimneyDefinitions & hearth.MacroCommons & hearth.std.StdExtensions =>
@@ -21,78 +35,82 @@ private[compiletime] trait GatewayCommons {
   protected def cacheDefinition[A: Type, Out: Type](expr: Expr[A])(usage: Expr[A] => Expr[Out]): Expr[Out] =
     ValDefs.createVal[A](expr, FreshName.FromType).use(usage)
 
-  /** "The macro-logging flag was enabled, dump the log journal at the end of the derivation". */
-  final protected case class MacroLogging(derivationStartedAt: java.time.Instant)
-
-  /** Macro-logging flag as an [[MLocal]] (set by [[enableLoggingIfFlagEnabled]], read - inside the program - by
-    * [[extractExprAndLog]]).
+  /** When macro-logging is enabled, append the two trailer entries the old journal dump used to add out-of-band
+    * ("Derived final expression is: ..." and "Derivation took ...") as regular `Info` logs, so they show up in the
+    * journal Hearth renders on the success path. Otherwise a no-op (no logs are rendered - see [[extractExprAndLog]]).
     */
-  private val macroLogging: MLocal[Option[MacroLogging]] =
-    MLocal(Option.empty[MacroLogging])(identity)((a, b) => a.orElse(b))
-
-  /** Let us keep the information if logging is needed in code that never had access to Context. */
-  protected def enableLoggingIfFlagEnabled[A](
-      result: MIO[A],
+  protected def enableLoggingIfFlagEnabled[Out](
+      result: MIO[Expr[Out]],
       isMacroLoggingEnabled: Boolean,
       derivationStartedAt: java.time.Instant
-  ): MIO[A] =
-    if (isMacroLoggingEnabled) macroLogging.set(Some(MacroLogging(derivationStartedAt))) >> result
+  ): MIO[Expr[Out]] =
+    if (isMacroLoggingEnabled)
+      result.flatTap { expr =>
+        val duration = java.time.Duration.between(derivationStartedAt, java.time.Instant.now())
+        Log.info(s"Derived final expression is:\n${expr.prettyPrint}") >>
+          Log.info(f"Derivation took ${duration.getSeconds}%d.${duration.getNano}%09d s")
+      }
     else result
 
-  /** Unwraps the `result` and fails with error message or prints diagnostics (if needed) before returning expression */
-  protected def extractExprAndLog[Out: Type](result: MIO[Expr[Out]], errorHeader: => String): Expr[Out] = {
-    // The macroLogging MLocal has to be read INSIDE the program - MState's local accessor is private[effect].
-    val program: MIO[(MResult[Expr[Out]], Option[MacroLogging])] =
-      result.attempt.tuple(macroLogging.get)
+  /** Runs the derivation program and either returns its expression or aborts with the user-facing error message.
+    *
+    * Delegates to Hearth's [[hearth.MIOIntegrations.MioExprOps.runToExprOrFail]] (the blessed runner) instead of
+    * calling `unsafe.runSync` directly: `runToExprOrFail` configures MIO benchmarking, writes flame graphs when the
+    * `-Xmacro-settings:hearth.mioBenchmark*` options are set, renders the success-path journal and reports the failure
+    * message we build in [[renderFailure]].
+    */
+  protected def extractExprAndLog[Out](
+      result: MIO[Expr[Out]],
+      errorHeader: => String,
+      isMacroLoggingEnabled: Boolean
+  ): Expr[Out] = {
+    // Builds Chimney's exact user-facing error text (errorHeader + DerivationErrors prettyPrint + doc-URL footer). The
+    // `renderedLogs` are the journal Hearth already rendered for us; they are empty unless MacrosLogging is enabled and
+    // the derivation failed, so every error-message test (which does not enable logging) still sees byte-identical text.
+    def renderFailure(renderedLogs: String, errors: NonEmptyVector[Throwable]): String = {
+      val lines = DerivationError.printErrors(errors)
 
-    val (logs, errorsOrExpr, macroLoggingFlag) =
-      try {
-        val (state, outcome) = program.unsafe.runSync
-        outcome match {
-          case Right((errorsOrExpr, macroLoggingFlag)) => (state.logs, errorsOrExpr, macroLoggingFlag)
-          // $COVERAGE-OFF$unreachable: after `.attempt` neither branch of `.tuple` can fail
-          case Left(errors) => (state.logs, Left(errors), None)
-          // $COVERAGE-ON$
-        }
-      } catch {
-        // Fatal errors (e.g. StackOverflowError) fly out of runSync; catching them here keeps the "-Xss64m" guidance
-        // in the rendered error (the state - so the logs and the macro-logging flag - is lost with the unwound stack).
-        case error: Throwable =>
-          (Vector.empty[Log], Left(NonEmptyVector.one[Throwable](DerivationError.MacroException(error))), None)
-      }
+      val richLines =
+        s"""$errorHeader
+           |
+           |$lines
+           |Consult ${Console.MAGENTA}$chimneyDocUrl${Console.RESET} for usage examples.
+           |
+           |""".stripMargin
 
-    macroLoggingFlag.foreach { case MacroLogging(derivationStartedAt) =>
-      val duration = java.time.Duration.between(derivationStartedAt, java.time.Instant.now())
-      val info = renderOldJournalShape(
-        logs ++
-          errorsOrExpr.toOption.map { expr =>
-            Log.Entry(Log.Level.Info, () => s"Derived final expression is:\n${expr.prettyPrint}", parentScopeId = 0)
-          }.toList :+
-          Log.Entry(
-            Log.Level.Info,
-            () => f"Derivation took ${duration.getSeconds}%d.${duration.getNano}%09d s",
-            parentScopeId = 0
-          )
-      )
-      Environment.reportInfo("\n" + info)
+      if (renderedLogs.nonEmpty) s"$renderedLogs\n$richLines" else richLines
     }
 
-    errorsOrExpr.fold(
-      derivationErrors => {
-        val lines = DerivationError.printErrors(derivationErrors)
-
-        val richLines =
-          s"""$errorHeader
-             |
-             |$lines
-             |Consult ${Console.MAGENTA}$chimneyDocUrl${Console.RESET} for usage examples.
-             |
-             |""".stripMargin
-
-        reportError(richLines)
-      },
-      identity
-    )
+    // Chimney's macro-dependent transformers derive nested instances by summoning implicits MID-derivation (e.g. an
+    // implicit `Transformer[Option[List[A]], List[B]]` that needs `Transformer.AutoDerived[A, B]`), which triggers a
+    // NESTED macro expansion - another `runToExprOrFail` - while this one's `runSync` is still on the stack.
+    // `runToExprOrFail` unconditionally goes through `Environment.withMioTimeout`, which throws `HearthAssertionError`
+    // ("MIO timeout is already set") on re-entry because it assumes a single top-level timeout. Chimney genuinely
+    // nests, so we neutralize the global deadline (a public `var`) around the call and restore it afterwards, letting
+    // the nested `withMioTimeout` install its own deadline and the outer one resume once the nested run returns.
+    // Hearth gap: https://github.com/kubuszok/hearth/issues/342 (nested `runToExprOrFail` unsupported).
+    val savedTimeoutDeadline = MIO.timeoutDeadlineNanos
+    MIO.timeoutDeadlineNanos = Long.MaxValue
+    try
+      result.runToExprOrFail(
+        macroName = macroName,
+        // On success `RenderFrom(Info)` makes Hearth dump the whole journal (only when the flag is on - otherwise
+        // `DontRender` keeps non-logging derivations silent, as before). `Warn`/`Error` stay `DontRender` to match the
+        // old behavior of never surfacing MIO-internal warnings/errors.
+        infoRendering = if (isMacroLoggingEnabled) RenderFrom(Log.Level.Info) else DontRender,
+        warnRendering = DontRender,
+        errorRendering = DontRender,
+        failOnErrorLog = false,
+        timeout = macroExpansionTimeout
+      )(renderFailure)
+    catch {
+      // A fatal StackOverflowError flies out of `runToExprOrFail`: Hearth's `handleMioTerminationException` only catches
+      // MioTerminationException/timeout, and MIO's run loop only catches `NonFatal`. Catch it here to keep the "-Xss64m"
+      // guidance (the state - so the logs - is lost with the unwound stack, hence no rendered logs are available).
+      case error: StackOverflowError =>
+        reportError(renderFailure("", NonEmptyVector.one[Throwable](DerivationError.MacroException(error))))
+    } finally
+      MIO.timeoutDeadlineNanos = savedTimeoutDeadline
   }
 
   /** `{ ${ statement1 }; ...; ${ expr } }` - prepends suppress-unused statements in front of the extracted expr. */
@@ -133,37 +151,15 @@ private[compiletime] trait GatewayCommons {
     nowarnedExpr
   }
 
-  /** Renders Hearth's flat [[Logs]] in the OLD `Log.Journal#print` shape (byte-for-byte for `Info` entries).
-    *
-    * Hearth's own renderer (`state.logs.render.fromInfo(...)`) uses a different scheme (`├`/`└` guides, `[Info]`
-    * prefixes, root-scope header, scope durations), which would break every test asserting on the journal shape - so
-    * the tree is reconstructed from the flat parent-scope-ID representation here (Hearth's `Log.toTree` is
-    * `private[effect]`) and printed with the old `"$indent+ "`/`"$indent| "` scheme instead.
-    *
-    * `Warn`/`Error` entries (only ever emitted by MIO's own internals, e.g. "Caught exception ..." - the old journal
-    * had no counterpart of those) are skipped; scope markers are always printed, like the old `Log.Scope`.
+  /** Top scope of the journal Hearth renders and the name it uses in a timeout message. */
+  private val macroName = "Chimney"
+
+  /** Chimney had no explicit timeout (the old hand-rolled `unsafe.runSync` ran unbounded); Hearth's default is 2s,
+    * which is far too low for large derivations. Pick a generous ceiling so ordinary compiles never time out spuriously
+    * (manual termination via Ctrl+C still works through Hearth's `TerminationObserver` regardless of this value).
     */
-  private def renderOldJournalShape(logs: Logs): String = {
-    val byParent = scala.collection.mutable.Map.empty[Int, scala.collection.mutable.ArrayBuffer[Log]]
-    logs.foreach { log =>
-      byParent.getOrElseUpdate(log.parentScopeId, scala.collection.mutable.ArrayBuffer.empty[Log]) += log
-    }
-
-    val singleIndent = "  "
-    def prependIndent(msg: String, indent: String): String = msg.replaceAll("\n", s"\n$indent| ")
-
-    def print(parentScopeId: Int, indent: String): String =
-      byParent.get(parentScopeId).fold("") {
-        _.map {
-          case Log.Entry(level, message, _) =>
-            if (level == Log.Level.Info) s"$indent+ ${prependIndent(message(), indent)}\n" else ""
-          case Log.Scope(scopeName, scopeId, _, _, _) =>
-            s"$indent+ ${prependIndent(scopeName, indent)}\n${print(scopeId, indent + singleIndent)}"
-        }.mkString
-      }
-
-    print(0, "")
-  }
+  private val macroExpansionTimeout: FiniteDuration =
+    FiniteDuration(10, java.util.concurrent.TimeUnit.MINUTES)
 
   private val chimneyDocUrl = "https://chimney.readthedocs.io"
 }
