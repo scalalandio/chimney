@@ -1,8 +1,8 @@
 package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
+import hearth.fp.effect.MIO
 import io.scalaland.chimney.dsl.PatcherDefinitionCommons
 import io.scalaland.chimney.Patcher
-import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.GatewayCommons
 import io.scalaland.chimney.internal.runtime
 
@@ -80,12 +80,12 @@ private[compiletime] trait Gateway extends GatewayCommons {
   }
 
   private def enableLoggingIfFlagEnabled[A](
-      result: => DerivationResult[A],
+      result: => MIO[A],
       ctx: PatcherContext[?, ?]
-  ): DerivationResult[A] =
+  ): MIO[A] =
     enableLoggingIfFlagEnabled[A](result, ctx.config.flags.displayMacrosLogging, ctx.derivationStartedAt)
 
-  private def extractExprAndLog[A: Type, Patch: Type, Out: Type](result: DerivationResult[Expr[Out]]): Expr[Out] =
+  private def extractExprAndLog[A: Type, Patch: Type, Out: Type](result: MIO[Expr[Out]]): Expr[Out] =
     extractExprAndLog[Out](
       result,
       s"""Chimney can't derive patching for ${Type.prettyPrint[A]} with patch type ${Type.prettyPrint[Patch]}"""

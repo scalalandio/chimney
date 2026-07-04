@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
-import io.scalaland.chimney.internal.compiletime.DerivationResult
+import hearth.fp.effect.MIO
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
 private[compiletime] trait TransformImplicitConversionRuleModule { this: Derivation & hearth.MacroCommons =>
@@ -12,15 +12,15 @@ private[compiletime] trait TransformImplicitConversionRuleModule { this: Derivat
       Expr.splice(fn).apply(Expr.splice(a))
     }
 
-    def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+    def expand[From, To](implicit ctx: TransformationContext[From, To]): MIO[Rule.ExpansionResult[To]] =
       if (ctx.config.areLocalFlagsAndOverridesEmpty) {
         if (ctx.config.flags.implicitConversions) {
           summonImplicitConversion[From, To] match {
             case Some(ev) => transformWithConversion[From, To](ev)
-            case None     => DerivationResult.attemptNextRule
+            case None     => attemptNextRule
           }
-        } else DerivationResult.attemptNextRuleBecause("Implicit conversions are disabled")
-      } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
+        } else attemptNextRuleBecause("Implicit conversions are disabled")
+      } else attemptNextRuleBecause("Configuration has defined overrides")
 
     private def summonImplicitConversion[From: Type, To: Type]: Option[Expr[From => To]] = {
       implicit val FnFromToType: Type[From => To] = Type.of[From => To]
@@ -29,9 +29,9 @@ private[compiletime] trait TransformImplicitConversionRuleModule { this: Derivat
 
     private def transformWithConversion[From, To](ev: Expr[From => To])(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[Rule.ExpansionResult[To]] =
+    ): MIO[Rule.ExpansionResult[To]] =
       // We're constructing:
       // '{ ${ ev }.apply(${ src }) }
-      DerivationResult.expandedTotal(applyFnCompat(ev, ctx.src))
+      expandedTotal(applyFnCompat(ev, ctx.src))
   }
 }

@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
+import hearth.fp.effect.MIO
 import scala.quoted.Quotes
 
 /** Scala 3 entrypoint of the macro cake: concrete macro classes extend this class. It also hosts the Scala 3 overrides
@@ -60,8 +61,8 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     * parameter.
     */
   override protected def transformerInstanceCompat[From: Type, To: Type](
-      deriveBody: Expr[From] => DerivationResult[Expr[To]]
-  ): DerivationResult[Expr[io.scalaland.chimney.Transformer[From, To]]] = {
+      deriveBody: Expr[From] => MIO[Expr[To]]
+  ): MIO[Expr[io.scalaland.chimney.Transformer[From, To]]] = {
     given tFrom: scala.quoted.Type[From] = Type[From].asInstanceOf[scala.quoted.Type[From]]
     given tTo: scala.quoted.Type[To] = Type[To].asInstanceOf[scala.quoted.Type[To]]
     val (srcSym, srcRef) = freshValSymbolOf[From](None)
@@ -78,8 +79,8 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
 
   /** Scala 3 override of `ChimneyExprs.partialTransformerInstanceCompat` - see [[transformerInstanceCompat]]. */
   override protected def partialTransformerInstanceCompat[From: Type, To: Type](
-      deriveBody: (Expr[From], Expr[Boolean]) => DerivationResult[Expr[io.scalaland.chimney.partial.Result[To]]]
-  ): DerivationResult[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] = {
+      deriveBody: (Expr[From], Expr[Boolean]) => MIO[Expr[io.scalaland.chimney.partial.Result[To]]]
+  ): MIO[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] = {
     given tFrom: scala.quoted.Type[From] = Type[From].asInstanceOf[scala.quoted.Type[From]]
     given tTo: scala.quoted.Type[To] = Type[To].asInstanceOf[scala.quoted.Type[To]]
     val (srcSym, srcRef) = freshValSymbolOf[From](None)
@@ -100,8 +101,8 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
 
   /** Scala 3 override of `ChimneyExprs.patcherInstanceCompat` - see [[transformerInstanceCompat]]. */
   override protected def patcherInstanceCompat[A: Type, Patch: Type](
-      deriveBody: (Expr[A], Expr[Patch]) => DerivationResult[Expr[A]]
-  ): DerivationResult[Expr[io.scalaland.chimney.Patcher[A, Patch]]] = {
+      deriveBody: (Expr[A], Expr[Patch]) => MIO[Expr[A]]
+  ): MIO[Expr[io.scalaland.chimney.Patcher[A, Patch]]] = {
     given tA: scala.quoted.Type[A] = Type[A].asInstanceOf[scala.quoted.Type[A]]
     given tPatch: scala.quoted.Type[Patch] = Type[Patch].asInstanceOf[scala.quoted.Type[Patch]]
     val (objSym, objRef) = freshValSymbolOf[A](None)

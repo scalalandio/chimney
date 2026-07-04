@@ -1,10 +1,13 @@
 package io.scalaland.chimney.internal.compiletime
 
+import hearth.fp.DirectStyle
+import hearth.fp.effect.MIO
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.integrations
 import io.scalaland.chimney.partial
 
 import scala.collection.Factory
+import scala.util.control.NonFatal
 
 /** NB: in `Transformer.instance`/`PartialTransformer.instance`/`Patcher.instance` the method parameters keep their
   * literal names (`src`/`failFast`/`obj`/`patch`) but a `FreshName.FromType`-named val is prepended (`val int$macro$N =
@@ -17,21 +20,37 @@ import scala.collection.Factory
   */
 private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions & hearth.MacroCommons =>
 
+  /** Runs `thunk` in MIO's direct style: `await` unwraps `MIO` values inside it (needed because
+    * `ChimneyExpr.*.instance` take pure `Expr => Expr` functions).
+    *
+    * NonFatal exceptions of the block itself become failures (MIO's `scoped` lets them fly); `RunSafe`'s own
+    * error-passing uses a ControlThrowable, which NonFatal does not intercept, so awaiting failed results still works.
+    */
+  private def direct[A](thunk: DirectStyle.RunSafe[MIO] => A): MIO[A] =
+    MIO
+      .scoped { runSafe =>
+        try Right(thunk(runSafe))
+        catch { case NonFatal(error) => Left(error) }
+      }
+      .flatMap {
+        case Right(value) => MIO.pure(value)
+        case Left(error)  => MIO.fail(error)
+      }
+
   /** Builds a `Transformer[From, To]` instance expr, running the body derivation through `deriveBody`.
     *
-    * HEARTH 0.4.0 ISSUE WORKAROUND (hearth#318, Scala 3): the shared default (used on Scala 2) keeps the
-    * `DerivationResult.direct` + `await`-inside-the-quote shape. On Scala 3 MIO's `await` hops to a
-    * `DirectStyleExecutor` thread, so exprs quoted in the instance-method splice (e.g. `failFast`) and the awaited
-    * derivation result belong to different splice evaluations and `-Xcheck-macros` aborts with "ScopeException:
-    * Expression created in a splice was used outside of that splice". The Scala 3 `PlatformBridge` overrides these
-    * three builders: mint a fresh `FromType`-named val symbol first, run the derivation against its `Ref` (plain MIO,
-    * no direct style), and only then construct the instance quote, binding the val to the method parameter inside the
-    * splice.
+    * HEARTH 0.4.0 ISSUE WORKAROUND (hearth#318, Scala 3): the shared default (used on Scala 2) keeps the [[direct]] +
+    * `await`-inside-the-quote shape. On Scala 3 MIO's `await` hops to a `DirectStyleExecutor` thread, so exprs quoted
+    * in the instance-method splice (e.g. `failFast`) and the awaited derivation result belong to different splice
+    * evaluations and `-Xcheck-macros` aborts with "ScopeException: Expression created in a splice was used outside of
+    * that splice". The Scala 3 `PlatformBridge` overrides these three builders: mint a fresh `FromType`-named val
+    * symbol first, run the derivation against its `Ref` (plain MIO, no direct style), and only then construct the
+    * instance quote, binding the val to the method parameter inside the splice.
     */
   protected def transformerInstanceCompat[From: Type, To: Type](
-      deriveBody: Expr[From] => DerivationResult[Expr[To]]
-  ): DerivationResult[Expr[io.scalaland.chimney.Transformer[From, To]]] =
-    DerivationResult.direct[Expr[To], Expr[io.scalaland.chimney.Transformer[From, To]]] { await =>
+      deriveBody: Expr[From] => MIO[Expr[To]]
+  ): MIO[Expr[io.scalaland.chimney.Transformer[From, To]]] =
+    direct { await =>
       ChimneyExpr.Transformer.instance[From, To] { (src: Expr[From]) =>
         await(deriveBody(src))
       }
@@ -39,9 +58,9 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions & hearth.Macr
 
   /** Builds a `PartialTransformer[From, To]` instance expr - see [[transformerInstanceCompat]]. */
   protected def partialTransformerInstanceCompat[From: Type, To: Type](
-      deriveBody: (Expr[From], Expr[Boolean]) => DerivationResult[Expr[partial.Result[To]]]
-  ): DerivationResult[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
-    DerivationResult.direct[Expr[partial.Result[To]], Expr[io.scalaland.chimney.PartialTransformer[From, To]]] { await =>
+      deriveBody: (Expr[From], Expr[Boolean]) => MIO[Expr[partial.Result[To]]]
+  ): MIO[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
+    direct { await =>
       ChimneyExpr.PartialTransformer.instance[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
         await(deriveBody(src, failFast))
       }
@@ -49,9 +68,9 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions & hearth.Macr
 
   /** Builds a `Patcher[A, Patch]` instance expr - see [[transformerInstanceCompat]]. */
   protected def patcherInstanceCompat[A: Type, Patch: Type](
-      deriveBody: (Expr[A], Expr[Patch]) => DerivationResult[Expr[A]]
-  ): DerivationResult[Expr[io.scalaland.chimney.Patcher[A, Patch]]] =
-    DerivationResult.direct[Expr[A], Expr[io.scalaland.chimney.Patcher[A, Patch]]] { await =>
+      deriveBody: (Expr[A], Expr[Patch]) => MIO[Expr[A]]
+  ): MIO[Expr[io.scalaland.chimney.Patcher[A, Patch]]] =
+    direct { await =>
       ChimneyExpr.Patcher.instance[A, Patch] { (obj: Expr[A], patch: Expr[Patch]) =>
         await(deriveBody(obj, patch))
       }

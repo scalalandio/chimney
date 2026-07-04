@@ -1,18 +1,17 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
+import hearth.fp.effect.{Log, MIO}
 import hearth.fp.syntax.*
 import io.scalaland.chimney.dsl as dsls
-import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
 import scala.collection.Factory
 
-/** `DerivationResult` is lazy (MIO), so `mapMaps` cannot eagerly run the delegated-to-IterableToIterable expansion to
-  * decide whether to pass on to the next rule - instead it returns
-  * `DerivationResult[Either[Option[String], TransformationExpr[To]]]`: `Left(reason)` is the decided-at-derivation-time
-  * "attempt next rule" of the delegated expansion; `expand` translates a `Left` of the main result into
-  * `AttemptNextRule`, and fallbacks that delegated-and-yielded are skipped during the merge fold.
+/** `MIO` is lazy, so `mapMaps` cannot eagerly run the delegated-to-IterableToIterable expansion to decide whether to
+  * pass on to the next rule - instead it returns `MIO[Either[Option[String], TransformationExpr[To]]]`: `Left(reason)`
+  * is the decided-at-derivation-time "attempt next rule" of the delegated expansion; `expand` translates a `Left` of
+  * the main result into `AttemptNextRule`, and fallbacks that delegated-and-yielded are skipped during the merge fold.
   */
 private[compiletime] trait TransformMapToMapRuleModule {
   this: Derivation & TransformIterableToIterableRuleModule & TransformProductToProductRuleModule &
@@ -75,15 +74,15 @@ private[compiletime] trait TransformMapToMapRuleModule {
         Expr.splice(f).tupled
       }
 
-    def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+    def expand[From, To](implicit ctx: TransformationContext[From, To]): MIO[Rule.ExpansionResult[To]] =
       mapMaps[From, To] match {
         case Right(srcToResult) =>
           srcToResult.flatMap {
             case Left(reason) =>
               // The delegated IterableToIterable expansion decided to pass on to the next rule - so does MapToMap.
-              DerivationResult.pure(Rule.ExpansionResult.AttemptNextRule(reason))
+              MIO.pure(Rule.ExpansionResult.AttemptNextRule(reason))
             case Right(srcTo) =>
-              lazy val fallbackToResult: Vector[DerivationResult[Option[TransformationExpr[To]]]] =
+              lazy val fallbackToResult: Vector[MIO[Option[TransformationExpr[To]]]] =
                 mapFallbackMaps[From, To].map(_.map(_.toOption))
 
               val merge: (TransformationExpr[To], TransformationExpr[To]) => TransformationExpr[To] = ctx match {
@@ -92,28 +91,28 @@ private[compiletime] trait TransformMapToMapRuleModule {
               }
 
               (ctx.config.flags.collectionFallbackMerge match {
-                case None                            => DerivationResult.pure(srcTo)
+                case None                            => MIO.pure(srcTo)
                 case Some(dsls.SourceAppendFallback) =>
                   fallbackToResult
-                    .foldLeft(DerivationResult.pure(srcTo)) { (acc, fallbackOpt) =>
+                    .foldLeft(MIO.pure(srcTo)) { (acc, fallbackOpt) =>
                       acc.map2(fallbackOpt)((a, opt) => opt.fold(a)(b => merge(a, b)))
                     }
                     .logInfo(s"Combined source Map with ${fallbackToResult.size} fallbacks (appended)")
                 case Some(dsls.FallbackAppendSource) =>
                   fallbackToResult.reverseIterator
-                    .foldRight(DerivationResult.pure(srcTo)) { (fallbackOpt, acc) =>
+                    .foldRight(MIO.pure(srcTo)) { (fallbackOpt, acc) =>
                       fallbackOpt.map2(acc)((opt, a) => opt.fold(a)(b => merge(b, a)))
                     }
                     .logInfo(s"Combined source Map with ${fallbackToResult.size} fallbacks (prepended)")
-              }).flatMap(DerivationResult.expanded)
+              }).flatMap(expanded)
           }
-        case Left(Some(reason)) => DerivationResult.attemptNextRuleBecause(reason)
-        case Left(None)         => DerivationResult.attemptNextRule
+        case Left(Some(reason)) => attemptNextRuleBecause(reason)
+        case Left(None)         => attemptNextRule
       }
 
     private def mapMaps[From, To](implicit
         ctx: TransformationContext[From, To]
-    ): Either[Option[String], DerivationResult[Either[Option[String], TransformationExpr[To]]]] =
+    ): Either[Option[String], MIO[Either[Option[String], TransformationExpr[To]]]] =
       (Type[From], Type[To]) match {
         case (TotallyOrPartiallyBuildMap(fromMap), TotallyOrPartiallyBuildMap(toMap)) =>
           import fromMap.{Key as FromK, Value as FromV}, toMap.{Key as ToK, Value as ToV}
@@ -134,7 +133,7 @@ private[compiletime] trait TransformMapToMapRuleModule {
               )
             case _ =>
               Right(
-                DerivationResult
+                Log
                   .namedScope(
                     "MapToMap matched in the context of total transformation without overrides - delegating to IterableToIterable (fallbacks handled in MapToMap)"
                   ) {
@@ -181,7 +180,7 @@ private[compiletime] trait TransformMapToMapRuleModule {
 
     private def mapFallbackMaps[From, To](implicit
         ctx: TransformationContext[From, To]
-    ): Vector[DerivationResult[Either[Option[String], TransformationExpr[To]]]] =
+    ): Vector[MIO[Either[Option[String], TransformationExpr[To]]]] =
       ctx.config.filterCurrentOverridesForFallbacks.view
         .map { case TransformerOverride.Fallback(fallback) =>
           import fallback.{Underlying as Fallback, value as fallbackExpr}
@@ -198,8 +197,8 @@ private[compiletime] trait TransformMapToMapRuleModule {
 
     private def deriveKeyMapping[From, To, FromK: Type, ToK: Type](
         key: Expr[FromK]
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[TransformationExpr[ToK]] =
-      DerivationResult.namedScope("Derive Map's key mapping") {
+    )(implicit ctx: TransformationContext[From, To]): MIO[TransformationExpr[ToK]] =
+      Log.namedScope("Derive Map's key mapping") {
         useOverrideIfPresentOr("everyMapKey", ctx.config.filterCurrentOverridesForEveryMapKey) {
           deriveRecursiveTransformationExpr[FromK, ToK](
             key,
@@ -212,8 +211,8 @@ private[compiletime] trait TransformMapToMapRuleModule {
 
     private def deriveValueMapping[From, To, FromV: Type, ToV: Type](
         value: Expr[FromV]
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[TransformationExpr[ToV]] =
-      DerivationResult.namedScope("Derive Map's value mapping") {
+    )(implicit ctx: TransformationContext[From, To]): MIO[TransformationExpr[ToV]] =
+      Log.namedScope("Derive Map's value mapping") {
         useOverrideIfPresentOr("everyMapValue", ctx.config.filterCurrentOverridesForEveryMapValue) {
           deriveRecursiveTransformationExpr[FromV, ToV](
             value,
@@ -229,12 +228,12 @@ private[compiletime] trait TransformMapToMapRuleModule {
         factoryEither: Either[Expr[Factory[(ToK, ToV), To]], Expr[Factory[(ToK, ToV), partial.Result[To]]]]
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[TransformationExpr[To]] = {
+    ): MIO[TransformationExpr[To]] = {
       implicit val TupleFromKVType: Type[(FromK, FromV)] = Type.of[(FromK, FromV)]
       implicit val TupleToKVType: Type[(ToK, ToV)] = Type.of[(ToK, ToV)]
       LambdaBuilder
         .of2[FromK, FromV](FreshName.FromPrefix("key"), FreshName.FromPrefix("value"))
-        .traverse[DerivationResult, (Expr[ToK], Expr[ToV])] { case (key, value) =>
+        .traverse[MIO, (Expr[ToK], Expr[ToV])] { case (key, value) =>
           deriveKeyMapping[From, To, FromK, ToK](key)
             .map(_.ensureTotal)
             .parTuple(deriveValueMapping[From, To, FromV, ToV](value).map(_.ensureTotal))
@@ -259,8 +258,8 @@ private[compiletime] trait TransformMapToMapRuleModule {
             )
 
           factoryEither match {
-            case Left(totalFactory)    => DerivationResult.totalExpr(iteratorMapTo(totalFactory))
-            case Right(partialFactory) => DerivationResult.partialExpr(iteratorMapTo(partialFactory))
+            case Left(totalFactory)    => totalExpr(iteratorMapTo(totalFactory))
+            case Right(partialFactory) => partialExpr(iteratorMapTo(partialFactory))
           }
         }
     }
@@ -272,7 +271,7 @@ private[compiletime] trait TransformMapToMapRuleModule {
         isConversionFromMap: Boolean // or from any sequence of tuples
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[TransformationExpr[To]] = {
+    ): MIO[TransformationExpr[To]] = {
       implicit val AnyT: Type[Any] = AnyType
       implicit val TupleFromKVType: Type[(FromK, FromV)] = Type.of[(FromK, FromV)]
       implicit val TupleToKVType: Type[(ToK, ToV)] = Type.of[(ToK, ToV)]
@@ -296,7 +295,7 @@ private[compiletime] trait TransformMapToMapRuleModule {
         LambdaBuilder
           .of2[FromK, FromV](FreshName.FromPrefix("key"), FreshName.FromPrefix("value"))
           .traverse[
-            DerivationResult,
+            MIO,
             ((Expr[partial.Result[ToK]], Expr[FromK]), (Expr[partial.Result[ToV]], Expr[FromV]))
           ] { case (key, value) =>
             deriveKeyMapping[From, To, FromK, ToK](key)
@@ -334,8 +333,8 @@ private[compiletime] trait TransformMapToMapRuleModule {
               )
 
             factoryEither match {
-              case Left(totalFactory)   => DerivationResult.partialExpr(partialResultTraverse(totalFactory))
-              case Right(partialResult) => DerivationResult.partialExpr(partialResultTraverse(partialResult).flatten)
+              case Left(totalFactory)   => partialExpr(partialResultTraverse(totalFactory))
+              case Right(partialResult) => partialExpr(partialResultTraverse(partialResult).flatten)
             }
           }
       } else {
@@ -365,19 +364,19 @@ private[compiletime] trait TransformMapToMapRuleModule {
         // )(${ factory })
         LambdaBuilder
           .of2[(FromK, FromV), Int](FreshName.FromPrefix("pair"), FreshName.FromPrefix("idx"))
-          .traverse[DerivationResult, Expr[partial.Result[(ToK, ToV)]]] { case (pairExpr, indexExpr) =>
+          .traverse[MIO, Expr[partial.Result[(ToK, ToV)]]] { case (pairExpr, indexExpr) =>
             val pairGetters = ProductType.parseExtraction[(FromK, FromV)].get.extraction
             val _1 = pairGetters("_1")
             val _2 = pairGetters("_2")
             import _1.{Underlying as From_1, value as getter_1}, _2.{Underlying as From_2, value as getter_2}
             val keyResultVal = ValDefs
               .createVal(getter_1.get(pairExpr).upcast[FromK], FreshName.FromPrefix("key"))
-              .traverse[DerivationResult, (Expr[partial.Result[ToK]], Expr[FromK])] { key =>
+              .traverse[MIO, (Expr[partial.Result[ToK]], Expr[FromK])] { key =>
                 deriveKeyMapping[From, To, FromK, ToK](key).map(_.ensurePartial -> key)
               }
             val valueResultVal = ValDefs
               .createVal(getter_2.get(pairExpr).upcast[FromV], FreshName.FromPrefix("value"))
-              .traverse[DerivationResult, (Expr[partial.Result[ToV]], Expr[FromV])] { value =>
+              .traverse[MIO, (Expr[partial.Result[ToV]], Expr[FromV])] { value =>
                 deriveValueMapping[From, To, FromV, ToV](value).map(_.ensurePartial -> value)
               }
             keyResultVal.parTuple(valueResultVal).map { case (keyVD, valueVD) =>
@@ -428,8 +427,8 @@ private[compiletime] trait TransformMapToMapRuleModule {
               )
 
             factoryEither match {
-              case Left(totalFactory)   => DerivationResult.partialExpr(partialResultTraverse(totalFactory))
-              case Right(partialResult) => DerivationResult.partialExpr(partialResultTraverse(partialResult).flatten)
+              case Left(totalFactory)   => partialExpr(partialResultTraverse(totalFactory))
+              case Right(partialResult) => partialExpr(partialResultTraverse(partialResult).flatten)
             }
           }
       }

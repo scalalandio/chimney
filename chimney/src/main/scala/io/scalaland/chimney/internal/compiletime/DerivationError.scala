@@ -24,6 +24,9 @@ object DerivationError {
     case _                                => MacroException(error)
   }
 
+  /** Renders MIO's raw errors - classifies each `Throwable` (see [[fromThrowable]]) before printing. */
+  def printErrors(errors: hearth.fp.effect.MErrors): String = printErrors(errors.toVector.map(fromThrowable))
+
   def printErrors(derivationErrors: Seq[DerivationError]): String =
     derivationErrors
       .collectFirst {

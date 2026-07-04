@@ -1,9 +1,9 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
+import hearth.fp.effect.MIO
 import hearth.fp.instances.*
 import hearth.fp.syntax.*
 import io.scalaland.chimney.dsl as dsls
-import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
@@ -52,7 +52,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
       Expr.splice(either1).orElse(Expr.splice(either2))
     }
 
-    def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+    def expand[From, To](implicit ctx: TransformationContext[From, To]): MIO[Rule.ExpansionResult[To]] =
       Type[To] match {
         case EitherCtor(toL, toR) if Type[From] <:< EitherOfAnyType =>
           import toL.Underlying as ToL, toR.Underlying as ToR
@@ -74,15 +74,15 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
                   srcToResult.parMap2(fallbackToResult)((srcTo, fallbackTo) =>
                     fallbackTo.reverseIterator.foldRight(srcTo)(merge)
                   )
-              }).flatMap(either => DerivationResult.expanded(either.map(_.upcast[To])))
-            case _ => DerivationResult.attemptNextRule
+              }).flatMap(either => expanded(either.map(_.upcast[To])))
+            case _ => attemptNextRule
           }
-        case _ => DerivationResult.attemptNextRule
+        case _ => attemptNextRule
       }
 
     private def mapEithers[From, To, ToL: Type, ToR: Type](implicit
         ctx: TransformationContext[From, To]
-    ): Option[DerivationResult[TransformationExpr[To]]] = Type[From] match {
+    ): Option[MIO[TransformationExpr[To]]] = Type[From] match {
       case LeftCtor(fromL, fromR) if !(Type[To] <:< RightOfAnyType) =>
         import fromL.Underlying as FromL, fromR.Underlying as FromR
         Some(mapLeft[From, To, FromL, FromR, ToL, ToR])
@@ -97,7 +97,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
 
     private def mapFallbackEithers[From, To, ToL: Type, ToR: Type](implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[Vector[TransformationExpr[To]]] =
+    ): MIO[Vector[TransformationExpr[To]]] =
       ctx.config.filterCurrentOverridesForFallbacks.view
         .map { case TransformerOverride.Fallback(fallback) =>
           import fallback.{Underlying as Fallback, value as fallbackExpr}
@@ -111,7 +111,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
 
     private def mapLeft[From, To, FromL: Type, FromR: Type, ToL: Type, ToR: Type](implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[TransformationExpr[To]] = {
+    ): MIO[TransformationExpr[To]] = {
       implicit val LeftFromType: Type[Left[FromL, FromR]] = Type.of[Left[FromL, FromR]]
       implicit val LeftToType: Type[Left[ToL, ToR]] = Type.of[Left[ToL, ToR]]
       useOverrideIfPresentOr("matchingLeft", ctx.config.filterCurrentOverridesForLeft) {
@@ -130,7 +130,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
 
     private def mapRight[From, To, FromL: Type, FromR: Type, ToL: Type, ToR: Type](implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[TransformationExpr[To]] = {
+    ): MIO[TransformationExpr[To]] = {
       implicit val RightFromType: Type[Right[FromL, FromR]] = Type.of[Right[FromL, FromR]]
       implicit val RightToType: Type[Right[ToL, ToR]] = Type.of[Right[ToL, ToR]]
       useOverrideIfPresentOr("matchingRight", ctx.config.filterCurrentOverridesForRight) {
@@ -149,7 +149,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
 
     private def mapEither[From, To, FromL: Type, FromR: Type, ToL: Type, ToR: Type](implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[TransformationExpr[To]] = {
+    ): MIO[TransformationExpr[To]] = {
       implicit val EitherFromType: Type[Either[FromL, FromR]] = Type.of[Either[FromL, FromR]]
       implicit val LeftFromType: Type[Left[FromL, FromR]] = Type.of[Left[FromL, FromR]]
       implicit val RightFromType: Type[Right[FromL, FromR]] = Type.of[Right[FromL, FromR]]

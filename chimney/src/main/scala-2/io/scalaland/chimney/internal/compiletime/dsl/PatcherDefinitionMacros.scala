@@ -1,82 +1,67 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.dsl.PatcherDefinition
-import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, Path}
-import io.scalaland.chimney.internal.runtime.PatcherOverrides.*
+import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides}
 
 import scala.annotation.unused
 import scala.reflect.macros.whitebox
 
-class PatcherDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
+class PatcherDefinitionMacros(ctx: whitebox.Context) extends DslBundle(ctx) {
 
-  import c.universe.{Select as _, *}
+  import c.universe.{Tree, WeakTypeTag}
 
   def withFieldConstImpl[
       A: WeakTypeTag,
       Patch: WeakTypeTag,
       Overrides <: PatcherOverrides: WeakTypeTag,
       Flags <: PatcherFlags: WeakTypeTag
-  ](selectorObj: Tree, value: Tree)(@unused ev: Tree): Tree = c.prefix.tree
-    .addOverride(value)
-    .asInstanceOfExpr(
-      new ApplyFieldNameType {
-        def apply[ObjPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PatcherDefinition[A, Patch, Const[ObjPath, Overrides], Flags]]
-      }.applyFromSelector(selectorObj)
-    )
+  ](selectorObj: Tree, value: Tree)(@unused ev: Tree): Tree =
+    PatcherDefinitionDsl
+      .withFieldConst[A, Patch, Overrides, Flags](prefixExpr, anyExpr(selectorObj), anyExpr(value))
+      .toUntypedResult
 
   def withFieldComputedImpl[
       A: WeakTypeTag,
       Patch: WeakTypeTag,
       Overrides <: PatcherOverrides: WeakTypeTag,
       Flags <: PatcherFlags: WeakTypeTag
-  ](selectorObj: Tree, f: Tree)(@unused ev: Tree): Tree = c.prefix.tree
-    .addOverride(f)
-    .asInstanceOfExpr(
-      new ApplyFieldNameType {
-        def apply[ObjPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PatcherDefinition[A, Patch, Computed[Path.Root, ObjPath, Overrides], Flags]]
-      }.applyFromSelector(selectorObj)
-    )
+  ](selectorObj: Tree, f: Tree)(@unused ev: Tree): Tree =
+    PatcherDefinitionDsl
+      .withFieldComputed[A, Patch, Overrides, Flags](prefixExpr, anyExpr(selectorObj), anyExpr(f))
+      .toUntypedResult
 
   def withFieldComputedFromImpl[
       A: WeakTypeTag,
       Patch: WeakTypeTag,
       Overrides <: PatcherOverrides: WeakTypeTag,
       Flags <: PatcherFlags: WeakTypeTag
-  ](selectorPatch: Tree)(selectorObj: Tree, f: Tree)(@unused ev: Tree): Tree = c.prefix.tree
-    .addOverride(f)
-    .asInstanceOfExpr(
-      new ApplyFieldNameTypes {
-        def apply[PatchPath <: Path: WeakTypeTag, ObjPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PatcherDefinition[A, Patch, Computed[PatchPath, ObjPath, Overrides], Flags]]
-      }.applyFromSelectors(selectorPatch, selectorObj)
-    )
+  ](selectorPatch: Tree)(selectorObj: Tree, f: Tree)(@unused ev: Tree): Tree =
+    PatcherDefinitionDsl
+      .withFieldComputedFrom[A, Patch, Overrides, Flags](
+        prefixExpr,
+        anyExpr(selectorPatch),
+        anyExpr(selectorObj),
+        anyExpr(f)
+      )
+      .toUntypedResult
 
   def withFieldIgnoredImpl[
       A: WeakTypeTag,
       Patch: WeakTypeTag,
       Overrides <: PatcherOverrides: WeakTypeTag,
       Flags <: PatcherFlags: WeakTypeTag
-  ](selectorPatch: Tree): Tree = c.prefix.tree
-    .asInstanceOfExpr(
-      new ApplyFieldNameType {
-        def apply[PatchPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PatcherDefinition[A, Patch, Ignored[PatchPath, Overrides], Flags]]
-      }.applyFromSelector(selectorPatch)
-    )
+  ](selectorPatch: Tree): Tree =
+    PatcherDefinitionDsl
+      .withFieldIgnored[A, Patch, Overrides, Flags](prefixExpr, anyExpr(selectorPatch))
+      .toUntypedResult
 
   def withPatchedValueFlagImpl[
       A: WeakTypeTag,
       Patch: WeakTypeTag,
       Overrides <: PatcherOverrides: WeakTypeTag,
       Flags <: PatcherFlags: WeakTypeTag
-  ](selectorObj: Tree): Tree = {
-    val pathObj = new ApplyFieldNameType {
-      def apply[ObjPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] = weakTypeTag[ObjPath]
-    }.applyFromSelector(selectorObj)
-    q"""new _root_.io.scalaland.chimney.dsl.PatcherPatchedValueFlagsDsl.OfPatcherDefinition[${weakTypeOf[
-        A
-      ]}, ${weakTypeOf[Patch]}, ${weakTypeOf[Overrides]}, ${weakTypeOf[Flags]}, $pathObj](${c.prefix.tree})"""
-  }
+  ](selectorObj: Tree): Tree =
+    patcherDefinitionWithPatchedValueFlag[A, Patch, Overrides, Flags](
+      c.Expr[io.scalaland.chimney.dsl.PatcherDefinition[A, Patch, Overrides, Flags]](c.prefix.tree),
+      anyExpr(selectorObj)
+    ).toUntypedResult
 }

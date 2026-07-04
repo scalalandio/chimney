@@ -1,19 +1,13 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
 import io.scalaland.chimney.dsl.*
-import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
-import io.scalaland.chimney.internal.runtime.{
-  ArgumentLists,
-  FunctionEitherToResult,
-  Path,
-  TransformerFlags,
-  TransformerOverrides,
-  WithRuntimeDataStore
-}
-import io.scalaland.chimney.internal.runtime.TransformerOverrides.*
+import io.scalaland.chimney.internal.compiletime.PlatformBridge
+import io.scalaland.chimney.internal.runtime.{Path, TransformerFlags, TransformerOverrides}
 import io.scalaland.chimney.partial
 
 import scala.quoted.*
+
+final class PartialTransformerDefinitionMacros(q: Quotes) extends PlatformBridge(q) with DslMacros
 
 object PartialTransformerDefinitionMacros {
 
@@ -28,14 +22,13 @@ object PartialTransformerDefinitionMacros {
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selector: Expr[To => T],
       value: Expr[U]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
-      '{
-        WithRuntimeDataStore
-          .update($td, $value)
-          .asInstanceOf[PartialTransformerDefinition[From, To, Const[toPath, Overrides], Flags]]
-      }
-    }(selector)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withFieldConst[From, To, Overrides, Flags](td, selector, value)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withFieldConstPartialImpl[
       From: Type,
@@ -48,19 +41,13 @@ object PartialTransformerDefinitionMacros {
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selector: Expr[To => T],
       value: Expr[partial.Result[U]]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
-      '{
-        WithRuntimeDataStore
-          .update($td, $value)
-          .asInstanceOf[PartialTransformerDefinition[
-            From,
-            To,
-            ConstPartial[toPath, Overrides],
-            Flags
-          ]]
-      }
-    }(selector)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withFieldConstPartial[From, To, Overrides, Flags](td, selector, value)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withFieldComputedImpl[
       From: Type,
@@ -73,14 +60,13 @@ object PartialTransformerDefinitionMacros {
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selector: Expr[To => T],
       f: Expr[From => U]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
-      '{
-        WithRuntimeDataStore
-          .update($td, $f)
-          .asInstanceOf[PartialTransformerDefinition[From, To, Computed[Path.Root, toPath, Overrides], Flags]]
-      }
-    }(selector)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withFieldComputed[From, To, Overrides, Flags](td, selector, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withFieldComputedFromImpl[
       From: Type,
@@ -95,15 +81,13 @@ object PartialTransformerDefinitionMacros {
       selectorFrom: Expr[From => S],
       selectorTo: Expr[To => T],
       f: Expr[S => U]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameTypes {
-      [fromPath <: Path, toPath <: Path] => (_: Type[fromPath]) ?=> (_: Type[toPath]) ?=>
-        '{
-          WithRuntimeDataStore
-            .update($td, $f)
-            .asInstanceOf[PartialTransformerDefinition[From, To, Computed[fromPath, toPath, Overrides], Flags]]
-        }
-    }(selectorFrom, selectorTo)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withFieldComputedFrom[From, To, Overrides, Flags](td, selectorFrom, selectorTo, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withFieldComputedPartialImpl[
       From: Type,
@@ -116,19 +100,13 @@ object PartialTransformerDefinitionMacros {
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selector: Expr[To => T],
       f: Expr[From => partial.Result[U]]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
-      '{
-        WithRuntimeDataStore
-          .update($td, $f)
-          .asInstanceOf[PartialTransformerDefinition[
-            From,
-            To,
-            ComputedPartial[Path.Root, toPath, Overrides],
-            Flags
-          ]]
-      }
-    }(selector)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withFieldComputedPartial[From, To, Overrides, Flags](td, selector, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withFieldComputedPartialFromImpl[
       From: Type,
@@ -143,20 +121,13 @@ object PartialTransformerDefinitionMacros {
       selectorFrom: Expr[From => S],
       selectorTo: Expr[To => T],
       f: Expr[S => partial.Result[U]]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameTypes {
-      [fromPath <: Path, toPath <: Path] => (_: Type[fromPath]) ?=> (_: Type[toPath]) ?=>
-        '{
-          WithRuntimeDataStore
-            .update($td, $f)
-            .asInstanceOf[PartialTransformerDefinition[
-              From,
-              To,
-              ComputedPartial[fromPath, toPath, Overrides],
-              Flags
-            ]]
-        }
-    }(selectorFrom, selectorTo)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withFieldComputedPartialFrom[From, To, Overrides, Flags](td, selectorFrom, selectorTo, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withFieldComputedPartialFailFastImpl[
       From: Type,
@@ -169,20 +140,13 @@ object PartialTransformerDefinitionMacros {
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selector: Expr[To => T],
       f: Expr[(From, Boolean) => partial.Result[U]]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
-      '{
-        val fn = $f
-        WithRuntimeDataStore
-          .update($td, (from: From) => (failFast: Boolean) => fn(from, failFast))
-          .asInstanceOf[PartialTransformerDefinition[
-            From,
-            To,
-            ComputedPartialFailFast[Path.Root, toPath, Overrides],
-            Flags
-          ]]
-      }
-    }(selector)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withFieldComputedPartialFailFast[From, To, Overrides, Flags](td, selector, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withFieldComputedPartialFromFailFastImpl[
       From: Type,
@@ -197,21 +161,13 @@ object PartialTransformerDefinitionMacros {
       selectorFrom: Expr[From => S],
       selectorTo: Expr[To => T],
       f: Expr[(S, Boolean) => partial.Result[U]]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameTypes {
-      [fromPath <: Path, toPath <: Path] => (_: Type[fromPath]) ?=> (_: Type[toPath]) ?=>
-        '{
-          val fn = $f
-          WithRuntimeDataStore
-            .update($td, (s: S) => (failFast: Boolean) => fn(s, failFast))
-            .asInstanceOf[PartialTransformerDefinition[
-              From,
-              To,
-              ComputedPartialFailFast[fromPath, toPath, Overrides],
-              Flags
-            ]]
-        }
-    }(selectorFrom, selectorTo)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withFieldComputedPartialFromFailFast[From, To, Overrides, Flags](td, selectorFrom, selectorTo, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withFieldRenamedImpl[
       From: Type,
@@ -224,15 +180,13 @@ object PartialTransformerDefinitionMacros {
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selectorFrom: Expr[From => T],
       selectorTo: Expr[To => U]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameTypes {
-      [fromPath <: Path, toPath <: Path] => (_: Type[fromPath]) ?=> (_: Type[toPath]) ?=>
-        '{
-          $td.asInstanceOf[
-            PartialTransformerDefinition[From, To, Renamed[fromPath, toPath, Overrides], Flags]
-          ]
-        }
-    }(selectorFrom, selectorTo)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withFieldRenamed[From, To, Overrides, Flags](td, selectorFrom, selectorTo)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withFieldUnusedImpl[
       From: Type,
@@ -241,14 +195,15 @@ object PartialTransformerDefinitionMacros {
       Flags <: TransformerFlags: Type,
       T: Type
   ](
-      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selectorFrom: Expr[From => T]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType { [fromPath <: Path] => (_: Type[fromPath]) ?=>
-      '{
-        $ti.asInstanceOf[PartialTransformerDefinition[From, To, Unused[fromPath, Overrides], Flags]]
-      }
-    }(selectorFrom)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withFieldUnused[From, To, Overrides, Flags](td, selectorFrom)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withSealedSubtypeHandledImpl[
       From: Type,
@@ -259,17 +214,13 @@ object PartialTransformerDefinitionMacros {
   ](
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       f: Expr[Subtype => To]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    '{
-      WithRuntimeDataStore
-        .update($td, $f)
-        .asInstanceOf[PartialTransformerDefinition[
-          From,
-          To,
-          Computed[Path.SourceMatching[Path.Root, Subtype], Path.Root, Overrides],
-          Flags
-        ]]
-    }
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withSealedSubtypeHandled[From, To, Overrides, Flags](td, f, m.typeOf_??[Subtype])
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withSealedSubtypeHandledPartialImpl[
       From: Type,
@@ -280,17 +231,13 @@ object PartialTransformerDefinitionMacros {
   ](
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       f: Expr[Subtype => partial.Result[To]]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    '{
-      WithRuntimeDataStore
-        .update($td, $f)
-        .asInstanceOf[PartialTransformerDefinition[
-          From,
-          To,
-          ComputedPartial[Path.SourceMatching[Path.Root, Subtype], Path.Root, Overrides],
-          Flags
-        ]]
-    }
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withSealedSubtypeHandledPartial[From, To, Overrides, Flags](td, f, m.typeOf_??[Subtype])
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withSealedSubtypeHandledPartialFailFastImpl[
       From: Type,
@@ -301,18 +248,13 @@ object PartialTransformerDefinitionMacros {
   ](
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       f: Expr[(Subtype, Boolean) => partial.Result[To]]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    '{
-      val fn = $f
-      WithRuntimeDataStore
-        .update($td, (subtype: Subtype) => (failFast: Boolean) => fn(subtype, failFast))
-        .asInstanceOf[PartialTransformerDefinition[
-          From,
-          To,
-          ComputedPartialFailFast[Path.SourceMatching[Path.Root, Subtype], Path.Root, Overrides],
-          Flags
-        ]]
-    }
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withSealedSubtypeHandledPartialFailFast[From, To, Overrides, Flags](td, f, m.typeOf_??[Subtype])
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withSealedSubtypeRenamedImpl[
       From: Type,
@@ -323,16 +265,13 @@ object PartialTransformerDefinitionMacros {
       ToSubtype: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    '{
-      $td
-        .asInstanceOf[PartialTransformerDefinition[
-          From,
-          To,
-          Renamed[Path.SourceMatching[Path.Root, FromSubtype], Path.Matching[Path.Root, ToSubtype], Overrides],
-          Flags
-        ]]
-    }
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withSealedSubtypeRenamed[From, To, Overrides, Flags](td, m.typeOf_??[FromSubtype], m.typeOf_??[ToSubtype])
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withSealedSubtypeUnmatchedImpl[
       From: Type,
@@ -341,14 +280,15 @@ object PartialTransformerDefinitionMacros {
       Flags <: TransformerFlags: Type,
       T: Type
   ](
-      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selectorTo: Expr[To => T]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
-      '{
-        $ti.asInstanceOf[PartialTransformerDefinition[From, To, Unmatched[toPath, Overrides], Flags]]
-      }
-    }(selectorTo)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withSealedSubtypeUnmatched[From, To, Overrides, Flags](td, selectorTo)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withFallbackImpl[
       From: Type,
@@ -359,12 +299,13 @@ object PartialTransformerDefinitionMacros {
   ](
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       fallback: Expr[FromFallback]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    '{
-      WithRuntimeDataStore
-        .update($td, $fallback)
-        .asInstanceOf[PartialTransformerDefinition[From, To, Fallback[FromFallback, Path.Root, Overrides], Flags]]
-    }
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withFallback[From, To, Overrides, Flags](td, m.typeOf_??[FromFallback], fallback)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withFallbackFromImpl[
       From: Type,
@@ -377,14 +318,13 @@ object PartialTransformerDefinitionMacros {
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selectorFrom: Expr[From => T],
       fallback: Expr[FromFallback]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType { [fromPath <: Path] => (_: Type[fromPath]) ?=>
-      '{
-        WithRuntimeDataStore
-          .update($td, $fallback)
-          .asInstanceOf[PartialTransformerDefinition[From, To, Fallback[FromFallback, fromPath, Overrides], Flags]]
-      }
-    }(selectorFrom)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withFallbackFrom[From, To, Overrides, Flags](td, m.typeOf_??[FromFallback], selectorFrom, fallback)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withConstructorImpl[
       From: Type,
@@ -395,14 +335,13 @@ object PartialTransformerDefinitionMacros {
   ](
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       f: Expr[Ctor]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyConstructorType { [args <: ArgumentLists] => (_: Type[args]) ?=>
-      '{
-        WithRuntimeDataStore
-          .update($td, $f)
-          .asInstanceOf[PartialTransformerDefinition[From, To, Constructor[args, Path.Root, Overrides], Flags]]
-      }
-    }(f)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withConstructor[From, To, Overrides, Flags](td, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withConstructorToImpl[
       From: Type,
@@ -415,21 +354,13 @@ object PartialTransformerDefinitionMacros {
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selector: Expr[To => T],
       f: Expr[Ctor]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyConstructorType { [args <: ArgumentLists] => (_: Type[args]) ?=>
-      DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
-        '{
-          WithRuntimeDataStore
-            .update($td, $f)
-            .asInstanceOf[PartialTransformerDefinition[
-              From,
-              To,
-              Constructor[args, toPath, Overrides],
-              Flags
-            ]]
-        }
-      }(selector)
-    }(f)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withConstructorTo[From, To, Overrides, Flags](td, selector, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withConstructorPartialImpl[
       From: Type,
@@ -440,19 +371,13 @@ object PartialTransformerDefinitionMacros {
   ](
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       f: Expr[Ctor]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyConstructorType { [args <: ArgumentLists] => (_: Type[args]) ?=>
-      '{
-        WithRuntimeDataStore
-          .update($td, $f)
-          .asInstanceOf[PartialTransformerDefinition[
-            From,
-            To,
-            ConstructorPartial[args, Path.Root, Overrides],
-            Flags
-          ]]
-      }
-    }(f)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withConstructorPartial[From, To, Overrides, Flags](td, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withConstructorPartialToImpl[
       From: Type,
@@ -465,21 +390,13 @@ object PartialTransformerDefinitionMacros {
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selector: Expr[To => T],
       f: Expr[Ctor]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyConstructorType { [args <: ArgumentLists] => (_: Type[args]) ?=>
-      DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
-        '{
-          WithRuntimeDataStore
-            .update($td, $f)
-            .asInstanceOf[PartialTransformerDefinition[
-              From,
-              To,
-              ConstructorPartial[args, toPath, Overrides],
-              Flags
-            ]]
-        }
-      }(selector)
-    }(f)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withConstructorPartialTo[From, To, Overrides, Flags](td, selector, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withConstructorPartialFailFastImpl[
       From: Type,
@@ -490,19 +407,13 @@ object PartialTransformerDefinitionMacros {
   ](
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       f: Expr[Ctor]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyConstructorType { [args <: ArgumentLists] => (_: Type[args]) ?=>
-      '{
-        WithRuntimeDataStore
-          .update($td, $f)
-          .asInstanceOf[PartialTransformerDefinition[
-            From,
-            To,
-            ConstructorPartialFailFast[args, Path.Root, Overrides],
-            Flags
-          ]]
-      }
-    }(f)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withConstructorPartialFailFast[From, To, Overrides, Flags](td, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withConstructorPartialToFailFastImpl[
       From: Type,
@@ -515,21 +426,13 @@ object PartialTransformerDefinitionMacros {
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selector: Expr[To => T],
       f: Expr[Ctor]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyConstructorType { [args <: ArgumentLists] => (_: Type[args]) ?=>
-      DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
-        '{
-          WithRuntimeDataStore
-            .update($td, $f)
-            .asInstanceOf[PartialTransformerDefinition[
-              From,
-              To,
-              ConstructorPartialFailFast[args, toPath, Overrides],
-              Flags
-            ]]
-        }
-      }(selector)
-    }(f)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withConstructorPartialToFailFast[From, To, Overrides, Flags](td, selector, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withConstructorEitherImpl[
       From: Type,
@@ -540,24 +443,13 @@ object PartialTransformerDefinitionMacros {
   ](
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       f: Expr[Ctor]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyConstructorType { [args <: ArgumentLists] => (_: Type[args]) ?=>
-      '{
-        WithRuntimeDataStore
-          .update(
-            $td,
-            FunctionEitherToResult.lift[Ctor, Any]($f)(
-              ${ Expr.summon[FunctionEitherToResult[Ctor]].get }.asInstanceOf[FunctionEitherToResult.Aux[Ctor, Any]]
-            )
-          )
-          .asInstanceOf[PartialTransformerDefinition[
-            From,
-            To,
-            ConstructorPartial[args, Path.Root, Overrides],
-            Flags
-          ]]
-      }
-    }(f)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withConstructorEither[From, To, Overrides, Flags](td, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withConstructorEitherToImpl[
       From: Type,
@@ -570,27 +462,13 @@ object PartialTransformerDefinitionMacros {
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selector: Expr[To => T],
       f: Expr[Ctor]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyConstructorType { [args <: ArgumentLists] => (_: Type[args]) ?=>
-      DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
-        '{
-          WithRuntimeDataStore
-            .update(
-              $td,
-              FunctionEitherToResult.lift[Ctor, Any]($f)(
-                ${ Expr.summon[FunctionEitherToResult[Ctor]].get }
-                  .asInstanceOf[FunctionEitherToResult.Aux[Ctor, Any]]
-              )
-            )
-            .asInstanceOf[PartialTransformerDefinition[
-              From,
-              To,
-              ConstructorPartial[args, toPath, Overrides],
-              Flags
-            ]]
-        }
-      }(selector)
-    }(f)
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.PartialTransformerDefinitionDsl
+      .withConstructorEitherTo[From, To, Overrides, Flags](td, selector, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withSourceFlagImpl[
       From: Type,
@@ -603,11 +481,14 @@ object PartialTransformerDefinitionMacros {
       selectorFrom: Expr[From => T]
   )(using
       Quotes
-  ): Expr[TransformerSourceFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, ? <: Path]] =
-    DslMacroUtils()
-      .applyFieldNameType { [fromPath <: Path] => (_: Type[fromPath]) ?=>
-        '{ TransformerSourceFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, fromPath]($td) }
-      }(selectorFrom)
+  ): Expr[TransformerSourceFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, ? <: Path]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.partialTransformerDefinitionWithSourceFlag[From, To, Overrides, Flags](td, selectorFrom)
+      .value
+      .asInstanceOf[Expr[
+        TransformerSourceFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, ? <: Path]
+      ]]
+  }
 
   def withTargetFlagImpl[
       From: Type,
@@ -620,9 +501,12 @@ object PartialTransformerDefinitionMacros {
       selectorTo: Expr[To => T]
   )(using
       Quotes
-  ): Expr[TransformerTargetFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, ? <: Path]] =
-    DslMacroUtils()
-      .applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
-        '{ TransformerTargetFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, toPath]($td) }
-      }(selectorTo)
+  ): Expr[TransformerTargetFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, ? <: Path]] = {
+    val m = new PartialTransformerDefinitionMacros(quotes)
+    m.partialTransformerDefinitionWithTargetFlag[From, To, Overrides, Flags](td, selectorTo)
+      .value
+      .asInstanceOf[Expr[
+        TransformerTargetFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, ? <: Path]
+      ]]
+  }
 }

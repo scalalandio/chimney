@@ -1,10 +1,11 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
+import hearth.fp.data.NonEmptyVector
+import hearth.fp.effect.{Log, MErrors, MIO}
 import hearth.fp.instances.*
 import hearth.fp.syntax.*
 import io.scalaland.chimney.dsl.FailOnIgnoredSourceVal
 import io.scalaland.chimney.internal.compiletime.NotSupportedOperationFromPath.Operation as FromOperation
-import io.scalaland.chimney.internal.compiletime.{DerivationErrors, DerivationResult}
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
@@ -43,7 +44,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       Expr.splice(fn).apply(Expr.splice(failFast))
     }
 
-    def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+    def expand[From, To](implicit ctx: TransformationContext[From, To]): MIO[Rule.ExpansionResult[To]] =
       // From is checked after To, because extraction always succeeds
       (Type[To], Type[From]) match {
         case (HasCustomConstructor(constructorOverride), Product.Extraction(fromExtractors)) =>
@@ -51,7 +52,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         case (Product.Constructor(parameters, constructor), Product.Extraction(fromExtractors)) =>
           mapOverridesAndExtractorsToConstructorArguments[From, To, To](fromExtractors, parameters, constructor)
         case _ =>
-          DerivationResult.attemptNextRuleBecause(
+          attemptNextRuleBecause(
             s"Type ${Type.prettyPrint[To]} does not have a public primary constructor NOR exactly one (non-primary) public constructor"
           )
       }
@@ -66,7 +67,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     private def mapOverridesAndExtractorsToConstructorArguments[From, To](
         fromExtractors: Product.Getters[From],
         constructorOverride: TransformerOverride.ForConstructor
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = {
+    )(implicit ctx: TransformationContext[From, To]): MIO[Rule.ExpansionResult[To]] = {
       import Product.Constructor.exprAsInstanceOfMethod as mkCtor
       constructorOverride match {
         case TransformerOverride.Constructor(args, runtimeData) =>
@@ -125,7 +126,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         fromExtractors: Product.Getters[From],
         parameters: Product.Parameters,
         constructor: Product.Arguments => Expr[ToOrPartialTo]
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[ToOrPartialTo]] = {
+    )(implicit ctx: TransformationContext[From, To]): MIO[Rule.ExpansionResult[ToOrPartialTo]] = {
       import ctx.config.*
 
       lazy val fromEnabledExtractors = fromExtractors.filter { case (name, getter) =>
@@ -164,23 +165,25 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           .toMap
       }
 
-      val verifyNoOverrideUnused: DerivationResult[List[Nothing]] =
+      val verifyNoOverrideUnused: MIO[List[Nothing]] =
         filterCurrentOverridesForField(usedToName =>
           !parameters.keys.exists(toName => areFieldNamesMatching(usedToName, toName))
         ).keys.toList
-          .parTraverse[DerivationResult, Nothing] { fromName =>
+          .parTraverse[MIO, Nothing] { fromName =>
             val tpeStr = Type.prettyPrint[To]
             val params = parameters.keys.map(n => s"`$n`").mkString(", ")
-            DerivationResult.assertionError(
-              s"""|Assumed that parameter/setter $fromName is a part of $tpeStr, but wasn't found
+            MIO.fail(
+              new AssertionError(
+                s"""|Assumed that parameter/setter $fromName is a part of $tpeStr, but wasn't found
                   |available methods: $params""".stripMargin
+              )
             )
           }
 
       val fromNamesUsedByExtractors = scala.collection.mutable.ListBuffer.empty[String]
       val fromNamesExplicitlyUnused = ctx.config.filterCurrentUnusedFields
 
-      DerivationResult.log {
+      Log.info {
         val gettersStr = fromExtractors
           .map { case (k, v) =>
             s"`$k`: ${Type.prettyPrint(using v.Underlying)} (${v.value.sourceType}, ${if (!v.value.isInherited) "declared"
@@ -206,7 +209,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             })
           }
           .toList
-          .parTraverse[DerivationResult, (String, Existential[TransformationExpr])] {
+          .parTraverse[MIO, (String, Existential[TransformationExpr])] {
             case (toName: String, ctorParam: Existential[Product.Parameter]) =>
               import ctorParam.Underlying as CtorParam, ctorParam.value.defaultValue
 
@@ -249,14 +252,14 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 .orElse(filterCurrentOverridesForField(areFieldNamesMatching(_, toName)).headOption)
                 .map {
                   case AmbiguousOverrides(overrideName, foundOverrides) =>
-                    DerivationResult.ambiguousFieldOverrides[From, To, Existential[TransformationExpr]](
+                    ambiguousFieldOverrides[From, To, Existential[TransformationExpr]](
                       overrideName,
                       foundOverrides,
                       flags.getFieldNameComparison.toString // name comparison is defined for nested fields, not the field itself
                     )
                   case (_, value) =>
                     useOverride[From, To, CtorParam](toName, value).flatMap(
-                      DerivationResult.existential[TransformationExpr, CtorParam](_)
+                      existential[TransformationExpr, CtorParam](_)
                     )
                 }
                 .orElse {
@@ -292,7 +295,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                         }
                       case Left(foundFromNames) =>
                         Some(
-                          DerivationResult.ambiguousFieldSources[From, To, Existential[TransformationExpr]](
+                          ambiguousFieldSources[From, To, Existential[TransformationExpr]](
                             foundFromNames,
                             toName
                           )
@@ -305,7 +308,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     defaultValue.orElse(summonDefaultValue[CtorParam].map(_.provide()))
                   }
                 }
-                .getOrElse[DerivationResult[Existential[TransformationExpr]]] {
+                .getOrElse[MIO[Existential[TransformationExpr]]] {
                   if (usePositionBasedMatching) {
                     val arities = ctorParamToGetterByPosition.view.zipWithIndex
                       .collect { case ((_, (_, sof)), idx) => sof.src -> idx }
@@ -316,7 +319,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                       .toList
                       .sortBy(_._1)
                       .map(_._2)
-                    DerivationResult.tupleArityMismatch(
+                    tupleArityMismatch(
                       fromArity = arities.headOption.getOrElse(0),
                       toArity = parameters.size,
                       fallbackArity = arities.drop(1)
@@ -334,31 +337,30 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     }
                     ctorParam.value.targetType match {
                       case Product.Parameter.TargetType.ConstructorParameter =>
-                        DerivationResult
-                          .missingConstructorArgument[From, To, CtorParam, Existential[TransformationExpr]](
-                            toName,
-                            availableMethodAccessors,
-                            availableInheritedAccessors,
-                            availableDefault = defaultValue.isDefined,
-                            availableNone = OptionalValue.parse[CtorParam].isDefined
-                          )
+                        missingConstructorArgument[From, To, CtorParam, Existential[TransformationExpr]](
+                          toName,
+                          availableMethodAccessors,
+                          availableInheritedAccessors,
+                          availableDefault = defaultValue.isDefined,
+                          availableNone = OptionalValue.parse[CtorParam].isDefined
+                        )
                       case Product.Parameter.TargetType.SetterParameter(_) if fieldFlags.beanSettersIgnoreUnmatched =>
-                        DerivationResult.pure(unmatchedSetter)
+                        MIO.pure(unmatchedSetter)
                       case Product.Parameter.TargetType.SetterParameter(returnedType)
                           if !fieldFlags.nonUnitBeanSetters && !(returnedType.Underlying =:= UnitType) =>
-                        DerivationResult.pure(nonUnitSetter)
+                        MIO.pure(nonUnitSetter)
                       case Product.Parameter.TargetType.SetterParameter(_) =>
-                        DerivationResult
-                          .missingJavaBeanSetterParam[From, To, CtorParam, Existential[TransformationExpr]](
-                            toName,
-                            availableMethodAccessors,
-                            availableInheritedAccessors,
-                            availableNone = OptionalValue.parse[CtorParam].isDefined
-                          )
+                        missingJavaBeanSetterParam[From, To, CtorParam, Existential[TransformationExpr]](
+                          toName,
+                          availableMethodAccessors,
+                          availableInheritedAccessors,
+                          availableNone = OptionalValue.parse[CtorParam].isDefined
+                        )
                     }
                   }
                 }
-                .logSuccess {
+                .log
+                .valueAsInfo {
                   case `unmatchedSetter` => s"Setter `$toName` not resolved but ignoring setters is allowed"
                   case `nonUnitSetter`   =>
                     s"Setter `$toName` not resolved it has non-Unit return type and they are ignored"
@@ -367,7 +369,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 .map(toName -> _)
           }
           .map(_.filterNot(_._2 == unmatchedSetter).filterNot(_._2 == nonUnitSetter))
-          .logSuccess { args =>
+          .log
+          .valueAsInfo { args =>
             val totals = args.count(_._2.value.isTotal)
             val partials = args.count(_._2.value.isPartial)
             s"Resolved ${args.size} arguments, $totals as total and $partials as partial Expr"
@@ -389,7 +392,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             (resolvedArguments: List[(String, Existential[TransformationExpr])]) =>
               wireArgumentsToConstructor[From, To, ToOrPartialTo](resolvedArguments, constructor)
           }
-          .flatMap(DerivationResult.expanded)
+          .flatMap(expanded)
     }
 
     private def useOverride[From, To, CtorParam: Type](
@@ -397,13 +400,13 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         runtimeFieldOverride: TransformerOverride.ForField
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[TransformationExpr[CtorParam]] = runtimeFieldOverride match {
+    ): MIO[TransformationExpr[CtorParam]] = runtimeFieldOverride match {
       case TransformerOverride.Unused =>
-        DerivationResult.assertionError("Unused field override should have been checked on source side Path")
+        MIO.fail(new AssertionError("Unused field override should have been checked on source side Path"))
       case TransformerOverride.Const(runtimeData) =>
         // We're constructing:
         // '{ ${ runtimeDataStore }(idx).asInstanceOf[$ctorParam] }
-        DerivationResult.pure(
+        MIO.pure(
           TransformationExpr.fromTotal(
             runtimeData.asInstanceOfExpr[CtorParam]
           )
@@ -415,7 +418,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         //     .asInstanceOf[partial.Result[$ctorParam]]
         //     .prependErrorPath(PathElement.Const("_.toName"))
         //  }
-        DerivationResult.pure(
+        MIO.pure(
           TransformationExpr.fromPartial(
             runtimeData
               .asInstanceOfExpr[partial.Result[CtorParam]]
@@ -511,7 +514,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       case TransformerOverride.Renamed(sourcePath, _) =>
         extractSrcByPath(FromOperation.Renamed, sourcePath, toName).flatMap { extractedSrc =>
           import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
-          DerivationResult.namedScope(
+          Log.namedScope(
             s"Recursive derivation for field `$sourcePath`: ${Type
                 .prettyPrint[ExtractedSrc]} renamed into `$toName`: ${Type.prettyPrint[CtorParam]}"
           ) {
@@ -523,10 +526,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               Path(_.select(toName)),
               findMatchingUpdateCandidates(toName)
             )
-              .transformWith { expr =>
+              .redeemWith { expr =>
                 // If we derived partial.Result[$ctorParam] we are appending:
                 //  ${ derivedToElement }.prependErrorPath(...).prependErrorPath(...) // sourcePath
-                DerivationResult.pure(expr.fold(TransformationExpr.fromTotal) { partialExpr =>
+                MIO.pure(expr.fold(TransformationExpr.fromTotal) { partialExpr =>
                   TransformationExpr.fromPartial(prependWholeErrorPath(partialExpr, sourcePath))
                 })
               } { errors =>
@@ -538,45 +541,49 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
     private def extractSrcByPath[From, To](operation: FromOperation, sourcePath: Path, toName: String)(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[ExistentialExpr] = {
+    ): MIO[ExistentialExpr] = {
       def extractSource[Source: Type](
           sourceName: String,
           extractedSrcExpr: Expr[Source]
-      ): DerivationResult[ExistentialExpr] = Type[Source] match {
+      ): MIO[ExistentialExpr] = Type[Source] match {
         case Product.Extraction(getters) =>
           getters.filter { case (fromName, _) => areFieldNamesMatching(fromName, sourceName) }.toList match {
             case Nil =>
-              DerivationResult.assertionError(
-                s"""|Assumed that field $sourceName is a part of ${Type.prettyPrint[Source]}, but wasn't found
+              MIO.fail(
+                new AssertionError(
+                  s"""|Assumed that field $sourceName is a part of ${Type.prettyPrint[Source]}, but wasn't found
                     |available methods: ${getters.keys.map(n => s"`$n`").mkString(", ")}""".stripMargin
+                )
               )
             case (_, getter) :: Nil =>
               import getter.Underlying as Getter, getter.value.get
-              DerivationResult.pure(get(extractedSrcExpr).as_??)
+              MIO.pure(get(extractedSrcExpr).as_??)
             case matchingGetters =>
-              DerivationResult.ambiguousFieldOverrides[From, To, ExistentialExpr](
+              ambiguousFieldOverrides[From, To, ExistentialExpr](
                 sourceName,
                 matchingGetters.map(_._1).sorted,
                 ctx.config.flags.getFieldNameComparison.toString // name comparison is defined for nested fields, not the field itself
               )
           }
         case _ =>
-          DerivationResult.assertionError(
-            s"""Assumed that field $sourceName is a part of ${Type.prettyPrint[Source]}, but wasn't found"""
+          MIO.fail(
+            new AssertionError(
+              s"""Assumed that field $sourceName is a part of ${Type.prettyPrint[Source]}, but wasn't found"""
+            )
           )
       }
 
-      def extractNestedSource(path: Path, extractedSrcValue: ExistentialExpr): DerivationResult[ExistentialExpr] =
+      def extractNestedSource(path: Path, extractedSrcValue: ExistentialExpr): MIO[ExistentialExpr] =
         path match {
           case Path.Root =>
-            DerivationResult.pure(extractedSrcValue)
+            MIO.pure(extractedSrcValue)
           case Path.AtField(sourceName, path2) =>
             import extractedSrcValue.Underlying as ExtractedSourceValue, extractedSrcValue.value as extractedSrcExpr
             extractSource[ExtractedSourceValue](sourceName, extractedSrcExpr).flatMap { extractedSrcValue2 =>
               extractNestedSource(path2, extractedSrcValue2)
             }
           case path =>
-            DerivationResult.notSupportedOperationFromPath[From, To, ExistentialExpr](
+            notSupportedOperationFromPath[From, To, ExistentialExpr](
               operation,
               toName,
               path,
@@ -593,7 +600,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         // We're not using orElse because we want to:
         // - find the first successful result
         // - but NOT aggregate the errors, if everything fails, keep only the first error
-        a.recoverWith(errors => b.recoverWith(_ => DerivationResult.fail(errors)))
+        a.recoverWith(errors => b.recoverWith(_ => MIO.fail(errors)))
       }
     }
 
@@ -601,25 +608,25 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     def useOverrideIfPresentOr[From, To, CtorParam: Type](
         toName: String,
         runtimeFieldOverrides: Set[TransformerOverride.ForField]
-    )(whenAbsent: => DerivationResult[TransformationExpr[CtorParam]])(implicit
+    )(whenAbsent: => MIO[TransformationExpr[CtorParam]])(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[TransformationExpr[CtorParam]] = runtimeFieldOverrides.toList match {
+    ): MIO[TransformationExpr[CtorParam]] = runtimeFieldOverrides.toList match {
       case Nil =>
         whenAbsent
       case runtimeFieldOverride :: Nil =>
         import io.scalaland.chimney.internal.compiletime.DerivationError.TransformerError as TError
         import io.scalaland.chimney.internal.compiletime.NotSupportedOperationFromPath as NotSupportedFrom
         useOverride[From, To, CtorParam](toName, runtimeFieldOverride).recoverWith {
-          case DerivationErrors(TError(NotSupportedFrom(_, `toName`, _, _)), Vector()) =>
+          case NonEmptyVector(TError(NotSupportedFrom(_, `toName`, _, _)), Vector()) =>
             // If we cannot extract value in .withFieldComputedFrom/.withFieldComputedPartialFrom, it might be because
             // path is matching on TargetSide, but SourceSide requires recursion, TransformationContext update,
             // and then matching on some other rule.
             whenAbsent
-          case errors => DerivationResult.fail(errors)
+          case errors => MIO.fail(errors)
         }
       // $COVERAGE-OFF$Config parsing dedupliate values
       case runtimeFieldOverrides =>
-        DerivationResult.assertionError(s"Unexpected multiple overrides: ${runtimeFieldOverrides.mkString(", ")}")
+        MIO.fail(new AssertionError(s"Unexpected multiple overrides: ${runtimeFieldOverrides.mkString(", ")}"))
       // $COVERAGE-ON$
     }
 
@@ -630,14 +637,13 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         getter: Existential[Product.Getter[From, *]]
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[Existential[TransformationExpr]] = ctorTargetType match {
+    ): MIO[Existential[TransformationExpr]] = ctorTargetType match {
       case Product.Parameter.TargetType.SetterParameter(_) if !ctx.config.flags.atTgt(_.select(toName)).beanSetters =>
-        DerivationResult
-          .notSupportedTransformerDerivation(ctx)
+        notSupportedTransformerDerivation(ctx)
           .logInfo(s"Matched $fromName to $toName but $toName is setter and they are disabled")
       case _ =>
         import getter.Underlying as Getter, getter.value.get
-        DerivationResult.namedScope(
+        Log.namedScope(
           s"Recursive derivation for field `$fromName`: ${Type
               .prettyPrint[Getter]} into matched `$toName`: ${Type.prettyPrint[CtorParam]}"
         ) {
@@ -648,12 +654,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             Path(_.select(fromName)),
             Path(_.select(toName)),
             findMatchingUpdateCandidates(toName)
-          ).transformWith { expr =>
+          ).redeemWith { expr =>
             // If we derived partial.Result[$ctorParam] we are appending:
             //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
-            DerivationResult.existential[TransformationExpr, CtorParam](expr.fold(TransformationExpr.fromTotal) {
-              partialExpr =>
-                TransformationExpr.fromPartial(prependWholeErrorPath(partialExpr, Path(_.select(fromName))))
+            existential[TransformationExpr, CtorParam](expr.fold(TransformationExpr.fromTotal) { partialExpr =>
+              TransformationExpr.fromPartial(prependWholeErrorPath(partialExpr, Path(_.select(fromName))))
             })
           } { errors =>
             appendMissingTransformer[From, To, Getter, CtorParam](errors, toName)
@@ -663,14 +668,14 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
     private def useFallbackValues[From, To, CtorParam: Type](toName: String)(
         defaultValue: => Option[Expr[CtorParam]]
-    )(implicit ctx: TransformationContext[From, To]): Option[DerivationResult[Existential[TransformationExpr]]] = {
+    )(implicit ctx: TransformationContext[From, To]): Option[MIO[Existential[TransformationExpr]]] = {
       lazy val fieldFlags = ctx.config.flags.atTgt(_.select(toName))
 
-      def useFallbackValue: Option[DerivationResult[Existential[TransformationExpr]]] =
+      def useFallbackValue: Option[MIO[Existential[TransformationExpr]]] =
         findMatchingFallbackFieldAndUpdateCandidates(toName).collectFirst {
           case (fromName, fromFallbackField, updateCandidates) =>
             import fromFallbackField.{Underlying as FromFallbackField, value as fallbackExpr}
-            DerivationResult.namedScope(
+            Log.namedScope(
               s"Recursive derivation for fallback field `$fromName`: ${Type
                   .prettyPrint[FromFallbackField]} into matched `$toName`: ${Type.prettyPrint[CtorParam]}"
             ) {
@@ -679,38 +684,38 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 Path(_.select(fromName)),
                 Path(_.select(toName)),
                 updateCandidates
-              ).flatMap(expr => DerivationResult.existential[TransformationExpr, CtorParam](expr))
+              ).flatMap(expr => existential[TransformationExpr, CtorParam](expr))
             }
         }
 
-      def useDefaultValue: Option[DerivationResult[Existential[TransformationExpr]]] =
+      def useDefaultValue: Option[MIO[Existential[TransformationExpr]]] =
         // Default values are provided from ProductType parsing.
         if (fieldFlags.isDefaultValueEnabledGloballyOrFor[CtorParam]) {
           defaultValue.map { (value: Expr[CtorParam]) =>
             // We're constructing:
             // '{ ${ defaultValue } }
-            DerivationResult.existential[TransformationExpr, CtorParam](
+            existential[TransformationExpr, CtorParam](
               TransformationExpr.fromTotal(value)
             )
           }
         } else None
 
-      def useNone: Option[DerivationResult[Existential[TransformationExpr]]] =
+      def useNone: Option[MIO[Existential[TransformationExpr]]] =
         // OptionalValue handles both scala.Options as well as a support provided through integrations.OptionalValue.
         OptionalValue.parse[CtorParam].filter(_ => fieldFlags.optionDefaultsToNone).map { optional =>
           // We're constructing:
           // '{ None }
-          DerivationResult.existential[TransformationExpr, CtorParam](
+          existential[TransformationExpr, CtorParam](
             TransformationExpr.fromTotal(optional.value.empty)
           )
         }
 
-      def useSingletonType: Option[DerivationResult[Existential[TransformationExpr]]] =
+      def useSingletonType: Option[MIO[Existential[TransformationExpr]]] =
         // Singletons are always supported as a fallback (except None as this is explicitly handled with a flag).
         SingletonType.parse[CtorParam].filterNot(_ => Type[CtorParam] =:= NoneType).map { singleton =>
           // We're constructing:
           // '{ singleton } // e.g. (), null, case object, val, Java enum
-          DerivationResult.existential[TransformationExpr, CtorParam](
+          existential[TransformationExpr, CtorParam](
             TransformationExpr.fromTotal(singleton.value.upcast[CtorParam])
           )
         }
@@ -809,9 +814,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               traverseValDefsCompat(partialConstructorArguments) {
                 case (name: String, expr: Existential[PartialExpr]) =>
                   // We start by building this initial block of '{ lazy val resN = ${ derivedResultTo } }
-                  import expr.{Underlying as Res, value as partialExpr}
+                  import expr.{Underlying as Res, value as partialResultExpr}
                   ValDefs
-                    .createLazy(partialExpr, FreshName.FromPrefix("res"))
+                    .createLazy(partialResultExpr, FreshName.FromPrefix("res"))
                     .map { (inner: Expr[partial.Result[Res]]) =>
                       name -> Existential[PartialExpr, Res](inner)
                     }
@@ -1031,22 +1036,19 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         fromNamesExplicitlyUnmatched: Set[String]
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[Unit] =
+    ): MIO[Unit] =
       ctx.config.flags.unusedFieldPolicy match {
-        case None                         => DerivationResult.unit
+        case None                         => MIO.void
         case Some(FailOnIgnoredSourceVal) =>
           val fromNamesUsedInOverrides = ctx.sourceFieldsUsedByOverrides
           val unusedFromNames =
             requiredFromNames -- fromNamesUsedByExtractors -- fromNamesUsedInOverrides -- fromNamesExplicitlyUnmatched
           if (unusedFromNames.isEmpty) {
-            DerivationResult.unit
-              .logSuccess(_ => s"Run UnusedFieldPolicy=$FailOnIgnoredSourceVal, all source vals used")
+            MIO.void.log.valueAsInfo(_ => s"Run UnusedFieldPolicy=$FailOnIgnoredSourceVal, all source vals used")
           } else
-            DerivationResult
-              .failedPolicyCheck(FailOnIgnoredSourceVal, ctx.currentSrc, unusedFromNames.toList)
-              .logFailure(_ =>
-                s"Run UnusedFieldPolicy=$FailOnIgnoredSourceVal, unused source vals: ${unusedFromNames.mkString(", ")}"
-              )
+            failedPolicyCheck(FailOnIgnoredSourceVal, ctx.currentSrc, unusedFromNames.toList).log.errorsAsInfo(_ =>
+              s"Run UnusedFieldPolicy=$FailOnIgnoredSourceVal, unused source vals: ${unusedFromNames.mkString(", ")}"
+            )
       }
 
     // Error-related utilities
@@ -1073,17 +1075,17 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       }
 
     private def appendMissingTransformer[From, To, SourceField: Type, TargetField: Type](
-        errors: DerivationErrors,
+        errors: MErrors,
         toName: String
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[Nothing] = {
-      val newError = DerivationResult.missingFieldTransformer[
+    )(implicit ctx: TransformationContext[From, To]): MIO[Nothing] = {
+      val newError = missingFieldTransformer[
         From,
         To,
         SourceField,
         TargetField,
         TransformationExpr[TargetField]
       ](toName)
-      val oldErrors = DerivationResult.fail(errors)
+      val oldErrors = MIO.fail(errors)
       newError.parTuple(oldErrors).map[Nothing](_ => ???)
     }
 

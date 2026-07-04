@@ -1,12 +1,8 @@
 package io.scalaland.chimney.internal.compiletime.derivation
 
-import hearth.fp.effect.{Log, Logs, MResult}
-import io.scalaland.chimney.internal.compiletime.{
-  ChimneyDefinitions,
-  DerivationError,
-  DerivationErrors,
-  DerivationResult
-}
+import hearth.fp.data.NonEmptyVector
+import hearth.fp.effect.{Log, Logs, MIO, MLocal, MResult}
+import io.scalaland.chimney.internal.compiletime.{ChimneyDefinitions, DerivationError}
 
 /** Shared logic of the transformer/patcher Gateways.
   *
@@ -25,26 +21,35 @@ private[compiletime] trait GatewayCommons {
   protected def cacheDefinition[A: Type, Out: Type](expr: Expr[A])(usage: Expr[A] => Expr[Out]): Expr[Out] =
     ValDefs.createVal[A](expr, FreshName.FromType).use(usage)
 
+  /** "The macro-logging flag was enabled, dump the log journal at the end of the derivation". */
+  final protected case class MacroLogging(derivationStartedAt: java.time.Instant)
+
+  /** Macro-logging flag as an [[MLocal]] (set by [[enableLoggingIfFlagEnabled]], read - inside the program - by
+    * [[extractExprAndLog]]).
+    */
+  private val macroLogging: MLocal[Option[MacroLogging]] =
+    MLocal(Option.empty[MacroLogging])(identity)((a, b) => a.orElse(b))
+
   /** Let us keep the information if logging is needed in code that never had access to Context. */
   protected def enableLoggingIfFlagEnabled[A](
-      result: DerivationResult[A],
+      result: MIO[A],
       isMacroLoggingEnabled: Boolean,
       derivationStartedAt: java.time.Instant
-  ): DerivationResult[A] =
-    if (isMacroLoggingEnabled) DerivationResult.enableLogPrinting(derivationStartedAt) >> result
+  ): MIO[A] =
+    if (isMacroLoggingEnabled) macroLogging.set(Some(MacroLogging(derivationStartedAt))) >> result
     else result
 
   /** Unwraps the `result` and fails with error message or prints diagnostics (if needed) before returning expression */
-  protected def extractExprAndLog[Out: Type](result: DerivationResult[Expr[Out]], errorHeader: => String): Expr[Out] = {
+  protected def extractExprAndLog[Out: Type](result: MIO[Expr[Out]], errorHeader: => String): Expr[Out] = {
     // The macroLogging MLocal has to be read INSIDE the program - MState's local accessor is private[effect].
-    val program: DerivationResult[(MResult[Expr[Out]], Option[DerivationResult.MacroLogging])] =
-      result.attempt.tuple(DerivationResult.macroLogging.get)
+    val program: MIO[(MResult[Expr[Out]], Option[MacroLogging])] =
+      result.attempt.tuple(macroLogging.get)
 
-    val (logs, errorsOrExpr, macroLogging) =
+    val (logs, errorsOrExpr, macroLoggingFlag) =
       try {
         val (state, outcome) = program.unsafe.runSync
         outcome match {
-          case Right((errorsOrExpr, macroLogging)) => (state.logs, errorsOrExpr, macroLogging)
+          case Right((errorsOrExpr, macroLoggingFlag)) => (state.logs, errorsOrExpr, macroLoggingFlag)
           // $COVERAGE-OFF$unreachable: after `.attempt` neither branch of `.tuple` can fail
           case Left(errors) => (state.logs, Left(errors), None)
           // $COVERAGE-ON$
@@ -53,10 +58,10 @@ private[compiletime] trait GatewayCommons {
         // Fatal errors (e.g. StackOverflowError) fly out of runSync; catching them here keeps the "-Xss64m" guidance
         // in the rendered error (the state - so the logs and the macro-logging flag - is lost with the unwound stack).
         case error: Throwable =>
-          (Vector.empty[Log], Left(DerivationErrors(DerivationError.MacroException(error))), None)
+          (Vector.empty[Log], Left(NonEmptyVector.one[Throwable](DerivationError.MacroException(error))), None)
       }
 
-    macroLogging.foreach { case DerivationResult.MacroLogging(derivationStartedAt) =>
+    macroLoggingFlag.foreach { case MacroLogging(derivationStartedAt) =>
       val duration = java.time.Duration.between(derivationStartedAt, java.time.Instant.now())
       val info = renderOldJournalShape(
         logs ++
@@ -74,7 +79,7 @@ private[compiletime] trait GatewayCommons {
 
     errorsOrExpr.fold(
       derivationErrors => {
-        val lines = derivationErrors.prettyPrint
+        val lines = DerivationError.printErrors(derivationErrors)
 
         val richLines =
           s"""$errorHeader

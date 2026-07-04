@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
-import io.scalaland.chimney.internal.compiletime.{ChimneyDefinitions, DerivationResult}
+import hearth.fp.effect.{Log, MIO}
+import io.scalaland.chimney.internal.compiletime.{ChimneyDefinitions, DerivationError}
 
 /** Rule order in [[rulesAvailableForPlatform]] matters. NB: TransformPartialOptionToNonOptionRule and
   * TransformToOptionRule have disjoint conditions at their pipeline position (target optional vs target non-optional),
@@ -63,7 +64,7 @@ private[compiletime] trait Derivation
   /** Intended use case: starting recursive derivation from Gateway */
   final protected def deriveTransformationResultExpr[From, To](implicit
       ctx: TransformationContext[From, To]
-  ): DerivationResult[TransformationExpr[To]] =
+  ): MIO[TransformationExpr[To]] =
     deriveTransformationResultExprUpdatingRules[From, To](identity)
 
   /** Intended use case: shared logic between what Gateway uses and recursive derivation uses */
@@ -71,8 +72,8 @@ private[compiletime] trait Derivation
       updateRules: List[Rule] => List[Rule]
   )(implicit
       ctx: TransformationContext[From, To]
-  ): DerivationResult[TransformationExpr[To]] =
-    DerivationResult.namedScope(
+  ): MIO[TransformationExpr[To]] =
+    Log.namedScope(
       ctx.fold(_ =>
         s"Deriving Total Transformer expression from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]} with context:\n$ctx"
       )(_ =>
@@ -89,14 +90,15 @@ private[compiletime] trait Derivation
       followTo: Path = Path.Root,
       updateFallbacks: TransformerOverride.ForFallback => Vector[TransformerOverride.ForFallback] = Vector(_),
       updateRules: List[Rule] => List[Rule] = identity
-  )(implicit ctx: TransformationContext[?, ?]): DerivationResult[TransformationExpr[NewTo]] = {
+  )(implicit ctx: TransformationContext[?, ?]): MIO[TransformationExpr[NewTo]] = {
     val newCtx: TransformationContext[NewFrom, NewTo] =
       ctx.updateFromTo[NewFrom, NewTo](newSrc, followFrom, followTo, updateFallbacks)
-    deriveTransformationResultExprUpdatingRules(updateRules)(newCtx)
-      .logSuccess {
+    deriveTransformationResultExprUpdatingRules(updateRules)(newCtx).log
+      .valueAsInfo {
         case TransformationExpr.TotalExpr(expr)   => s"Derived recursively total expression ${Expr.prettyPrint(expr)}"
         case TransformationExpr.PartialExpr(expr) => s"Derived recursively partial expression ${Expr.prettyPrint(expr)}"
       }
-      .logFailure(errors => s"Errors at recursive derivation: ${errors.prettyPrint}")
+      .log
+      .errorsAsInfo(errors => s"Errors at recursive derivation: ${DerivationError.printErrors(errors)}")
   }
 }

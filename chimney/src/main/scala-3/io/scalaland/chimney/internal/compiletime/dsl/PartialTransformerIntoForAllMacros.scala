@@ -1,12 +1,13 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
 import io.scalaland.chimney.dsl.*
-import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
-import io.scalaland.chimney.internal.runtime.{Path, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
-import io.scalaland.chimney.internal.runtime.TransformerOverrides.*
+import io.scalaland.chimney.internal.compiletime.PlatformBridge
+import io.scalaland.chimney.internal.runtime.{Path, TransformerFlags, TransformerOverrides}
 import io.scalaland.chimney.partial
 
 import scala.quoted.*
+
+final class PartialTransformerIntoForAllMacros(q: Quotes) extends PlatformBridge(q) with DslMacros
 
 object PartialTransformerIntoForAllMacros {
 
@@ -23,26 +24,13 @@ object PartialTransformerIntoForAllMacros {
       ti: Expr[PartialTransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch]],
       selectorFrom: Expr[FromMatch => T],
       selectorTo: Expr[ToMatch => U]
-  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameTypes {
-      [fromPath <: Path, toPath <: Path] => (_: Type[fromPath]) ?=> (_: Type[toPath]) ?=>
-        '{
-          new PartialTransformerInto[
-            From,
-            To,
-            ForAll[FromMatch, ToMatch, Renamed[fromPath, toPath, Empty], Overrides],
-            Flags
-          ](
-            $ti.source,
-            $ti.td.asInstanceOf[PartialTransformerDefinition[
-              From,
-              To,
-              ForAll[FromMatch, ToMatch, Renamed[fromPath, toPath, Empty], Overrides],
-              Flags
-            ]]
-          )
-        }
-    }(selectorFrom, selectorTo)
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerIntoForAllMacros(quotes)
+    m.PartialTransformerIntoForAllDsl
+      .withFieldRenamed[From, To, Overrides, Flags, FromMatch, ToMatch](ti, selectorFrom, selectorTo)
+      .value
+      .asInstanceOf[Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withFieldConstImpl[
       From: Type,
@@ -57,23 +45,13 @@ object PartialTransformerIntoForAllMacros {
       ti: Expr[PartialTransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch]],
       selector: Expr[ToMatch => T],
       value: Expr[U]
-  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
-      '{
-        val updatedTd = WithRuntimeDataStore
-          .update($ti.td, $value)
-          .asInstanceOf[PartialTransformerDefinition[
-            From,
-            To,
-            ForAll[FromMatch, ToMatch, Const[toPath, Empty], Overrides],
-            Flags
-          ]]
-        new PartialTransformerInto[From, To, ForAll[FromMatch, ToMatch, Const[toPath, Empty], Overrides], Flags](
-          $ti.source,
-          updatedTd
-        )
-      }
-    }(selector)
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerIntoForAllMacros(quotes)
+    m.PartialTransformerIntoForAllDsl
+      .withFieldConst[From, To, Overrides, Flags, FromMatch, ToMatch](ti, selector, value)
+      .value
+      .asInstanceOf[Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withFieldComputedImpl[
       From: Type,
@@ -88,28 +66,13 @@ object PartialTransformerIntoForAllMacros {
       ti: Expr[PartialTransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch]],
       selector: Expr[ToMatch => T],
       f: Expr[FromMatch => U]
-  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
-      '{
-        val updatedTd = WithRuntimeDataStore
-          .update($ti.td, $f)
-          .asInstanceOf[PartialTransformerDefinition[
-            From,
-            To,
-            ForAll[FromMatch, ToMatch, Computed[Path.Root, toPath, Empty], Overrides],
-            Flags
-          ]]
-        new PartialTransformerInto[
-          From,
-          To,
-          ForAll[FromMatch, ToMatch, Computed[Path.Root, toPath, Empty], Overrides],
-          Flags
-        ](
-          $ti.source,
-          updatedTd
-        )
-      }
-    }(selector)
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerIntoForAllMacros(quotes)
+    m.PartialTransformerIntoForAllDsl
+      .withFieldComputed[From, To, Overrides, Flags, FromMatch, ToMatch](ti, selector, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withFieldComputedPartialImpl[
       From: Type,
@@ -124,26 +87,11 @@ object PartialTransformerIntoForAllMacros {
       ti: Expr[PartialTransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch]],
       selector: Expr[ToMatch => T],
       f: Expr[FromMatch => partial.Result[U]]
-  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameType { [toPath <: Path] => (_: Type[toPath]) ?=>
-      '{
-        val updatedTd = WithRuntimeDataStore
-          .update($ti.td, $f)
-          .asInstanceOf[PartialTransformerDefinition[
-            From,
-            To,
-            ForAll[FromMatch, ToMatch, ComputedPartial[Path.Root, toPath, Empty], Overrides],
-            Flags
-          ]]
-        new PartialTransformerInto[
-          From,
-          To,
-          ForAll[FromMatch, ToMatch, ComputedPartial[Path.Root, toPath, Empty], Overrides],
-          Flags
-        ](
-          $ti.source,
-          updatedTd
-        )
-      }
-    }(selector)
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
+    val m = new PartialTransformerIntoForAllMacros(quotes)
+    m.PartialTransformerIntoForAllDsl
+      .withFieldComputedPartial[From, To, Overrides, Flags, FromMatch, ToMatch](ti, selector, f)
+      .value
+      .asInstanceOf[Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]]]
+  }
 }

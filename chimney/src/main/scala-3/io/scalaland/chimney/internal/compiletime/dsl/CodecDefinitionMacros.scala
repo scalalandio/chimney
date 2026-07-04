@@ -1,11 +1,12 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
 import io.scalaland.chimney.dsl.*
-import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
+import io.scalaland.chimney.internal.compiletime.PlatformBridge
 import io.scalaland.chimney.internal.runtime.{Path, TransformerFlags, TransformerOverrides}
-import io.scalaland.chimney.internal.runtime.TransformerOverrides.*
 
 import scala.quoted.*
+
+final class CodecDefinitionMacros(q: Quotes) extends PlatformBridge(q) with DslMacros
 
 object CodecDefinitionMacros {
 
@@ -21,19 +22,13 @@ object CodecDefinitionMacros {
       cd: Expr[CodecDefinition[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags]],
       selectorDomain: Expr[Domain => T],
       selectorDto: Expr[Dto => U]
-  )(using Quotes): Expr[CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameTypes {
-      [fromPath <: Path, toPath <: Path] => (_: Type[fromPath]) ?=> (_: Type[toPath]) ?=>
-        '{
-          $cd.asInstanceOf[CodecDefinition[
-            Domain,
-            Dto,
-            Renamed[fromPath, toPath, EncodeOverrides],
-            Renamed[toPath, fromPath, DecodeOverrides],
-            Flags
-          ]]
-        }
-    }(selectorDomain, selectorDto)
+  )(using Quotes): Expr[CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] = {
+    val m = new CodecDefinitionMacros(quotes)
+    m.CodecDefinitionDsl
+      .withFieldRenamed[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags](cd, selectorDomain, selectorDto)
+      .value
+      .asInstanceOf[Expr[CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withSealedSubtypeRenamedImpl[
       Domain: Type,
@@ -45,23 +40,15 @@ object CodecDefinitionMacros {
       DtoSubtype: Type
   ](
       cd: Expr[CodecDefinition[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags]]
-  )(using Quotes): Expr[CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] =
-    '{
-      $cd
-        .asInstanceOf[CodecDefinition[
-          Domain,
-          Dto,
-          Renamed[
-            Path.SourceMatching[Path.Root, DomainSubtype],
-            Path.Matching[Path.Root, DtoSubtype],
-            EncodeOverrides
-          ],
-          Renamed[
-            Path.SourceMatching[Path.Root, DtoSubtype],
-            Path.Matching[Path.Root, DomainSubtype],
-            DecodeOverrides
-          ],
-          Flags
-        ]]
-    }
+  )(using Quotes): Expr[CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] = {
+    val m = new CodecDefinitionMacros(quotes)
+    m.CodecDefinitionDsl
+      .withSealedSubtypeRenamed[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags](
+        cd,
+        m.typeOf_??[DomainSubtype],
+        m.typeOf_??[DtoSubtype]
+      )
+      .value
+      .asInstanceOf[Expr[CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]]]
+  }
 }

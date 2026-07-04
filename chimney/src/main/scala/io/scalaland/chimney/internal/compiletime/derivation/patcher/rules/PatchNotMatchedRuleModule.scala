@@ -1,20 +1,20 @@
 package io.scalaland.chimney.internal.compiletime.derivation.patcher.rules
 
-import io.scalaland.chimney.internal.compiletime.DerivationResult
+import hearth.fp.effect.MIO
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.Derivation
-import io.scalaland.chimney.internal.compiletime.NotSupportedPatcherDerivation
+import io.scalaland.chimney.internal.compiletime.{DerivationError, NotSupportedPatcherDerivation}
 
 private[compiletime] trait PatchNotMatchedRuleModule { this: Derivation & hearth.MacroCommons =>
 
   protected object PatchNotMatchedRule extends Rule("PatchNotMatched") {
 
-    def expand[Patch, A](implicit ctx: TransformationContext[Patch, A]): DerivationResult[Rule.ExpansionResult[A]] =
+    def expand[Patch, A](implicit ctx: TransformationContext[Patch, A]): MIO[Rule.ExpansionResult[A]] =
       ctx match {
         case Patched(_) =>
-          DerivationResult.patcherError(
-            NotSupportedPatcherDerivation(Type.prettyPrint[A], Type.prettyPrint[Patch])
+          MIO.fail(
+            DerivationError.PatcherError(NotSupportedPatcherDerivation(Type.prettyPrint[A], Type.prettyPrint[Patch]))
           )
-        case _ => DerivationResult.attemptNextRule
+        case _ => attemptNextRule
       }
   }
 }

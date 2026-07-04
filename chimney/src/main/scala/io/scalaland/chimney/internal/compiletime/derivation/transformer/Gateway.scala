@@ -1,8 +1,8 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
+import hearth.fp.effect.{Log, MIO}
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.{PartialTransformer, Transformer}
-import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.GatewayCommons
 import io.scalaland.chimney.internal.runtime
 import io.scalaland.chimney.partial
@@ -10,7 +10,7 @@ import io.scalaland.chimney.partial
 /** Every public entry point calls `ensureStandardExtensionsLoaded()` first (Hearth's `IsOption`/`IsEither`/...
   * providers return nothing until `Environment.loadStandardExtensions()` ran; the call is idempotent per bundle).
   *
-  * `DerivationResult.direct`+`await` is used because `ChimneyExpr.*.instance` take pure `Expr => Expr` functions, so
+  * `direct`+`await` (in `ChimneyExprs`) is used because `ChimneyExpr.*.instance` take pure `Expr => Expr` functions, so
   * the effect must be unwrapped inside the generated-class body (hearth#318). Fatal errors are caught at
   * `unsafe.runSync` in [[GatewayCommons]].
   */
@@ -159,8 +159,8 @@ private[compiletime] trait Gateway extends GatewayCommons {
   /** Adapts TransformationExpr[To] to expected type of transformation */
   def deriveFinalTransformationResultExpr[From, To](implicit
       ctx: TransformationContext[From, To]
-  ): DerivationResult[Expr[ctx.Target]] =
-    DerivationResult.log(s"Start derivation with context: $ctx") >>
+  ): MIO[Expr[ctx.Target]] =
+    Log.info(s"Start derivation with context: $ctx") >>
       deriveTransformationResultExpr[From, To]
         .map { transformationExpr =>
           ctx.fold(_ => transformationExpr.ensureTotal.asInstanceOf[Expr[ctx.Target]])(_ =>
@@ -169,12 +169,12 @@ private[compiletime] trait Gateway extends GatewayCommons {
         }
 
   private def enableLoggingIfFlagEnabled[A](
-      result: => DerivationResult[A],
+      result: => MIO[A],
       ctx: TransformationContext[?, ?]
-  ): DerivationResult[A] =
+  ): MIO[A] =
     enableLoggingIfFlagEnabled[A](result, ctx.config.flags.displayMacrosLogging, ctx.derivationStartedAt)
 
-  private def extractExprAndLog[From: Type, To: Type, Out: Type](result: DerivationResult[Expr[Out]]): Expr[Out] =
+  private def extractExprAndLog[From: Type, To: Type, Out: Type](result: MIO[Expr[Out]]): Expr[Out] =
     extractExprAndLog[Out](
       result,
       s"""Chimney can't derive transformation from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]}"""

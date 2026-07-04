@@ -1,14 +1,12 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.dsl.IsoDefinition
-import io.scalaland.chimney.internal.runtime.{Path, TransformerFlags, TransformerOverrides}
-import io.scalaland.chimney.internal.runtime.TransformerOverrides.*
+import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
 
 import scala.reflect.macros.whitebox
 
-class IsoDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
+class IsoDefinitionMacros(ctx: whitebox.Context) extends DslBundle(ctx) {
 
-  import c.universe.{Select as _, *}
+  import c.universe.{Tree, WeakTypeTag}
 
   def withFieldRenamedImpl[
       First: WeakTypeTag,
@@ -16,19 +14,14 @@ class IsoDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
       FirstOverrides <: TransformerOverrides: WeakTypeTag,
       SecondOverrides <: TransformerOverrides: WeakTypeTag,
       Flags <: TransformerFlags: WeakTypeTag
-  ](selectorFirst: Tree, selectorSecond: Tree): Tree = c.prefix.tree
-    .asInstanceOfExpr(
-      new ApplyFieldNameTypes {
-        def apply[FirstPath <: Path: WeakTypeTag, SecondPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[IsoDefinition[
-            First,
-            Second,
-            Renamed[FirstPath, SecondPath, FirstOverrides],
-            Renamed[SecondPath, FirstPath, SecondOverrides],
-            Flags
-          ]]
-      }.applyFromSelectors(selectorFirst, selectorSecond)
-    )
+  ](selectorFirst: Tree, selectorSecond: Tree): Tree =
+    IsoDefinitionDsl
+      .withFieldRenamed[First, Second, FirstOverrides, SecondOverrides, Flags](
+        prefixAnyExpr,
+        anyExpr(selectorFirst),
+        anyExpr(selectorSecond)
+      )
+      .toUntypedResult
 
   def withSealedSubtypeRenamedImpl[
       First: WeakTypeTag,
@@ -38,22 +31,12 @@ class IsoDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
       Flags <: TransformerFlags: WeakTypeTag,
       FirstSubtype: WeakTypeTag,
       SecondSubtype: WeakTypeTag
-  ]: Tree = c.prefix.tree
-    .asInstanceOfExpr(
-      weakTypeTag[IsoDefinition[
-        First,
-        Second,
-        Renamed[
-          Path.SourceMatching[Path.Root, FirstSubtype],
-          Path.Matching[Path.Root, SecondSubtype],
-          FirstOverrides
-        ],
-        Renamed[
-          Path.SourceMatching[Path.Root, SecondSubtype],
-          Path.Matching[Path.Root, FirstSubtype],
-          SecondOverrides
-        ],
-        Flags
-      ]]
-    )
+  ]: Tree =
+    IsoDefinitionDsl
+      .withSealedSubtypeRenamed[First, Second, FirstOverrides, SecondOverrides, Flags](
+        prefixAnyExpr,
+        typeOf_??[FirstSubtype],
+        typeOf_??[SecondSubtype]
+      )
+      .toUntypedResult
 }

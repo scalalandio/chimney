@@ -1,7 +1,8 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
+import hearth.fp.effect.{Log, MIO}
 import hearth.fp.syntax.*
-import io.scalaland.chimney.internal.compiletime.DerivationResult
+import io.scalaland.chimney.internal.compiletime.DerivationError
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
@@ -18,12 +19,12 @@ private[compiletime] trait TransformationRules { this: Derivation & hearth.Macro
     * Since we cannot restrict how condition is checked (running some predicate or using PartialFunction is too
     * restrictive), we have to express matching or not with the result:
     *   - `Expanded` means that rule applied and created `Expr` value
-    *   - `AttemptNextRule` means that rule decided that conditions aren't met The `DerivationResult` as a whole might
-    *     also fail, which means that rule did apply but couldn't derive expression.
+    *   - `AttemptNextRule` means that rule decided that conditions aren't met. The `MIO` result as a whole might also
+    *     fail, which means that rule did apply but couldn't derive expression.
     */
   abstract protected class Rule(val name: String) {
 
-    def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]]
+    def expand[From, To](implicit ctx: TransformationContext[From, To]): MIO[Rule.ExpansionResult[To]]
   }
   protected object Rule {
 
@@ -39,26 +40,26 @@ private[compiletime] trait TransformationRules { this: Derivation & hearth.Macro
     /** Attempt to apply rules in order in which they are on list. The first match wins. */
     def expandRules[From, To](
         rules: List[Rule]
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[TransformationExpr[To]] = rules match {
+    )(implicit ctx: TransformationContext[From, To]): MIO[TransformationExpr[To]] = rules match {
       case Nil =>
-        DerivationResult.notSupportedTransformerDerivation(ctx).logInfo("Tested all derivation rules, none matched")
+        notSupportedTransformerDerivation(ctx).logInfo("Tested all derivation rules, none matched")
       case rule :: nextRules =>
-        DerivationResult
+        Log
           .namedScope(s"Attempting expansion of rule ${rule.name}")(
-            rule.expand[From, To].logFailure(errors => errors.prettyPrint)
+            rule.expand[From, To].log.errorsAsInfo(errors => DerivationError.printErrors(errors))
           )
           .flatMap {
             case ExpansionResult.Expanded(transformationExpr) =>
-              DerivationResult
-                .log(s"Rule ${rule.name} expanded successfully: ${transformationExpr.prettyPrint}")
+              Log
+                .info(s"Rule ${rule.name} expanded successfully: ${transformationExpr.prettyPrint}")
                 .as(transformationExpr.asInstanceOf[TransformationExpr[To]])
             case ExpansionResult.AttemptNextRule(Some(reason)) =>
-              DerivationResult.log(
+              Log.info(
                 s"Rule ${rule.name} decided to pass on to the next rule - some conditions were fulfilled but at least one failed: $reason"
               ) >>
                 expandRules[From, To](nextRules)
             case ExpansionResult.AttemptNextRule(None) =>
-              DerivationResult.log(s"Rule ${rule.name} decided to pass on to the next rule") >>
+              Log.info(s"Rule ${rule.name} decided to pass on to the next rule") >>
                 expandRules[From, To](nextRules)
           }
     }

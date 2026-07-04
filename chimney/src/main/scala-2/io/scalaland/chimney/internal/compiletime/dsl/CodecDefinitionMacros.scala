@@ -1,14 +1,12 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.dsl.CodecDefinition
-import io.scalaland.chimney.internal.runtime.{Path, TransformerFlags, TransformerOverrides}
-import io.scalaland.chimney.internal.runtime.TransformerOverrides.*
+import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
 
 import scala.reflect.macros.whitebox
 
-class CodecDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
+class CodecDefinitionMacros(ctx: whitebox.Context) extends DslBundle(ctx) {
 
-  import c.universe.{Select as _, *}
+  import c.universe.{Tree, WeakTypeTag}
 
   def withFieldRenamedImpl[
       Domain: WeakTypeTag,
@@ -16,19 +14,14 @@ class CodecDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils
       EncodeOverrides <: TransformerOverrides: WeakTypeTag,
       DecodeOverrides <: TransformerOverrides: WeakTypeTag,
       Flags <: TransformerFlags: WeakTypeTag
-  ](selectorDomain: Tree, selectorDto: Tree): Tree = c.prefix.tree
-    .asInstanceOfExpr(
-      new ApplyFieldNameTypes {
-        def apply[FromPath <: Path: WeakTypeTag, ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[CodecDefinition[
-            Domain,
-            Dto,
-            Renamed[FromPath, ToPath, EncodeOverrides],
-            Renamed[ToPath, FromPath, DecodeOverrides],
-            Flags
-          ]]
-      }.applyFromSelectors(selectorDomain, selectorDto)
-    )
+  ](selectorDomain: Tree, selectorDto: Tree): Tree =
+    CodecDefinitionDsl
+      .withFieldRenamed[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags](
+        prefixAnyExpr,
+        anyExpr(selectorDomain),
+        anyExpr(selectorDto)
+      )
+      .toUntypedResult
 
   def withSealedSubtypeRenamedImpl[
       Domain: WeakTypeTag,
@@ -38,22 +31,12 @@ class CodecDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils
       Flags <: TransformerFlags: WeakTypeTag,
       DomainSubtype: WeakTypeTag,
       DtoSubtype: WeakTypeTag
-  ]: Tree = c.prefix.tree
-    .asInstanceOfExpr(
-      weakTypeTag[CodecDefinition[
-        Domain,
-        Dto,
-        Renamed[
-          Path.SourceMatching[Path.Root, DomainSubtype],
-          Path.Matching[Path.Root, DtoSubtype],
-          EncodeOverrides
-        ],
-        Renamed[
-          Path.SourceMatching[Path.Root, DtoSubtype],
-          Path.Matching[Path.Root, DomainSubtype],
-          DecodeOverrides
-        ],
-        Flags
-      ]]
-    )
+  ]: Tree =
+    CodecDefinitionDsl
+      .withSealedSubtypeRenamed[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags](
+        prefixAnyExpr,
+        typeOf_??[DomainSubtype],
+        typeOf_??[DtoSubtype]
+      )
+      .toUntypedResult
 }

@@ -279,6 +279,80 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
       override def asUntyped: UntypedType = untypedCtor
     }
 
+  /** See [[ctor1UpperBoundedCompat]]. */
+  protected def ctor4UpperBoundedCompat[U1, U2, U3, U4, HKT[_ <: U1, _ <: U2, _ <: U3, _ <: U4]](
+      applied: Type[HKT[U1, U2, U3, U4]]
+  ): Type.Ctor4.UpperBounded[U1, U2, U3, U4, HKT] =
+    new Type.Ctor4.Bounded[Nothing, U1, Nothing, U2, Nothing, U3, Nothing, U4, HKT] {
+      private val untypedCtor: UntypedType = UntypedType.typeConstructor(applied.asUntyped)
+
+      def apply[A <: U1: Type, B <: U2: Type, C <: U3: Type, D <: U4: Type]: Type[HKT[A, B, C, D]] =
+        UntypedType
+          .applyTypeArgs(untypedCtor, List(Type[A].asUntyped, Type[B].asUntyped, Type[C].asUntyped, Type[D].asUntyped))
+          .asTyped[HKT[A, B, C, D]]
+
+      def unapply[In](
+          In: Type[In]
+      ): Option[(Nothing <:??<: U1, Nothing <:??<: U2, Nothing <:??<: U3, Nothing <:??<: U4)] = {
+        val dealiased = UntypedType.dealias(In.asUntyped)
+        if (UntypedType.sameTypeConstructorAs(untypedCtor, dealiased))
+          UntypedType.typeArguments(dealiased) match {
+            case a1 :: a2 :: a3 :: a4 :: Nil =>
+              Some(
+                (
+                  a1.asTyped[U1].as_??<:[U1],
+                  a2.asTyped[U2].as_??<:[U2],
+                  a3.asTyped[U3].as_??<:[U3],
+                  a4.asTyped[U4].as_??<:[U4]
+                )
+              )
+            case _ => None
+          }
+        else None
+      }
+
+      override def asUntyped: UntypedType = untypedCtor
+    }
+
+  /** See [[ctor1UpperBoundedCompat]]. */
+  protected def ctor5UpperBoundedCompat[U1, U2, U3, U4, U5, HKT[_ <: U1, _ <: U2, _ <: U3, _ <: U4, _ <: U5]](
+      applied: Type[HKT[U1, U2, U3, U4, U5]]
+  ): Type.Ctor5.UpperBounded[U1, U2, U3, U4, U5, HKT] =
+    new Type.Ctor5.Bounded[Nothing, U1, Nothing, U2, Nothing, U3, Nothing, U4, Nothing, U5, HKT] {
+      private val untypedCtor: UntypedType = UntypedType.typeConstructor(applied.asUntyped)
+
+      def apply[A <: U1: Type, B <: U2: Type, C <: U3: Type, D <: U4: Type, E <: U5: Type]: Type[HKT[A, B, C, D, E]] =
+        UntypedType
+          .applyTypeArgs(
+            untypedCtor,
+            List(Type[A].asUntyped, Type[B].asUntyped, Type[C].asUntyped, Type[D].asUntyped, Type[E].asUntyped)
+          )
+          .asTyped[HKT[A, B, C, D, E]]
+
+      def unapply[In](
+          In: Type[In]
+      ): Option[(Nothing <:??<: U1, Nothing <:??<: U2, Nothing <:??<: U3, Nothing <:??<: U4, Nothing <:??<: U5)] = {
+        val dealiased = UntypedType.dealias(In.asUntyped)
+        if (UntypedType.sameTypeConstructorAs(untypedCtor, dealiased))
+          UntypedType.typeArguments(dealiased) match {
+            case a1 :: a2 :: a3 :: a4 :: a5 :: Nil =>
+              Some(
+                (
+                  a1.asTyped[U1].as_??<:[U1],
+                  a2.asTyped[U2].as_??<:[U2],
+                  a3.asTyped[U3].as_??<:[U3],
+                  a4.asTyped[U4].as_??<:[U4],
+                  a5.asTyped[U5].as_??<:[U5]
+                )
+              )
+            case _ => None
+          }
+        else None
+      }
+
+      override def asUntyped: UntypedType = untypedCtor
+    }
+
   /** Workaround for a Hearth 0.4.0 bug (hearth#312): on Scala 2 cross-quotes `Type.of[F[A, ?]]` fails to compile
     * whenever the enclosing method has type parameters ("not found: type ?$1" - the generated workaround method loses
     * the wildcard). `Type.of[F[Any, ?]]` in a member without type parameters expands fine, so `ChimneyType.*.inferred`

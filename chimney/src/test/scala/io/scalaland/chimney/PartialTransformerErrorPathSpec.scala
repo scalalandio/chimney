@@ -2,7 +2,7 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.partial.syntax.*
-import io.scalaland.chimney.utils.OptionUtils.StringOps
+import io.scalaland.chimney.utils.OptionUtils.StringParsingOps
 
 object PartialTransformerErrorPathSpec {
   sealed trait Foo

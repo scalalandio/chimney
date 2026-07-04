@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
-import io.scalaland.chimney.internal.compiletime.DerivationResult
+import hearth.fp.effect.MIO
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
 /** SMART-CONSTRUCTOR value types (Hearth `IsValueType` extensions whose `wrap` is a `CtorLikeOf.Either*OrValue` - see
@@ -19,7 +19,7 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
 
   protected object TransformTypeToValueClassRule extends Rule("TypeToValueClass") {
 
-    def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+    def expand[From, To](implicit ctx: TransformationContext[From, To]): MIO[Rule.ExpansionResult[To]] =
       Type[To] match {
         case ValueClassType(to2) =>
           if (ctx.config.areOverridesEmpty) {
@@ -27,11 +27,11 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
             // Java boxed primitives are only wrapped from their exact primitive counterpart - the mirror of the
             // ValueClassToType restriction (see ValueClasses.isJavaBoxedPrimitive for the rationale).
             if (isJavaBoxedPrimitive[To] && !(Type[From] =:= Type[InnerTo]))
-              DerivationResult.attemptNextRuleBecause(
+              attemptNextRuleBecause(
                 "Java boxed primitives are only wrapped from their exact primitive counterpart"
               )
             else transformToInnerToAndWrap[From, To, InnerTo](valueTo.fieldName, valueTo.wrap)
-          } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
+          } else attemptNextRuleBecause("Configuration has defined overrides")
         case WrapperClassType(to2) =>
           if (ctx.config.areOverridesEmpty) {
             import to2.{Underlying as InnerTo, value as valueTo}
@@ -39,8 +39,8 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
             if (ctx.config.flags.nonAnyValWrappers || valueTo.fromStdExtension) {
               transformToInnerToAndWrap[From, To, InnerTo](valueTo.fieldName, valueTo.wrap)
             } else
-              DerivationResult.attemptNextRuleBecause("Wrapping in non-AnyVal wrapper types was disabled by a flag")
-          } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
+              attemptNextRuleBecause("Wrapping in non-AnyVal wrapper types was disabled by a flag")
+          } else attemptNextRuleBecause("Configuration has defined overrides")
         case PartialWrapperClassType(to2) =>
           // Smart-constructor value types are by construction ALWAYS extension-provided (only Hearth IsValueType
           // providers can supply a validating CtorLike), so they are never gated behind the nonAnyValWrappers flag -
@@ -51,19 +51,19 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
                 import to2.{Underlying as InnerTo, value as valueTo}
                 transformToInnerToAndWrapPartially[From, To, InnerTo](valueTo.fieldName, valueTo.partialWrap)
               case TransformationContext.ForTotal(_) =>
-                DerivationResult.attemptNextRuleBecause(
+                attemptNextRuleBecause(
                   s"Only smart-constructor (partial) wrapping available for ${Type.prettyPrint[To]}, in total context"
                 )
             }
-          } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
-        case _ => DerivationResult.attemptNextRule
+          } else attemptNextRuleBecause("Configuration has defined overrides")
+        case _ => attemptNextRule
       }
   }
 
   private def transformToInnerToAndWrap[From, To, InnerTo: Type](
       innerToFieldName: String,
       wrapInnerToIntoTo: Expr[InnerTo] => Expr[To]
-  )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+  )(implicit ctx: TransformationContext[From, To]): MIO[Rule.ExpansionResult[To]] =
     deriveRecursiveTransformationExpr[From, InnerTo](
       ctx.src,
       followTo = Path(_.select(innerToFieldName))
@@ -71,13 +71,12 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
       .flatMap { derivedInnerTo =>
         // We're constructing:
         // '{ new $To(${ derivedInnerTo }) }
-        DerivationResult.expanded(derivedInnerTo.map(wrapInnerToIntoTo))
+        expanded(derivedInnerTo.map(wrapInnerToIntoTo))
       }
       // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
       .orElse(TransformProductToProductRule.expand(ctx))
       .orElse(
-        DerivationResult
-          .notSupportedTransformerDerivationForField(innerToFieldName)(ctx)
+        notSupportedTransformerDerivationForField(innerToFieldName)(ctx)
           .logInfo(
             s"Failed to resolve derivation from ${Type.prettyPrint[From]} to ${Type
                 .prettyPrint[InnerTo]} (wrapped by ${Type.prettyPrint[To]})"
@@ -87,7 +86,7 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
   private def transformToInnerToAndWrapPartially[From, To, InnerTo: Type](
       innerToFieldName: String,
       wrapInnerToIntoPartialTo: Expr[InnerTo] => Expr[io.scalaland.chimney.partial.Result[To]]
-  )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+  )(implicit ctx: TransformationContext[From, To]): MIO[Rule.ExpansionResult[To]] =
     deriveRecursiveTransformationExpr[From, InnerTo](
       ctx.src,
       followTo = Path(_.select(innerToFieldName))
@@ -96,15 +95,14 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
         // We're constructing:
         // '{ partial.Result.fromEither*(${ smartCtor }(${ derivedInnerTo })) }
         // (flatMapped into the inner partial.Result when the inner derivation itself was partial)
-        DerivationResult.expanded(
+        expanded(
           derivedInnerTo.flatMap(innerTo => TransformationExpr.fromPartial(wrapInnerToIntoPartialTo(innerTo)))
         )
       }
       // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
       .orElse(TransformProductToProductRule.expand(ctx))
       .orElse(
-        DerivationResult
-          .notSupportedTransformerDerivationForField(innerToFieldName)(ctx)
+        notSupportedTransformerDerivationForField(innerToFieldName)(ctx)
           .logInfo(
             s"Failed to resolve derivation from ${Type.prettyPrint[From]} to ${Type
                 .prettyPrint[InnerTo]} (wrapped by smart constructor of ${Type.prettyPrint[To]})"

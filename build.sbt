@@ -398,6 +398,8 @@ lazy val chimney = projectMatrix
       for2_13 = Seq("-skip-packages", "io.scalaland.chimney.internal")
     ),
     libraryDependencies += "com.kubuszok" %%% "hearth" % versions.hearth,
+    // ChimneySpec is based on hearth-munit's MacroSuite (group/==>/compileErrors-check utilities).
+    libraryDependencies += "com.kubuszok" %%% "hearth-munit" % versions.hearth % Test,
     // Cross-quotes: on Scala 2 they are macros (part of hearth), on Scala 3 they are a compiler plugin.
     libraryDependencies ++= versions.fold(scalaVersion.value)(
       for2_13 = Seq.empty,

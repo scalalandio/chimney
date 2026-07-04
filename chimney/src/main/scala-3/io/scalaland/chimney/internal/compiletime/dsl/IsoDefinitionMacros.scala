@@ -1,11 +1,12 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
 import io.scalaland.chimney.dsl.*
-import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
+import io.scalaland.chimney.internal.compiletime.PlatformBridge
 import io.scalaland.chimney.internal.runtime.{Path, TransformerFlags, TransformerOverrides}
-import io.scalaland.chimney.internal.runtime.TransformerOverrides.*
 
 import scala.quoted.*
+
+final class IsoDefinitionMacros(q: Quotes) extends PlatformBridge(q) with DslMacros
 
 object IsoDefinitionMacros {
 
@@ -21,19 +22,13 @@ object IsoDefinitionMacros {
       id: Expr[IsoDefinition[First, Second, FirstOverrides, SecondOverrides, Flags]],
       selectorFirst: Expr[First => T],
       selectorSecond: Expr[Second => U]
-  )(using Quotes): Expr[IsoDefinition[First, Second, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyFieldNameTypes {
-      [firstPath <: Path, secondPath <: Path] => (_: Type[firstPath]) ?=> (_: Type[secondPath]) ?=>
-        '{
-          $id.asInstanceOf[IsoDefinition[
-            First,
-            Second,
-            Renamed[firstPath, secondPath, FirstOverrides],
-            Renamed[secondPath, firstPath, SecondOverrides],
-            Flags
-          ]]
-        }
-    }(selectorFirst, selectorSecond)
+  )(using Quotes): Expr[IsoDefinition[First, Second, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] = {
+    val m = new IsoDefinitionMacros(quotes)
+    m.IsoDefinitionDsl
+      .withFieldRenamed[First, Second, FirstOverrides, SecondOverrides, Flags](id, selectorFirst, selectorSecond)
+      .value
+      .asInstanceOf[Expr[IsoDefinition[First, Second, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]]]
+  }
 
   def withSealedSubtypeRenamedImpl[
       First: Type,
@@ -45,23 +40,15 @@ object IsoDefinitionMacros {
       SecondSubtype: Type
   ](
       id: Expr[IsoDefinition[First, Second, FirstOverrides, SecondOverrides, Flags]]
-  )(using Quotes): Expr[IsoDefinition[First, Second, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] =
-    '{
-      $id
-        .asInstanceOf[IsoDefinition[
-          First,
-          Second,
-          Renamed[
-            Path.SourceMatching[Path.Root, FirstSubtype],
-            Path.Matching[Path.Root, SecondSubtype],
-            FirstOverrides
-          ],
-          Renamed[
-            Path.SourceMatching[Path.Root, SecondSubtype],
-            Path.Matching[Path.Root, FirstSubtype],
-            SecondOverrides
-          ],
-          Flags
-        ]]
-    }
+  )(using Quotes): Expr[IsoDefinition[First, Second, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] = {
+    val m = new IsoDefinitionMacros(quotes)
+    m.IsoDefinitionDsl
+      .withSealedSubtypeRenamed[First, Second, FirstOverrides, SecondOverrides, Flags](
+        id,
+        m.typeOf_??[FirstSubtype],
+        m.typeOf_??[SecondSubtype]
+      )
+      .value
+      .asInstanceOf[Expr[IsoDefinition[First, Second, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]]]
+  }
 }

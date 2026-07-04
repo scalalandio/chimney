@@ -1,14 +1,13 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.internal.runtime.{Path, TransformerFlags, TransformerOverrides}
-import io.scalaland.chimney.internal.runtime.TransformerOverrides.*
+import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
 
 import scala.annotation.unused
 import scala.reflect.macros.whitebox
 
-class PartialTransformerIntoForAllMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
+class PartialTransformerIntoForAllMacros(ctx: whitebox.Context) extends DslBundle(ctx) {
 
-  import c.universe.{Select as _, *}
+  import c.universe.{Tree, WeakTypeTag}
 
   def withFieldRenamedImpl[
       From: WeakTypeTag,
@@ -17,28 +16,16 @@ class PartialTransformerIntoForAllMacros(val c: whitebox.Context) extends utils.
       Flags <: TransformerFlags: WeakTypeTag,
       FromMatch: WeakTypeTag,
       ToMatch: WeakTypeTag
-  ](selectorFrom: Tree, selectorTo: Tree): Tree = {
-    val overridesType = new ApplyFieldNameTypes {
-      def apply[FromPath <: Path: WeakTypeTag, ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-        weakTypeTag[ForAll[FromMatch, ToMatch, Renamed[FromPath, ToPath, Empty], Overrides]]
-    }.applyFromSelectors(selectorFrom, selectorTo)
-    q"""
-      new _root_.io.scalaland.chimney.dsl.PartialTransformerInto[
-        ${weakTypeOf[From]},
-        ${weakTypeOf[To]},
-        $overridesType,
-        ${weakTypeOf[Flags]}
-      ](
-        ${c.prefix}.source,
-        ${c.prefix}.td.asInstanceOf[_root_.io.scalaland.chimney.dsl.PartialTransformerDefinition[
-          ${weakTypeOf[From]},
-          ${weakTypeOf[To]},
-          $overridesType,
-          ${weakTypeOf[Flags]}
-        ]]
+  ](selectorFrom: Tree, selectorTo: Tree): Tree =
+    PartialTransformerIntoForAllDsl
+      .withFieldRenamed[From, To, Overrides, Flags, FromMatch, ToMatch](
+        c.Expr[io.scalaland.chimney.dsl.PartialTransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch]](
+          c.prefix.tree
+        ),
+        anyExpr(selectorFrom),
+        anyExpr(selectorTo)
       )
-    """
-  }
+      .toUntypedResult
 
   def withFieldConstImpl[
       From: WeakTypeTag,
@@ -47,33 +34,16 @@ class PartialTransformerIntoForAllMacros(val c: whitebox.Context) extends utils.
       Flags <: TransformerFlags: WeakTypeTag,
       FromMatch: WeakTypeTag,
       ToMatch: WeakTypeTag
-  ](selector: Tree, value: Tree)(@unused ev: Tree): Tree = {
-    val overridesType = new ApplyFieldNameType {
-      def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-        weakTypeTag[ForAll[FromMatch, ToMatch, Const[ToPath, Empty], Overrides]]
-    }.applyFromSelector(selector)
-    q"""
-      {
-        val updatedTd = _root_.io.scalaland.chimney.internal.runtime.WithRuntimeDataStore
-          .update(${c.prefix}.td, $value)
-          .asInstanceOf[_root_.io.scalaland.chimney.dsl.PartialTransformerDefinition[
-            ${weakTypeOf[From]},
-            ${weakTypeOf[To]},
-            $overridesType,
-            ${weakTypeOf[Flags]}
-          ]]
-        new _root_.io.scalaland.chimney.dsl.PartialTransformerInto[
-          ${weakTypeOf[From]},
-          ${weakTypeOf[To]},
-          $overridesType,
-          ${weakTypeOf[Flags]}
-        ](
-          ${c.prefix}.source,
-          updatedTd
-        )
-      }
-    """
-  }
+  ](selector: Tree, value: Tree)(@unused ev: Tree): Tree =
+    PartialTransformerIntoForAllDsl
+      .withFieldConst[From, To, Overrides, Flags, FromMatch, ToMatch](
+        c.Expr[io.scalaland.chimney.dsl.PartialTransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch]](
+          c.prefix.tree
+        ),
+        anyExpr(selector),
+        anyExpr(value)
+      )
+      .toUntypedResult
 
   def withFieldComputedImpl[
       From: WeakTypeTag,
@@ -82,33 +52,16 @@ class PartialTransformerIntoForAllMacros(val c: whitebox.Context) extends utils.
       Flags <: TransformerFlags: WeakTypeTag,
       FromMatch: WeakTypeTag,
       ToMatch: WeakTypeTag
-  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree = {
-    val overridesType = new ApplyFieldNameType {
-      def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-        weakTypeTag[ForAll[FromMatch, ToMatch, Computed[Path.Root, ToPath, Empty], Overrides]]
-    }.applyFromSelector(selector)
-    q"""
-      {
-        val updatedTd = _root_.io.scalaland.chimney.internal.runtime.WithRuntimeDataStore
-          .update(${c.prefix}.td, $f)
-          .asInstanceOf[_root_.io.scalaland.chimney.dsl.PartialTransformerDefinition[
-            ${weakTypeOf[From]},
-            ${weakTypeOf[To]},
-            $overridesType,
-            ${weakTypeOf[Flags]}
-          ]]
-        new _root_.io.scalaland.chimney.dsl.PartialTransformerInto[
-          ${weakTypeOf[From]},
-          ${weakTypeOf[To]},
-          $overridesType,
-          ${weakTypeOf[Flags]}
-        ](
-          ${c.prefix}.source,
-          updatedTd
-        )
-      }
-    """
-  }
+  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree =
+    PartialTransformerIntoForAllDsl
+      .withFieldComputed[From, To, Overrides, Flags, FromMatch, ToMatch](
+        c.Expr[io.scalaland.chimney.dsl.PartialTransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch]](
+          c.prefix.tree
+        ),
+        anyExpr(selector),
+        anyExpr(f)
+      )
+      .toUntypedResult
 
   def withFieldComputedPartialImpl[
       From: WeakTypeTag,
@@ -117,31 +70,14 @@ class PartialTransformerIntoForAllMacros(val c: whitebox.Context) extends utils.
       Flags <: TransformerFlags: WeakTypeTag,
       FromMatch: WeakTypeTag,
       ToMatch: WeakTypeTag
-  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree = {
-    val overridesType = new ApplyFieldNameType {
-      def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-        weakTypeTag[ForAll[FromMatch, ToMatch, ComputedPartial[Path.Root, ToPath, Empty], Overrides]]
-    }.applyFromSelector(selector)
-    q"""
-      {
-        val updatedTd = _root_.io.scalaland.chimney.internal.runtime.WithRuntimeDataStore
-          .update(${c.prefix}.td, $f)
-          .asInstanceOf[_root_.io.scalaland.chimney.dsl.PartialTransformerDefinition[
-            ${weakTypeOf[From]},
-            ${weakTypeOf[To]},
-            $overridesType,
-            ${weakTypeOf[Flags]}
-          ]]
-        new _root_.io.scalaland.chimney.dsl.PartialTransformerInto[
-          ${weakTypeOf[From]},
-          ${weakTypeOf[To]},
-          $overridesType,
-          ${weakTypeOf[Flags]}
-        ](
-          ${c.prefix}.source,
-          updatedTd
-        )
-      }
-    """
-  }
+  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree =
+    PartialTransformerIntoForAllDsl
+      .withFieldComputedPartial[From, To, Overrides, Flags, FromMatch, ToMatch](
+        c.Expr[io.scalaland.chimney.dsl.PartialTransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch]](
+          c.prefix.tree
+        ),
+        anyExpr(selector),
+        anyExpr(f)
+      )
+      .toUntypedResult
 }
