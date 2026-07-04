@@ -3,12 +3,11 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.chimneyextensiontest.{TestBox2, TestSpecialBox2, TestSpecialLeaf}
 
-/** Proves Chimney's OWN engine-aware macro-extension SPI
-  * ([[io.scalaland.chimney.integrations.ChimneyMacroExtension]]) end to end: the
-  * `io.scalaland.chimney.chimneyextensiontest.TestChimneyMacroExtension` handler is SEPARATELY COMPILED (in this
-  * module's `Compile`) and loaded via `ServiceLoader` when THESE test sources are macro-expanded - there is NO import
-  * that brings the conversions into scope, so the only way they derive is through the ServiceLoader-registered handler
-  * (property d).
+/** Proves Chimney's OWN engine-aware macro-extension SPI ([[io.scalaland.chimney.integrations.ChimneyMacroExtension]])
+  * end to end: the `io.scalaland.chimney.chimneyextensiontest.TestChimneyMacroExtension` handler is SEPARATELY COMPILED
+  * (in this module's `Compile`) and loaded via `ServiceLoader` when THESE test sources are macro-expanded - there is NO
+  * import that brings the conversions into scope, so the only way they derive is through the ServiceLoader-registered
+  * handler (property d).
   */
 class ChimneyMacroExtensionSpec extends ChimneySpec {
 

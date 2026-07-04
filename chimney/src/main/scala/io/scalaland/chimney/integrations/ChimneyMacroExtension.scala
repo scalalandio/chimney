@@ -33,11 +33,12 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.ChimneyE
   * }}}
   *
   * Precedence: the rule that consults these handlers sits BELOW the four implicit rules (`Transformer`/
-  * `PartialTransformer`/`TotalOuterTransformer`/`PartialOuterTransformer` implicits, incl. `io.scalaland.chimney.integrations`
-  * ones) and ABOVE Chimney's built-in structural rules - so a user implicit `Transformer` for the same pair still wins.
+  * `PartialTransformer`/`TotalOuterTransformer`/`PartialOuterTransformer` implicits, incl.
+  * `io.scalaland.chimney.integrations` ones) and ABOVE Chimney's built-in structural rules - so a user implicit
+  * `Transformer` for the same pair still wins.
   *
   * NOTE: currently `private[chimney]` (usable by IN-TREE integration modules). Promoting to fully public API is a
   * planned follow-up once the shape is signed off.
   */
-private[chimney] abstract class ChimneyMacroExtension
+abstract private[chimney] class ChimneyMacroExtension
     extends hearth.MacroExtension[hearth.MacroCommons & ChimneyEngineExtensionApi]

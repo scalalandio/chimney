@@ -2,7 +2,8 @@ package io.scalaland.chimney.chimneyextensiontest
 
 /** Special-cased leaf, supported EXCLUSIVELY through the engine-aware [[TestChimneyMacroExtension]] (a
   * `ChimneyMacroExtension` handler): private constructor, no structural single-field/value-class shape and no implicit -
-  * so only the pair-specific handler can build it (`Int -> TestSpecialLeaf` total, `String -> TestSpecialLeaf` partial).
+  * so only the pair-specific handler can build it (`Int -> TestSpecialLeaf` total, `String -> TestSpecialLeaf`
+  * partial).
   */
 final class TestSpecialLeaf private (val value: Int) {
   override def equals(obj: Any): Boolean = obj match {
@@ -31,5 +32,6 @@ object TestSpecialBox2 {
   def of[A, B](first: A, second: B): TestSpecialBox2[A, B] = new TestSpecialBox2(first, second)
 }
 
-/** Plain source product the specs construct; the handler turns it into a [[TestSpecialBox2]] by deferring both fields. */
+/** Plain source product the specs construct; the handler turns it into a [[TestSpecialBox2]] by deferring both fields.
+  */
 final case class TestBox2[A, B](first: A, second: B)

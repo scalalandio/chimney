@@ -6,14 +6,15 @@ import io.scalaland.chimney.dsl.PreferPartialTransformer
 import io.scalaland.chimney.integrations.ChimneyMacroExtension
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.ChimneyEngineExtensionApi
 
-/** Chimney `ChimneyMacroExtension` (registered via `META-INF/services/io.scalaland.chimney.integrations.ChimneyMacroExtension`,
-  * shipped in the published chimney-protobufs jar) providing engine-aware, PAIR-SPECIFIC transformations for the
-  * Protobuf well-known types whose shape Hearth's std-extension providers cannot express (see the sibling
-  * [[ProtobufsMacroExtension]] for the ones that CAN - ByteString/wrappers.*Value/Timestamp).
+/** Chimney `ChimneyMacroExtension` (registered via
+  * `META-INF/services/io.scalaland.chimney.integrations.ChimneyMacroExtension`, shipped in the published
+  * chimney-protobufs jar) providing engine-aware, PAIR-SPECIFIC transformations for the Protobuf well-known types whose
+  * shape Hearth's std-extension providers cannot express (see the sibling [[ProtobufsMacroExtension]] for the ones that
+  * CAN - ByteString/wrappers.*Value/Timestamp).
   *
   * Since 2.0.0 these replaced the corresponding IMPLICITS (deleted from `ProtobufsTransformerImplicits` /
-  * `ProtobufsPartialTransformerImplicits`), so the conversions work WITHOUT any import once this jar is on the classpath
-  * (user/integration implicits still override them - the special-cased rule sits below the implicit rules):
+  * `ProtobufsPartialTransformerImplicits`), so the conversions work WITHOUT any import once this jar is on the
+  * classpath (user/integration implicits still override them - the special-cased rule sits below the implicit rules):
   *
   *   - `com.google.protobuf.duration.Duration` <-> `java.time.Duration` / `scala.concurrent.duration.FiniteDuration`
   *     (total both ways) and <-> `scala.concurrent.duration.Duration` (total FROM proto via upcast; partial TO proto,

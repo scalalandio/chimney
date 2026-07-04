@@ -11,8 +11,8 @@ import io.scalaland.chimney.partial
   * only register `IsCollection`/`IsValueType`/... providers and has no access to the derivation engine). A
   * `ChimneyMacroExtension` registers PAIR-SPECIFIC transformation handlers (`(Type[From], Type[To]) => ...`) that:
   *
-  *   - decide, by inspecting `Type[From]`/`Type[To]`, whether they special-case a given pair (the [[IsChimneySpecialCased]]
-  *     extractor asks each registered handler in turn),
+  *   - decide, by inspecting `Type[From]`/`Type[To]`, whether they special-case a given pair (the
+  *     [[IsChimneySpecialCased]] extractor asks each registered handler in turn),
   *   - build the resulting `Expr` for the OUTER layer while DEFERRING inner values back to the engine via
   *     [[deriveInner]] (which re-enters the full rule pipeline recursively - supporting N inner derivations, not just
   *     the single-inner shape `TotalOuterTransformer`/`PartialOuterTransformer` allow),
@@ -41,20 +41,23 @@ private[chimney] trait ChimneyEngineExtensionApi extends Contexts with rules.Tra
   /** A derived (possibly partial) inner expression returned by [[deriveInner]] (compose via its `fold`/`map`). */
   final type DerivedExpr[A] = TransformationExpr[A]
 
-  /** A handler registered by an integration. Asked - via [[IsChimneySpecialCased]] - whether it special-cases a pair. */
+  /** A handler registered by an integration. Asked - via [[IsChimneySpecialCased]] - whether it special-cases a pair.
+    */
   private[chimney] trait SpecialCaseHandler {
 
     /** Return `Some(handler)` iff this extension special-cases the `(From, To)` pair, else `None`. */
     def apply[From, To](implicit From: Type[From], To: Type[To]): Option[SpecialCasedTransformation[From, To]]
   }
 
-  /** The pair-specific transformation matched for a concrete `(From, To)`. `specialCase` yields
-    * `Some(derivedExpr)` when it produces a transformation, or `None` to DECLINE after matching by type (e.g. no total
-    * path in a total context) so derivation continues with the next rule.
+  /** The pair-specific transformation matched for a concrete `(From, To)`. `specialCase` yields `Some(derivedExpr)`
+    * when it produces a transformation, or `None` to DECLINE after matching by type (e.g. no total path in a total
+    * context) so derivation continues with the next rule.
     */
   private[chimney] trait SpecialCasedTransformation[From, To] {
 
-    /** Build the transformation for the (already matched) `(From, To)` pair, deferring inner values via [[deriveInner]]. */
+    /** Build the transformation for the (already matched) `(From, To)` pair, deferring inner values via
+      * [[deriveInner]].
+      */
     def specialCase(implicit ctx: SpecialCaseContext[From, To]): MIO[Option[DerivedExpr[To]]]
   }
 
@@ -121,7 +124,8 @@ private[chimney] trait ChimneyEngineExtensionApi extends Contexts with rules.Tra
   // Load handlers once per macro-bundle instance (mirrors `ensureStandardExtensionsLoaded`).
   private var chimneyMacroExtensionsLoaded = false
 
-  /** Call before consulting [[IsChimneySpecialCased]]. Idempotent. Loads `ChimneyMacroExtension`s via `ServiceLoader`. */
+  /** Call before consulting [[IsChimneySpecialCased]]. Idempotent. Loads `ChimneyMacroExtension`s via `ServiceLoader`.
+    */
   protected def ensureChimneyMacroExtensionsLoaded(): Unit =
     if (!chimneyMacroExtensionsLoaded) {
       Environment.loadMacroExtensions[io.scalaland.chimney.integrations.ChimneyMacroExtension].toEither match {
