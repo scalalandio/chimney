@@ -1,9 +1,12 @@
 package io.scalaland.chimney.internal.compiletime
 
 /** Hearth workarounds and small helpers used by the derivation engine; each workaround member cites its upstream issue
-  * (https://github.com/kubuszok/hearth/issues). After the 0.4.1-SNAPSHOT sweep (it.29) the surviving workarounds are:
-  * #307 (ctorN factories - upstream fix widens literal args), #317/#318 (splice-scoping, still reproducible) and the
-  * #334 annotation-attaching gap (nowarn/suppressWarnings).
+  * (https://github.com/kubuszok/hearth/issues). After the 0.4.0-16-gd4adc1c-SNAPSHOT sweep (it.30) the surviving
+  * workarounds are: #307 (ctorN factories - the fixed codegen still fails to MATCH existentially-quantified type
+  * projections on Scala 2), #317/#318 (the derive-first `*InstanceCompat` architecture and `prependFreshValCompat`'s
+  * owner healing are still needed - `withMacroEntryCtx` pins caches but pinning a WHOLE derivation inside a splice
+  * creates entry-owned defs inside nested-splice-owned trees) and the #334 annotation-attaching gap
+  * (nowarn/suppressWarnings). `withMacroEntryCtxCompat` now delegates to Hearth's `withMacroEntryCtx` on Scala 3.
   */
 private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
 
@@ -38,30 +41,29 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
 
   /** Runs the thunk with Cross-Quotes' active context restored to the MACRO-ENTRY one (`Quotes` on Scala 3).
     *
-    * HEARTH 0.4.0 ISSUE WORKAROUND (hearth#317, Scala 3): whole derivations that run INSIDE an `Expr.splice` (the
-    * `Transformer`/`PartialTransformer`/`Patcher` `instance` builders) execute under Cross-Quotes' `nestedCtx`.
-    * Everything they create through cross-quoted helpers (types, exprs, cached `SealedEnum`/`Product` views,
-    * trait-level lazy vals initialized on first touch) then BELONGS to that one splice evaluation - deriving a SECOND
-    * instance in the same expansion (Iso/Codec do exactly that) re-evaluates the same splice and `-Xcheck-macros`
-    * aborts with "Type created in a splice, extruded from that splice and then used in a subsequent evaluation of that
-    * same splice" / "Expression created in a splice was used outside of that splice". Restoring the entry `Quotes` for
-    * the derivation makes all definitions/types/caches entry-scoped and legal in every splice.
+    * Cross-platform bridge of Hearth's Scala 3-only `withMacroEntryCtx` (added in 0.4.1 as the hearth#317/#318 fix):
+    * whole derivations that run INSIDE an `Expr.splice` (the `Transformer`/`PartialTransformer`/`Patcher` `instance`
+    * builders) execute under Cross-Quotes' `nestedCtx`, so everything they create or first-touch (types, exprs, cached
+    * `SealedEnum`/`Product` views, trait-level lazy vals) would BELONG to that one splice evaluation - deriving a
+    * SECOND instance in the same expansion (Iso/Codec do exactly that) re-evaluates the same splice and
+    * `-Xcheck-macros` aborts with a ScopeException. Pinning the entry `Quotes` for the derivation makes all
+    * definitions/types/caches entry-scoped and legal in every splice.
     *
     * IMPORTANT: quote any splice-scoped parameters (e.g. `Expr.quote(src)`) BEFORE entering this wrapper. Identity on
-    * Scala 2 (no `Quotes` scoping).
+    * Scala 2 (no `Quotes` scoping); the Scala 3 `PlatformBridge` override delegates to Hearth's `withMacroEntryCtx`.
     */
   protected def withMacroEntryCtxCompat[T](thunk: => T): T = thunk
 
   /** Prepends a `FreshName.FromType`-named val in front of `use`'s result - a `ValDefs.createVal(...).use(...)` that is
     * SAFE to call inside an `Expr.splice` on Scala 3.
     *
-    * HEARTH 0.4.0 ISSUE WORKAROUND (hearth#317, Scala 3): Hearth's `ValDefs` is bound to the macro-entry `Quotes`, so
-    * inside an `Expr.splice` (where Cross-Quotes' `nestedCtx` switched the active `Quotes`) the created `ValDef` is
-    * owned by the ENTRY splice owner, while trees that pass through cross-quoted helpers get re-owned to the nested
-    * quote's owner (e.g. `method transform`); `ValDefs.closeScope`'s `Block.apply` then trips `-Xcheck-macros` with
-    * "Block contains definition with different owners". The Scala 3 `PlatformBridge` override builds the val under
-    * `CrossQuotes.ctx` (correct owner) and heals the body with `changeOwner`. The shared default (fine on Scala 2,
-    * where there is no owner tracking) delegates to `ValDefs`.
+    * HEARTH ISSUE WORKAROUND (hearth#317 leftover): even with 0.4.0-16-gd4adc1c's owner-following symbol creation, a
+    * plain `ValDefs.createVal(...).use(...)` under the entry-ctx pin still produces "Block contains definition with
+    * different owners" (owners `method transform`/`val macro`) - the val is entry-owned while defs created during
+    * nested `Expr.quote` splices of the derived body (e.g. `MatchCase` binds) are owned by the instance-method splice
+    * (re-verified against 0.4.0-16-gd4adc1c-SNAPSHOT in it.30). The Scala 3 `PlatformBridge` override additionally
+    * HEALS the body with `changeOwner(Symbol.spliceOwner)`, which Hearth's `closeScope` does not do. The shared default
+    * (fine on Scala 2, where there is no owner tracking) delegates to `ValDefs`.
     */
   protected def prependFreshValCompat[A: Type, B: Type](value: Expr[A])(use: Expr[A] => Expr[B]): Expr[B] =
     ValDefs.createVal[A](value, FreshName.FromType).use(use)
@@ -137,11 +139,13 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
   protected def suppressWarningsExpr[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A]
 
   /** Workaround for a Hearth bug (hearth#307 leftover): on Scala 2 the 0.4.0 `Type.CtorN.UpperBounded.of[...]` (and
-    * `Bounded.of`) with a non-`Any` upper bound expanded to code that did not typecheck; 0.4.1 fixes THAT, but the
-    * generated `matchResult` now calls `.dealias.widen` on every EXTRACTED type argument, which decays literal types -
-    * Chimney's phantom-type configs carry literal `String` singletons (`Path.Select["fieldName", _]`,
-    * `ArgumentList.Argument["name", _, _]`, ...) and `extractStringSingleton` then aborts with "Invalid string literal
-    * type: java.lang.String" (verified against 0.4.0-9-g8153a5e-SNAPSHOT; see the follow-up comment on hearth#307).
+    * `Bounded.of`) with a non-`Any` upper bound expanded to code that did not typecheck; 0.4.1 fixed THAT, and
+    * 0.4.0-16-gd4adc1c also fixed the follow-up literal-args decay (`.dealias.widen` in `matchResult`) - but the
+    * generated `unapply` still fails to MATCH existentially-quantified type projections, e.g.
+    * `TransformerFlags#OptionFallbackMerge[?$3]` coming from DSL members declared with wildcard args
+    * (`Disable[OptionFallbackMerge[?], Flags]` in `TransformerTargetFlagsDsl`): Scala 2 configuration parsing then
+    * aborts with "Invalid internal TransformerFlag type: ...OptionFallbackMerge[...`?$3`]!" (verified against
+    * 0.4.0-16-gd4adc1c-SNAPSHOT; see the follow-up comment on hearth#307).
     *
     * These factories hand-build the same `Type.CtorN.UpperBounded` instances on top of Hearth's untyped API instead
     * (extracted args passed through UNWIDENED). `applied` is the type constructor applied to its upper bounds - it only

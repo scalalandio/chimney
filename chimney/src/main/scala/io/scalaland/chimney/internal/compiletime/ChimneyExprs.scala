@@ -46,6 +46,10 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions & hearth.Macr
     * that splice". The Scala 3 `PlatformBridge` overrides these three builders: mint a fresh `FromType`-named val
     * symbol first, run the derivation against its `Ref` (plain MIO, no direct style), and only then construct the
     * instance quote, binding the val to the method parameter inside the splice.
+    *
+    * Re-verified against 0.4.0-16-gd4adc1c-SNAPSHOT (it.30): running the WHOLE derivation inside the splice pinned via
+    * the new `withMacroEntryCtx` trades the ScopeException for owner mismatches (entry-owned Hearth defs inside
+    * nested-splice-owned quote fragments), so the derive-first overrides stay.
     */
   protected def transformerInstanceCompat[From: Type, To: Type](
       deriveBody: Expr[From] => MIO[Expr[To]]

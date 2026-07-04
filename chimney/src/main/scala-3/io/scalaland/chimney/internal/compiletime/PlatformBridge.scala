@@ -118,48 +118,11 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     }
   }
 
-  /** Scala 3 override of `ProductTypes.inheritedFieldGettersCompat` (hearth#327 leftover): since 0.4.1 Hearth's
-    * `Type[A].methods` lists inherited parent-class `val` fields, but with `isAvailable(Everywhere) = false` and
-    * `isInherited = false` - the former drops them from Chimney's candidate filter, the latter would bypass the
-    * `enableInheritedAccessors` gate. Until the metadata is right, keep walking `A.baseClasses` (same approach as
-    * scalalandio/chimney-macro-commons#85, chimney issue #835).
+  /** Scala 3 override of [[MacroCommonsCompat.withMacroEntryCtxCompat]]: delegates to Hearth's `withMacroEntryCtx`
+    * (added in 0.4.1 as part of the hearth#317/#318 fix), which pins the macro-ENTRY `Quotes` as Cross-Quotes' active
+    * context for the duration of the thunk.
     */
-  override protected def inheritedFieldGettersCompat[A: Type](existingNames: Set[String]): List[(String, ??)] = {
-    given tA: scala.quoted.Type[A] = Type[A].asInstanceOf[scala.quoted.Type[A]]
-    val aRepr = TypeRepr.of[A]
-    def isPublic(sym: Symbol): Boolean =
-      !sym.flags.is(Flags.Private) && !sym.flags.is(Flags.Protected) &&
-        sym.privateWithin.isEmpty && sym.protectedWithin.isEmpty
-    // NOTE (hearth#328, fixed in 0.4.1 by the `baseClassTypes` alias): hearth's own `baseClasses` extension on
-    // UntypedType (= TypeRepr) returns List[UntypedType] and wins over quotes.reflect's
-    // `TypeRepr#baseClasses: List[Symbol]` - call the reflect one explicitly.
-    val bases: List[Symbol] = quotes.reflect.TypeReprMethods.baseClasses(aRepr)
-    (for {
-      base <- bases
-      field <- base.fieldMembers
-      name = field.name.trim
-      if !existingNames(name)
-      if isPublic(field) && !field.flags.is(Flags.Synthetic) && !field.flags.is(Flags.Artifact)
-    } yield {
-      val fieldType = aRepr.memberType(field).widenByName.dealias
-      name -> (fieldType.asType match {
-        case '[t] => (summon[scala.quoted.Type[t]].asInstanceOf[Type[t]]).as_??
-      })
-    }).distinctBy(_._1)
-  }
-
-  /** Scala 3 override of `ProductTypes.inheritedFieldGetterCompat`: plain field selection `in.name`. */
-  override protected def inheritedFieldGetterCompat[A: Type, Tpe: Type](in: Expr[A], name: String): Expr[Tpe] = {
-    given tTpe: scala.quoted.Type[Tpe] = Type[Tpe].asInstanceOf[scala.quoted.Type[Tpe]]
-    Select.unique(in.asInstanceOf[scala.quoted.Expr[A]].asTerm, name).asExprOf[Tpe].asInstanceOf[Expr[Tpe]]
-  }
-
-  /** Scala 3 override of [[MacroCommonsCompat.withMacroEntryCtxCompat]]: restores the macro-entry `Quotes` as
-    * Cross-Quotes' active context for the duration of the thunk (no-op when it is already active).
-    */
-  override protected def withMacroEntryCtxCompat[T](thunk: => T): T =
-    if CrossQuotes.ctx[Quotes] eq quotes then thunk
-    else CrossQuotes.nestedCtx(using quotes)(thunk)
+  override protected def withMacroEntryCtxCompat[T](thunk: => T): T = withMacroEntryCtx(thunk)
 
   /** Scala 3 override of [[MacroCommonsCompat.prependFreshValCompat]]: builds the `val` under the CURRENT
     * (Cross-Quotes-managed) `Quotes` so its owner matches the definitions produced by cross-quoted helpers inside the

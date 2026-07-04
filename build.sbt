@@ -35,11 +35,11 @@ val versions = new {
 
   // Dependencies.
   // !!! TODO(hearth-migration) LOUD WARNING !!! -----------------------------------------------------------------
-  // !!! SNAPSHOT PIN: 0.4.0-9-g8153a5e-SNAPSHOT is a MOVING TARGET from Maven Central Snapshots (resolver below).
+  // !!! SNAPSHOT PIN: 0.4.0-16-gd4adc1c-SNAPSHOT is a MOVING TARGET from Maven Central Snapshots (resolver below).
   // !!! It MUST be replaced by a proper hearth RELEASE (and the snapshots resolver removed again)
   // !!! BEFORE merging PR #903. Do NOT release/merge with a -SNAPSHOT hearth dependency.
   // !!! -----------------------------------------------------------------------------------------------------------
-  val hearth = "0.4.0-9-g8153a5e-SNAPSHOT"
+  val hearth = "0.4.0-16-gd4adc1c-SNAPSHOT"
   val cats = "2.13.0"
   // Latest published kindlings (its 0.3.0 depends on hearth 0.4.0, same as us; publishes JVM/JS/Native x 2.13/3).
   val kindlingsCatsIntegration = "0.3.0"

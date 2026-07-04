@@ -105,29 +105,6 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
     }
   }
 
-  /** Scala 3-only (hearth#327 leftover): since 0.4.1 Hearth's `Type[A].methods` DOES list `val` fields inherited from
-    * parent classes, but with wrong metadata - `isAvailable(Everywhere)` is `false` (they get dropped by the
-    * availability filter) and `isInherited` is `false` (they would bypass the `enableInheritedAccessors` gate if
-    * accepted) - so Chimney keeps its own base-class walk until the metadata is right (verified empirically against
-    * 0.4.0-9-g8153a5e-SNAPSHOT; see the follow-up comment on hearth#327).
-    *
-    * Returns `(name, field type)` for PUBLIC non-synthetic fields found on base classes but absent from
-    * `existingNames`; the Scala 3 bridge overrides it (the shared default is empty - Scala 2's `member` walk already
-    * sees inherited fields with correct metadata).
-    */
-  protected def inheritedFieldGettersCompat[A: Type](existingNames: Set[String]): List[(String, ??)] = {
-    val _ = existingNames
-    List.empty
-  }
-
-  /** Scala 3-only: the getter expr (`in.field` selection) for a field returned by [[inheritedFieldGettersCompat]]. */
-  protected def inheritedFieldGetterCompat[A: Type, Tpe: Type](in: Expr[A], name: String): Expr[Tpe] = {
-    // $COVERAGE-OFF$should never happen - inheritedFieldGettersCompat is empty wherever this is not overridden
-    val _ = in
-    assertionFailed(s"No platform override for inherited field getter $name of ${Type.prettyPrint[A]}")
-    // $COVERAGE-ON$
-  }
-
   protected object ProductType {
 
     private[datatypes] lazy val AnyType: Type[Any] = Type.of[Any]
@@ -169,13 +146,15 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
       case _                               => false
     }
 
-    /** Dealiases the type before symbol-based Hearth lookups.
+    /** Dealiases the type before symbol-based Hearth lookups - product parsing is deliberately alias-TRANSPARENT.
       *
-      * HEARTH ISSUE WORKAROUND (hearth#315 leftover): since 0.4.1 Hearth's `primaryConstructor`/`constructors` DO
-      * dealias `export`-created aliases, but the FLAG checks (`Type.isClass`/`Type.isAbstract`) still read the alias
-      * symbol as given and return `false` for e.g. `export Inner.Foo` - the type then fails `isPOJO` and does not parse
-      * as a product (issue 758 regression; verified empirically against 0.4.0-9-g8153a5e-SNAPSHOT, see the follow-up
-      * comment on hearth#315). Scala 2's `typeSymbol` auto-dealiases, so this is a no-op there.
+      * NO LONGER a hearth#315 workaround: since 0.4.0-16-gd4adc1c Hearth's `Type.isClass`/`Type.isAbstract` classify
+      * `export`-created aliases by their underlying class (verified by probe, see the it.30 comment on hearth#315), so
+      * the original justification (issue 758's `export Inner.Foo` failing `isPOJO`) is gone. The dealias stays because
+      * OTHER aliases still need it: e.g. Scala 3 `NamedTuple[...]` types reached through override paths
+      * (`withFieldConst(_.bar.matchingSome.baz, ...)`) arrive in alias form and fail to parse as products without it
+      * (16 NamedTuple-spec regressions when removed against 0.4.0-16-gd4adc1c-SNAPSHOT). Scala 2's `typeSymbol`
+      * auto-dealiases, so this is a no-op there.
       */
     private def dealiasedType[A](A: Type[A]): Type[A] =
       UntypedType.toTyped[A](UntypedType.dealias(UntypedType.fromTyped[A](using A)))
@@ -253,23 +232,7 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
         )
       }
 
-      // inheritedFieldGettersCompat: Scala 3 `val` fields inherited from parent classes carry wrong
-      // availability/inheritance metadata in Hearth (issue #835 / hearth#327) - restore them as inherited body vals
-      // (flag-gated by enableInheritedAccessors).
-      val inheritedFieldGetters = inheritedFieldGettersCompat[A](candidates.map(_.name.trim).toSet)
-        .filterNot { case (name, _) => ProductTypes.isGarbageName(name) }
-        .map { case (name, returned) =>
-          import returned.Underlying as Tpe
-          name -> Existential[Product.Getter[A, *], Tpe](
-            Product.Getter[A, Tpe](
-              sourceType = Product.Getter.SourceType.ConstructorBodyVal,
-              isInherited = true,
-              get = (in: Expr[A]) => inheritedFieldGetterCompat[A, Tpe](in, name)
-            )
-          )
-        }
-
-      ListMap.from(methodBasedGetters ++ inheritedFieldGetters)
+      ListMap.from(methodBasedGetters)
     }
 
     private def namedTupleGetters[A: Type](namedTuple: NamedTuple[A]): Product.Getters[A] =
@@ -310,7 +273,7 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
     private type CachedConstructor[A] = Option[Product.Constructor[A]]
     private val constructorCache = new TypeCache[CachedConstructor]
     def parseConstructor[A](implicit A0: Type[A]): Option[Product.Constructor[A]] =
-      // dealiasedType: Scala 3 export aliases would otherwise fail the isPOJO flag checks (see above).
+      // dealiasedType: alias-transparent parsing (e.g. NamedTuple aliases at override-path positions - see above).
       constructorCache(A0)(parseConstructorImpl(dealiasedType(A0)))
     private def parseConstructorImpl[A](implicit A: Type[A]): Option[Product.Constructor[A]] = {
       val singleton = parseSingleton[A]
