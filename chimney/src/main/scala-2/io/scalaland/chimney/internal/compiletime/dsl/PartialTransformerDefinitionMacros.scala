@@ -72,7 +72,7 @@ class PartialTransformerDefinitionMacros(ctx: whitebox.Context) extends DslBundl
       Subtype: WeakTypeTag
   ](f: Tree): Tree =
     PartialTransformerDefinitionDsl
-      .withSealedSubtypeHandled[From, To, Overrides, Flags](prefixExpr, anyExpr(f), javaEnumFixedSubtype[Subtype](f))
+      .withSealedSubtypeHandled[From, To, Overrides, Flags](prefixExpr, anyExpr(f), typeOf_??[Subtype])
       .toUntypedResult
 
   def withSealedSubtypeRenamedImpl[
@@ -237,7 +237,7 @@ class PartialTransformerDefinitionMacros(ctx: whitebox.Context) extends DslBundl
       .withSealedSubtypeHandledPartial[From, To, Overrides, Flags](
         prefixExpr,
         anyExpr(f),
-        javaEnumFixedSubtype[Subtype](f)
+        typeOf_??[Subtype]
       )
       .toUntypedResult
 
@@ -252,7 +252,7 @@ class PartialTransformerDefinitionMacros(ctx: whitebox.Context) extends DslBundl
       .withSealedSubtypeHandledPartialFailFast[From, To, Overrides, Flags](
         prefixExpr,
         anyExpr(f),
-        javaEnumFixedSubtype[Subtype](f)
+        typeOf_??[Subtype]
       )
       .toUntypedResult
 

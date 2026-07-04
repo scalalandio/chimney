@@ -18,6 +18,8 @@ package io.scalaland.chimney.internal.runtime
   *
   * and we are only able to store it for DSL by encoding the name read from the tree with a dedicated type from below.
   *
-  * In Scala 3 no such shenanigan are needed.
+  * In Scala 3 no such shenanigan are needed (the marker is only ever created on Scala 2), but the class lives in shared
+  * sources so that the shared DSL macros can construct and deconstruct it through plain applied-type matching (see
+  * `DslDefinitions.javaEnumFixedSubtype` and `Configurations.extractPath`).
   */
 sealed class RefinedJavaEnum[E, Value <: String]

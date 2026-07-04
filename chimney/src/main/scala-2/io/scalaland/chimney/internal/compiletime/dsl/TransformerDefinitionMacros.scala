@@ -72,7 +72,7 @@ class TransformerDefinitionMacros(ctx: whitebox.Context) extends DslBundle(ctx) 
       Subtype: WeakTypeTag
   ](f: Tree): Tree =
     TransformerDefinitionDsl
-      .withSealedSubtypeHandled[From, To, Overrides, Flags](prefixExpr, anyExpr(f), javaEnumFixedSubtype[Subtype](f))
+      .withSealedSubtypeHandled[From, To, Overrides, Flags](prefixExpr, anyExpr(f), typeOf_??[Subtype])
       .toUntypedResult
 
   def withSealedSubtypeRenamedImpl[

@@ -561,6 +561,14 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
         )
     }
 
+    /** Scala 2's carrier of a Java-enum value selected in the DSL (see [[runtime.RefinedJavaEnum]]): built by
+      * `DslDefinitions.javaEnumFixedSubtype`, decoded back by `Configurations.extractPath` - both through this ctor.
+      */
+    lazy val RefinedJavaEnum: Type.Ctor2.UpperBounded[Any, String, runtime.RefinedJavaEnum] =
+      ctor2UpperBoundedCompat[Any, String, runtime.RefinedJavaEnum](
+        Type.of[runtime.RefinedJavaEnum[Any, String]]
+      )
+
     object PartialOuterTransformer extends Type.Ctor4[integrations.PartialOuterTransformer] {
       // See reapplyLeadingTypeArgsCompat for why the wildcards are not just `Type.of[F[From, To, ?, ?]]`.
       private lazy val inferredUntyped: UntypedType =

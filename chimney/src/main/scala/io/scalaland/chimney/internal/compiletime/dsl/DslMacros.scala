@@ -632,7 +632,7 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
       updated[From, To, Flags](
         prefix,
         f,
-        DslOverride.computed[Overrides](sourceMatchingRootPath(subtype), rootPathType)
+        DslOverride.computed[Overrides](sourceMatchingRootPath(javaEnumFixedSubtype(f, subtype)), rootPathType)
       )
 
     def withSealedSubtypeHandledPartial[
@@ -644,7 +644,7 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
       updated[From, To, Flags](
         prefix,
         f,
-        DslOverride.computedPartial[Overrides](sourceMatchingRootPath(subtype), rootPathType)
+        DslOverride.computedPartial[Overrides](sourceMatchingRootPath(javaEnumFixedSubtype(f, subtype)), rootPathType)
       )
 
     def withSealedSubtypeHandledPartialFailFast[
@@ -656,7 +656,8 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
       updated[From, To, Flags](
         prefix,
         curriedFailFastData(f),
-        DslOverride.computedPartialFailFast[Overrides](sourceMatchingRootPath(subtype), rootPathType)
+        DslOverride
+          .computedPartialFailFast[Overrides](sourceMatchingRootPath(javaEnumFixedSubtype(f, subtype)), rootPathType)
       )
 
     def withSealedSubtypeRenamed[
