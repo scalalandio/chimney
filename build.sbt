@@ -42,7 +42,9 @@ val versions = new {
   val hearth = "0.4.0-19-g881908a-SNAPSHOT"
   val cats = "2.13.0"
   // Latest published kindlings (its 0.3.0 depends on hearth 0.4.0, same as us; publishes JVM/JS/Native x 2.13/3).
-  val kindlingsCatsIntegration = "0.3.0"
+  // TODO(kindlings-release): snapshot carrying kubuszok/kindlings#163 (NonEmptySeq/NonEmptyLazyList IsCollection
+  // providers). Return to a released kindlings before merging PR #903.
+  val kindlingsCatsIntegration = "0.3.0-24-gfc36d68-SNAPSHOT"
   val kindProjector = "0.13.4"
   val munit = "1.3.3"
   val scalaJavaCompat = "1.0.2"
@@ -495,6 +497,16 @@ lazy val chimneyCats = projectMatrix
     Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*, io.scalaland.chimney.cats.*",
     libraryDependencies += "org.typelevel" %%% "cats-core" % versions.cats,
     libraryDependencies += "org.typelevel" %%% "cats-laws" % versions.cats % Test,
+    // Since 2.0.0 chimney-cats also ships a Chimney `ChimneyMacroExtension` (ServiceLoader-registered, see
+    // src/main/resources/META-INF/services): engine-aware SpecialCaseHandlers restoring the total NonEmpty<->NonEmpty
+    // (Traverse), NonEmptyMap/NonEmptySet and FunctionK conversions that used to live as `CatsDataImplicits`. The
+    // handlers use Hearth's API + cross-quotes directly (hearth itself already comes transitively through chimney).
+    libraryDependencies += "com.kubuszok" %%% "hearth" % versions.hearth,
+    // Cross-quotes: on Scala 2 they are macros (part of hearth), on Scala 3 they are a compiler plugin.
+    libraryDependencies ++= versions.fold(scalaVersion.value)(
+      for2_13 = Seq.empty,
+      for3 = Seq(compilerPlugin("com.kubuszok" %% "hearth-cross-quotes" % versions.hearth))
+    ),
     // Hearth StandardMacroExtension with IsCollection/IsMap providers for cats.data types (NonEmptyList, Chain, ...).
     // Test-scoped: it is consulted at MACRO-EXPANSION time of the TEST sources (ServiceLoader on the compile
     // classpath of the code being derived) - the specs prove cats collections derive WITHOUT chimney-cats implicits.

@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import hearth.fp.effect.MIO
+import hearth.fp.syntax.*
 import io.scalaland.chimney.dsl.PreferPartialTransformer
 import io.scalaland.chimney.partial
 
@@ -107,6 +108,48 @@ private[chimney] trait ChimneyEngineExtensionApi extends Contexts with rules.Tra
       inner: Expr[InnerFrom]
   )(implicit ctx: SpecialCaseContext[?, ?]): MIO[DerivedExpr[InnerTo]] =
     deriveRecursiveTransformationExpr[InnerFrom, InnerTo](inner)
+
+  /** Build a special-cased OUTER transformation that maps every inner element THROUGH the engine - the extension analog
+    * of a `TotalOuterTransformer`, for when the outer container carries a homogeneous `InnerFrom` to map into `InnerTo`
+    * (e.g. `F[A] -> F[B]` / `F[A] -> G[B]`).
+    *
+    * It recursively derives `InnerFrom => InnerTo` for the elements (re-entering the full rule pipeline under the
+    * `everyItem` path, so nested transformers/overrides apply), folds whether that inner derivation came back total or
+    * partial, and lets the handler wrap the built inner FUNCTION with its own outer construction:
+    *   - [[onTotalInner]] receives `Expr[InnerFrom => InnerTo]` and returns the total `Expr[To]` (e.g.
+    *     `Traverse[F].map(src)(fn)`),
+    *   - [[onPartialInner]] receives `Expr[InnerFrom => partial.Result[InnerTo]]` and the fail-fast flag and returns
+    *     `Expr[partial.Result[To]]` (used when an element's derivation is partial; requires a partial context - a
+    *     partial inner in a total context is a derivation bug, surfaced as an assertion).
+    *
+    * Mirrors the built-in `TransformImplicitOuterTransformerRule`, so the produced pieces compose under the
+    * cross-quotes contract exactly like a summoned `TotalOuterTransformer` would.
+    */
+  private[chimney] def specialCasedOuterMap[From, To, InnerFrom: Type, InnerTo: Type](
+      onTotalInner: Expr[InnerFrom => InnerTo] => Expr[To]
+  )(
+      onPartialInner: (Expr[InnerFrom => partial.Result[InnerTo]], Expr[Boolean]) => Expr[partial.Result[To]]
+  )(implicit ctx: SpecialCaseContext[From, To]): MIO[Option[DerivedExpr[To]]] = {
+    import ChimneyType.Implicits.* // provides the `Type[partial.Result[InnerTo]]` needed by `build` below
+    LambdaBuilder
+      .of1[InnerFrom]()
+      .traverse { (innerFromExpr: Expr[InnerFrom]) =>
+        deriveRecursiveTransformationExpr[InnerFrom, InnerTo](innerFromExpr, Path(_.everyItem), Path(_.everyItem))
+      }
+      .flatMap { (builder: LambdaBuilder[InnerFrom => *, TransformationExpr[InnerTo]]) =>
+        builder.foldTransformationExpr { (onTotal: LambdaBuilder[InnerFrom => *, Expr[InnerTo]]) =>
+          specialCasedTotal(onTotalInner(onTotal.build[InnerTo]))
+        } { (onPartial: LambdaBuilder[InnerFrom => *, Expr[partial.Result[InnerTo]]]) =>
+          ctx.fold { _ =>
+            MIO.fail[Option[DerivedExpr[To]]](
+              new AssertionError("Special-cased outer transformer derived a partial inner in a total context")
+            )
+          } { partialCtx =>
+            specialCasedPartial(onPartialInner(onPartial.build[partial.Result[InnerTo]], partialCtx.failFast))
+          }
+        }
+      }
+  }
 
   // Context accessors (the context's own members stay `protected`; these facade helpers reach them from inside the cake).
 

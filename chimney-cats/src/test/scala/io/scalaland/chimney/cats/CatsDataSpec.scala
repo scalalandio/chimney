@@ -13,14 +13,15 @@ import io.scalaland.chimney.utils.OptionUtils.*
   * import is needed for the conversions below.
   *
   * BEHAVIOR CHANGES vs 1.x (documented per-test):
-  *   - NonEmpty* types are detected as SMART-CONSTRUCTOR collections: `PartialTransformer` derivation works, TOTAL
-  *     derivation fails to compile (1.x was the same for stdlib->NonEmpty; what is NEW is that NonEmpty->NonEmpty and
-  *     any `F[A] -> F[B]` mapping via `Traverse`/`~>` is no longer total - those `TotalOuterTransformer` instances were
-  *     removed without a kindlings counterpart),
+  *   - NonEmpty* types are detected as SMART-CONSTRUCTOR collections for stdlib->NonEmpty (`PartialTransformer` works,
+  *     TOTAL fails to compile - same as 1.x). NonEmpty->NonEmpty and any `F[A] -> F[B]`/`F[A] -> G[B]` mapping via
+  *     `Traverse`/`~>` stay TOTAL, RESTORED by `chimney-cats`' `CatsChimneyMacroExtension` (the 1.x
+  *     `catsTotalOuterTransformerFromTraverse`/`-ForNonEmptyMap`/`-ForNonEmptySet`/`catsTotalTransformerFromFunctionK`
+  *     instances, deleted with `CatsDataImplicits`, are re-provided as engine `SpecialCaseHandler`s),
   *   - empty-input error MESSAGE drift: 1.x `PartiallyBuildIterable` implicits produced `"" -> "empty value"`
   *     (`partial.Result.fromOption`), kindlings providers produce `"" -> "Cannot create <Type> from empty collection"`.
   *     Paths are unchanged (error at the collection itself; element errors still at "(idx)"/"keys(k)"),
-  *   - `NonEmptySeq`/`NonEmptyLazyList` have NO kindlings 0.3.0 provider - conversions are GONE (pinned below),
+  *   - `NonEmptySeq`/`NonEmptyLazyList` are supported again (kindlings providers since kubuszok/kindlings#163),
   *   - `NonEmptyMap`/`NonEmptySet` require `cats.Order` of the key/element to be summonable at MACRO-EXPANSION time
   *     (1.x required `Ordering` at implicit-summoning time - same effective requirement, different mechanism).
   *
@@ -125,59 +126,43 @@ class CatsDataSpec extends ChimneySpec {
     )
   }
 
-  test("BEHAVIOR GAP (2.0.0): Traverse-based TOTAL mapping between NonEmpty collections was removed (pinned)") {
+  test("Traverse-based TOTAL mapping between NonEmpty collections (restored via CatsChimneyMacroExtension)") {
     implicit val intToStr: Transformer[Int, String] = _.toString
 
-    // NonEmptyList still derives TOTALLY - not as a collection, but as a plain case class (head + tail), which
-    // yields the same elementwise mapping the removed Traverse-based instance produced:
+    // RESTORED (2.0.0): 1.x's catsTotalOuterTransformerFromTraverse/-ForNonEmptyMap/-ForNonEmptySet (deleted with
+    // CatsDataImplicits) are re-provided by chimney-cats' CatsChimneyMacroExtension - a Traverse[F].map handler for
+    // NonEmptyChain/NonEmptyVector/NonEmptyList, plus dedicated NonEmptyMap/NonEmptySet handlers (those two have no
+    // cats.Traverse, so they map via mapBoth/map given a summonable cats.Order of the target key/element).
     NonEmptyList.one(1).transformInto[NonEmptyList[String]] ==> NonEmptyList.one("1")
-
-    // The newtype-encoded (NonEmptyChain/NonEmptyMap/NonEmptySet) and private-constructor (NonEmptyVector) types
-    // lost their TOTAL path: 1.x derived these via catsTotalOuterTransformerFromTraverse/-ForNonEmptyMap/
-    // -ForNonEmptySet (TotalOuterTransformer instances, deleted without a kindlings counterpart) - use
-    // transformIntoPartial (previous test) instead.
-    compileErrors("""NonEmptyChain.one(1).transformInto[NonEmptyChain[String]]""").check(
-      "Chimney can't derive transformation from"
-    )
-    compileErrors("""NonEmptyVector.one(1).transformInto[NonEmptyVector[String]]""").check(
-      "Chimney can't derive transformation from"
-    )
-    compileErrors("""NonEmptyMap.one(1, 1).transformInto[NonEmptyMap[String, String]]""").check(
-      "Chimney can't derive transformation from"
-    )
-    compileErrors("""NonEmptySet.one(1).transformInto[NonEmptySet[String]]""").check(
-      "Chimney can't derive transformation from"
-    )
+    NonEmptyChain.one(1).transformInto[NonEmptyChain[String]] ==> NonEmptyChain.one("1")
+    NonEmptyVector.one(1).transformInto[NonEmptyVector[String]] ==> NonEmptyVector.one("1")
+    NonEmptyMap.one(1, 1).transformInto[NonEmptyMap[String, String]] ==> NonEmptyMap.one("1", "1")
+    NonEmptySet.one(1).transformInto[NonEmptySet[String]] ==> NonEmptySet.one("1")
   }
 
-  test("BEHAVIOR GAP (2.0.0): FunctionK-based total transformation was removed (pinned)") {
-    // 1.x derived F[A] -> G[B] TOTALLY given `F ~> G` + `Traverse[F]` (catsTotalTransformerFromFunctionK).
-    // The instance was deleted and no extension mechanism replaces arbitrary-FunctionK support.
-    compileErrors("""
-      implicit val listToOption: _root_.cats.arrow.FunctionK[List, Option] =
-        new _root_.cats.arrow.FunctionK[List, Option] {
-          def apply[A](fa: List[A]): Option[A] = fa.headOption
-        }
-      List(1, 2, 3).transformInto[Option[Int]]
-    """).check("Chimney can't derive transformation from")
+  test("FunctionK-based total transformation F[A] -> G[B] (restored via CatsChimneyMacroExtension)") {
+    // RESTORED (2.0.0): 1.x's catsTotalTransformerFromFunctionK (F[A] -> G[B] given `F ~> G` + `Traverse[F]`) is
+    // re-provided by CatsChimneyMacroExtension - it summons both cats.Traverse[F] and cats.arrow.FunctionK[F, G] at
+    // macro-expansion time and produces `fk(Traverse[F].map(src)(inner))`.
+    implicit val listToOption: _root_.cats.arrow.FunctionK[List, Option] =
+      new _root_.cats.arrow.FunctionK[List, Option] {
+        def apply[A](fa: List[A]): Option[A] = fa.headOption
+      }
+    List(1, 2, 3).transformInto[Option[Int]] ==> Some(1)
   }
 
-  test("BEHAVIOR GAP (2.0.0): NonEmptySeq and NonEmptyLazyList are unsupported (pinned)") {
-    // kindlings-cats-integration 0.3.0 ships providers for NonEmptyList/NonEmptyVector/NonEmptyChain/Chain/
-    // NonEmptySet/NonEmptyMap but NOT for NonEmptySeq/NonEmptyLazyList - report upstream; users can bring their
-    // own io.scalaland.chimney.integrations.PartiallyBuildIterable in the meantime.
-    compileErrors("""List("test").transformIntoPartial[_root_.cats.data.NonEmptySeq[String]]""").check(
-      "Chimney can't derive transformation from"
+  test("NonEmptySeq and NonEmptyLazyList (restored via kindlings-cats-integration providers)") {
+    // RESTORED (2.0.0): kindlings-cats-integration now (kubuszok/kindlings#163) ships IsCollection providers for
+    // NonEmptySeq/NonEmptyLazyList too, so these derive as smart-constructor collections WITHOUT any extension of our
+    // own (just the dep on the classpath). Empty-input message follows kindlings' wording (see other tests).
+    List("test").transformIntoPartial[_root_.cats.data.NonEmptySeq[String]].asOption ==> Some(
+      _root_.cats.data.NonEmptySeq.one("test")
     )
-    compileErrors("""_root_.cats.data.NonEmptySeq.one("test").transformInto[List[String]]""").check(
-      "Chimney can't derive transformation from"
+    _root_.cats.data.NonEmptySeq.one("test").transformInto[List[String]] ==> List("test")
+    List("test").transformIntoPartial[_root_.cats.data.NonEmptyLazyList[String]].asOption ==> Some(
+      _root_.cats.data.NonEmptyLazyList("test")
     )
-    compileErrors("""List("test").transformIntoPartial[_root_.cats.data.NonEmptyLazyList[String]]""").check(
-      "Chimney can't derive transformation from"
-    )
-    compileErrors("""_root_.cats.data.NonEmptyLazyList("test").transformInto[List[String]]""").check(
-      "Chimney can't derive transformation from"
-    )
+    _root_.cats.data.NonEmptyLazyList("test").transformInto[List[String]] ==> List("test")
   }
 
   test("Validated derivation stays unsupported: chimney's engine has no IsEither extension hook (pinned)") {
