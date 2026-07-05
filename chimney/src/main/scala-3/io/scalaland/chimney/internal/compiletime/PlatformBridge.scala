@@ -15,17 +15,4 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     * splices - per expansion).
     */
   override protected def cacheScopeToken: AnyRef = CrossQuotes.ctx[scala.quoted.Quotes]
-
-  /** Scala 3 builder of the `@java.lang.SuppressWarnings(Array(...))` annotation instance (see
-    * [[MacroCommonsCompat.suppressWarningsAnnotationExpr]]). Java annotations cannot be `new`-ed in source, but
-    * `quotes.reflect`'s `New` bypasses that frontend check.
-    */
-  override protected def suppressWarningsAnnotationExpr(warnings: List[String]): Expr[java.lang.SuppressWarnings] = {
-    import quotes.reflect.*
-    val annotationSymbol: Symbol = TypeRepr.of[java.lang.SuppressWarnings].typeSymbol
-    Apply(
-      Select(New(TypeIdent(annotationSymbol)), annotationSymbol.primaryConstructor),
-      List(scala.quoted.Expr(warnings.toArray).asTerm)
-    ).asExprOf[java.lang.SuppressWarnings]
-  }
 }

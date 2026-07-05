@@ -6,9 +6,9 @@ import io.scalaland.chimney.integrations
 import io.scalaland.chimney.internal.runtime
 import io.scalaland.chimney.partial
 
-/** NB: upper-bounded `Type.CtorN` modules go through `ctorNUpperBoundedCompat` (see [[MacroCommonsCompat]],
-  * hearth#307), and `inferred` members hide their wildcards behind type aliases (cross-quotes `Type.of[F[A, ?]]` does
-  * not compile on Scala 2).
+/** NB: upper-bounded `Type.CtorN` modules use Hearth's direct `Type.CtorN.UpperBounded.of` (hearth#307/#344), and
+  * `inferred` members hide their wildcards behind type aliases (cross-quotes `Type.of[F[A, ?]]` does not compile on
+  * Scala 2).
   */
 private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.MacroCommons =>
 
@@ -72,18 +72,14 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
       lazy val Empty: Type[runtime.ArgumentList.Empty] = Type.of[runtime.ArgumentList.Empty]
 
       lazy val Argument: Type.Ctor3.UpperBounded[String, Any, runtime.ArgumentList, runtime.ArgumentList.Argument] =
-        ctor3UpperBoundedCompat[String, Any, runtime.ArgumentList, runtime.ArgumentList.Argument](
-          Type.of[runtime.ArgumentList.Argument[String, Any, runtime.ArgumentList]]
-        )
+        Type.Ctor3.UpperBounded.of[String, Any, runtime.ArgumentList, runtime.ArgumentList.Argument]
     }
 
     object ArgumentLists {
       lazy val Empty: Type[runtime.ArgumentLists.Empty] = Type.of[runtime.ArgumentLists.Empty]
 
       lazy val List: Type.Ctor2.UpperBounded[runtime.ArgumentList, runtime.ArgumentLists, runtime.ArgumentLists.List] =
-        ctor2UpperBoundedCompat[runtime.ArgumentList, runtime.ArgumentLists, runtime.ArgumentLists.List](
-          Type.of[runtime.ArgumentLists.List[runtime.ArgumentList, runtime.ArgumentLists]]
-        )
+        Type.Ctor2.UpperBounded.of[runtime.ArgumentList, runtime.ArgumentLists, runtime.ArgumentLists.List]
     }
 
     object TransformerOverrides {
@@ -91,33 +87,26 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
 
       lazy val Unused
           : Type.Ctor2.UpperBounded[runtime.Path, runtime.TransformerOverrides, runtime.TransformerOverrides.Unused] =
-        ctor2UpperBoundedCompat[runtime.Path, runtime.TransformerOverrides, runtime.TransformerOverrides.Unused](
-          Type.of[runtime.TransformerOverrides.Unused[runtime.Path, runtime.TransformerOverrides]]
-        )
+        Type.Ctor2.UpperBounded.of[runtime.Path, runtime.TransformerOverrides, runtime.TransformerOverrides.Unused]
 
       lazy val Unmatched: Type.Ctor2.UpperBounded[
         runtime.Path,
         runtime.TransformerOverrides,
         runtime.TransformerOverrides.Unmatched
       ] =
-        ctor2UpperBoundedCompat[runtime.Path, runtime.TransformerOverrides, runtime.TransformerOverrides.Unmatched](
-          Type.of[runtime.TransformerOverrides.Unmatched[runtime.Path, runtime.TransformerOverrides]]
-        )
+        Type.Ctor2.UpperBounded.of[runtime.Path, runtime.TransformerOverrides, runtime.TransformerOverrides.Unmatched]
 
       lazy val Const
           : Type.Ctor2.UpperBounded[runtime.Path, runtime.TransformerOverrides, runtime.TransformerOverrides.Const] =
-        ctor2UpperBoundedCompat[runtime.Path, runtime.TransformerOverrides, runtime.TransformerOverrides.Const](
-          Type.of[runtime.TransformerOverrides.Const[runtime.Path, runtime.TransformerOverrides]]
-        )
+        Type.Ctor2.UpperBounded.of[runtime.Path, runtime.TransformerOverrides, runtime.TransformerOverrides.Const]
 
       lazy val ConstPartial: Type.Ctor2.UpperBounded[
         runtime.Path,
         runtime.TransformerOverrides,
         runtime.TransformerOverrides.ConstPartial
       ] =
-        ctor2UpperBoundedCompat[runtime.Path, runtime.TransformerOverrides, runtime.TransformerOverrides.ConstPartial](
-          Type.of[runtime.TransformerOverrides.ConstPartial[runtime.Path, runtime.TransformerOverrides]]
-        )
+        Type.Ctor2.UpperBounded
+          .of[runtime.Path, runtime.TransformerOverrides, runtime.TransformerOverrides.ConstPartial]
 
       lazy val Computed: Type.Ctor3.UpperBounded[
         runtime.Path,
@@ -125,14 +114,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
         runtime.TransformerOverrides,
         runtime.TransformerOverrides.Computed
       ] =
-        ctor3UpperBoundedCompat[
+        Type.Ctor3.UpperBounded.of[
           runtime.Path,
           runtime.Path,
           runtime.TransformerOverrides,
           runtime.TransformerOverrides.Computed
-        ](
-          Type.of[runtime.TransformerOverrides.Computed[runtime.Path, runtime.Path, runtime.TransformerOverrides]]
-        )
+        ]
 
       lazy val ComputedPartial: Type.Ctor3.UpperBounded[
         runtime.Path,
@@ -140,16 +127,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
         runtime.TransformerOverrides,
         runtime.TransformerOverrides.ComputedPartial
       ] =
-        ctor3UpperBoundedCompat[
+        Type.Ctor3.UpperBounded.of[
           runtime.Path,
           runtime.Path,
           runtime.TransformerOverrides,
           runtime.TransformerOverrides.ComputedPartial
-        ](
-          Type.of[
-            runtime.TransformerOverrides.ComputedPartial[runtime.Path, runtime.Path, runtime.TransformerOverrides]
-          ]
-        )
+        ]
 
       lazy val Fallback: Type.Ctor3.UpperBounded[
         Any,
@@ -157,14 +140,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
         runtime.TransformerOverrides,
         runtime.TransformerOverrides.Fallback
       ] =
-        ctor3UpperBoundedCompat[
+        Type.Ctor3.UpperBounded.of[
           Any,
           runtime.Path,
           runtime.TransformerOverrides,
           runtime.TransformerOverrides.Fallback
-        ](
-          Type.of[runtime.TransformerOverrides.Fallback[Any, runtime.Path, runtime.TransformerOverrides]]
-        )
+        ]
 
       lazy val Constructor: Type.Ctor3.UpperBounded[
         runtime.ArgumentLists,
@@ -172,16 +153,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
         runtime.TransformerOverrides,
         runtime.TransformerOverrides.Constructor
       ] =
-        ctor3UpperBoundedCompat[
+        Type.Ctor3.UpperBounded.of[
           runtime.ArgumentLists,
           runtime.Path,
           runtime.TransformerOverrides,
           runtime.TransformerOverrides.Constructor
-        ](
-          Type.of[
-            runtime.TransformerOverrides.Constructor[runtime.ArgumentLists, runtime.Path, runtime.TransformerOverrides]
-          ]
-        )
+        ]
 
       lazy val ComputedPartialFailFast: Type.Ctor3.UpperBounded[
         runtime.Path,
@@ -189,20 +166,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
         runtime.TransformerOverrides,
         runtime.TransformerOverrides.ComputedPartialFailFast
       ] =
-        ctor3UpperBoundedCompat[
+        Type.Ctor3.UpperBounded.of[
           runtime.Path,
           runtime.Path,
           runtime.TransformerOverrides,
           runtime.TransformerOverrides.ComputedPartialFailFast
-        ](
-          Type.of[
-            runtime.TransformerOverrides.ComputedPartialFailFast[
-              runtime.Path,
-              runtime.Path,
-              runtime.TransformerOverrides
-            ]
-          ]
-        )
+        ]
 
       lazy val ConstructorPartial: Type.Ctor3.UpperBounded[
         runtime.ArgumentLists,
@@ -210,20 +179,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
         runtime.TransformerOverrides,
         runtime.TransformerOverrides.ConstructorPartial
       ] =
-        ctor3UpperBoundedCompat[
+        Type.Ctor3.UpperBounded.of[
           runtime.ArgumentLists,
           runtime.Path,
           runtime.TransformerOverrides,
           runtime.TransformerOverrides.ConstructorPartial
-        ](
-          Type.of[
-            runtime.TransformerOverrides.ConstructorPartial[
-              runtime.ArgumentLists,
-              runtime.Path,
-              runtime.TransformerOverrides
-            ]
-          ]
-        )
+        ]
 
       lazy val ConstructorPartialFailFast: Type.Ctor3.UpperBounded[
         runtime.ArgumentLists,
@@ -231,20 +192,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
         runtime.TransformerOverrides,
         runtime.TransformerOverrides.ConstructorPartialFailFast
       ] =
-        ctor3UpperBoundedCompat[
+        Type.Ctor3.UpperBounded.of[
           runtime.ArgumentLists,
           runtime.Path,
           runtime.TransformerOverrides,
           runtime.TransformerOverrides.ConstructorPartialFailFast
-        ](
-          Type.of[
-            runtime.TransformerOverrides.ConstructorPartialFailFast[
-              runtime.ArgumentLists,
-              runtime.Path,
-              runtime.TransformerOverrides
-            ]
-          ]
-        )
+        ]
 
       lazy val Renamed: Type.Ctor3.UpperBounded[
         runtime.Path,
@@ -252,17 +205,15 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
         runtime.TransformerOverrides,
         runtime.TransformerOverrides.Renamed
       ] =
-        ctor3UpperBoundedCompat[
+        Type.Ctor3.UpperBounded.of[
           runtime.Path,
           runtime.Path,
           runtime.TransformerOverrides,
           runtime.TransformerOverrides.Renamed
-        ](
-          Type.of[runtime.TransformerOverrides.Renamed[runtime.Path, runtime.Path, runtime.TransformerOverrides]]
-        )
+        ]
 
       // ForAll has 2 unbounded + 2 upper-bounded params, which does not fit the Type.CtorN(.UpperBounded) shapes -
-      // a hand-rolled extractor on the untyped API (same exact-ctor matching as ctorNUpperBoundedCompat).
+      // a hand-rolled extractor on the untyped API (same exact-ctor matching as Type.CtorN.UpperBounded.of).
       object ForAll {
         private lazy val untypedCtor: UntypedType =
           UntypedType.typeConstructor(
@@ -308,26 +259,22 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
         runtime.TransformerFlags,
         runtime.TransformerFlags.Enable
       ] =
-        ctor2UpperBoundedCompat[
+        Type.Ctor2.UpperBounded.of[
           runtime.TransformerFlags.Flag,
           runtime.TransformerFlags,
           runtime.TransformerFlags.Enable
-        ](
-          Type.of[runtime.TransformerFlags.Enable[runtime.TransformerFlags.Flag, runtime.TransformerFlags]]
-        )
+        ]
 
       lazy val Disable: Type.Ctor2.UpperBounded[
         runtime.TransformerFlags.Flag,
         runtime.TransformerFlags,
         runtime.TransformerFlags.Disable
       ] =
-        ctor2UpperBoundedCompat[
+        Type.Ctor2.UpperBounded.of[
           runtime.TransformerFlags.Flag,
           runtime.TransformerFlags,
           runtime.TransformerFlags.Disable
-        ](
-          Type.of[runtime.TransformerFlags.Disable[runtime.TransformerFlags.Flag, runtime.TransformerFlags]]
-        )
+        ]
 
       lazy val Source: Type.Ctor3.UpperBounded[
         runtime.Path,
@@ -335,14 +282,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
         runtime.TransformerFlags,
         runtime.TransformerFlags.Source
       ] =
-        ctor3UpperBoundedCompat[
+        Type.Ctor3.UpperBounded.of[
           runtime.Path,
           runtime.TransformerFlags,
           runtime.TransformerFlags,
           runtime.TransformerFlags.Source
-        ](
-          Type.of[runtime.TransformerFlags.Source[runtime.Path, runtime.TransformerFlags, runtime.TransformerFlags]]
-        )
+        ]
 
       lazy val Target: Type.Ctor3.UpperBounded[
         runtime.Path,
@@ -350,14 +295,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
         runtime.TransformerFlags,
         runtime.TransformerFlags.Target
       ] =
-        ctor3UpperBoundedCompat[
+        Type.Ctor3.UpperBounded.of[
           runtime.Path,
           runtime.TransformerFlags,
           runtime.TransformerFlags,
           runtime.TransformerFlags.Target
-        ](
-          Type.of[runtime.TransformerFlags.Target[runtime.Path, runtime.TransformerFlags, runtime.TransformerFlags]]
-        )
+        ]
 
       object Flags {
         lazy val InheritedAccessors: Type[runtime.TransformerFlags.InheritedAccessors] =
@@ -390,64 +333,48 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
           dsls.ImplicitTransformerPreference,
           runtime.TransformerFlags.ImplicitConflictResolution
         ] =
-          ctor1UpperBoundedCompat[
+          Type.Ctor1.UpperBounded.of[
             dsls.ImplicitTransformerPreference,
             runtime.TransformerFlags.ImplicitConflictResolution
-          ](
-            Type.of[runtime.TransformerFlags.ImplicitConflictResolution[dsls.ImplicitTransformerPreference]]
-          )
+          ]
         lazy val OptionFallbackMerge: Type.Ctor1.UpperBounded[
           dsls.OptionFallbackMergeStrategy,
           runtime.TransformerFlags.OptionFallbackMerge
         ] =
-          ctor1UpperBoundedCompat[dsls.OptionFallbackMergeStrategy, runtime.TransformerFlags.OptionFallbackMerge](
-            Type.of[runtime.TransformerFlags.OptionFallbackMerge[dsls.OptionFallbackMergeStrategy]]
-          )
+          Type.Ctor1.UpperBounded.of[dsls.OptionFallbackMergeStrategy, runtime.TransformerFlags.OptionFallbackMerge]
         lazy val EitherFallbackMerge: Type.Ctor1.UpperBounded[
           dsls.OptionFallbackMergeStrategy,
           runtime.TransformerFlags.EitherFallbackMerge
         ] =
-          ctor1UpperBoundedCompat[dsls.OptionFallbackMergeStrategy, runtime.TransformerFlags.EitherFallbackMerge](
-            Type.of[runtime.TransformerFlags.EitherFallbackMerge[dsls.OptionFallbackMergeStrategy]]
-          )
+          Type.Ctor1.UpperBounded.of[dsls.OptionFallbackMergeStrategy, runtime.TransformerFlags.EitherFallbackMerge]
         lazy val CollectionFallbackMerge: Type.Ctor1.UpperBounded[
           dsls.CollectionFallbackMergeStrategy,
           runtime.TransformerFlags.CollectionFallbackMerge
         ] =
-          ctor1UpperBoundedCompat[
+          Type.Ctor1.UpperBounded.of[
             dsls.CollectionFallbackMergeStrategy,
             runtime.TransformerFlags.CollectionFallbackMerge
-          ](
-            Type.of[runtime.TransformerFlags.CollectionFallbackMerge[dsls.CollectionFallbackMergeStrategy]]
-          )
+          ]
         lazy val FieldNameComparison: Type.Ctor1.UpperBounded[
           dsls.TransformedNamesComparison,
           runtime.TransformerFlags.FieldNameComparison
         ] =
-          ctor1UpperBoundedCompat[dsls.TransformedNamesComparison, runtime.TransformerFlags.FieldNameComparison](
-            Type.of[runtime.TransformerFlags.FieldNameComparison[dsls.TransformedNamesComparison]]
-          )
+          Type.Ctor1.UpperBounded.of[dsls.TransformedNamesComparison, runtime.TransformerFlags.FieldNameComparison]
         lazy val SubtypeNameComparison: Type.Ctor1.UpperBounded[
           dsls.TransformedNamesComparison,
           runtime.TransformerFlags.SubtypeNameComparison
         ] =
-          ctor1UpperBoundedCompat[dsls.TransformedNamesComparison, runtime.TransformerFlags.SubtypeNameComparison](
-            Type.of[runtime.TransformerFlags.SubtypeNameComparison[dsls.TransformedNamesComparison]]
-          )
+          Type.Ctor1.UpperBounded.of[dsls.TransformedNamesComparison, runtime.TransformerFlags.SubtypeNameComparison]
         lazy val UnusedFieldPolicyCheck: Type.Ctor1.UpperBounded[
           dsls.UnusedFieldPolicy,
           runtime.TransformerFlags.UnusedFieldPolicyCheck
         ] =
-          ctor1UpperBoundedCompat[dsls.UnusedFieldPolicy, runtime.TransformerFlags.UnusedFieldPolicyCheck](
-            Type.of[runtime.TransformerFlags.UnusedFieldPolicyCheck[dsls.UnusedFieldPolicy]]
-          )
+          Type.Ctor1.UpperBounded.of[dsls.UnusedFieldPolicy, runtime.TransformerFlags.UnusedFieldPolicyCheck]
         lazy val UnmatchedSubtypePolicyCheck: Type.Ctor1.UpperBounded[
           dsls.UnmatchedSubtypePolicy,
           runtime.TransformerFlags.UnmatchedSubtypePolicyCheck
         ] =
-          ctor1UpperBoundedCompat[dsls.UnmatchedSubtypePolicy, runtime.TransformerFlags.UnmatchedSubtypePolicyCheck](
-            Type.of[runtime.TransformerFlags.UnmatchedSubtypePolicyCheck[dsls.UnmatchedSubtypePolicy]]
-          )
+          Type.Ctor1.UpperBounded.of[dsls.UnmatchedSubtypePolicy, runtime.TransformerFlags.UnmatchedSubtypePolicyCheck]
         lazy val MacrosLogging: Type[runtime.TransformerFlags.MacrosLogging] =
           Type.of[runtime.TransformerFlags.MacrosLogging]
       }
@@ -458,14 +385,10 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
 
       lazy val Ignored
           : Type.Ctor2.UpperBounded[runtime.Path, runtime.PatcherOverrides, runtime.PatcherOverrides.Ignored] =
-        ctor2UpperBoundedCompat[runtime.Path, runtime.PatcherOverrides, runtime.PatcherOverrides.Ignored](
-          Type.of[runtime.PatcherOverrides.Ignored[runtime.Path, runtime.PatcherOverrides]]
-        )
+        Type.Ctor2.UpperBounded.of[runtime.Path, runtime.PatcherOverrides, runtime.PatcherOverrides.Ignored]
 
       lazy val Const: Type.Ctor2.UpperBounded[runtime.Path, runtime.PatcherOverrides, runtime.PatcherOverrides.Const] =
-        ctor2UpperBoundedCompat[runtime.Path, runtime.PatcherOverrides, runtime.PatcherOverrides.Const](
-          Type.of[runtime.PatcherOverrides.Const[runtime.Path, runtime.PatcherOverrides]]
-        )
+        Type.Ctor2.UpperBounded.of[runtime.Path, runtime.PatcherOverrides, runtime.PatcherOverrides.Const]
 
       lazy val Computed: Type.Ctor3.UpperBounded[
         runtime.Path,
@@ -473,14 +396,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
         runtime.PatcherOverrides,
         runtime.PatcherOverrides.Computed
       ] =
-        ctor3UpperBoundedCompat[
+        Type.Ctor3.UpperBounded.of[
           runtime.Path,
           runtime.Path,
           runtime.PatcherOverrides,
           runtime.PatcherOverrides.Computed
-        ](
-          Type.of[runtime.PatcherOverrides.Computed[runtime.Path, runtime.Path, runtime.PatcherOverrides]]
-        )
+        ]
     }
 
     object PatcherFlags {
@@ -488,15 +409,11 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
 
       lazy val Enable
           : Type.Ctor2.UpperBounded[runtime.PatcherFlags.Flag, runtime.PatcherFlags, runtime.PatcherFlags.Enable] =
-        ctor2UpperBoundedCompat[runtime.PatcherFlags.Flag, runtime.PatcherFlags, runtime.PatcherFlags.Enable](
-          Type.of[runtime.PatcherFlags.Enable[runtime.PatcherFlags.Flag, runtime.PatcherFlags]]
-        )
+        Type.Ctor2.UpperBounded.of[runtime.PatcherFlags.Flag, runtime.PatcherFlags, runtime.PatcherFlags.Enable]
 
       lazy val Disable
           : Type.Ctor2.UpperBounded[runtime.PatcherFlags.Flag, runtime.PatcherFlags, runtime.PatcherFlags.Disable] =
-        ctor2UpperBoundedCompat[runtime.PatcherFlags.Flag, runtime.PatcherFlags, runtime.PatcherFlags.Disable](
-          Type.of[runtime.PatcherFlags.Disable[runtime.PatcherFlags.Flag, runtime.PatcherFlags]]
-        )
+        Type.Ctor2.UpperBounded.of[runtime.PatcherFlags.Flag, runtime.PatcherFlags, runtime.PatcherFlags.Disable]
 
       lazy val PatchedValue: Type.Ctor3.UpperBounded[
         runtime.Path,
@@ -504,14 +421,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
         runtime.PatcherFlags,
         runtime.PatcherFlags.PatchedValue
       ] =
-        ctor3UpperBoundedCompat[
+        Type.Ctor3.UpperBounded.of[
           runtime.Path,
           runtime.PatcherFlags,
           runtime.PatcherFlags,
           runtime.PatcherFlags.PatchedValue
-        ](
-          Type.of[runtime.PatcherFlags.PatchedValue[runtime.Path, runtime.PatcherFlags, runtime.PatcherFlags]]
-        )
+        ]
 
       object Flags {
         lazy val IgnoreNoneInPatch: Type[runtime.PatcherFlags.IgnoreNoneInPatch] =
@@ -531,43 +446,29 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions & hearth.Macr
       lazy val Root: Type[runtime.Path.Root] = Type.of[runtime.Path.Root]
 
       lazy val Select: Type.Ctor2.UpperBounded[runtime.Path, String, runtime.Path.Select] =
-        ctor2UpperBoundedCompat[runtime.Path, String, runtime.Path.Select](
-          Type.of[runtime.Path.Select[runtime.Path, String]]
-        )
+        Type.Ctor2.UpperBounded.of[runtime.Path, String, runtime.Path.Select]
 
       lazy val Matching: Type.Ctor2.UpperBounded[runtime.Path, Any, runtime.Path.Matching] =
-        ctor2UpperBoundedCompat[runtime.Path, Any, runtime.Path.Matching](
-          Type.of[runtime.Path.Matching[runtime.Path, Any]]
-        )
+        Type.Ctor2.UpperBounded.of[runtime.Path, Any, runtime.Path.Matching]
 
       lazy val SourceMatching: Type.Ctor2.UpperBounded[runtime.Path, Any, runtime.Path.SourceMatching] =
-        ctor2UpperBoundedCompat[runtime.Path, Any, runtime.Path.SourceMatching](
-          Type.of[runtime.Path.SourceMatching[runtime.Path, Any]]
-        )
+        Type.Ctor2.UpperBounded.of[runtime.Path, Any, runtime.Path.SourceMatching]
 
       lazy val EveryItem: Type.Ctor1.UpperBounded[runtime.Path, runtime.Path.EveryItem] =
-        ctor1UpperBoundedCompat[runtime.Path, runtime.Path.EveryItem](
-          Type.of[runtime.Path.EveryItem[runtime.Path]]
-        )
+        Type.Ctor1.UpperBounded.of[runtime.Path, runtime.Path.EveryItem]
 
       lazy val EveryMapKey: Type.Ctor1.UpperBounded[runtime.Path, runtime.Path.EveryMapKey] =
-        ctor1UpperBoundedCompat[runtime.Path, runtime.Path.EveryMapKey](
-          Type.of[runtime.Path.EveryMapKey[runtime.Path]]
-        )
+        Type.Ctor1.UpperBounded.of[runtime.Path, runtime.Path.EveryMapKey]
 
       lazy val EveryMapValue: Type.Ctor1.UpperBounded[runtime.Path, runtime.Path.EveryMapValue] =
-        ctor1UpperBoundedCompat[runtime.Path, runtime.Path.EveryMapValue](
-          Type.of[runtime.Path.EveryMapValue[runtime.Path]]
-        )
+        Type.Ctor1.UpperBounded.of[runtime.Path, runtime.Path.EveryMapValue]
     }
 
     /** Scala 2's carrier of a Java-enum value selected in the DSL (see [[runtime.RefinedJavaEnum]]): built by
       * `DslDefinitions.javaEnumFixedSubtype`, decoded back by `Configurations.extractPath` - both through this ctor.
       */
     lazy val RefinedJavaEnum: Type.Ctor2.UpperBounded[Any, String, runtime.RefinedJavaEnum] =
-      ctor2UpperBoundedCompat[Any, String, runtime.RefinedJavaEnum](
-        Type.of[runtime.RefinedJavaEnum[Any, String]]
-      )
+      Type.Ctor2.UpperBounded.of[Any, String, runtime.RefinedJavaEnum]
 
     object PartialOuterTransformer extends Type.Ctor4[integrations.PartialOuterTransformer] {
       // See reapplyLeadingTypeArgsCompat for why the wildcards are not just `Type.of[F[From, To, ?, ?]]`.

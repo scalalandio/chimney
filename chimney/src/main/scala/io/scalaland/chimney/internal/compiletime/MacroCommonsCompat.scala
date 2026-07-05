@@ -1,17 +1,16 @@
 package io.scalaland.chimney.internal.compiletime
 
 /** Hearth workarounds and small helpers used by the derivation engine; each workaround member cites its upstream issue
-  * (https://github.com/kubuszok/hearth/issues). After the 0.4.0-19-g881908a-SNAPSHOT sweep (it.37) the #334
-  * annotation-attaching gap is GONE (`nowarnExpr` is fully shared via `Expr.annotated`; only the Java-annotation
-  * INSTANCE for `suppressWarningsExpr` is still built per-platform - `java.lang.SuppressWarnings` cannot be `new`-ed in
-  * expression position). The surviving Type-level workaround is #307: the `ctorNUpperBoundedCompat` factories STAY
-  * because Scala 3's cross-quotes plugin still does not rewrite `Type.CtorN.UpperBounded.of`/`Bounded.of` (the Scala 2
-  * unapply fix in 0.4.0-19 is not enough for shared code - see the factories' ScalaDoc). Earlier the
-  * 0.4.0-16-gd4adc1c-SNAPSHOT sweep (it.30) and the cross-quotes usage-contract refactor (it.31) removed the #317/#318
-  * shims (`prependFreshValCompat`, `withMacroEntryCtxCompat`, the Scala 3 derive-first `*InstanceCompat` overrides):
-  * chimney honors the cross-quotes usage contract ("an expr that is spliced has to be created inside the expr that is
-  * splicing it") - derivations run inside the splice that consumes them (see `ChimneyExprs`) and caches never hand out
-  * `Expr`s across splices (see [[TypeCache]]).
+  * (https://github.com/kubuszok/hearth/issues). After the 0.4.0-20-gfd010da-SNAPSHOT sweep both the #334
+  * annotation-attaching gap and the #307/#344 upper-bounded `Type.CtorN` gap are GONE:
+  * `nowarnExpr`/`suppressWarningsExpr` attach annotations cross-platform via the type-based `Expr.annotated[A, Ann]`
+  * (no per-platform Java-annotation INSTANCE needed), and `ChimneyTypes`/`DslMacros` call Hearth's direct
+  * `Type.CtorN.UpperBounded.of` in shared code (Scala 3's cross-quotes plugin now rewrites the three-select form).
+  * Earlier the 0.4.0-16-gd4adc1c-SNAPSHOT sweep (it.30) and the cross-quotes usage-contract refactor (it.31) removed
+  * the #317/#318 shims (`prependFreshValCompat`, `withMacroEntryCtxCompat`, the Scala 3 derive-first `*InstanceCompat`
+  * overrides): chimney honors the cross-quotes usage contract ("an expr that is spliced has to be created inside the
+  * expr that is splicing it") - derivations run inside the splice that consumes them (see `ChimneyExprs`) and caches
+  * never hand out `Expr`s across splices (see [[TypeCache]]).
   */
 private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
 
@@ -108,194 +107,21 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
     * the expr to a fresh `@annotation val`.
     */
   protected def nowarnExpr[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A] = {
-    val annotation: Expr[scala.annotation.nowarn] = warnings match {
-      case Some(msg) =>
-        val msgExpr = Expr(msg)
-        Expr.quote(new scala.annotation.nowarn(Expr.splice(msgExpr)))
-      case None =>
-        Expr.quote(new scala.annotation.nowarn)
+    implicit val nowarnType: Type[scala.annotation.nowarn] = Type.of[scala.annotation.nowarn]
+    warnings match {
+      case Some(msg) => expr.annotated[scala.annotation.nowarn](Expr(msg).asUntyped)
+      case None      => expr.annotated[scala.annotation.nowarn]()
     }
-    Expr.annotated(expr, annotation)
   }
 
   /** Attaches `@SuppressWarnings(Array(...))` to the generated expr (on by default for linters like WartRemover,
     * configurable with `-Xmacro-settings:chimney.SuppressWarnings=...`) - see [[nowarnExpr]].
     */
-  protected def suppressWarningsExpr[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A] =
-    Expr.annotated(expr, suppressWarningsAnnotationExpr(warnings))
-
-  /** Builds the `new java.lang.SuppressWarnings(Array(...))` annotation-INSTANCE expression for
-    * [[suppressWarningsExpr]].
-    *
-    * Unlike the Scala `@nowarn` class (built cross-platform via `Expr.quote(new scala.annotation.nowarn(...))`),
-    * `java.lang.SuppressWarnings` is a Java annotation and CANNOT be instantiated in expression position - Scala 2
-    * rejects `new java.lang.SuppressWarnings(...)` ("Java annotation SuppressWarnings is abstract; cannot be
-    * instantiated") and Scala 3 only allows it through `quotes.reflect`'s `New`, so cross-quotes `Expr.quote` cannot
-    * express it. Hence this one tree is built per-platform in the `PlatformBridge`s (the val-binding machinery still
-    * goes through Hearth's `Expr.annotated`, hearth#334).
-    */
-  protected def suppressWarningsAnnotationExpr(warnings: List[String]): Expr[java.lang.SuppressWarnings]
-
-  /** Cross-platform upper-bounded `Type.CtorN` factories (hearth#307).
-    *
-    * Hearth's public `Type.CtorN.UpperBounded.of` / `Bounded.of` cannot be used in Chimney's SHARED code:
-    *   - Scala 2: fixed as of 0.4.0-19-g881908a (the generated `unapply` now matches wildcard existential type
-    *     projections like `TransformerFlags#OptionFallbackMerge[?$N]` reaching config parsing from wildcard DSL
-    *     members) - it works there now.
-    *   - Scala 3: the cross-quotes PLUGIN only rewrites the two-select `Type.CtorN.of` form; it has NO match case for
-    *     the three-select `Type.CtorN.UpperBounded.of` / `Bounded.of` (only doc comments), so every such call trips the
-    *     `@compileTimeOnly("Install cross-quotes-plugin ...")` guard. Confirmed against 0.4.0-19-g881908a: hearth's own
-    *     `UpperBounded.of`/`Bounded.of` fixtures are Scala-2-only (`Issue307ReproFixturesImpl`). See the it.37 comment.
-    *
-    * Because ChimneyTypes/DslMacros are shared, these factories hand-build the same `Type.CtorN.UpperBounded` instances
-    * on top of Hearth's untyped API (no plugin/codegen needed on either platform). `applied` is the type constructor
-    * applied to its upper bounds - it only serves as a way to obtain the untyped type constructor in shared code.
-    *
-    * Semantics difference vs the cross-quotes-generated instances: `unapply` matches on the exact (dealiased) type
-    * constructor, without `baseType` subtype-awareness - which is enough for Chimney's phantom-type configs.
-    */
-  protected def ctor1UpperBoundedCompat[U1, HKT[_ <: U1]](applied: Type[HKT[U1]]): Type.Ctor1.UpperBounded[U1, HKT] =
-    new Type.Ctor1.Bounded[Nothing, U1, HKT] {
-      private val untypedCtor: UntypedType = UntypedType.typeConstructor(applied.asUntyped)
-
-      def apply[A <: U1: Type]: Type[HKT[A]] =
-        UntypedType.applyTypeArgs(untypedCtor, List(Type[A].asUntyped)).asTyped[HKT[A]]
-
-      def unapply[In](In: Type[In]): Option[Nothing <:??<: U1] = {
-        val dealiased = UntypedType.dealias(In.asUntyped)
-        if (UntypedType.sameTypeConstructorAs(untypedCtor, dealiased))
-          UntypedType.typeArguments(dealiased) match {
-            case a1 :: Nil => Some(a1.asTyped[U1].as_??<:[U1])
-            case _         => None
-          }
-        else None
-      }
-
-      override def asUntyped: UntypedType = untypedCtor
-    }
-
-  /** See [[ctor1UpperBoundedCompat]]. */
-  protected def ctor2UpperBoundedCompat[U1, U2, HKT[_ <: U1, _ <: U2]](
-      applied: Type[HKT[U1, U2]]
-  ): Type.Ctor2.UpperBounded[U1, U2, HKT] =
-    new Type.Ctor2.Bounded[Nothing, U1, Nothing, U2, HKT] {
-      private val untypedCtor: UntypedType = UntypedType.typeConstructor(applied.asUntyped)
-
-      def apply[A <: U1: Type, B <: U2: Type]: Type[HKT[A, B]] =
-        UntypedType.applyTypeArgs(untypedCtor, List(Type[A].asUntyped, Type[B].asUntyped)).asTyped[HKT[A, B]]
-
-      def unapply[In](In: Type[In]): Option[(Nothing <:??<: U1, Nothing <:??<: U2)] = {
-        val dealiased = UntypedType.dealias(In.asUntyped)
-        if (UntypedType.sameTypeConstructorAs(untypedCtor, dealiased))
-          UntypedType.typeArguments(dealiased) match {
-            case a1 :: a2 :: Nil => Some((a1.asTyped[U1].as_??<:[U1], a2.asTyped[U2].as_??<:[U2]))
-            case _               => None
-          }
-        else None
-      }
-
-      override def asUntyped: UntypedType = untypedCtor
-    }
-
-  /** See [[ctor1UpperBoundedCompat]]. */
-  protected def ctor3UpperBoundedCompat[U1, U2, U3, HKT[_ <: U1, _ <: U2, _ <: U3]](
-      applied: Type[HKT[U1, U2, U3]]
-  ): Type.Ctor3.UpperBounded[U1, U2, U3, HKT] =
-    new Type.Ctor3.Bounded[Nothing, U1, Nothing, U2, Nothing, U3, HKT] {
-      private val untypedCtor: UntypedType = UntypedType.typeConstructor(applied.asUntyped)
-
-      def apply[A <: U1: Type, B <: U2: Type, C <: U3: Type]: Type[HKT[A, B, C]] =
-        UntypedType
-          .applyTypeArgs(untypedCtor, List(Type[A].asUntyped, Type[B].asUntyped, Type[C].asUntyped))
-          .asTyped[HKT[A, B, C]]
-
-      def unapply[In](In: Type[In]): Option[(Nothing <:??<: U1, Nothing <:??<: U2, Nothing <:??<: U3)] = {
-        val dealiased = UntypedType.dealias(In.asUntyped)
-        if (UntypedType.sameTypeConstructorAs(untypedCtor, dealiased))
-          UntypedType.typeArguments(dealiased) match {
-            case a1 :: a2 :: a3 :: Nil =>
-              Some((a1.asTyped[U1].as_??<:[U1], a2.asTyped[U2].as_??<:[U2], a3.asTyped[U3].as_??<:[U3]))
-            case _ => None
-          }
-        else None
-      }
-
-      override def asUntyped: UntypedType = untypedCtor
-    }
-
-  /** See [[ctor1UpperBoundedCompat]]. */
-  protected def ctor4UpperBoundedCompat[U1, U2, U3, U4, HKT[_ <: U1, _ <: U2, _ <: U3, _ <: U4]](
-      applied: Type[HKT[U1, U2, U3, U4]]
-  ): Type.Ctor4.UpperBounded[U1, U2, U3, U4, HKT] =
-    new Type.Ctor4.Bounded[Nothing, U1, Nothing, U2, Nothing, U3, Nothing, U4, HKT] {
-      private val untypedCtor: UntypedType = UntypedType.typeConstructor(applied.asUntyped)
-
-      def apply[A <: U1: Type, B <: U2: Type, C <: U3: Type, D <: U4: Type]: Type[HKT[A, B, C, D]] =
-        UntypedType
-          .applyTypeArgs(untypedCtor, List(Type[A].asUntyped, Type[B].asUntyped, Type[C].asUntyped, Type[D].asUntyped))
-          .asTyped[HKT[A, B, C, D]]
-
-      def unapply[In](
-          In: Type[In]
-      ): Option[(Nothing <:??<: U1, Nothing <:??<: U2, Nothing <:??<: U3, Nothing <:??<: U4)] = {
-        val dealiased = UntypedType.dealias(In.asUntyped)
-        if (UntypedType.sameTypeConstructorAs(untypedCtor, dealiased))
-          UntypedType.typeArguments(dealiased) match {
-            case a1 :: a2 :: a3 :: a4 :: Nil =>
-              Some(
-                (
-                  a1.asTyped[U1].as_??<:[U1],
-                  a2.asTyped[U2].as_??<:[U2],
-                  a3.asTyped[U3].as_??<:[U3],
-                  a4.asTyped[U4].as_??<:[U4]
-                )
-              )
-            case _ => None
-          }
-        else None
-      }
-
-      override def asUntyped: UntypedType = untypedCtor
-    }
-
-  /** See [[ctor1UpperBoundedCompat]]. */
-  protected def ctor5UpperBoundedCompat[U1, U2, U3, U4, U5, HKT[_ <: U1, _ <: U2, _ <: U3, _ <: U4, _ <: U5]](
-      applied: Type[HKT[U1, U2, U3, U4, U5]]
-  ): Type.Ctor5.UpperBounded[U1, U2, U3, U4, U5, HKT] =
-    new Type.Ctor5.Bounded[Nothing, U1, Nothing, U2, Nothing, U3, Nothing, U4, Nothing, U5, HKT] {
-      private val untypedCtor: UntypedType = UntypedType.typeConstructor(applied.asUntyped)
-
-      def apply[A <: U1: Type, B <: U2: Type, C <: U3: Type, D <: U4: Type, E <: U5: Type]: Type[HKT[A, B, C, D, E]] =
-        UntypedType
-          .applyTypeArgs(
-            untypedCtor,
-            List(Type[A].asUntyped, Type[B].asUntyped, Type[C].asUntyped, Type[D].asUntyped, Type[E].asUntyped)
-          )
-          .asTyped[HKT[A, B, C, D, E]]
-
-      def unapply[In](
-          In: Type[In]
-      ): Option[(Nothing <:??<: U1, Nothing <:??<: U2, Nothing <:??<: U3, Nothing <:??<: U4, Nothing <:??<: U5)] = {
-        val dealiased = UntypedType.dealias(In.asUntyped)
-        if (UntypedType.sameTypeConstructorAs(untypedCtor, dealiased))
-          UntypedType.typeArguments(dealiased) match {
-            case a1 :: a2 :: a3 :: a4 :: a5 :: Nil =>
-              Some(
-                (
-                  a1.asTyped[U1].as_??<:[U1],
-                  a2.asTyped[U2].as_??<:[U2],
-                  a3.asTyped[U3].as_??<:[U3],
-                  a4.asTyped[U4].as_??<:[U4],
-                  a5.asTyped[U5].as_??<:[U5]
-                )
-              )
-            case _ => None
-          }
-        else None
-      }
-
-      override def asUntyped: UntypedType = untypedCtor
-    }
+  protected def suppressWarningsExpr[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A] = {
+    implicit val suppressWarningsType: Type[java.lang.SuppressWarnings] = Type.of[java.lang.SuppressWarnings]
+    implicit val stringType: Type[String] = Type.of[String] // for ExprCodec[Array[String]]
+    expr.annotated[java.lang.SuppressWarnings](Expr(warnings.toArray).asUntyped)
+  }
 
   /** Cross-quotes-limitation workaround: on Scala 2 cross-quotes `Type.of[F[A, ?]]` fails to compile whenever the
     * enclosing method has type parameters ("not found: type ?$1" - the generated workaround method loses the wildcard;

@@ -54,13 +54,4 @@ abstract private[compiletime] class PlatformBridge(val c: scala.reflect.macros.b
         }
     } else inst
   }
-
-  /** Scala 2 builder of the `@java.lang.SuppressWarnings(Array(...))` annotation instance (see
-    * [[MacroCommonsCompat.suppressWarningsAnnotationExpr]]). A quasiquote tree is untyped, so it sidesteps the "Java
-    * annotation is abstract; cannot be instantiated" typecheck that blocks cross-quotes.
-    */
-  override protected def suppressWarningsAnnotationExpr(warnings: List[String]): Expr[java.lang.SuppressWarnings] = {
-    import c.universe.*
-    c.Expr[java.lang.SuppressWarnings](q"new _root_.java.lang.SuppressWarnings(_root_.scala.Array(..$warnings))")
-  }
 }

@@ -82,13 +82,17 @@ private[compiletime] trait GatewayCommons {
     }
 
     // Chimney's macro-dependent transformers derive nested instances by summoning implicits MID-derivation (e.g. an
-    // implicit `Transformer[Option[List[A]], List[B]]` that needs `Transformer.AutoDerived[A, B]`), which triggers a
-    // NESTED macro expansion - another `runToExprOrFail` - while this one's `runSync` is still on the stack.
-    // `runToExprOrFail` unconditionally goes through `Environment.withMioTimeout`, which throws `HearthAssertionError`
-    // ("MIO timeout is already set") on re-entry because it assumes a single top-level timeout. Chimney genuinely
-    // nests, so we neutralize the global deadline (a public `var`) around the call and restore it afterwards, letting
-    // the nested `withMioTimeout` install its own deadline and the outer one resume once the nested run returns.
-    // Hearth gap: https://github.com/kubuszok/hearth/issues/342 (nested `runToExprOrFail` unsupported).
+    // implicit `Transformer[Option[List[A]], List[B]]` that needs `Transformer.AutoDerived[A, B]`). Summoning such an
+    // implicit makes the COMPILER expand a separate transform macro - a genuinely distinct top-level `runToExprOrFail`
+    // with its own entry point - while this outer one's `runSync` is still on the JVM stack. `runToExprOrFail` installs
+    // a single global MIO deadline via `Environment.withMioTimeout`, which by design throws on re-entry (hearth#342,
+    // closed as by-design: `runToExprOrFail` is meant to be called once, at the top level, and the deadline/aggregation
+    // are single-top-level settings). Because the inner expansion is a SEPARATE macro run - not chimney re-entering its
+    // own run - we neutralize the global deadline (a public `var`) around the summon and restore it afterwards, so the
+    // inner run installs its own deadline and the outer resumes once it returns. (This is a deliberate accommodation of
+    // compiler-driven nested expansion, not a `flatMap`/DirectStyle-composable nesting; restructuring so the compiler
+    // never expands a macro-dependent implicit inside a run - deriving those nested instances within the same MIO
+    // program instead - is a larger engine change tracked separately.)
     val savedTimeoutDeadline = MIO.timeoutDeadlineNanos
     MIO.timeoutDeadlineNanos = Long.MaxValue
     try

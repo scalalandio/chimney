@@ -15,274 +15,174 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
 
   import ChimneyType.{PatcherOverrides as PO, TransformerOverrides as TO}
 
-  // --- DSL wrapper type constructors (ctorNUpperBoundedCompat: see MacroCommonsCompat, hearth#307) ---
+  // --- DSL wrapper type constructors (Type.CtorN.UpperBounded.of, hearth#307/#344) ---
 
-  private lazy val TransformerDefinitionT = ctor4UpperBoundedCompat[
+  private lazy val TransformerDefinitionT = Type.Ctor4.UpperBounded.of[
     Any,
     Any,
     runtime.TransformerOverrides,
     runtime.TransformerFlags,
     dsls.TransformerDefinition
-  ](Type.of[dsls.TransformerDefinition[Any, Any, runtime.TransformerOverrides, runtime.TransformerFlags]])
+  ]
 
-  private lazy val TransformerIntoT = ctor4UpperBoundedCompat[
+  private lazy val TransformerIntoT = Type.Ctor4.UpperBounded.of[
     Any,
     Any,
     runtime.TransformerOverrides,
     runtime.TransformerFlags,
     dsls.TransformerInto
-  ](Type.of[dsls.TransformerInto[Any, Any, runtime.TransformerOverrides, runtime.TransformerFlags]])
+  ]
 
-  private lazy val PartialTransformerDefinitionT = ctor4UpperBoundedCompat[
+  private lazy val PartialTransformerDefinitionT = Type.Ctor4.UpperBounded.of[
     Any,
     Any,
     runtime.TransformerOverrides,
     runtime.TransformerFlags,
     dsls.PartialTransformerDefinition
-  ](Type.of[dsls.PartialTransformerDefinition[Any, Any, runtime.TransformerOverrides, runtime.TransformerFlags]])
+  ]
 
-  private lazy val PartialTransformerIntoT = ctor4UpperBoundedCompat[
+  private lazy val PartialTransformerIntoT = Type.Ctor4.UpperBounded.of[
     Any,
     Any,
     runtime.TransformerOverrides,
     runtime.TransformerFlags,
     dsls.PartialTransformerInto
-  ](Type.of[dsls.PartialTransformerInto[Any, Any, runtime.TransformerOverrides, runtime.TransformerFlags]])
+  ]
 
-  private lazy val PatcherDefinitionT = ctor4UpperBoundedCompat[
+  private lazy val PatcherDefinitionT = Type.Ctor4.UpperBounded.of[
     Any,
     Any,
     runtime.PatcherOverrides,
     runtime.PatcherFlags,
     dsls.PatcherDefinition
-  ](Type.of[dsls.PatcherDefinition[Any, Any, runtime.PatcherOverrides, runtime.PatcherFlags]])
+  ]
 
-  private lazy val PatcherUsingT = ctor4UpperBoundedCompat[
+  private lazy val PatcherUsingT = Type.Ctor4.UpperBounded.of[
     Any,
     Any,
     runtime.PatcherOverrides,
     runtime.PatcherFlags,
     dsls.PatcherUsing
-  ](Type.of[dsls.PatcherUsing[Any, Any, runtime.PatcherOverrides, runtime.PatcherFlags]])
+  ]
 
-  private lazy val CodecDefinitionT = ctor5UpperBoundedCompat[
+  private lazy val CodecDefinitionT = Type.Ctor5.UpperBounded.of[
     Any,
     Any,
     runtime.TransformerOverrides,
     runtime.TransformerOverrides,
     runtime.TransformerFlags,
     dsls.CodecDefinition
-  ](
-    Type.of[dsls.CodecDefinition[
-      Any,
-      Any,
-      runtime.TransformerOverrides,
-      runtime.TransformerOverrides,
-      runtime.TransformerFlags
-    ]]
-  )
+  ]
 
-  private lazy val IsoDefinitionT = ctor5UpperBoundedCompat[
+  private lazy val IsoDefinitionT = Type.Ctor5.UpperBounded.of[
     Any,
     Any,
     runtime.TransformerOverrides,
     runtime.TransformerOverrides,
     runtime.TransformerFlags,
     dsls.IsoDefinition
-  ](
-    Type.of[
-      dsls.IsoDefinition[Any, Any, runtime.TransformerOverrides, runtime.TransformerOverrides, runtime.TransformerFlags]
-    ]
-  )
+  ]
 
   // ChimneyTypes' ForAll module is unapply-only (the engine never constructs it) - the DSL needs the apply.
-  private lazy val ForAllT = ctor4UpperBoundedCompat[
+  private lazy val ForAllT = Type.Ctor4.UpperBounded.of[
     Any,
     Any,
     runtime.TransformerOverrides,
     runtime.TransformerOverrides,
     runtime.TransformerOverrides.ForAll
-  ](
-    Type.of[
-      runtime.TransformerOverrides.ForAll[Any, Any, runtime.TransformerOverrides, runtime.TransformerOverrides]
-    ]
-  )
+  ]
 
   // Flags-DSL wrapper ctors: `Type.of[X[...]]` with BOUNDED method type params loses the bounds in the Scala 2
   // cross-quotes expansion ("type arguments do not conform..."), so these also go through the compat factories.
-  private lazy val SourceFlagsOfTransformerDefinitionT = ctor5UpperBoundedCompat[
+  private lazy val SourceFlagsOfTransformerDefinitionT = Type.Ctor5.UpperBounded.of[
     Any,
     Any,
     runtime.TransformerOverrides,
     runtime.TransformerFlags,
     runtime.Path,
     dsls.TransformerSourceFlagsDsl.OfTransformerDefinition
-  ](
-    Type.of[dsls.TransformerSourceFlagsDsl.OfTransformerDefinition[
-      Any,
-      Any,
-      runtime.TransformerOverrides,
-      runtime.TransformerFlags,
-      runtime.Path
-    ]]
-  )
+  ]
 
-  private lazy val TargetFlagsOfTransformerDefinitionT = ctor5UpperBoundedCompat[
+  private lazy val TargetFlagsOfTransformerDefinitionT = Type.Ctor5.UpperBounded.of[
     Any,
     Any,
     runtime.TransformerOverrides,
     runtime.TransformerFlags,
     runtime.Path,
     dsls.TransformerTargetFlagsDsl.OfTransformerDefinition
-  ](
-    Type.of[dsls.TransformerTargetFlagsDsl.OfTransformerDefinition[
-      Any,
-      Any,
-      runtime.TransformerOverrides,
-      runtime.TransformerFlags,
-      runtime.Path
-    ]]
-  )
+  ]
 
-  private lazy val SourceFlagsOfTransformerIntoT = ctor5UpperBoundedCompat[
+  private lazy val SourceFlagsOfTransformerIntoT = Type.Ctor5.UpperBounded.of[
     Any,
     Any,
     runtime.TransformerOverrides,
     runtime.TransformerFlags,
     runtime.Path,
     dsls.TransformerSourceFlagsDsl.OfTransformerInto
-  ](
-    Type.of[dsls.TransformerSourceFlagsDsl.OfTransformerInto[
-      Any,
-      Any,
-      runtime.TransformerOverrides,
-      runtime.TransformerFlags,
-      runtime.Path
-    ]]
-  )
+  ]
 
-  private lazy val TargetFlagsOfTransformerIntoT = ctor5UpperBoundedCompat[
+  private lazy val TargetFlagsOfTransformerIntoT = Type.Ctor5.UpperBounded.of[
     Any,
     Any,
     runtime.TransformerOverrides,
     runtime.TransformerFlags,
     runtime.Path,
     dsls.TransformerTargetFlagsDsl.OfTransformerInto
-  ](
-    Type.of[dsls.TransformerTargetFlagsDsl.OfTransformerInto[
-      Any,
-      Any,
-      runtime.TransformerOverrides,
-      runtime.TransformerFlags,
-      runtime.Path
-    ]]
-  )
+  ]
 
-  private lazy val SourceFlagsOfPartialTransformerDefinitionT = ctor5UpperBoundedCompat[
+  private lazy val SourceFlagsOfPartialTransformerDefinitionT = Type.Ctor5.UpperBounded.of[
     Any,
     Any,
     runtime.TransformerOverrides,
     runtime.TransformerFlags,
     runtime.Path,
     dsls.TransformerSourceFlagsDsl.OfPartialTransformerDefinition
-  ](
-    Type.of[dsls.TransformerSourceFlagsDsl.OfPartialTransformerDefinition[
-      Any,
-      Any,
-      runtime.TransformerOverrides,
-      runtime.TransformerFlags,
-      runtime.Path
-    ]]
-  )
+  ]
 
-  private lazy val TargetFlagsOfPartialTransformerDefinitionT = ctor5UpperBoundedCompat[
+  private lazy val TargetFlagsOfPartialTransformerDefinitionT = Type.Ctor5.UpperBounded.of[
     Any,
     Any,
     runtime.TransformerOverrides,
     runtime.TransformerFlags,
     runtime.Path,
     dsls.TransformerTargetFlagsDsl.OfPartialTransformerDefinition
-  ](
-    Type.of[dsls.TransformerTargetFlagsDsl.OfPartialTransformerDefinition[
-      Any,
-      Any,
-      runtime.TransformerOverrides,
-      runtime.TransformerFlags,
-      runtime.Path
-    ]]
-  )
+  ]
 
-  private lazy val SourceFlagsOfPartialTransformerIntoT = ctor5UpperBoundedCompat[
+  private lazy val SourceFlagsOfPartialTransformerIntoT = Type.Ctor5.UpperBounded.of[
     Any,
     Any,
     runtime.TransformerOverrides,
     runtime.TransformerFlags,
     runtime.Path,
     dsls.TransformerSourceFlagsDsl.OfPartialTransformerInto
-  ](
-    Type.of[dsls.TransformerSourceFlagsDsl.OfPartialTransformerInto[
-      Any,
-      Any,
-      runtime.TransformerOverrides,
-      runtime.TransformerFlags,
-      runtime.Path
-    ]]
-  )
+  ]
 
-  private lazy val TargetFlagsOfPartialTransformerIntoT = ctor5UpperBoundedCompat[
+  private lazy val TargetFlagsOfPartialTransformerIntoT = Type.Ctor5.UpperBounded.of[
     Any,
     Any,
     runtime.TransformerOverrides,
     runtime.TransformerFlags,
     runtime.Path,
     dsls.TransformerTargetFlagsDsl.OfPartialTransformerInto
-  ](
-    Type.of[dsls.TransformerTargetFlagsDsl.OfPartialTransformerInto[
-      Any,
-      Any,
-      runtime.TransformerOverrides,
-      runtime.TransformerFlags,
-      runtime.Path
-    ]]
-  )
+  ]
 
-  private lazy val PatchedValueFlagsOfPatcherDefinitionT = ctor5UpperBoundedCompat[
+  private lazy val PatchedValueFlagsOfPatcherDefinitionT = Type.Ctor5.UpperBounded.of[
     Any,
     Any,
     runtime.PatcherOverrides,
     runtime.PatcherFlags,
     runtime.Path,
     dsls.PatcherPatchedValueFlagsDsl.OfPatcherDefinition
-  ](
-    Type.of[
-      dsls.PatcherPatchedValueFlagsDsl.OfPatcherDefinition[
-        Any,
-        Any,
-        runtime.PatcherOverrides,
-        runtime.PatcherFlags,
-        runtime.Path
-      ]
-    ]
-  )
+  ]
 
-  private lazy val PatchedValueFlagsOfPatcherUsingT = ctor5UpperBoundedCompat[
+  private lazy val PatchedValueFlagsOfPatcherUsingT = Type.Ctor5.UpperBounded.of[
     Any,
     Any,
     runtime.PatcherOverrides,
     runtime.PatcherFlags,
     runtime.Path,
     dsls.PatcherPatchedValueFlagsDsl.OfPatcherUsing
-  ](
-    Type.of[
-      dsls.PatcherPatchedValueFlagsDsl.OfPatcherUsing[
-        Any,
-        Any,
-        runtime.PatcherOverrides,
-        runtime.PatcherFlags,
-        runtime.Path
-      ]
-    ]
-  )
+  ]
 
   private lazy val WithRuntimeDataStoreT: Type[runtime.WithRuntimeDataStore] = Type.of[runtime.WithRuntimeDataStore]
 

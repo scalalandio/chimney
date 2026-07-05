@@ -276,13 +276,13 @@ private[compiletime] trait DslDefinitions { this: ChimneyDefinitions & hearth.Ma
     * `isJavaEnumValue == false`). Both spellings answer `isJavaEnum && !isJavaEnumValue`, so the two are told apart by
     * `shortName`: Scala 3's value type has a VALUE short name (`Black`, already among the enum's `directChildrenList`
     * values) and is passed through untouched, while Scala 2's widened subtype has the ENUM-CLASS short name (`Color`)
-    * and needs the value recovered. The one surviving witness of the value name on Scala 2 is the handler's original
-    * source, which Hearth exposes cross-platform via `UntypedExpr.sourceCode`: the parameter's `Enum.Value.type`
-    * ascription names the value. We read it there, cross-check it against the enum's actual values and re-encode it as
-    * `runtime.RefinedJavaEnum[E, "Name"]` (a Scala 2 whitebox cannot spell the platform's Java-enum-value type inside
-    * the refined `Overrides` type; `Configurations.extractPath` / `fixJavaEnumCompat` decode the marker back into the
-    * value type). When no single value is named (the handler covers the whole enum) the type is passed through
-    * unchanged.
+    * and needs the value recovered. The one surviving witness of the value name on Scala 2 is the handler parameter's
+    * DECLARED (un-widened) type, which Hearth exposes cross-platform via `DestructuredExpr.Lambda.Param.declaredTpe`
+    * (hearth#341): the parameter's `Enum.Value.type` ascription names the value. We read it there, cross-check it
+    * against the enum's actual values and re-encode it as `runtime.RefinedJavaEnum[E, "Name"]` (a Scala 2 whitebox
+    * cannot spell the platform's Java-enum-value type inside the refined `Overrides` type; `Configurations.extractPath`
+    * / `fixJavaEnumCompat` decode the marker back into the value type). When no single value is named (the handler
+    * covers the whole enum) the type is passed through unchanged.
     */
   protected def javaEnumFixedSubtype(f: Expr[Any], subtype: ??): ?? = {
     import subtype.Underlying as Subtype
@@ -299,42 +299,19 @@ private[compiletime] trait DslDefinitions { this: ChimneyDefinitions & hearth.Ma
   }
 
   /** The single enum value named by a `(value: Enum.Value.type) => ...` handler. Its singleton is gone from every typed
-    * carrier on Scala 2, so - having confirmed the handler is a one-argument lambda via [[DestructuredExpr]] - the name
-    * is recovered from the parameter's singleton-type ascription in the handler's original source and validated against
-    * the enum's real value names.
+    * carrier on Scala 2 (`param.tpe` widens the `Enum.Value.type` singleton away to the enum class), so - having
+    * confirmed the handler is a one-argument lambda via [[DestructuredExpr]] - the name is recovered from the
+    * parameter's `declaredTpe`, which Hearth preserves as the DECLARED (un-widened) `Enum.Value.type` ascription
+    * (hearth#341). Its `shortName` is the value name, cross-checked against the enum's real value names.
     */
-  private def handledJavaEnumValueName(f: Expr[Any], valueNames: List[String]): Option[String] = {
-    val untyped = UntypedExpr.fromTyped(f)
-    DestructuredExpr.parseUntyped(untyped) match {
+  private def handledJavaEnumValueName(f: Expr[Any], valueNames: List[String]): Option[String] =
+    DestructuredExpr.parseUntyped(UntypedExpr.fromTyped(f)) match {
       case lambda: DestructuredExpr.Lambda if lambda.params.sizeIs == 1 =>
-        untyped.sourceCode.flatMap { source =>
-          // The parameter clause is everything up to the lambda's arrow; the value only ever appears there as an
-          // `Enum.Value.type` ascription (bodies reference values as terms, never as `.type` singletons).
-          val paramClause = source.split("=>", 2).headOption.getOrElse("")
-          valueNames.filter(name => mentionsSingletonType(paramClause, name)).sortBy(-_.length).headOption
-        }
+        val declared = lambda.params.head.declaredTpe
+        import declared.Underlying as Declared
+        Some(Type[Declared].shortName).filter(valueNames.contains)
       case _ => None
     }
-  }
-
-  /** True when `name` appears as a whole-identifier `name.type` singleton ascription in `text` (not as a substring of a
-    * longer identifier such as `DarkGreen.type` for `Green`).
-    */
-  private def mentionsSingletonType(text: String, name: String): Boolean = {
-    val token = name + ".type"
-    def isIdentChar(c: Char): Boolean = c.isLetterOrDigit || c == '_'
-    def standaloneAt(at: Int): Boolean = {
-      val precededByIdent = at > 0 && isIdentChar(text.charAt(at - 1))
-      val afterIdx = at + token.length
-      val followedByNameChar =
-        afterIdx < text.length && (isIdentChar(text.charAt(afterIdx)) || text.charAt(afterIdx) == '.')
-      !precededByIdent && !followedByNameChar
-    }
-    Iterator
-      .iterate(text.indexOf(token))(from => if (from < 0) -1 else text.indexOf(token, from + 1))
-      .takeWhile(_ >= 0)
-      .exists(standaloneAt)
-  }
 
   // --- abort-on-error entry points ---
 
