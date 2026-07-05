@@ -55,39 +55,12 @@ abstract private[compiletime] class PlatformBridge(val c: scala.reflect.macros.b
     } else inst
   }
 
-  /** Hearth has no annotation-attaching API - the quasiquote-based implementation lives here (see
-    * [[MacroCommonsCompat.nowarnExpr]]).
+  /** Scala 2 builder of the `@java.lang.SuppressWarnings(Array(...))` annotation instance (see
+    * [[MacroCommonsCompat.suppressWarningsAnnotationExpr]]). A quasiquote tree is untyped, so it sidesteps the "Java
+    * annotation is abstract; cannot be instantiated" typecheck that blocks cross-quotes.
     */
-  override protected def nowarnExpr[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A] = {
+  override protected def suppressWarningsAnnotationExpr(warnings: List[String]): Expr[java.lang.SuppressWarnings] = {
     import c.universe.*
-    val name = c.internal.reificationSupport.freshTermName("nowarnresult$macro$")
-    c.Expr[A](
-      warnings.fold(
-        q"""
-        @ _root_.scala.annotation.nowarn
-        val $name = $expr
-        $name
-        """
-      ) { msg =>
-        q"""
-        @ _root_.scala.annotation.nowarn($msg)
-        val $name = $expr
-        $name
-        """
-      }
-    )
-  }
-
-  /** See [[nowarnExpr]]. */
-  override protected def suppressWarningsExpr[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A] = {
-    import c.universe.*
-    val name = c.internal.reificationSupport.freshTermName("suppresswarningsresult$macro$")
-    c.Expr[A](
-      q"""
-      @ _root_.java.lang.SuppressWarnings(_root_.scala.Array(..$warnings))
-      val $name = $expr
-      $name
-      """
-    )
+    c.Expr[java.lang.SuppressWarnings](q"new _root_.java.lang.SuppressWarnings(_root_.scala.Array(..$warnings))")
   }
 }

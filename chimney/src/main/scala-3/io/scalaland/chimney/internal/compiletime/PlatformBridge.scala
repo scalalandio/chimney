@@ -9,28 +9,6 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     extends hearth.MacroCommonsScala3(using q)
     with ChimneyDefinitions {
 
-  import quotes.reflect.*
-
-  // Workaround to contain @experimental Symbol.freshName from polluting the whole codebase.
-  private lazy val freshName = quotes.reflect.Symbol.getClass.getMethod("freshName", classOf[String])
-  private def freshTerm(prefix: String): String =
-    freshName.invoke(quotes.reflect.Symbol, prefix).asInstanceOf[String]
-
-  private def annotatedValExpr[A: Type](annotation: Term, namePrefix: String)(expr: Expr[A]): Expr[A] = {
-    val name = Symbol.newVal(
-      Symbol.spliceOwner,
-      freshTerm(namePrefix),
-      AnnotatedType(TypeRepr.of[A], annotation),
-      Flags.EmptyFlags,
-      Symbol.noSymbol
-    )
-
-    Block(
-      List(ValDef(name, Some(expr.asTerm.changeOwner(name)))),
-      Ref(name)
-    ).asExprOf[A]
-  }
-
   /** Scala 3 override of [[MacroCommonsCompat.cacheScopeToken]]: the ACTIVE Cross-Quotes `Quotes`. Each `Expr.splice`
     * evaluates its thunks under a fresh nested `Quotes`, so values a `TypeCache` materializes during one splice are
     * never handed out during another (the cross-quotes usage contract; Iso/Codec derive two instances - two sibling
@@ -38,25 +16,16 @@ abstract private[compiletime] class PlatformBridge(q: Quotes)
     */
   override protected def cacheScopeToken: AnyRef = CrossQuotes.ctx[scala.quoted.Quotes]
 
-  /** Hearth has no annotation-attaching API - the `AnnotatedType`-based implementation lives here (see
-    * [[MacroCommonsCompat.nowarnExpr]]).
+  /** Scala 3 builder of the `@java.lang.SuppressWarnings(Array(...))` annotation instance (see
+    * [[MacroCommonsCompat.suppressWarningsAnnotationExpr]]). Java annotations cannot be `new`-ed in source, but
+    * `quotes.reflect`'s `New` bypasses that frontend check.
     */
-  override protected def nowarnExpr[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A] = {
-    val annotationSymbol: Symbol = TypeRepr.of[scala.annotation.nowarn].typeSymbol
-    val annotation = Apply(
-      Select(New(TypeIdent(annotationSymbol)), annotationSymbol.primaryConstructor),
-      List(scala.quoted.Expr(warnings.toArray).asTerm)
-    )
-    annotatedValExpr[A](annotation, "nowarnResult")(expr)
-  }
-
-  /** See [[nowarnExpr]]. */
-  override protected def suppressWarningsExpr[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A] = {
+  override protected def suppressWarningsAnnotationExpr(warnings: List[String]): Expr[java.lang.SuppressWarnings] = {
+    import quotes.reflect.*
     val annotationSymbol: Symbol = TypeRepr.of[java.lang.SuppressWarnings].typeSymbol
-    val annotation = Apply(
+    Apply(
       Select(New(TypeIdent(annotationSymbol)), annotationSymbol.primaryConstructor),
       List(scala.quoted.Expr(warnings.toArray).asTerm)
-    )
-    annotatedValExpr[A](annotation, "suppressWarningsResult")(expr)
+    ).asExprOf[java.lang.SuppressWarnings]
   }
 }

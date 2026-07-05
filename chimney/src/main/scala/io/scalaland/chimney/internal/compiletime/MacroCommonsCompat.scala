@@ -1,13 +1,17 @@
 package io.scalaland.chimney.internal.compiletime
 
 /** Hearth workarounds and small helpers used by the derivation engine; each workaround member cites its upstream issue
-  * (https://github.com/kubuszok/hearth/issues). After the 0.4.0-16-gd4adc1c-SNAPSHOT sweep (it.30) and the cross-quotes
-  * usage-contract refactor (it.31) the surviving workarounds are: #307 (ctorN factories - the fixed codegen still fails
-  * to MATCH existentially-quantified type projections on Scala 2) and the #334 annotation-attaching gap
-  * (nowarn/suppressWarnings). The former #317/#318 shims (`prependFreshValCompat`, `withMacroEntryCtxCompat`, the Scala
-  * 3 derive-first `*InstanceCompat` overrides) are GONE: chimney now honors the cross-quotes usage contract ("an expr
-  * that is spliced has to be created inside the expr that is splicing it") - derivations run inside the splice that
-  * consumes them (see `ChimneyExprs`) and caches never hand out `Expr`s across splices (see [[TypeCache]]).
+  * (https://github.com/kubuszok/hearth/issues). After the 0.4.0-19-g881908a-SNAPSHOT sweep (it.37) the #334
+  * annotation-attaching gap is GONE (`nowarnExpr` is fully shared via `Expr.annotated`; only the Java-annotation
+  * INSTANCE for `suppressWarningsExpr` is still built per-platform - `java.lang.SuppressWarnings` cannot be `new`-ed in
+  * expression position). The surviving Type-level workaround is #307: the `ctorNUpperBoundedCompat` factories STAY
+  * because Scala 3's cross-quotes plugin still does not rewrite `Type.CtorN.UpperBounded.of`/`Bounded.of` (the Scala 2
+  * unapply fix in 0.4.0-19 is not enough for shared code - see the factories' ScalaDoc). Earlier the
+  * 0.4.0-16-gd4adc1c-SNAPSHOT sweep (it.30) and the cross-quotes usage-contract refactor (it.31) removed the #317/#318
+  * shims (`prependFreshValCompat`, `withMacroEntryCtxCompat`, the Scala 3 derive-first `*InstanceCompat` overrides):
+  * chimney honors the cross-quotes usage contract ("an expr that is spliced has to be created inside the expr that is
+  * splicing it") - derivations run inside the splice that consumes them (see `ChimneyExprs`) and caches never hand out
+  * `Expr`s across splices (see [[TypeCache]]).
   */
 private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
 
@@ -99,29 +103,53 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
   /** Attaches `@nowarn`/`@nowarn(msg)` to the generated expr (the `-Xmacro-settings:chimney.nowarn=...` user feature,
     * used by `GatewayCommons.suppressWarnings`).
     *
-    * Hearth's built-in unused-suppression (`Expr.suppressUnused`) covers unused-value warnings, but it has no
-    * annotation-attaching API for these user-configurable `@nowarn`/`@SuppressWarnings` wrappers - they are implemented
-    * per-platform in the `PlatformBridge`s (Scala 2: quasiquote; Scala 3: `AnnotatedType` `ValDef`).
+    * Hearth's built-in unused-suppression (`Expr.suppressUnused`) covers unused-value warnings; these user-configurable
+    * `@nowarn`/`@SuppressWarnings` wrappers are attached cross-platform via `Expr.annotated` (hearth#334), which binds
+    * the expr to a fresh `@annotation val`.
     */
-  protected def nowarnExpr[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A]
+  protected def nowarnExpr[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A] = {
+    val annotation: Expr[scala.annotation.nowarn] = warnings match {
+      case Some(msg) =>
+        val msgExpr = Expr(msg)
+        Expr.quote(new scala.annotation.nowarn(Expr.splice(msgExpr)))
+      case None =>
+        Expr.quote(new scala.annotation.nowarn)
+    }
+    Expr.annotated(expr, annotation)
+  }
 
   /** Attaches `@SuppressWarnings(Array(...))` to the generated expr (on by default for linters like WartRemover,
     * configurable with `-Xmacro-settings:chimney.SuppressWarnings=...`) - see [[nowarnExpr]].
     */
-  protected def suppressWarningsExpr[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A]
+  protected def suppressWarningsExpr[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A] =
+    Expr.annotated(expr, suppressWarningsAnnotationExpr(warnings))
 
-  /** Workaround for a Hearth bug (hearth#307 leftover): on Scala 2 the 0.4.0 `Type.CtorN.UpperBounded.of[...]` (and
-    * `Bounded.of`) with a non-`Any` upper bound expanded to code that did not typecheck; 0.4.1 fixed THAT, and
-    * 0.4.0-16-gd4adc1c also fixed the follow-up literal-args decay (`.dealias.widen` in `matchResult`) - but the
-    * generated `unapply` still fails to MATCH existentially-quantified type projections, e.g.
-    * `TransformerFlags#OptionFallbackMerge[?$3]` coming from DSL members declared with wildcard args
-    * (`Disable[OptionFallbackMerge[?], Flags]` in `TransformerTargetFlagsDsl`): Scala 2 configuration parsing then
-    * aborts with "Invalid internal TransformerFlag type: ...OptionFallbackMerge[...`?$3`]!" (verified against
-    * 0.4.0-16-gd4adc1c-SNAPSHOT; see the follow-up comment on hearth#307).
+  /** Builds the `new java.lang.SuppressWarnings(Array(...))` annotation-INSTANCE expression for
+    * [[suppressWarningsExpr]].
     *
-    * These factories hand-build the same `Type.CtorN.UpperBounded` instances on top of Hearth's untyped API instead
-    * (extracted args passed through UNWIDENED). `applied` is the type constructor applied to its upper bounds - it only
-    * serves as a way to obtain the untyped type constructor in shared code.
+    * Unlike the Scala `@nowarn` class (built cross-platform via `Expr.quote(new scala.annotation.nowarn(...))`),
+    * `java.lang.SuppressWarnings` is a Java annotation and CANNOT be instantiated in expression position - Scala 2
+    * rejects `new java.lang.SuppressWarnings(...)` ("Java annotation SuppressWarnings is abstract; cannot be
+    * instantiated") and Scala 3 only allows it through `quotes.reflect`'s `New`, so cross-quotes `Expr.quote` cannot
+    * express it. Hence this one tree is built per-platform in the `PlatformBridge`s (the val-binding machinery still
+    * goes through Hearth's `Expr.annotated`, hearth#334).
+    */
+  protected def suppressWarningsAnnotationExpr(warnings: List[String]): Expr[java.lang.SuppressWarnings]
+
+  /** Cross-platform upper-bounded `Type.CtorN` factories (hearth#307).
+    *
+    * Hearth's public `Type.CtorN.UpperBounded.of` / `Bounded.of` cannot be used in Chimney's SHARED code:
+    *   - Scala 2: fixed as of 0.4.0-19-g881908a (the generated `unapply` now matches wildcard existential type
+    *     projections like `TransformerFlags#OptionFallbackMerge[?$N]` reaching config parsing from wildcard DSL
+    *     members) - it works there now.
+    *   - Scala 3: the cross-quotes PLUGIN only rewrites the two-select `Type.CtorN.of` form; it has NO match case for
+    *     the three-select `Type.CtorN.UpperBounded.of` / `Bounded.of` (only doc comments), so every such call trips the
+    *     `@compileTimeOnly("Install cross-quotes-plugin ...")` guard. Confirmed against 0.4.0-19-g881908a: hearth's own
+    *     `UpperBounded.of`/`Bounded.of` fixtures are Scala-2-only (`Issue307ReproFixturesImpl`). See the it.37 comment.
+    *
+    * Because ChimneyTypes/DslMacros are shared, these factories hand-build the same `Type.CtorN.UpperBounded` instances
+    * on top of Hearth's untyped API (no plugin/codegen needed on either platform). `applied` is the type constructor
+    * applied to its upper bounds - it only serves as a way to obtain the untyped type constructor in shared code.
     *
     * Semantics difference vs the cross-quotes-generated instances: `unapply` matches on the exact (dealiased) type
     * constructor, without `baseType` subtype-awareness - which is enough for Chimney's phantom-type configs.
