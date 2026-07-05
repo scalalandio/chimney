@@ -23,8 +23,9 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.ChimneyE
   *     is summonable (handler #2 - `NonEmptyMap` has NO `cats.Traverse`),
   *   - `catsTotalOuterTransformerForNonEmptySet`: `NonEmptySet[A] -> NonEmptySet[B]` when `cats.kernel.Order[B]` is
   *     summonable (handler #3 - `NonEmptySet` has NO `cats.Traverse`),
-  *   - `catsTotalTransformerFromFunctionK`: `F[A] -> G[B]` when both `cats.Traverse[F]` and `cats.arrow.FunctionK[F, G]`
-  *     (`F ~> G`) are summonable (handler #4, registered LAST so same-`F` pairs go to handler #1).
+  *   - `catsTotalTransformerFromFunctionK`: `F[A] -> G[B]` when both `cats.Traverse[F]` and
+  *     `cats.arrow.FunctionK[F, G]` (`F ~> G`) are summonable (handler #4, registered LAST so same-`F` pairs go to
+  *     handler #1).
   *
   * The handlers are registered in that order; [[IsChimneySpecialCased]] takes the first that matches a `(From, To)`
   * pair (so `NonEmptySet`, which decomposes to one arg but has no `Traverse[NonEmptySet]`, falls through handler #1's
@@ -35,8 +36,8 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.ChimneyE
   * reification happy): (1) every actual Cats operation lives in `internal.runtime.CatsMacroConversions` (normal Scala,
   * fully-qualified), so quotes only splice values into a helper call and `asInstanceOf`-cast the result - the summoned
   * instances are meta-level `Expr`-cast onto the erased `Traverse[AnyF]` / `FunctionK[Id, Id]` shapes first; (2) the
-  * quote-building is done in helper methods with REGULAR `[A: Type]` type parameters (not `existential.Underlying`),
-  * so element types reify through their `Type` evidence instead of a macro-local path. This module compiles with
+  * quote-building is done in helper methods with REGULAR `[A: Type]` type parameters (not `existential.Underlying`), so
+  * element types reify through their `Type` evidence instead of a macro-local path. This module compiles with
   * `-Xsource:3`, so Scala-3 syntax (`.apply(using ...)`, `*` splices, `&`) is used.
   */
 final class CatsChimneyMacroExtension extends ChimneyMacroExtension { loader =>
@@ -177,7 +178,10 @@ final class CatsChimneyMacroExtension extends ChimneyMacroExtension { loader =>
     // --- Handler #1: general `F[A] -> F[B]` via `cats.Traverse[F]` (SAME `F`) ---
     registerSpecialCase(new SpecialCaseHandler {
       @scala.annotation.nowarn("msg=is never used")
-      override def apply[From, To](implicit From: Type[From], To: Type[To]): Option[SpecialCasedTransformation[From, To]] =
+      override def apply[From, To](implicit
+          From: Type[From],
+          To: Type[To]
+      ): Option[SpecialCasedTransformation[From, To]] =
         (Type.decompose1[From], Type.decompose1[To]) match {
           case (Some((fCtor, fArg)), Some((gCtor, toArg))) if fCtor.sameTypeConstructorAs(gCtor.asUntyped) =>
             import fArg.Underlying as A, toArg.Underlying as B
@@ -194,7 +198,10 @@ final class CatsChimneyMacroExtension extends ChimneyMacroExtension { loader =>
     // --- Handler #2: `NonEmptyMap[A, B] -> NonEmptyMap[C, D]` (needs `cats.kernel.Order[C]`) ---
     registerSpecialCase(new SpecialCaseHandler {
       @scala.annotation.nowarn("msg=is never used")
-      override def apply[From, To](implicit From: Type[From], To: Type[To]): Option[SpecialCasedTransformation[From, To]] =
+      override def apply[From, To](implicit
+          From: Type[From],
+          To: Type[To]
+      ): Option[SpecialCasedTransformation[From, To]] =
         (NonEmptyMapCtor.unapply(From), NonEmptyMapCtor.unapply(To)) match {
           case (Some((aArg, bArg)), Some((cArg, dArg))) =>
             import aArg.Underlying as A, bArg.Underlying as B, cArg.Underlying as C, dArg.Underlying as D
@@ -209,7 +216,10 @@ final class CatsChimneyMacroExtension extends ChimneyMacroExtension { loader =>
     // --- Handler #3: `NonEmptySet[A] -> NonEmptySet[B]` (needs `cats.kernel.Order[B]`) ---
     registerSpecialCase(new SpecialCaseHandler {
       @scala.annotation.nowarn("msg=is never used")
-      override def apply[From, To](implicit From: Type[From], To: Type[To]): Option[SpecialCasedTransformation[From, To]] =
+      override def apply[From, To](implicit
+          From: Type[From],
+          To: Type[To]
+      ): Option[SpecialCasedTransformation[From, To]] =
         (NonEmptySetCtor.unapply(From), NonEmptySetCtor.unapply(To)) match {
           case (Some(aArg), Some(bArg)) =>
             import aArg.Underlying as A, bArg.Underlying as B
@@ -224,7 +234,10 @@ final class CatsChimneyMacroExtension extends ChimneyMacroExtension { loader =>
     // --- Handler #4: `F[A] -> G[B]` via `cats.Traverse[F]` + `cats.arrow.FunctionK[F, G]` (`F ~> G`) ---
     registerSpecialCase(new SpecialCaseHandler {
       @scala.annotation.nowarn("msg=is never used")
-      override def apply[From, To](implicit From: Type[From], To: Type[To]): Option[SpecialCasedTransformation[From, To]] =
+      override def apply[From, To](implicit
+          From: Type[From],
+          To: Type[To]
+      ): Option[SpecialCasedTransformation[From, To]] =
         (Type.decompose1[From], Type.decompose1[To]) match {
           case (Some((fCtor, fArg)), Some((gCtor, gArg))) =>
             import fArg.Underlying as A, gArg.Underlying as B

@@ -6,8 +6,8 @@ import io.scalaland.chimney.partial
   *
   * Every actual Cats operation lives HERE, in normal (non-quoted) Scala, so the macro's quotes never have to reify a
   * Cats extension-ops conversion or a higher-kinded/phantom `AnyK1` type - both of which Scala 2 cross-quotes fail to
-  * emit correctly. The quotes only splice already-derived values (source, element function, `Order`) into a call to
-  * one of these methods and `asInstanceOf`-cast the result; the methods' type parameters are INFERRED from those value
+  * emit correctly. The quotes only splice already-derived values (source, element function, `Order`) into a call to one
+  * of these methods and `asInstanceOf`-cast the result; the methods' type parameters are INFERRED from those value
   * arguments at the splice site, so no path-dependent existential (`elem.Underlying`) ever gets reified either.
   *
   * Higher-kinded instances are received erased: `cats.Traverse[AnyF]` (`AnyF[x] = Any`, so `map`/`traverseWithIndexM`
