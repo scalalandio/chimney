@@ -434,7 +434,7 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
 
         val methodType: ?? = args.foldRight[??](Type[A].as_??) { (paramList, resultType) =>
           // TODO: handle FunctionXXL
-          if (paramList.size > 22) {
+          if (paramList.sizeIs > 22) {
             // $COVERAGE-OFF$should never happen unless we messed up
             assertionFailed(s"Expected arity between 0 and 22 into ${Type.prettyPrint[A]}, got: ${paramList.size}")
             // $COVERAGE-ON$
@@ -461,7 +461,7 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
 
     private def applyFunctionExpr(fn: ExistentialExpr, arguments: List[ExistentialExpr]): ExistentialExpr = {
       import fn.{Underlying as Fn, value as fnExpr}
-      val applyMethod = (Type[Fn].methods: List[Method])
+      val applyMethod = (Type[Fn].unsortedMethods: List[Method]) // order-independent: unique `apply` by name + arity
         .collectFirst {
           case oi: Method.OnInstance if oi.name == "apply" && oi.isNAry(arguments.size) => (oi: Method)
         }

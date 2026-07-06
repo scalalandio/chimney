@@ -78,14 +78,21 @@ private[compiletime] trait Derivation
   )(implicit
       ctx: TransformationContext[From, To]
   ): MIO[TransformationExpr[To]] =
+    // Cheap constant scope name; the expensive per-derivation detail (prettyPrints + full context dump) is moved into a
+    // by-name Log.info that is only built when Info logging is actually rendered.
     Log.namedScope(
-      ctx.fold(_ =>
-        s"Deriving Total Transformer expression from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]} with context:\n$ctx"
-      )(_ =>
-        s"Deriving Partial Transformer expression from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]} with context:\n$ctx"
-      )
+      ctx.fold(_ => "Deriving Total Transformer expression")(_ => "Deriving Partial Transformer expression")
     ) {
-      Rule.expandRules[From, To](updateRules(rulesAvailableForPlatform))
+      // $COVERAGE-OFF$scope detail is only built when Info logging is rendered (off by default, incl. in tests)
+      Log.info(
+        ctx.fold(_ =>
+          s"Deriving Total Transformer expression from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]} with context:\n$ctx"
+        )(_ =>
+          s"Deriving Partial Transformer expression from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]} with context:\n$ctx"
+        )
+      ) >>
+        // $COVERAGE-ON$
+        Rule.expandRules[From, To](updateRules(rulesAvailableForPlatform))
     }
 
   /** Intended use case: recursive derivation within rules */

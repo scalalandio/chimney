@@ -15,7 +15,10 @@ private[compiletime] trait ImplicitSummoning { this: Derivation & hearth.MacroCo
     val wanted = Set(
       "derive" // handled by recursion in macro
     )
-    Type[io.scalaland.chimney.Patcher.type].methods.collect { case method if wanted(method.name) => method.asUntyped }
+    // order-independent: name-filtered ignore-set for implicit summoning
+    Type[io.scalaland.chimney.Patcher.type].unsortedMethods.collect {
+      case method if wanted(method.name) => method.asUntyped
+    }
   }
 
   protected def summonPatcherUnchecked[A: Type, Patch: Type]: Option[Expr[io.scalaland.chimney.Patcher[A, Patch]]] =

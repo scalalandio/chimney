@@ -29,11 +29,14 @@ private[compiletime] trait TransformToOptionRuleModule {
           notSupportedTransformerDerivation(ctx)
             .logInfo(s"Discovered that target type is ${Type.prettyPrint(using NoneType)} which we explicitly reject")
         case OptionalValue(_) =>
-          Log.namedScope(
-            s"Lifting ${Type.prettyPrint[From]} -> ${Type
-                .prettyPrint[To]} transformation into ${Type.prettyPrint(using optionTypeCompat[From])} -> ${Type.prettyPrint[To]}"
-          ) {
-            wrapInOptionAndTransform[From, To]
+          Log.namedScope("Lifting transformation into Option") {
+            // $COVERAGE-OFF$scope detail is only built when Info logging is rendered (off by default, incl. in tests)
+            Log.info(
+              s"Lifting ${Type.prettyPrint[From]} -> ${Type
+                  .prettyPrint[To]} transformation into ${Type.prettyPrint(using optionTypeCompat[From])} -> ${Type.prettyPrint[To]}"
+            ) >>
+              // $COVERAGE-ON$
+              wrapInOptionAndTransform[From, To]
           }
         case _ =>
           attemptNextRule

@@ -48,12 +48,15 @@ private[compiletime] trait Derivation
   )
 
   final def derivePatcherResultExpr[A, Patch](implicit ctx: PatcherContext[A, Patch]): MIO[Expr[A]] =
-    Log.namedScope(
-      s"Deriving Patcher expression for ${Type.prettyPrint[A]} with patch ${Type.prettyPrint[Patch]} with context:\n$ctx"
-    ) {
+    // Cheap constant scope name; the expensive prettyPrints + context dump move into by-name Log.info entries.
+    Log.namedScope("Deriving Patcher expression") {
+      // $COVERAGE-OFF$scope detail is only built when Info logging is rendered (off by default, incl. in tests)
       Log.info(
+        s"Deriving Patcher expression for ${Type.prettyPrint[A]} with patch ${Type.prettyPrint[Patch]} with context:\n$ctx"
+      ) >> Log.info(
         s"Patching expression will be derived as total transformation from ${Type.prettyPrint[Patch]} to ${Type.prettyPrint[A]} with original ${Type.prettyPrint[A]} as fallback"
       ) >>
+        // $COVERAGE-ON$
         deriveTransformationResultExpr(ctx.toTransformerContext).map(_.ensureTotal)
     }
 }

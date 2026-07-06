@@ -216,7 +216,7 @@ object TransformerMacros {
 
     def extractAllArgs(tpe: TypeRepr): Option[(Type[?], Type[?])] = {
       val args = tpe.dealias.typeArgs
-      if args.length >= 4 then {
+      if args.lengthIs >= 4 then {
         // Both Overrides (index 2) and Flags (index 3) must be concrete (not TypeBounds/wildcards)
         (args(2), args(3)) match {
           case (_: TypeBounds, _) | (_, _: TypeBounds) => None
@@ -243,7 +243,7 @@ object TransformerMacros {
           .filter(cls => cls == tdClassSym || cls == ptdClassSym)
           .map(cls => widened.baseType(cls).typeArgs)
           .collectFirst {
-            case args if args.length >= 4 && !args(3).match { case TypeBounds(_, _) => true; case _ => false } =>
+            case args if args.lengthIs >= 4 && !args(3).match { case TypeBounds(_, _) => true; case _ => false } =>
               args(3).asType
           }
 
@@ -258,7 +258,8 @@ object TransformerMacros {
                   case Select(qualifier, _) =>
                     val qTpe = qualifier.asInstanceOf[Term].tpe.widen.dealias
                     val args = qTpe.typeArgs
-                    if args.length >= 4 && !args(2).match { case TypeBounds(_, _) => true; case _ => false } then Some(
+                    if args.lengthIs >= 4 && !args(2).match { case TypeBounds(_, _) => true; case _ => false }
+                    then Some(
                       args(2).asType
                     )
                     else findOverrides(qualifier)
@@ -267,7 +268,8 @@ object TransformerMacros {
                   case TypeApply(inner, _)  =>
                     val tTpe = t.asInstanceOf[Term].tpe.widen.dealias
                     val args = tTpe.typeArgs
-                    if args.length >= 4 && !args(2).match { case TypeBounds(_, _) => true; case _ => false } then Some(
+                    if args.lengthIs >= 4 && !args(2).match { case TypeBounds(_, _) => true; case _ => false }
+                    then Some(
                       args(2).asType
                     )
                     else findOverrides(inner)

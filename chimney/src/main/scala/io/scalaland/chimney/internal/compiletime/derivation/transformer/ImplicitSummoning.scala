@@ -20,7 +20,8 @@ private[compiletime] trait ImplicitSummoning { this: Derivation & hearth.MacroCo
 
   private def ignoredCompanionImplicits[Companion: Type](names: String*): List[UntypedMethod] = {
     val wanted = names.toSet
-    Type[Companion].methods.collect { case method if wanted(method.name) => method.asUntyped }
+    // order-independent: name-filtered ignore-set for implicit summoning
+    Type[Companion].unsortedMethods.collect { case method if wanted(method.name) => method.asUntyped }
   }
 
   private lazy val ignoredTransformerImplicits: List[UntypedMethod] = {

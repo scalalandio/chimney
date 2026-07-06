@@ -148,7 +148,7 @@ private[compiletime] trait Configurations { this: Derivation & hearth.MacroCommo
         if (inheritedAccessors) Vector("inheritedAccessors") else Vector.empty,
         if (methodAccessors) Vector("methodAccessors") else Vector.empty,
         if (processDefaultValues) Vector("processDefaultValues") else Vector.empty,
-        if (processDefaultValuesOfType.nonEmpty) Vector(processDefaultValuesOfType.toVector.map(_.prettyPrint).mkString("processDefaultValuesOfType=(", ", ", ")"))
+        if (processDefaultValuesOfType.nonEmpty) Vector(processDefaultValuesOfType.iterator.map(_.prettyPrint).mkString("processDefaultValuesOfType=(", ", ", ")"))
         else Vector.empty,
         if (beanSetters) Vector("beanSetters") else Vector.empty,
         if (beanSettersIgnoreUnmatched) Vector("beanSettersIgnoreUnmatched") else Vector.empty,

@@ -132,15 +132,16 @@ private[compiletime] trait ValueClasses {
           case _               => None
         }
         (argumentName, argumentParam) = argument
-        getter <- (Type[A].methods: List[Method]).collectFirst {
-          case oi: Method.OnInstance
-              if oi.name.trim == argumentName && oi.isNullary && oi.isAvailable(Everywhere) &&
-                !oi.expectations.exists {
-                  case MethodExpectation.NeedsTypes(_) => true
-                  case _                               => false
-                } =>
-            (oi: Method)
-        }
+        getter <- (Type[A].unsortedMethods: List[Method])
+          .collectFirst { // order-independent: name-matched unwrap getter
+            case oi: Method.OnInstance
+                if oi.name.trim == argumentName && oi.isNullary && oi.isAvailable(Everywhere) &&
+                  !oi.expectations.exists {
+                    case MethodExpectation.NeedsTypes(_) => true
+                    case _                               => false
+                  } =>
+              (oi: Method)
+          }
         if !Type.isPrimitive[A]
       } yield {
         val argumentType: ?? = argumentParam.tpe

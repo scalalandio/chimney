@@ -244,7 +244,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     }
                     .toList
                     .sorted
-                  if (ambiguousOverrides.size > 1) Some(toName -> ambiguousOverrides) else None
+                  if (ambiguousOverrides.sizeIs > 1) Some(toName -> ambiguousOverrides) else None
                 }
               }
 
@@ -516,27 +516,30 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       case TransformerOverride.Renamed(sourcePath, _) =>
         extractSrcByPath(FromOperation.Renamed, sourcePath, toName).flatMap { extractedSrc =>
           import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
-          Log.namedScope(
-            s"Recursive derivation for field `$sourcePath`: ${Type
-                .prettyPrint[ExtractedSrc]} renamed into `$toName`: ${Type.prettyPrint[CtorParam]}"
-          ) {
-            // We're constructing:
-            // '{ ${ derivedToElement } } // using ${ src.$name }
-            deriveRecursiveTransformationExpr[ExtractedSrc, CtorParam](
-              extractedSrcExpr,
-              sourcePath,
-              Path(_.select(toName)),
-              findMatchingUpdateCandidates(toName)
-            )
-              .redeemWith { expr =>
-                // If we derived partial.Result[$ctorParam] we are appending:
-                //  ${ derivedToElement }.prependErrorPath(...).prependErrorPath(...) // sourcePath
-                MIO.pure(expr.fold(TransformationExpr.fromTotal) { partialExpr =>
-                  TransformationExpr.fromPartial(prependWholeErrorPath(partialExpr, sourcePath))
-                })
-              } { errors =>
-                appendMissingTransformer[From, To, ExtractedSrc, CtorParam](errors, toName)
-              }
+          Log.namedScope(s"Recursive derivation for renamed field `$sourcePath` -> `$toName`") {
+            // $COVERAGE-OFF$scope detail is only built when Info logging is rendered (off by default, incl. in tests)
+            Log.info(
+              s"Recursive derivation for field `$sourcePath`: ${Type
+                  .prettyPrint[ExtractedSrc]} renamed into `$toName`: ${Type.prettyPrint[CtorParam]}"
+            ) >>
+              // $COVERAGE-ON$
+              // We're constructing:
+              // '{ ${ derivedToElement } } // using ${ src.$name }
+              deriveRecursiveTransformationExpr[ExtractedSrc, CtorParam](
+                extractedSrcExpr,
+                sourcePath,
+                Path(_.select(toName)),
+                findMatchingUpdateCandidates(toName)
+              )
+                .redeemWith { expr =>
+                  // If we derived partial.Result[$ctorParam] we are appending:
+                  //  ${ derivedToElement }.prependErrorPath(...).prependErrorPath(...) // sourcePath
+                  MIO.pure(expr.fold(TransformationExpr.fromTotal) { partialExpr =>
+                    TransformationExpr.fromPartial(prependWholeErrorPath(partialExpr, sourcePath))
+                  })
+                } { errors =>
+                  appendMissingTransformer[From, To, ExtractedSrc, CtorParam](errors, toName)
+                }
           }
         }
     }
@@ -645,26 +648,29 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           .logInfo(s"Matched $fromName to $toName but $toName is setter and they are disabled")
       case _ =>
         import getter.Underlying as Getter, getter.value.get
-        Log.namedScope(
-          s"Recursive derivation for field `$fromName`: ${Type
-              .prettyPrint[Getter]} into matched `$toName`: ${Type.prettyPrint[CtorParam]}"
-        ) {
-          // We're constructing:
-          // '{ ${ derivedToElement } } // using ${ src.$name }
-          deriveRecursiveTransformationExpr[Getter, CtorParam](
-            get(ctx.src),
-            Path(_.select(fromName)),
-            Path(_.select(toName)),
-            findMatchingUpdateCandidates(toName)
-          ).redeemWith { expr =>
-            // If we derived partial.Result[$ctorParam] we are appending:
-            //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
-            existential[TransformationExpr, CtorParam](expr.fold(TransformationExpr.fromTotal) { partialExpr =>
-              TransformationExpr.fromPartial(prependWholeErrorPath(partialExpr, Path(_.select(fromName))))
-            })
-          } { errors =>
-            appendMissingTransformer[From, To, Getter, CtorParam](errors, toName)
-          }
+        Log.namedScope(s"Recursive derivation for field `$fromName` -> `$toName`") {
+          // $COVERAGE-OFF$scope detail is only built when Info logging is rendered (off by default, incl. in tests)
+          Log.info(
+            s"Recursive derivation for field `$fromName`: ${Type
+                .prettyPrint[Getter]} into matched `$toName`: ${Type.prettyPrint[CtorParam]}"
+          ) >>
+            // $COVERAGE-ON$
+            // We're constructing:
+            // '{ ${ derivedToElement } } // using ${ src.$name }
+            deriveRecursiveTransformationExpr[Getter, CtorParam](
+              get(ctx.src),
+              Path(_.select(fromName)),
+              Path(_.select(toName)),
+              findMatchingUpdateCandidates(toName)
+            ).redeemWith { expr =>
+              // If we derived partial.Result[$ctorParam] we are appending:
+              //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
+              existential[TransformationExpr, CtorParam](expr.fold(TransformationExpr.fromTotal) { partialExpr =>
+                TransformationExpr.fromPartial(prependWholeErrorPath(partialExpr, Path(_.select(fromName))))
+              })
+            } { errors =>
+              appendMissingTransformer[From, To, Getter, CtorParam](errors, toName)
+            }
         }
     }
 
@@ -677,16 +683,19 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         findMatchingFallbackFieldAndUpdateCandidates(toName).collectFirst {
           case (fromName, fromFallbackField, updateCandidates) =>
             import fromFallbackField.{Underlying as FromFallbackField, value as fallbackExpr}
-            Log.namedScope(
-              s"Recursive derivation for fallback field `$fromName`: ${Type
-                  .prettyPrint[FromFallbackField]} into matched `$toName`: ${Type.prettyPrint[CtorParam]}"
-            ) {
-              deriveRecursiveTransformationExpr[FromFallbackField, CtorParam](
-                fallbackExpr,
-                Path(_.select(fromName)),
-                Path(_.select(toName)),
-                updateCandidates
-              ).flatMap(expr => existential[TransformationExpr, CtorParam](expr))
+            Log.namedScope(s"Recursive derivation for fallback field `$fromName` -> `$toName`") {
+              // $COVERAGE-OFF$scope detail is only built when Info logging is rendered (off by default, incl. in tests)
+              Log.info(
+                s"Recursive derivation for fallback field `$fromName`: ${Type
+                    .prettyPrint[FromFallbackField]} into matched `$toName`: ${Type.prettyPrint[CtorParam]}"
+              ) >>
+                // $COVERAGE-ON$
+                deriveRecursiveTransformationExpr[FromFallbackField, CtorParam](
+                  fallbackExpr,
+                  Path(_.select(fromName)),
+                  Path(_.select(toName)),
+                  updateCandidates
+                ).flatMap(expr => existential[TransformationExpr, CtorParam](expr))
             }
         }
 
