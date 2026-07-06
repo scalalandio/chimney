@@ -191,65 +191,6 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
     }
   }
 
-  // HEARTH ISSUE WORKAROUND (hearth#321 leftover, Scala 2 re-typecheck): the EnumSet provider's `factory` quote
-  // contains WILDCARD class literals (`classOf[java.util.EnumSet[?]]`, `classOf[java.lang.Class[?]]`), which print
-  // RAW (`classOf[java.util.EnumSet]`) after Chimney's Scala 2 `c.untypecheck` + re-typecheck and fail with
-  // "class EnumSet takes type parameters". (The 0.4.1 fixes cover the rest: the CONCRETE enum token is a literal
-  // since hearth#321, `asIterable` quotes are helper-routed since hearth#322, detection is symbolic since
-  // hearth#323 - and EnumMap's factory has no wildcard literals, so it needs no replacement at all.) Only the
-  // factory is replaced, with the same reflective construction except through `Class.forName` STRINGS, which
-  // re-typecheck fine. Applied on both Scala versions so both test suites exercise the single code path.
-  // Detection deliberately avoids `Type.classOfType` (hearth#333 - throws on IArray - stays unfixed).
-  private lazy val juEnumSetTypeCtorCompat: Option[UntypedType] =
-    // Try: java.util.EnumSet is absent from the Scala.js/Native compilation classpaths (where Hearth ships no Java
-    // providers anyway, so the compat can never trigger).
-    scala.util.Try(UntypedType.fromClassName("java.util.EnumSet")).toOption
-
-  private def isJavaEnumSetCompat[M: Type]: Boolean =
-    juEnumSetTypeCtorCompat.exists(ctor =>
-      UntypedType.sameTypeConstructorAs(ctor, UntypedType.dealias(Type[M].asUntyped))
-    )
-
-  private def enumClassExprCompat[Item: Type]: Expr[java.lang.Class[Item]] =
-    // ClassExprCodec's Liftable ignores the passed value and lifts a class literal from Type[Item] (hearth#321).
-    Expr.ClassExprCodec[Item].toExpr(classOf[Any].asInstanceOf[java.lang.Class[Item]])
-
-  /** `Factory[Item, M]` for an `M =:= java.util.EnumSet[Item]` target - see [[juEnumSetTypeCtorCompat]]. Mirrors the
-    * provider's generated code shape (reflective `EnumSet.noneOf` bypassing the `E <: Enum[E]` bound that an unbounded
-    * macro type parameter cannot satisfy).
-    */
-  @scala.annotation.nowarn("msg=is never used")
-  private def javaEnumSetFactoryCompat[Item: Type, M: Type](
-      itemClass: Expr[java.lang.Class[Item]]
-  ): Expr[Factory[Item, M]] = {
-    implicit val FactoryItemM: Type[Factory[Item, M]] = Type.of[Factory[Item, M]]
-    Expr.quote {
-      new scala.collection.Factory[Item, M] {
-        override def fromSpecific(it: IterableOnce[Item]): M = newBuilder.addAll(it).result()
-        override def newBuilder: scala.collection.mutable.Builder[Item, M] =
-          new scala.collection.mutable.Builder[Item, M] {
-            private val impl: java.util.EnumSet[?] = {
-              // Bypass EnumSet.noneOf's `E <: Enum[E]` bound (not satisfiable by an unbounded Item) via reflection -
-              // the same trick as Hearth's own provider, except with `Class.forName` instead of `classOf[Generic[?]]`
-              // literals (see the compat's rationale above).
-              val cls: java.lang.Class[?] = Expr.splice(itemClass)
-              java.lang.Class
-                .forName("java.util.EnumSet")
-                .getMethod("noneOf", java.lang.Class.forName("java.lang.Class"))
-                .invoke(null, cls)
-                .asInstanceOf[java.util.EnumSet[?]]
-            }
-            override def clear(): Unit = impl.clear()
-            override def result(): M = impl.asInstanceOf[M]
-            override def addOne(elem: Item): this.type = {
-              val _ = impl.asInstanceOf[java.util.Set[AnyRef]].add(elem.asInstanceOf[AnyRef])
-              this
-            }
-          }
-      }
-    }
-  }
-
   @scala.annotation.nowarn("msg=is never used")
   protected def tupleFirstCompat[A: Type, B: Type](tuple: Expr[(A, B)]): Expr[A] = {
     implicit val TupleAB: Type[(A, B)] = Type.of[(A, B)]
@@ -381,22 +322,18 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
         new TotallyBuildIterable[M, Item] {
 
           def totalFactory: Expr[Factory[Item, M]] =
-            // The provider's EnumSet factory quote does not survive Chimney's Scala 2 re-typecheck - see
-            // juEnumSetTypeCtorCompat above.
-            if (isJavaEnumSetCompat[M]) javaEnumSetFactoryCompat[Item, M](enumClassExprCompat[Item])
-            else
-              buildToValue match {
-                case None =>
-                  // CtorResult =:= M was checked by the caller - same runtime value, equivalent tree type.
-                  isCollectionOf.factory.asInstanceOf[Expr[Factory[Item, M]]]
-                case Some(build) =>
-                  totalFactoryFromBuilderCompat[Item, CtorResult0, M](
-                    // CtorResult0 IS isCollectionOf.CtorResult (passed by the caller) - identity cast bridging the
-                    // path-dependent type to the regular type parameter.
-                    isCollectionOf.factory.asInstanceOf[Expr[Factory[Item, CtorResult0]]],
-                    build
-                  )
-              }
+            buildToValue match {
+              case None =>
+                // CtorResult =:= M was checked by the caller - same runtime value, equivalent tree type.
+                isCollectionOf.factory.asInstanceOf[Expr[Factory[Item, M]]]
+              case Some(build) =>
+                totalFactoryFromBuilderCompat[Item, CtorResult0, M](
+                  // CtorResult0 IS isCollectionOf.CtorResult (passed by the caller) - identity cast bridging the
+                  // path-dependent type to the regular type parameter.
+                  isCollectionOf.factory.asInstanceOf[Expr[Factory[Item, CtorResult0]]],
+                  build
+                )
+            }
 
           def iterator(collection: Expr[M]): Expr[Iterator[Item]] =
             iterableIteratorCompat(isCollectionOf.asIterable(collection))
