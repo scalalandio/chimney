@@ -42,6 +42,8 @@ private[compiletime] trait Derivation
     TransformMapToMapRule,
     TransformIterableToIterableRule,
     TransformSubtypesRule,
+    // Directly before the structural rules - see the transformer chain / DerivationPolicy.
+    TransformDerivationPolicyRule,
     PatchProductWithProductRule,
     TransformSealedHierarchyToSealedHierarchyRule,
     PatchNotMatchedRule

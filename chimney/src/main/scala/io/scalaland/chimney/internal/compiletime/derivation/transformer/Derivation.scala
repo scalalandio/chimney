@@ -20,6 +20,7 @@ private[compiletime] trait Derivation
     with integrations.TotallyBuildIterables
     with integrations.TotallyOrPartiallyBuildIterables
     with ChimneyEngineExtensionApi
+    with io.scalaland.chimney.internal.compiletime.derivation.DerivationPolicy
     with rules.TransformationRules
     with rules.TransformImplicitRuleModule
     with rules.TransformImplicitPartialFallbackToTotalRuleModule
@@ -38,6 +39,7 @@ private[compiletime] trait Derivation
     with rules.TransformEitherToEitherRuleModule
     with rules.TransformMapToMapRuleModule
     with rules.TransformIterableToIterableRuleModule
+    with rules.TransformDerivationPolicyRuleModule
     with rules.TransformProductToProductRuleModule
     with rules.TransformSealedHierarchyToSealedHierarchyRuleModule {
   this: hearth.MacroCommons & hearth.std.StdExtensions =>
@@ -62,6 +64,9 @@ private[compiletime] trait Derivation
     TransformEitherToEitherRule,
     TransformMapToMapRule,
     TransformIterableToIterableRule,
+    // Directly before the structural rules: gates exactly "derive new code for a product/sum type" (a no-op yield
+    // under the default always-allowed policy) - everything above stays ungated. See DerivationPolicy.
+    TransformDerivationPolicyRule,
     TransformProductToProductRule,
     TransformSealedHierarchyToSealedHierarchyRule
   )

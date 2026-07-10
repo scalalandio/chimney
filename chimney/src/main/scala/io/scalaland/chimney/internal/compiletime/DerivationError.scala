@@ -17,6 +17,7 @@ object DerivationError {
       extends DerivationError(transformerDerivationError.toString)
   final case class PatcherError(patcherDerivationError: PatcherDerivationError)
       extends DerivationError(patcherDerivationError.toString)
+  final case class PolicyViolation(message: String) extends DerivationError(message)
 
   /** Classifies an arbitrary `Throwable` caught by MIO as a [[DerivationError]] before rendering. */
   def fromThrowable(error: Throwable): DerivationError = error match {
@@ -30,6 +31,8 @@ object DerivationError {
   def printErrors(derivationErrors: Seq[DerivationError]): String =
     derivationErrors
       .collectFirst {
+        case PolicyViolation(message) =>
+          message.linesIterator.map("  " + _).mkString("\n")
         case MacroException(exception) =>
           val stackTrace =
             exception.getStackTrace.view

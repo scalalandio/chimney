@@ -1039,6 +1039,46 @@ For the reasons above the recommendations are as follows:
   - use benchmarks to ensure it is reasonably fast
   - and keep on using `import dsl._` until you have some good proof that (recursive) semi-automatic derivation is needed 
 
+### Derivation policy: restricting where derivation may happen
+
+!!! tip
+
+    Available since Chimney 2.0.0. Same design and configuration keys as
+    [Kindlings' derivation policy](https://kubuszok.github.io/kindlings/user-guide/derivation-policy/).
+
+Some teams want tighter control over **where** transformations come into existence — for example, to ensure every
+canonical mapping is defined in one designated place rather than materialized ad-hoc at a random call site. The
+**derivation policy** provides this without a separate semi-automatic API: it is a compile-time switch configured
+entirely through `-Xmacro-settings`.
+
+The policy gates only **structural derivation** — generating new transformation code for a `case class` or a `sealed`
+hierarchy / `enum`. Everything else keeps working unconditionally: pre-existing implicits (your hand-written
+`Transformer`s), subtype upcasts, options, eithers, collections, value classes.
+
+```scala
+// build.sbt
+Compile / scalacOptions ++= Seq(
+  // opt-in (gated) or always-allowed (default - current behavior):
+  "-Xmacro-settings:chimney.policy.enabled=opt-in",
+  // scopes (packages, objects or classes, by fully-qualified name) where structural derivation is permitted;
+  // separate entries with ; or | - NEVER , (Scala 3 splits a -Xmacro-settings option on commas, Scala 2 does not):
+  "-Xmacro-settings:chimney.policy.allowedScopes=com.acme.mappings;com.acme.Instances",
+  // whether the opt-in import below also permits derivation (default: true):
+  "-Xmacro-settings:chimney.policy.optInByImport=true"
+)
+```
+
+When the policy is `opt-in` and a macro would structurally derive outside an allowed scope, compilation fails with an
+actionable message. Derivation can then be permitted locally with the opt-in import:
+
+```scala
+import io.scalaland.chimney.policy.allowDerivationForChimney
+```
+
+The check runs once per macro expansion: if the outermost derivation happens in an allowed place, all transformations
+nested in it (recursively derived fields, subtypes, collection elements) are permitted as part of it — you define the
+transformation once, in an allowed location, and use it as an implicit everywhere else.
+
 ## Bidirectional transformations
 
 In some cases you might want to derive 2 transformations: from some type into another type and back. Most of the time,
