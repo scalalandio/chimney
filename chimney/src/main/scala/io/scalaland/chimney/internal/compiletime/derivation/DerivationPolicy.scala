@@ -8,10 +8,10 @@ import io.scalaland.chimney.internal.compiletime.DerivationError
   * `DerivationPolicy` (kubuszok/kindlings#85 - the "sanely-automatic" derivation-policy design), with the single
   * `chimney` namespace instead of Kindlings' per-module ones.
   *
-  * By default (`always-allowed`) nothing changes. Under `opt-in`, structural derivation is permitted only in
-  * designated scopes or behind the `io.scalaland.chimney.policy.allowDerivationForChimney` import; everywhere else the
-  * macro fails with an actionable message. Everything non-structural keeps working unconditionally: pre-existing
-  * implicits, subtype upcasts, options, eithers, collections, value classes - the policy rule sits directly before the
+  * By default (`always-allowed`) nothing changes. Under `opt-in`, structural derivation is permitted only in designated
+  * scopes or behind the `io.scalaland.chimney.policy.allowDerivationForChimney` import; everywhere else the macro fails
+  * with an actionable message. Everything non-structural keeps working unconditionally: pre-existing implicits, subtype
+  * upcasts, options, eithers, collections, value classes - the policy rule sits directly before the
   * ProductToProduct/SealedHierarchy (and PatchProductWithProduct) rules, so only the structural fallthrough is gated.
   *
   * Configuration keys (all under `chimney.policy.`):
@@ -101,7 +101,10 @@ private[compiletime] trait DerivationPolicy { this: hearth.MacroCommons =>
         }
     }
 
-  private def derivationPolicyDeniedMessage(derivationName: String, denied: DerivationPolicy.Decision.Denied): String = {
+  private def derivationPolicyDeniedMessage(
+      derivationName: String,
+      denied: DerivationPolicy.Decision.Denied
+  ): String = {
     val base =
       if (denied.allowedScopes.nonEmpty)
         s"""Structural derivation of $derivationName is enabled only in the following scopes:
