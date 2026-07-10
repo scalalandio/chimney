@@ -90,8 +90,8 @@ private[compiletime] trait ValueClasses {
   protected object WrapperClassType {
 
     private type Cached[A] = Option[Existential[WrapperClass[A, *]]]
-    private val wrapperClassCache = new TypeCache[Cached]
-    def parse[A: Type]: Option[Existential[WrapperClass[A, *]]] = wrapperClassCache(Type[A]) {
+    private val wrapperClassCache = new Type.Cache[Cached]
+    def parse[A: Type]: Option[Existential[WrapperClass[A, *]]] = wrapperClassCache.getOrPut(Type[A]) {
       hearthSupport[A].orElse(methodBasedParse[A])
     }
     def unapply[A](tpe: Type[A]): Option[Existential[WrapperClass[A, *]]] = parse(using tpe)
@@ -178,8 +178,8 @@ private[compiletime] trait ValueClasses {
     private lazy val AnyValType: Type[AnyVal] = Type.of[AnyVal]
 
     private type Cached[A] = Option[Existential.UpperBounded[AnyVal, ValueClass[A, *]]]
-    private val valueClassCache = new TypeCache[Cached]
-    def parse[A: Type]: Option[Existential.UpperBounded[AnyVal, ValueClass[A, *]]] = valueClassCache(Type[A]) {
+    private val valueClassCache = new Type.Cache[Cached]
+    def parse[A: Type]: Option[Existential.UpperBounded[AnyVal, ValueClass[A, *]]] = valueClassCache.getOrPut(Type[A]) {
       // Java boxed primitives surface through the UNGATED ValueClassType: `java.lang.Integer` is
       // the Java spelling of an AnyVal, its Inner (`Int`) genuinely IS <: AnyVal, and the chimney-java-collections
       // implicits it replaces required no flag either. The actual unwrap/wrap exprs come from Hearth's built-in
@@ -218,8 +218,8 @@ private[compiletime] trait ValueClasses {
   protected object PartialWrapperClassType {
 
     private type Cached[A] = Option[Existential[PartialWrapperClass[A, *]]]
-    private val partialWrapperClassCache = new TypeCache[Cached]
-    def parse[A: Type]: Option[Existential[PartialWrapperClass[A, *]]] = partialWrapperClassCache(Type[A]) {
+    private val partialWrapperClassCache = new Type.Cache[Cached]
+    def parse[A: Type]: Option[Existential[PartialWrapperClass[A, *]]] = partialWrapperClassCache.getOrPut(Type[A]) {
       // Total wrapping wins - a type that parses as a (provider-provided PlainValue or Method-based) WrapperClass
       // must keep its total expansion; smart-constructor support only ADDS types nothing else could handle.
       if (WrapperClassType.parse[A].isDefined) None

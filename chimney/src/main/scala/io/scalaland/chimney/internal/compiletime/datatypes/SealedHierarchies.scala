@@ -33,8 +33,8 @@ private[compiletime] trait SealedHierarchies { this: ChimneyDefinitions & hearth
   protected object SealedHierarchy {
 
     private type Cached[A] = Option[SealedEnum[A]]
-    private val enumCache = new TypeCache[Cached]
-    def parse[A: Type]: Option[SealedEnum[A]] = enumCache(Type[A]) {
+    private val enumCache = new Type.Cache[Cached]
+    def parse[A: Type]: Option[SealedEnum[A]] = enumCache.getOrPut(Type[A]) {
       if (isSealed[A] || isJavaEnum[A]) subtypesToEnum[A](flattenedSubtypes[A])
       else None
     }

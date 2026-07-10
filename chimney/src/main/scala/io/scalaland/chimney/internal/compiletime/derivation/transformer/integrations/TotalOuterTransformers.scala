@@ -30,9 +30,9 @@ trait TotalOuterTransformers { this: Derivation & hearth.MacroCommons =>
   }
   protected object TotalOuterTransformer {
 
-    private val implicitCache = new TypeCache[Option]
+    private val implicitCache = new Type.Cache[Option]
     def parse[From, To](implicit from: Type[From], to: Type[To]): Option[TotalOuterTransformer[From, To]] =
-      implicitCache(
+      implicitCache.getOrPut(
         Type[integrations.TotalOuterTransformer[From, To, From, To]].asInstanceOf[Type[TotalOuterTransformer[From, To]]]
       )(summonTotalOuterTransformer[From, To])
     def unapply[From, To](pair: (Type[From], Type[To])): Option[TotalOuterTransformer[From, To]] =

@@ -10,7 +10,8 @@ package io.scalaland.chimney.internal.compiletime
   * the #317/#318 shims (`prependFreshValCompat`, `withMacroEntryCtxCompat`, the Scala 3 derive-first `*InstanceCompat`
   * overrides): chimney honors the cross-quotes usage contract ("an expr that is spliced has to be created inside the
   * expr that is splicing it") - derivations run inside the splice that consumes them (see `ChimneyExprs`) and caches
-  * never hand out `Expr`s across splices (see [[TypeCache]]).
+  * never hand out `Expr`s across splices (Hearth's `Type.Cache` partitions by the active Cross-Quotes scope since
+  * hearth#347, which is also why Chimney's own scope-partitioned `TypeCache` could be deleted).
   */
 private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
 
@@ -146,47 +147,7 @@ private[compiletime] trait MacroCommonsCompat { this: hearth.MacroCommons =>
   // with inline `Type.of[...]` (or a helper def with its own `[X: Type]` parameters when existential-imported types
   // are involved).
 
-  /** Identity of the Cross-Quotes scope the calling code is currently evaluated under.
-    *
-    * Scala 3 `PlatformBridge` overrides this with the ACTIVE `Quotes` (each `Expr.splice` evaluates its thunks under a
-    * fresh nested `Quotes`); on Scala 2 there is no expr scoping, so the default is a single constant token per cake
-    * instance. Used by [[TypeCache]] to keep cached values scope-local.
-    */
-  protected def cacheScopeToken: AnyRef = this
-
-  /** Caches a computed `F[A]` per `Type[A]` (keys compared with `=:=`) WITHIN a single Cross-Quotes scope.
-    *
-    * CROSS-QUOTES USAGE CONTRACT: an expr that is spliced has to be created inside the expr that is splicing it - so a
-    * cache accessed from inside an `Expr.splice` must NOT hand out values materialized during a DIFFERENT splice
-    * evaluation (deriving a second instance in one expansion - Iso/Codec - would then use the first splice's `Expr`s
-    * and `-Xcheck-macros` aborts with a ScopeException). Cached values here routinely embed materialized `Expr`s
-    * (summoned integration implicits, provider views, default-value exprs), so entries are partitioned by
-    * [[cacheScopeToken]]: within one scope the memoization is as effective as before, a new scope recomputes (fresh
-    * summons/exprs) instead of leaking foreign-scope trees. On Scala 2 the token is constant and this behaves like a
-    * plain per-expansion cache.
-    */
-  final protected class TypeCache[F[_]] {
-    sealed private trait Entry {
-      type Underlying
-      val key: Type[Underlying]
-      val value: F[Underlying]
-    }
-    private object Entry {
-      def apply[A](key: Type[A], value: F[A]): Entry { type Underlying = A } = new Impl(key, value)
-      final class Impl[A](val key: Type[A], val value: F[A]) extends Entry { type Underlying = A }
-    }
-    private val storage =
-      scala.collection.mutable.Map.empty[AnyRef, scala.collection.mutable.ListBuffer[Entry]]
-
-    def apply[A](key: Type[A])(newValue: => F[A]): F[A] = {
-      val entries = storage.getOrElseUpdate(cacheScopeToken, scala.collection.mutable.ListBuffer.empty[Entry])
-      entries.find(_.key =:= key) match {
-        case Some(found) => found.value.asInstanceOf[F[A]]
-        case None        =>
-          val value = newValue
-          entries += Entry(key, value)
-          value
-      }
-    }
-  }
+  // NOTE: Chimney's own `TypeCache` (with `cacheScopeToken` splice-scope partitioning) is GONE: since hearth#347
+  // Hearth's `Type.Cache` is itself partitioned by the active Cross-Quotes scope (and hash-bucketed by dealiased
+  // type symbol), so the derivation caches use `new Type.Cache[F]` + `getOrPut` directly.
 }

@@ -50,9 +50,9 @@ trait OptionalValues { this: Derivation & hearth.MacroCommons & hearth.std.StdEx
     private lazy val OptionCtor: Type.Ctor1[Option] = Type.Ctor1.of[Option]
 
     private type Cached[A] = Option[Existential[OptionalValue[A, *]]]
-    private val optionalCache = new TypeCache[Cached]
+    private val optionalCache = new Type.Cache[Cached]
     def parse[Optional](implicit Optional: Type[Optional]): Option[Existential[OptionalValue[Optional, *]]] =
-      optionalCache(Optional)(
+      optionalCache.getOrPut(Optional)(
         providedSupport[Optional].orElse(buildInOptionSupport[Optional]).orElse(hearthProviderSupport[Optional])
       )
     def unapply[Optional](Optional: Type[Optional]): Option[Existential[OptionalValue[Optional, *]]] = parse(using

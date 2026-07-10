@@ -32,9 +32,9 @@ trait PartialOuterTransformers { this: Derivation & hearth.MacroCommons =>
   }
   protected object PartialOuterTransformer {
 
-    private val implicitCache = new TypeCache[Option]
+    private val implicitCache = new Type.Cache[Option]
     def parse[From, To](implicit from: Type[From], to: Type[To]): Option[PartialOuterTransformer[From, To]] =
-      implicitCache(
+      implicitCache.getOrPut(
         Type[integrations.PartialOuterTransformer[From, To, From, To]]
           .asInstanceOf[Type[PartialOuterTransformer[From, To]]]
       )(summonPartialOuterTransformer[From, To])

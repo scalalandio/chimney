@@ -119,9 +119,9 @@ trait PartiallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.
   protected object PartiallyBuildIterable {
 
     private type Cached[M] = Option[Existential[PartiallyBuildIterable[M, *]]]
-    private val partiallyBulidIterableCache = new TypeCache[Cached]
+    private val partiallyBulidIterableCache = new Type.Cache[Cached]
     def parse[M](implicit M: Type[M]): Option[Existential[PartiallyBuildIterable[M, *]]] =
-      partiallyBulidIterableCache(M)(providedSupport[M].orElse(hearthProviderSupport[M]))
+      partiallyBulidIterableCache.getOrPut(M)(providedSupport[M].orElse(hearthProviderSupport[M]))
     def unapply[M](M: Type[M]): Option[Existential[PartiallyBuildIterable[M, *]]] = parse(using M)
 
     private def providedSupport[Collection: Type]: Option[Existential[PartiallyBuildIterable[Collection, *]]] =

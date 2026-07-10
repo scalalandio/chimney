@@ -7,12 +7,6 @@ import scala.quoted.Quotes
   */
 abstract private[compiletime] class PlatformBridge(q: Quotes)
     extends hearth.MacroCommonsScala3(using q)
-    with ChimneyDefinitions {
-
-  /** Scala 3 override of [[MacroCommonsCompat.cacheScopeToken]]: the ACTIVE Cross-Quotes `Quotes`. Each `Expr.splice`
-    * evaluates its thunks under a fresh nested `Quotes`, so values a `TypeCache` materializes during one splice are
-    * never handed out during another (the cross-quotes usage contract; Iso/Codec derive two instances - two sibling
-    * splices - per expansion).
-    */
-  override protected def cacheScopeToken: AnyRef = CrossQuotes.ctx[scala.quoted.Quotes]
-}
+    with ChimneyDefinitions
+// NOTE: the `cacheScopeToken` override is GONE: Hearth's `Type.Cache` partitions by the active Cross-Quotes scope
+// itself since hearth#347 (the same splice-scoping Chimney's removed `TypeCache` implemented).

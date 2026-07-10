@@ -221,9 +221,9 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
   protected object TotallyBuildIterable {
 
     private type Cached[M] = Option[Existential[TotallyBuildIterable[M, *]]]
-    private val totallyBulidIterableCache = new TypeCache[Cached]
+    private val totallyBulidIterableCache = new Type.Cache[Cached]
     def parse[M](implicit M: Type[M]): Option[Existential[TotallyBuildIterable[M, *]]] =
-      totallyBulidIterableCache(M)(providedSupport[M].orElse(hearthSupport[M]))
+      totallyBulidIterableCache.getOrPut(M)(providedSupport[M].orElse(hearthSupport[M]))
     def unapply[M](M: Type[M]): Option[Existential[TotallyBuildIterable[M, *]]] = parse(using M)
 
     private def providedSupport[Collection: Type]: Option[Existential[TotallyBuildIterable[Collection, *]]] =

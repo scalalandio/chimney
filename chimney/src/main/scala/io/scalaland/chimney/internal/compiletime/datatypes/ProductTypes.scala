@@ -176,9 +176,9 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
       SingletonValue.unapply(A).filter(_ => Type.isAvailable[A](Everywhere))
 
     private type CachedExtraction[A] = Option[Product.Extraction[A]]
-    private val extractionCache = new TypeCache[CachedExtraction]
+    private val extractionCache = new Type.Cache[CachedExtraction]
     def parseExtraction[A](implicit A0: Type[A]): Option[Product.Extraction[A]] =
-      extractionCache(A0)(parseExtractionImpl(dealiasedType(A0)))
+      extractionCache.getOrPut(A0)(parseExtractionImpl(dealiasedType(A0)))
     private def parseExtractionImpl[A](implicit A: Type[A]): Option[Product.Extraction[A]] =
       Some(Product.Extraction(NamedTuple.unapply(Type[A]) match {
         case Some(namedTuple) => namedTupleGetters[A](namedTuple)
@@ -186,15 +186,20 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
       }))
 
     private def methodGetters[A: Type]: Product.Getters[A] = {
-      val candidates = (Type[A].methods: List[Method]).iterator
-        // Instance methods only - Hearth's `methods` also lists companion-object members.
-        .collect { case oi: Method.OnInstance => (oi: Method) }
-        .filter(_.isAvailable(Everywhere))
-        .filter(_.isNullary)
-        .filterNot(hasTypeParameters) // remove methods with type parameters
-        .filterNot(method => ProductTypes.isGarbageName(method.name.trim))
-        .filterNot(method => method.name.endsWith("_=") || method.name.endsWith("_$eq")) // Scala var setters
-        .toList
+      // Filter-first pattern: `unsortedMethods` skips Hearth's expensive position-resolving sort, and `Method.sort`
+      // then restores the exact same stable order on the small filtered subset (its sort key is per-method, so
+      // filter-then-sort == sort-then-filter), paying position resolution only for the methods that survived.
+      val candidates = Method.sort(
+        (Type[A].unsortedMethods: List[Method]).iterator
+          // Instance methods only - Hearth's `unsortedMethods` also lists companion-object members.
+          .collect { case oi: Method.OnInstance => (oi: Method) }
+          .filter(_.isAvailable(Everywhere))
+          .filter(_.isNullary)
+          .filterNot(hasTypeParameters) // remove methods with type parameters
+          .filterNot(method => ProductTypes.isGarbageName(method.name.trim))
+          .filterNot(method => method.name.endsWith("_=") || method.name.endsWith("_$eq")) // Scala var setters
+          .toList
+      )
 
       // Getter ordering: constructor arg vals (in ctor order) ++ body vals ++ accessors and getters.
       val ctorParamOrder: Map[String, Int] = Type[A].primaryConstructor.fold(Map.empty[String, Int]) { ctor =>
@@ -249,16 +254,23 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
 
     private def setterCandidatesOf[A: Type]: List[(String, Method)] = {
       val seen = scala.collection.mutable.Set.empty[String]
-      (Type[A].methods: List[Method]).iterator
-        .collect { case oi: Method.OnInstance => (oi: Method) }
-        .filter(_.isAvailable(Everywhere))
-        .filter(_.isUnary)
-        .filterNot(hasTypeParameters)
-        .filterNot(method => ProductTypes.isGarbageName(method.name.trim))
-        .filter { method =>
-          val n = method.name.trim
-          ProductTypes.BeanAware.isSetterName(n) || n.endsWith("_=") || n.endsWith("_$eq")
-        }
+      // Filter-first pattern (see `methodGetters`): setter order is user-observable (it is the order the generated
+      // code calls the setters in, and the order they are reported in), so the filtered subset is re-sorted into
+      // `methods`' stable declaration order.
+      val candidates = Method.sort(
+        (Type[A].unsortedMethods: List[Method]).iterator
+          .collect { case oi: Method.OnInstance => (oi: Method) }
+          .filter(_.isAvailable(Everywhere))
+          .filter(_.isUnary)
+          .filterNot(hasTypeParameters)
+          .filterNot(method => ProductTypes.isGarbageName(method.name.trim))
+          .filter { method =>
+            val n = method.name.trim
+            ProductTypes.BeanAware.isSetterName(n) || n.endsWith("_=") || n.endsWith("_$eq")
+          }
+          .toList
+      )
+      candidates.iterator
         .map { method =>
           // Scala 3's JB setters _are_ methods ending with _= due to change in @BeanProperty behavior.
           // We have to drop that suffix to align names, so that comparing is possible.
@@ -271,10 +283,10 @@ private[compiletime] trait ProductTypes { this: ChimneyDefinitions & hearth.Macr
     }
 
     private type CachedConstructor[A] = Option[Product.Constructor[A]]
-    private val constructorCache = new TypeCache[CachedConstructor]
+    private val constructorCache = new Type.Cache[CachedConstructor]
     def parseConstructor[A](implicit A0: Type[A]): Option[Product.Constructor[A]] =
       // dealiasedType: alias-transparent parsing (e.g. NamedTuple aliases at override-path positions - see above).
-      constructorCache(A0)(parseConstructorImpl(dealiasedType(A0)))
+      constructorCache.getOrPut(A0)(parseConstructorImpl(dealiasedType(A0)))
     private def parseConstructorImpl[A](implicit A: Type[A]): Option[Product.Constructor[A]] = {
       val singleton = parseSingleton[A]
       if (singleton.isDefined) {
