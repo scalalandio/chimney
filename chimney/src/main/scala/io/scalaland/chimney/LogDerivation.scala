@@ -1,7 +1,6 @@
 package io.scalaland.chimney
 
-/** Marker used to enable derivation debug logging for every Chimney macro expansion that sees it in the implicit
-  * scope.
+/** Marker used to enable derivation debug logging for every Chimney macro expansion that sees it in the implicit scope.
   *
   * Do not instantiate it directly - `import io.scalaland.chimney.debug._` in the file you want to inspect (or enable
   * logging project-wide with `-Xmacro-settings:chimney.logDerivation=true`). Same idiom as Kindlings' per-module
