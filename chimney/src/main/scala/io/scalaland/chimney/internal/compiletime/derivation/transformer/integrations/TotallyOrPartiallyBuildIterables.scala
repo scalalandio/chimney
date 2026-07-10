@@ -27,6 +27,14 @@ trait TotallyOrPartiallyBuildIterables { this: Derivation & hearth.MacroCommons 
         factory: Expr[Factory[Item, Collection2]]
     ): Expr[Collection2]
 
+    /** Expression computing the collection's size for pre-allocating a builder (`Builder.sizeHint`), or `None` when no
+      * SAFE size expression exists. Safety contract is hearth's `IsCollectionOf.sizeHintForBuilder` (hearth#354): the
+      * expression must be cheap and must NOT traverse/consume the collection - single-pass sources stay `None` (the
+      * default) - and may evaluate to a negative value at runtime when unknown (callers guard with `>= 0`).
+      * Hearth-backed instances delegate to the provider; everything else keeps the default.
+      */
+    def builderSizeHint(collection: Expr[Collection]): Option[Expr[Int]] = None
+
     val asMap: Option[(ExistentialType, ExistentialType)]
   }
   object TotallyOrPartiallyBuildIterable {

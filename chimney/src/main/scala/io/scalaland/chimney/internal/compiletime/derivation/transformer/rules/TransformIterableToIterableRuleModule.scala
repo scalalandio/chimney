@@ -29,21 +29,22 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
     private def factoryTypeCompat[A: Type, C: Type]: Type[Factory[A, C]] = Type.of[Factory[A, C]]
 
     /** Total per-item mapping as foreach+builder (Hearth `IsCollection` mechanics): `{ val f = fn; val b =
-      * factory.newBuilder; <foreach src> { item => b += f(item) }; b.result() }` - no `iterator.map` wrapper
-      * allocation, and providers with a cheaper traversal (e.g. arrays by index) skip the iterator entirely.
+      * factory.newBuilder; <if hinted: b.sizeHint(...)>; <foreach src> { item => b += f(item) }; b.result() }` - no
+      * `iterator.map` wrapper allocation, and providers with a cheaper traversal (e.g. arrays by index) skip the
+      * iterator entirely.
       *
-      * Deliberately NO `sizeHint` here: obtaining a size means asking the source for a second traversal
-      * (`fromIterable.iterator(src)` next to the `foreach`), which CONSUMES single-pass sources - `java.util.Iterator`
-      * / `Enumeration` sources came out empty and `java.util.stream` sources threw "stream has already been operated
-      * upon" (caught by the chimney-java-collections suite). The one collection where the missing hint measurably hurt
-      * (Array targets: builder regrowth + an extra `result()` copy, 0.55x of by-hand) does not take this encoding -
-      * Array sources use the single-traversal mapped-iterator encoding in `srcForeachToBuilder`; for the rest
-      * (Vector/Map/List/...) the hint measured as noise.
+      * `sizeHint` comes from [[TotallyOrPartiallyBuildIterable.builderSizeHint]] (ultimately hearth's per-provider
+      * `IsCollectionOf.sizeHintForBuilder`, hearth#354), so it exists ONLY when a non-consuming size expression exists -
+      * single-pass sources are `None` by construction (obtaining a size generically would be a second traversal, which
+      * emptied java Iterator/Enumeration sources and broke java streams before). The expression may evaluate to a
+      * negative value at runtime (unknown size), hence the `>= 0` guard. Array sources still use the single-traversal
+      * mapped-iterator encoding in `srcForeachToBuilder` (measured faster than even a hinted builder loop).
       */
     @scala.annotation.nowarn("msg=is never used")
     private def foreachToBuilder[A: Type, B: Type, C: Type](
         fn: Expr[A => B],
         factory: Expr[Factory[B, C]],
+        sizeHint: Option[Expr[Int]],
         foreachSrc: (Expr[A] => Expr[Unit]) => Expr[Unit]
     ): Expr[C] = {
       implicit val FnAB: Type[A => B] = Type.of[A => B]
@@ -57,6 +58,16 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
             FreshName.FromType
           )
           .use { bRef =>
+            val hint: Expr[Unit] = sizeHint match {
+              case Some(size) =>
+                // The Int overload of sizeHint (not the IterableOnce one): the latter has a default `delta`
+                // argument, and Scala 2 cross-quotes expansion mishandles the default-argument tree.
+                Expr.quote {
+                  val ks = Expr.splice(size)
+                  if (ks >= 0) Expr.splice(bRef).sizeHint(ks)
+                }
+              case None => Expr.quote(())
+            }
             val loop: Expr[Unit] = foreachSrc { (item: Expr[A]) =>
               // suppressUnused (tree-level `val _ = expr; ()`): a quoted `val _`/named-val/bare-statement discard
               // trips (respectively) a Scala 2 reify crash, unused-local warnings, or -Wnonunit-statement.
@@ -65,6 +76,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
               )
             }
             Expr.quote {
+              Expr.splice(hint)
               Expr.splice(loop)
               Expr.splice(bRef).result()
             }
@@ -316,10 +328,12 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
                 else
                   // We're constructing
                   // '{ val f = from2 => ${ derivedInnerTo }; val b = ${ factory }.newBuilder
+                  //    <if the provider has a safe size: b.sizeHint(...)>
                   //    <foreach over src> { item => b += f(item) }; b.result() }
                   foreachToBuilder[InnerFrom, InnerTo, ToOrPartialTo](
                     totalP.build[InnerTo],
                     factory,
+                    fromIterable.builderSizeHint(ctx.src),
                     f => fromIterable.foreach(ctx.src)(f)
                   )
 

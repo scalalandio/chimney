@@ -341,6 +341,9 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
           def foreach(collection: Expr[M])(f: Expr[Item] => Expr[Unit]): Expr[Unit] =
             isCollectionOf.foreach(collection)(f)
 
+          override def builderSizeHint(collection: Expr[M]): Option[Expr[Int]] =
+            isCollectionOf.sizeHintForBuilder(collection)
+
           def to[Collection2: Type](
               collection: Expr[M],
               factory: Expr[Factory[Item, Collection2]]
@@ -404,6 +407,9 @@ trait TotallyBuildIterables { this: Derivation & hearth.MacroCommons & hearth.st
           def foreach(collection: Expr[M])(f: Expr[(K, V)] => Expr[Unit]): Expr[Unit] =
             if (pairIsTuple) isMapOf.foreach(collection)(f.asInstanceOf[Expr[Pair] => Expr[Unit]])
             else isMapOf.foreach(collection)(pair => f(toTuple(pair)))
+
+          override def builderSizeHint(collection: Expr[M]): Option[Expr[Int]] =
+            isMapOf.sizeHintForBuilder(collection)
 
           def to[Collection2: Type](
               collection: Expr[M],
