@@ -29,16 +29,24 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
     private def factoryTypeCompat[A: Type, C: Type]: Type[Factory[A, C]] = Type.of[Factory[A, C]]
 
     /** Total per-item mapping as foreach+builder (Hearth `IsCollection` mechanics): `{ val f = fn; val b =
-      * factory.newBuilder; <foreach src> { item => b += f(item) }; b.result() }` - no `iterator.map` wrapper
-      * allocation, and providers with a cheaper traversal (e.g. arrays by index) skip the iterator entirely.
+      * factory.newBuilder; b.sizeHint(srcIterator); <foreach src> { item => b += f(item) }; b.result() }` - no
+      * `iterator.map` wrapper allocation, and providers with a cheaper traversal (e.g. arrays by index) skip the
+      * iterator entirely.
+      *
+      * The `sizeHint` matters: without it an array target regrows its `ArrayBuilder` log(n) times and copies once more
+      * in `result()` (measured 0.55x of the by-hand throughput; `Iterator.to(factory)` - the previous encoding -
+      * pre-allocated via `knownSize`). `srcIterator` is only consumed by `sizeHint`'s `knownSize` read; sources without
+      * a known size (e.g. `List`) make it a no-op.
       */
     @scala.annotation.nowarn("msg=is never used")
     private def foreachToBuilder[A: Type, B: Type, C: Type](
         fn: Expr[A => B],
         factory: Expr[Factory[B, C]],
+        srcIterator: Expr[Iterator[A]],
         foreachSrc: (Expr[A] => Expr[Unit]) => Expr[Unit]
     ): Expr[C] = {
       implicit val FnAB: Type[A => B] = Type.of[A => B]
+      implicit val IteratorA: Type[Iterator[A]] = iteratorTypeCompat[A]
       implicit val FactoryBC: Type[Factory[B, C]] = Type.of[Factory[B, C]]
       implicit val BuilderBC: Type[scala.collection.mutable.Builder[B, C]] =
         Type.of[scala.collection.mutable.Builder[B, C]]
@@ -49,6 +57,12 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
             FreshName.FromType
           )
           .use { bRef =>
+            // The Int overload of sizeHint (not the IterableOnce one): the latter has a default `delta` argument,
+            // and Scala 2 cross-quotes expansion mishandles the default-argument tree here.
+            val hint: Expr[Unit] = Expr.quote {
+              val ks = Expr.splice(srcIterator).knownSize
+              if (ks >= 0) Expr.splice(bRef).sizeHint(ks)
+            }
             val loop: Expr[Unit] = foreachSrc { (item: Expr[A]) =>
               // suppressUnused (tree-level `val _ = expr; ()`): a quoted `val _`/named-val/bare-statement discard
               // trips (respectively) a Scala 2 reify crash, unused-local warnings, or -Wnonunit-statement.
@@ -57,6 +71,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
               )
             }
             Expr.quote {
+              Expr.splice(hint)
               Expr.splice(loop)
               Expr.splice(bRef).result()
             }
@@ -73,6 +88,13 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
 
     private def iteratorZipWithIndexCompat[A: Type](it: Expr[Iterator[A]]): Expr[Iterator[(A, Int)]] = Expr.quote {
       Expr.splice(it).zipWithIndex
+    }
+
+    private def iteratorMapCompat[A: Type, B: Type](it: Expr[Iterator[A]], f: Expr[A => B]): Expr[Iterator[B]] = {
+      implicit val IteratorB: Type[Iterator[B]] = iteratorTypeCompat[B]
+      Expr.quote {
+        Expr.splice(it).map(Expr.splice(f))
+      }
     }
 
     private def iteratorConcatCompat[A: Type](
@@ -287,14 +309,25 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
               def srcForeachToBuilder[ToOrPartialTo: Type](
                   factory: Expr[Factory[InnerTo, ToOrPartialTo]]
               ): Expr[ToOrPartialTo] =
-                // We're constructing
-                // '{ val f = from2 => ${ derivedInnerTo }; val b = ${ factory }.newBuilder
-                //    <foreach over src> { item => b += f(item) }; b.result() }
-                foreachToBuilder[InnerFrom, InnerTo, ToOrPartialTo](
-                  totalP.build[InnerTo],
-                  factory,
-                  f => fromIterable.foreach(ctx.src)(f)
-                )
+                if ((ctx.From: Type[From]).isArray)
+                  // Array sources use the mapped-iterator encoding: `iterator.map(f).to(factory)` fills the target
+                  // builder through `addAll`'s monomorphic inner loop with a knownSize pre-allocation, which measures
+                  // at by-hand speed for Array -> Array; the foreach+builder encoding below stays ~18% behind for
+                  // arrays even with its sizeHint (call-site interface `addOne` per element).
+                  iteratorToCompat[InnerTo, ToOrPartialTo](
+                    iteratorMapCompat[InnerFrom, InnerTo](fromIterable.iterator(ctx.src), totalP.build[InnerTo]),
+                    factory
+                  )
+                else
+                  // We're constructing
+                  // '{ val f = from2 => ${ derivedInnerTo }; val b = ${ factory }.newBuilder; b.sizeHint(...)
+                  //    <foreach over src> { item => b += f(item) }; b.result() }
+                  foreachToBuilder[InnerFrom, InnerTo, ToOrPartialTo](
+                    totalP.build[InnerTo],
+                    factory,
+                    fromIterable.iterator(ctx.src),
+                    f => fromIterable.foreach(ctx.src)(f)
+                  )
 
               toIterable.factory match {
                 case Left(totalFactory)    => totalExpr(srcForeachToBuilder(totalFactory))
