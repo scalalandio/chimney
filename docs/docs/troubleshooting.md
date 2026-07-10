@@ -2619,6 +2619,80 @@ would generate:
     + Derivation took 0.113354000 s
     ```
 
+### Debug logging without touching the code (import or scalac option)
+
+!!! tip
+
+    Available since Chimney 2.0.0. The same idiom is used by every
+    [Kindlings](https://kubuszok.github.io/kindlings/) module.
+
+Besides the `.enableMacrosLogging` flag, logging can be enabled without modifying the transformation itself:
+
+**Via import (per-file)** - add the debug import to the file you want to inspect; every Chimney macro expanded in that
+file will print its log:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.debug._
+
+    case class Foo(x: String, y: Int)
+    case class Bar(x: String, y: Int)
+
+    Bar("abc", 10).transformInto[Foo] // prints the derivation log
+    ```
+
+The import places a `LogDerivation` implicit in scope; when a macro sees it, it prints the matched rules, summoned
+implicits and the generated code.
+
+**Via scalac option (project-wide)** - no code changes needed:
+
+!!! example
+
+    ```scala
+    // build.sbt
+    scalacOptions += "-Xmacro-settings:chimney.logDerivation=true"
+    ```
+
+(The older `-Xmacro-settings:chimney.transformer.MacrosLogging=true` and `chimney.patcher.MacrosLogging=true` options
+keep working and enable logging for only one kind of macro.)
+
+### Profiling derivation with flame graphs
+
+Chimney's derivation engine runs on [Hearth](https://kubuszok.github.io/hearth/), which can profile how long each
+derivation step takes and emit a flame graph per macro expansion. Add these scalac options:
+
+!!! example
+
+    ```scala
+    // build.sbt
+    scalacOptions ++= Seq(
+      "-Xmacro-settings:hearth.mioBenchmarkScopes=true",
+      "-Xmacro-settings:hearth.mioBenchmarkFlameGraphDir=/tmp/chimney-flamegraphs"
+    )
+    ```
+
+This generates `.speedscope.json` files in the specified directory - one per macro expansion. Open them at
+[speedscope.app](https://www.speedscope.app/) to visualize where compilation time is spent. This is most useful when a
+specific transformation takes noticeably long to derive.
+
+### Derivation timeout
+
+Every Chimney macro enforces a timeout, so a runaway derivation fails compilation with a clear error instead of
+hanging the compiler. The default is generous (**10 minutes**) so ordinary compiles never time out spuriously; it can
+be overridden when needed:
+
+!!! example
+
+    ```scala
+    // build.sbt
+    scalacOptions += "-Xmacro-settings:chimney.timeout=30s"
+    ```
+
+Accepted formats: `30` (seconds), `30s`, `5000ms`, `1m`.
+
 ## More sources, videos and tutorials
 
 Videos/presentations including or describing Chimney:

@@ -39,11 +39,31 @@ private[compiletime] trait GatewayCommons {
     * ("Derived final expression is: ..." and "Derivation took ...") as regular `Info` logs, so they show up in the
     * journal Hearth renders on the success path. Otherwise a no-op (no logs are rendered - see [[extractExprAndLog]]).
     */
+  /** Kindlings-style EXTERNAL logging enablement, checked in addition to the `.enableMacrosLogging` DSL flag and the
+    * `chimney.transformer.MacrosLogging`/`chimney.patcher.MacrosLogging` macro settings:
+    *
+    *   - a [[io.scalaland.chimney.LogDerivation]] implicit in scope at the expansion site (placed there by
+    *     `import io.scalaland.chimney.debug._`) - per-file enablement without touching the transformation,
+    *   - the `-Xmacro-settings:chimney.logDerivation=true` scalac option - project-wide enablement.
+    *
+    * Evaluated lazily once per macro expansion (the implicit search is a cheap miss in the common case).
+    */
+  protected lazy val isLogDerivationEnabledExternally: Boolean = {
+    implicit val LogDerivationType: Type[io.scalaland.chimney.LogDerivation] =
+      Type.of[io.scalaland.chimney.LogDerivation]
+    Expr.summonImplicit[io.scalaland.chimney.LogDerivation].isDefined || (for {
+      data <- Environment.typedSettings.toOption
+      chimney <- data.get("chimney")
+      shouldLog <- chimney.get("logDerivation").flatMap(_.asBoolean)
+    } yield shouldLog).getOrElse(false)
+  }
+
   protected def enableLoggingIfFlagEnabled[Out](
       result: MIO[Expr[Out]],
-      isMacroLoggingEnabled: Boolean,
+      isMacroLoggingEnabledByFlag: Boolean,
       derivationStartedAt: java.time.Instant
-  ): MIO[Expr[Out]] =
+  ): MIO[Expr[Out]] = {
+    val isMacroLoggingEnabled = isMacroLoggingEnabledByFlag || isLogDerivationEnabledExternally
     if (isMacroLoggingEnabled)
       result.flatTap { expr =>
         val duration = java.time.Duration.between(derivationStartedAt, java.time.Instant.now())
@@ -51,6 +71,7 @@ private[compiletime] trait GatewayCommons {
           Log.info(f"Derivation took ${duration.getSeconds}%d.${duration.getNano}%09d s")
       }
     else result
+  }
 
   /** Runs the derivation program and either returns its expression or aborts with the user-facing error message.
     *
@@ -62,8 +83,9 @@ private[compiletime] trait GatewayCommons {
   protected def extractExprAndLog[Out](
       result: MIO[Expr[Out]],
       errorHeader: => String,
-      isMacroLoggingEnabled: Boolean
+      isMacroLoggingEnabledByFlag: Boolean
   ): Expr[Out] = {
+    val isMacroLoggingEnabled = isMacroLoggingEnabledByFlag || isLogDerivationEnabledExternally
     // Builds Chimney's exact user-facing error text (errorHeader + DerivationErrors prettyPrint + doc-URL footer). The
     // `renderedLogs` are the journal Hearth already rendered for us; they are empty unless MacrosLogging is enabled and
     // the derivation failed, so every error-message test (which does not enable logging) still sees byte-identical text.
@@ -161,9 +183,57 @@ private[compiletime] trait GatewayCommons {
   /** Chimney had no explicit timeout (the old hand-rolled `unsafe.runSync` ran unbounded); Hearth's default is 2s,
     * which is far too low for large derivations. Pick a generous ceiling so ordinary compiles never time out spuriously
     * (manual termination via Ctrl+C still works through Hearth's `TerminationObserver` regardless of this value).
+    *
+    * Overridable Kindlings-style with `-Xmacro-settings:chimney.timeout=30s` (accepted formats: `30`, `30s`, `5000ms`,
+    * `1m` - same grammar as Kindlings' per-module `timeout` settings; unlike Kindlings the DEFAULT stays generous).
     */
-  private val macroExpansionTimeout: FiniteDuration =
-    FiniteDuration(10, java.util.concurrent.TimeUnit.MINUTES)
+  private lazy val macroExpansionTimeout: FiniteDuration =
+    (for {
+      data <- Environment.typedSettings.toOption
+      chimney <- data.get("chimney")
+      timeoutData <- chimney.get("timeout")
+      duration <- timeoutData.asInt
+        .filter(_ > 0)
+        .map(n => FiniteDuration(n.toLong, java.util.concurrent.TimeUnit.SECONDS))
+        .orElse(
+          timeoutData.asLong.filter(_ > 0).map(n => FiniteDuration(n, java.util.concurrent.TimeUnit.SECONDS))
+        )
+        .orElse(timeoutData.asString.flatMap(parseTimeoutString))
+    } yield duration).getOrElse(GatewayCommons.DefaultMacroExpansionTimeout)
+
+  private def parseTimeoutString(str: String): Option[FiniteDuration] = str.trim match {
+    case GatewayCommons.TimeoutDurationPattern(num, unit) =>
+      val n = num.toLong
+      if (n > 0) {
+        val tu = unit match {
+          case "ms" | "millis" | "milliseconds" => java.util.concurrent.TimeUnit.MILLISECONDS
+          case "s" | "second" | "seconds"       => java.util.concurrent.TimeUnit.SECONDS
+          case "m" | "minute" | "minutes"       => java.util.concurrent.TimeUnit.MINUTES
+        }
+        Some(FiniteDuration(n, tu))
+      } else {
+        Environment.reportWarn(
+          s"chimney.timeout: value must be positive, got '$str'. " +
+            s"Using default of ${GatewayCommons.DefaultMacroExpansionTimeout.toMinutes}m."
+        )
+        None
+      }
+    case _ =>
+      Environment.reportWarn(
+        s"chimney.timeout: unrecognized format '$str'. Expected formats: 30, 30s, 5000ms, 1m. " +
+          s"Using default of ${GatewayCommons.DefaultMacroExpansionTimeout.toMinutes}m."
+      )
+      None
+  }
 
   private val chimneyDocUrl = "https://chimney.readthedocs.io"
+}
+
+private[compiletime] object GatewayCommons {
+
+  private val DefaultMacroExpansionTimeout: FiniteDuration =
+    FiniteDuration(10, java.util.concurrent.TimeUnit.MINUTES)
+
+  // Same grammar as Kindlings' per-module `timeout` settings.
+  private val TimeoutDurationPattern = """^\s*(\d+)\s*(ms|millis|milliseconds|s|seconds?|m|minutes?)\s*$""".r
 }
