@@ -516,6 +516,15 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       case TransformerOverride.Renamed(sourcePath, _) =>
         extractSrcByPath(FromOperation.Renamed, sourcePath, toName).flatMap { extractedSrc =>
           import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
+          // `sourcePath` is absolute (rooted at the whole transformation's source), but
+          // `deriveRecursiveTransformationExpr` expects a *relative* follow-path - it is concatenated onto the
+          // current journal position (`newSrcPath = last.concat(followFrom)`) and used to strip relative sided
+          // override paths. Every other caller passes a relative path (e.g. `Path(_.select(fromName))`); passing
+          // the absolute `sourcePath` here double-counts the current prefix, producing journal paths like
+          // `_.field.everyItem.field.everyItem.fieldA` that no longer line up with the override's own source path
+          // and break lookup for deeper nested renames (#718). Relativize against the current source position;
+          // for a top-level rename `ctx.currentSrc` is `Root`, so this is a no-op there.
+          val relativeSourcePath = sourcePath.drop(ctx.currentSrc).getOrElse(sourcePath)
           Log.namedScope(s"Recursive derivation for renamed field `$sourcePath` -> `$toName`") {
             // $COVERAGE-OFF$scope detail is only built when Info logging is rendered (off by default, incl. in tests)
             Log.info(
@@ -527,7 +536,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               // '{ ${ derivedToElement } } // using ${ src.$name }
               deriveRecursiveTransformationExpr[ExtractedSrc, CtorParam](
                 extractedSrcExpr,
-                sourcePath,
+                relativeSourcePath,
                 Path(_.select(toName)),
                 findMatchingUpdateCandidates(toName)
               )

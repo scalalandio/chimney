@@ -932,4 +932,18 @@ class IssuesSpec extends ChimneySpec {
     (DomainTree.Node(DomainTree.Node(DomainTree.Leaf)): DomainTree[String])
       .transformInto[ApiTree] ==> ApiTree.Node(ApiTree.Node(ApiTree.Leaf))
   }
+
+  test("fix issue #718 (rename ending with everyItem/matchingSome)") {
+    import Issue718.*
+
+    val transformer = Transformer
+      .define[A, B]
+      .withFieldRenamed(_.field.everyItem.fieldA, _.field.everyItem.fieldB)
+      .withFieldRenamed(_.field.everyItem.fieldA.matchingSome.fieldA_A, _.field.everyItem.fieldB.matchingSome.fieldB_B)
+      .buildTransformer
+
+    transformer.transform(A(List(A_inner(Some(A_inner_inner("value")))))) ==>
+      B(List(B_inner(Some(B_inner_inner("value")))))
+    transformer.transform(A(List(A_inner(None)))) ==> B(List(B_inner(None)))
+  }
 }

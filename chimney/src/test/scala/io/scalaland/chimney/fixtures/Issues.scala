@@ -254,6 +254,16 @@ object Issue741 {
   case class GItemOptional(entry: Option[GItem])
 }
 
+object Issue718 {
+  case class A_inner_inner(fieldA_A: String)
+  case class A_inner(fieldA: Option[A_inner_inner])
+  case class A(field: List[A_inner])
+
+  case class B_inner_inner(fieldB_B: String)
+  case class B_inner(fieldB: Option[B_inner_inner])
+  case class B(field: List[B_inner])
+}
+
 object Issue707 {
   // A GENERIC sealed hierarchy whose leaves fix the type parameter to a concrete type.
   sealed trait DomainModel[A]
