@@ -35,6 +35,19 @@ object Issue857 {
   }
 }
 
+object Issue625 {
+  // Lowercase, parameterless enum cases: the wrong case used to be picked (everything collapsed onto the first
+  // case, `solo`) because the generated `matchOn` reference was a bare lowercase `Ident` that dotty reinterpreted
+  // as a catch-all pattern variable (scala/scala3#20350).
+  enum Enum1 {
+    case solo, team, school
+  }
+
+  enum Enum2 {
+    case solo, team, school
+  }
+}
+
 object Issue835 {
   abstract class StatusEntity(val status: String)
 

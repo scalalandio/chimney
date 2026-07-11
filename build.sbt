@@ -39,7 +39,7 @@ val versions = new {
   // !!! It MUST be replaced by a proper hearth RELEASE (and the snapshots resolver removed again)
   // !!! BEFORE merging PR #903. Do NOT release/merge with a -SNAPSHOT hearth dependency.
   // !!! -----------------------------------------------------------------------------------------------------------
-  val hearth = "0.4.0-52-gaaf7e1a-SNAPSHOT"
+  val hearth = "0.4.0-55-g60be58f-SNAPSHOT"
   val cats = "2.13.0"
   // Latest published kindlings (its 0.3.0 depends on hearth 0.4.0, same as us; publishes JVM/JS/Native x 2.13/3).
   // TODO(kindlings-release): snapshot carrying kubuszok/kindlings#163 (NonEmptySeq/NonEmptyLazyList IsCollection

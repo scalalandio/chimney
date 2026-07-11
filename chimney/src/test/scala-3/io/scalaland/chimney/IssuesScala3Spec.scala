@@ -5,6 +5,14 @@ import scala.annotation.unused
 
 class IssuesScala3Spec extends ChimneySpec {
 
+  test("fix issue #625 (correct case picked for simple lowercase enum transformation)") {
+    import io.scalaland.chimney.fixtures.Issue625.*
+
+    Enum1.solo.transformInto[Enum2] ==> Enum2.solo
+    Enum1.team.transformInto[Enum2] ==> Enum2.team
+    Enum1.school.transformInto[Enum2] ==> Enum2.school
+  }
+
   test("fix issue #592 (givens in companion)") {
     case class Foo(a: Int, b: String)
     case class Bar(a: Int, b: String)

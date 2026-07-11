@@ -254,6 +254,15 @@ object Issue741 {
   case class GItemOptional(entry: Option[GItem])
 }
 
+object Issue673 {
+  // A value typed as an intersection `HasName with HasAge` used to expose NONE of the members declared by its
+  // parts on Scala 3 (the AndType's `typeSymbol` is `NoSymbol`), so derivation could not see `name`/`age`.
+  trait HasName { def name: String }
+  trait HasAge { def age: Int }
+
+  case class Person(name: String, age: Int)
+}
+
 object Issue718 {
   case class A_inner_inner(fieldA_A: String)
   case class A_inner(fieldA: Option[A_inner_inner])

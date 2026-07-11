@@ -946,4 +946,18 @@ class IssuesSpec extends ChimneySpec {
       B(List(B_inner(Some(B_inner_inner("value")))))
     transformer.transform(A(List(A_inner(None)))) ==> B(List(B_inner(None)))
   }
+
+  test("fix issue #673 (intersection-type source exposes members from all its parts)") {
+    import Issue673.*
+
+    val source: HasName with HasAge = new HasName with HasAge {
+      def name: String = "Alice"
+      def age: Int = 30
+    }
+
+    // Before the underlying Hearth fix, a value typed as `HasName with HasAge` (an `AndType` on Scala 3) exposed
+    // NONE of its parts' members, so neither `name` nor `age` was found. Now both are visible; as they are `def`s
+    // inherited from the traits, they are surfaced as method/inherited accessors.
+    source.into[Person].enableMethodAccessors.enableInheritedAccessors.transform ==> Person("Alice", 30)
+  }
 }
