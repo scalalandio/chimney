@@ -64,6 +64,98 @@ trait PartialTransformer[From, To] {
     */
   final def transformFailFast(src: From): partial.Result[To] =
     transform(src, failFast = true)
+
+  /** Creates a new [[io.scalaland.chimney.PartialTransformer]] by applying a pure function to the successful result of
+    * this transformation.
+    *
+    * {{{
+    *   val parseInt: PartialTransformer[String, Int] = PartialTransformer(str => partial.Result.fromCatching(str.toInt))
+    *
+    *   case class Length(length: Int)
+    *
+    *   implicit val toLength: PartialTransformer[String, Length] = parseInt.map(Length(_))
+    * }}}
+    *
+    * @tparam To2
+    *   type of the mapped output value
+    * @param f
+    *   a pure function that maps `To` to `To2`
+    * @return
+    *   new [[io.scalaland.chimney.PartialTransformer]] from `From` to `To2`
+    *
+    * @since 2.0.0
+    */
+  final def map[To2](f: To => To2): PartialTransformer[From, To2] =
+    (src: From, failFast: Boolean) => transform(src, failFast).map(f)
+
+  /** Creates a new [[io.scalaland.chimney.PartialTransformer]] by applying a partial function to the successful result
+    * of this transformation, allowing the mapping itself to fail.
+    *
+    * {{{
+    *   val parseInt: PartialTransformer[String, Int] = PartialTransformer(str => partial.Result.fromCatching(str.toInt))
+    *
+    *   case class Positive(value: Int)
+    *
+    *   implicit val toPositive: PartialTransformer[String, Positive] =
+    *     parseInt.mapPartial(i => partial.Result.fromOption(Option.when(i > 0)(Positive(i))))
+    * }}}
+    *
+    * @tparam To2
+    *   type of the mapped output value
+    * @param f
+    *   a function that maps `To` to a [[io.scalaland.chimney.partial.Result]] of `To2`
+    * @return
+    *   new [[io.scalaland.chimney.PartialTransformer]] from `From` to `To2`
+    *
+    * @since 2.0.0
+    */
+  final def mapPartial[To2](f: To => partial.Result[To2]): PartialTransformer[From, To2] =
+    (src: From, failFast: Boolean) => transform(src, failFast).flatMap(f)
+
+  /** Creates a new [[io.scalaland.chimney.PartialTransformer]] by applying a pure function to the source before this
+    * transformation.
+    *
+    * {{{
+    *   val parseInt: PartialTransformer[String, Int] = PartialTransformer(str => partial.Result.fromCatching(str.toInt))
+    *
+    *   case class Raw(raw: String)
+    *
+    *   implicit val rawToInt: PartialTransformer[Raw, Int] = parseInt.contramap(_.raw)
+    * }}}
+    *
+    * @tparam From2
+    *   type of the new input value
+    * @param f
+    *   a pure function that maps `From2` to `From`
+    * @return
+    *   new [[io.scalaland.chimney.PartialTransformer]] from `From2` to `To`
+    *
+    * @since 2.0.0
+    */
+  final def contramap[From2](f: From2 => From): PartialTransformer[From2, To] =
+    (src: From2, failFast: Boolean) => transform(f(src), failFast)
+
+  /** Creates a new [[io.scalaland.chimney.PartialTransformer]] by applying a partial function to the source before this
+    * transformation, allowing the preprocessing itself to fail.
+    *
+    * {{{
+    *   val parseInt: PartialTransformer[String, Int] = PartialTransformer(str => partial.Result.fromCatching(str.toInt))
+    *
+    *   implicit val trimmedToInt: PartialTransformer[String, Int] =
+    *     parseInt.contramapPartial(str => partial.Result.fromOption(Option(str).map(_.trim).filter(_.nonEmpty)))
+    * }}}
+    *
+    * @tparam From2
+    *   type of the new input value
+    * @param f
+    *   a function that maps `From2` to a [[io.scalaland.chimney.partial.Result]] of `From`
+    * @return
+    *   new [[io.scalaland.chimney.PartialTransformer]] from `From2` to `To`
+    *
+    * @since 2.0.0
+    */
+  final def contramapPartial[From2](f: From2 => partial.Result[From]): PartialTransformer[From2, To] =
+    (src: From2, failFast: Boolean) => f(src).flatMap(from => transform(from, failFast))
 }
 
 /** Companion of [[io.scalaland.chimney.PartialTransformer]].

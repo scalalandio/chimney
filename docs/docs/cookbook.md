@@ -1157,6 +1157,118 @@ or `Codec` (for bidirectional conversion which always succeeds in one way, but m
 Both `Iso` and `Codec` are only available through semiautomatic derivation. Currently, they only provide
 `withFieldRenamed` value override and flags overrides. 
 
+## Adapting existing type class instances
+
+Sometimes you already have a `Transformer`, `PartialTransformer`, `Iso` or `Codec` and you only need to tweak its
+input or output type, without deriving a brand new instance. Every one of these type classes provides combinators for
+exactly that, so you can reuse an existing instance instead of paying for another derivation.
+
+`Transformer` can adapt its output with `map` and its input with `contramap`:
+
+!!! example "Adapting a `Transformer`"
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.dsl._
+
+    val stringLength: Transformer[String, Int] = _.length
+
+    case class Id(id: String)
+    case class Length(length: Int)
+
+    // contramap adapts the input side, map adapts the output side
+    implicit val idLength: Transformer[Id, Length] =
+      stringLength.contramap[Id](_.id).map(Length(_))
+
+    pprint.pprintln(Id("test").transformInto[Length])
+    // expected output:
+    // Length(length = 4)
+    ```
+
+`PartialTransformer` adds partial variants - `mapPartial` and `contramapPartial` - for when the adaptation itself can
+fail:
+
+!!! example "Adapting a `PartialTransformer`"
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.PartialTransformer
+    import io.scalaland.chimney.partial.Result
+
+    val parseInt: PartialTransformer[String, Int] =
+      PartialTransformer[String, Int](str => Result.fromCatching(str.toInt))
+
+    val parsePositive: PartialTransformer[String, Int] =
+      parseInt.mapPartial { i =>
+        if (i > 0) Result.fromValue(i)
+        else Result.fromErrorString("must be positive")
+      }
+
+    pprint.pprintln(parsePositive.transform("10").asOption)
+    pprint.pprintln(parsePositive.transform("-1").asOption)
+    pprint.pprintln(parsePositive.transform("oops").asOption)
+    // expected output:
+    // Some(value = 10)
+    // None
+    // None
+    ```
+
+`Iso` and `Codec` are bidirectional, so their combinators are invariant - they take a pair of functions (there and
+back). `Iso` uses `imapFirst`/`imapSecond` and `Codec` uses `imapDomain`/`imapDto`:
+
+!!! example "Adapting an `Iso`"
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.Iso
+
+    case class Celsius(value: Int)
+    case class Kelvin(value: Int)
+
+    val celsiusKelvin: Iso[Celsius, Kelvin] =
+      Iso((c: Celsius) => Kelvin(c.value + 273), (k: Kelvin) => Celsius(k.value - 273))
+
+    // rebase the First side onto a raw Int using a bijection
+    val intKelvin: Iso[Int, Kelvin] = celsiusKelvin.imapFirst(_.value)(Celsius(_))
+
+    pprint.pprintln(intKelvin.first.transform(0))
+    pprint.pprintln(intKelvin.second.transform(Kelvin(300)))
+    // expected output:
+    // Kelvin(value = 273)
+    // 27
+    ```
+
+!!! example "Adapting a `Codec`"
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.{Codec, PartialTransformer}
+    import io.scalaland.chimney.partial.Result
+
+    val intStringCodec: Codec[Int, String] = Codec(
+      (i: Int) => i.toString,
+      PartialTransformer[String, Int](str => Result.fromCatching(str.toInt))
+    )
+
+    case class Id(value: Int)
+
+    // rebase the Domain side onto Id using a bijection
+    val idCodec: Codec[Id, String] = intStringCodec.imapDomain(Id(_))(_.value)
+
+    pprint.pprintln(idCodec.encode.transform(Id(42)))
+    pprint.pprintln(idCodec.decode.transform("42").asOption)
+    pprint.pprintln(idCodec.decode.transform("bad").asOption)
+    // expected output:
+    // "42"
+    // Some(value = Id(value = 42))
+    // None
+    ```
+
 ## Java collections' integration
 
 Since `2.0.0` Java's types are supported out of the box on the JVM - no extra dependency, no import

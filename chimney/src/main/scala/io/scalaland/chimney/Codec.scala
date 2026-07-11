@@ -21,7 +21,42 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
   *
   * @since 1.2.0
   */
-final case class Codec[Domain, Dto](encode: Transformer[Domain, Dto], decode: PartialTransformer[Dto, Domain])
+final case class Codec[Domain, Dto](encode: Transformer[Domain, Dto], decode: PartialTransformer[Dto, Domain]) {
+
+  /** Creates a new [[io.scalaland.chimney.Codec]] with the `Domain` side replaced by `NewDomain`, given a bijection
+    * between the two.
+    *
+    * @tparam NewDomain
+    *   the new domain type
+    * @param f
+    *   conversion from the old `Domain` to `NewDomain`
+    * @param g
+    *   conversion from `NewDomain` back to the old `Domain`
+    * @return
+    *   new [[io.scalaland.chimney.Codec]] between `NewDomain` and `Dto`
+    *
+    * @since 2.0.0
+    */
+  def imapDomain[NewDomain](f: Domain => NewDomain)(g: NewDomain => Domain): Codec[NewDomain, Dto] =
+    Codec(encode.contramap(g), decode.map(f))
+
+  /** Creates a new [[io.scalaland.chimney.Codec]] with the `Dto` side replaced by `NewDto`, given a bijection between
+    * the two.
+    *
+    * @tparam NewDto
+    *   the new DTO type
+    * @param f
+    *   conversion from the old `Dto` to `NewDto`
+    * @param g
+    *   conversion from `NewDto` back to the old `Dto`
+    * @return
+    *   new [[io.scalaland.chimney.Codec]] between `Domain` and `NewDto`
+    *
+    * @since 2.0.0
+    */
+  def imapDto[NewDto](f: Dto => NewDto)(g: NewDto => Dto): Codec[Domain, NewDto] =
+    Codec(encode.map(f), decode.contramap(g))
+}
 
 /** Companion of [[io.scalaland.chimney.Codec]].
   *

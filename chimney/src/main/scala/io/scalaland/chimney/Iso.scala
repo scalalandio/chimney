@@ -20,7 +20,42 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
   *
   * @since 1.2.0
   */
-final case class Iso[First, Second](first: Transformer[First, Second], second: Transformer[Second, First])
+final case class Iso[First, Second](first: Transformer[First, Second], second: Transformer[Second, First]) {
+
+  /** Creates a new [[io.scalaland.chimney.Iso]] with the `First` side replaced by `NewFirst`, given a bijection between
+    * the two.
+    *
+    * @tparam NewFirst
+    *   the new first type
+    * @param f
+    *   conversion from the old `First` to `NewFirst`
+    * @param g
+    *   conversion from `NewFirst` back to the old `First`
+    * @return
+    *   new [[io.scalaland.chimney.Iso]] between `NewFirst` and `Second`
+    *
+    * @since 2.0.0
+    */
+  def imapFirst[NewFirst](f: First => NewFirst)(g: NewFirst => First): Iso[NewFirst, Second] =
+    Iso(first.contramap(g), second.map(f))
+
+  /** Creates a new [[io.scalaland.chimney.Iso]] with the `Second` side replaced by `NewSecond`, given a bijection
+    * between the two.
+    *
+    * @tparam NewSecond
+    *   the new second type
+    * @param f
+    *   conversion from the old `Second` to `NewSecond`
+    * @param g
+    *   conversion from `NewSecond` back to the old `Second`
+    * @return
+    *   new [[io.scalaland.chimney.Iso]] between `First` and `NewSecond`
+    *
+    * @since 2.0.0
+    */
+  def imapSecond[NewSecond](f: Second => NewSecond)(g: NewSecond => Second): Iso[First, NewSecond] =
+    Iso(first.map(f), second.contramap(g))
+}
 
 /** Companion of [[io.scalaland.chimney.Iso]].
   *

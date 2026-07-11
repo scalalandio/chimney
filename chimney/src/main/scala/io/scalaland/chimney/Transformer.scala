@@ -36,6 +36,52 @@ trait Transformer[From, To] {
     * @since 0.1.0
     */
   def transform(src: From): To
+
+  /** Creates a new [[io.scalaland.chimney.Transformer]] by applying a pure function to the result of this
+    * transformation.
+    *
+    * {{{
+    *   val stringLength: Transformer[String, Int] = _.length
+    *
+    *   case class Length(length: Int)
+    *
+    *   implicit val toLength: Transformer[String, Length] = stringLength.map(Length(_))
+    * }}}
+    *
+    * @tparam To2
+    *   type of the mapped output value
+    * @param f
+    *   a pure function that maps `To` to `To2`
+    * @return
+    *   new [[io.scalaland.chimney.Transformer]] from `From` to `To2`
+    *
+    * @since 2.0.0
+    */
+  final def map[To2](f: To => To2): Transformer[From, To2] =
+    (src: From) => f(transform(src))
+
+  /** Creates a new [[io.scalaland.chimney.Transformer]] by applying a pure function to the source before this
+    * transformation.
+    *
+    * {{{
+    *   val stringLength: Transformer[String, Int] = _.length
+    *
+    *   case class Id(id: String)
+    *
+    *   implicit val idLength: Transformer[Id, Int] = stringLength.contramap(_.id)
+    * }}}
+    *
+    * @tparam From2
+    *   type of the new input value
+    * @param f
+    *   a pure function that maps `From2` to `From`
+    * @return
+    *   new [[io.scalaland.chimney.Transformer]] from `From2` to `To`
+    *
+    * @since 2.0.0
+    */
+  final def contramap[From2](f: From2 => From): Transformer[From2, To] =
+    (src: From2) => transform(f(src))
 }
 
 /** Companion of [[io.scalaland.chimney.Transformer]].
