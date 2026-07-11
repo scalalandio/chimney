@@ -110,4 +110,28 @@ class TransformedNamesComparisonSpec extends ChimneySpec {
     }
 
   }
+
+  group("TransformedNamesComparison.IgnorePrefix") {
+
+    test("should match when the source name equals the prefix followed by the target name") {
+      IgnoreFooPrefix.namesMatch("FooBar", "Bar") ==> true
+      IgnoreFooPrefix.namesMatch("FooBaz", "Baz") ==> true
+    }
+
+    test("should match identical names only when the prefix is empty") {
+      IgnoreFooPrefix.namesMatch("Bar", "Bar") ==> false
+      IgnoreFooPrefix.namesMatch("Foo", "Foo") ==> false
+    }
+
+    test("should not match when the prefix is missing or the names differ") {
+      IgnoreFooPrefix.namesMatch("Bar", "FooBar") ==> false
+      IgnoreFooPrefix.namesMatch("BarFoo", "Bar") ==> false
+      IgnoreFooPrefix.namesMatch("FooBar", "Baz") ==> false
+    }
+  }
 }
+
+/** Extended outside of `TransformedNamesComparison` to make sure `IgnorePrefix` is not `sealed` and can be reused by
+  * downstream code, as documented.
+  */
+case object IgnoreFooPrefix extends TransformedNamesComparison.IgnorePrefix("Foo")

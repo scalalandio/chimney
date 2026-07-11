@@ -76,6 +76,12 @@ object TransformedNamesComparison {
     }
   }
 
+  /** Matches names after stripping a fixed prefix from the source name. */
+  abstract class IgnorePrefix(prefix: String) extends TransformedNamesComparison { this: Singleton =>
+
+    def namesMatch(fromName: String, toName: String): Boolean = fromName == prefix + toName
+  }
+
   type FieldDefault = BeanAware.type
   val FieldDefault: FieldDefault = BeanAware
 

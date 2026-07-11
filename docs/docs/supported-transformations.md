@@ -6227,8 +6227,13 @@ Arguments taken by both `.enableCustomFieldNameComparison` and `.enableCustomSub
   `true`
  - `TransformedNamesComparison.CamelSnakeCaseEquality` - 2 names are considered equal if they are identical `String`s OR if they are
    identical after you convert them from snake to camel case (e.g. `snake_case` -> `snakeCase`, `camelCase` -> `camelCase`)
+ - `TransformedNamesComparison.IgnorePrefix` - a base class (rather than a ready-to-use value) that you extend with a fixed
+   prefix, e.g. `case object FooNamesComparison extends TransformedNamesComparison.IgnorePrefix("Foo")`. The source name
+   matches the target name if it equals the prefix followed by the target name (e.g. `FooBar` matches `Bar`). This is handy for
+   code-generated types such as Protobuf enums whose variants
+   [repeat the enum name as a prefix](https://buf.build/blog/totw-3-enum-names-need-prefixes)
 
-However, these 4 do not exhaust all possible comparisons, and you might need to provide one yourself. 
+However, these 5 do not exhaust all possible comparisons, and you might need to provide one yourself. 
 
 !!! warning
 
