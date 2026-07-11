@@ -253,3 +253,32 @@ object Issue741 {
   case class GItem(id: String, data: String)
   case class GItemOptional(entry: Option[GItem])
 }
+
+object Issue707 {
+  // A GENERIC sealed hierarchy whose leaves fix the type parameter to a concrete type.
+  sealed trait DomainModel[A]
+  object DomainModel {
+    case object Foo extends DomainModel[String]
+    case object Bar extends DomainModel[String]
+  }
+
+  // ...transformed into a NON-generic sealed hierarchy.
+  sealed trait ApiModel
+  object ApiModel {
+    case object Foo extends ApiModel
+    case object Bar extends ApiModel
+  }
+
+  // The same, but recursive (the shape from the original report).
+  sealed trait DomainTree[A]
+  object DomainTree {
+    case class Node[A](inner: DomainTree[A]) extends DomainTree[A]
+    case object Leaf extends DomainTree[String]
+  }
+
+  sealed trait ApiTree
+  object ApiTree {
+    case class Node(inner: ApiTree) extends ApiTree
+    case object Leaf extends ApiTree
+  }
+}

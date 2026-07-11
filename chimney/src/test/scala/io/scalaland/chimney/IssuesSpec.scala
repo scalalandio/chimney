@@ -914,4 +914,22 @@ class IssuesSpec extends ChimneySpec {
         Some(None)
     }
   }
+
+  test("fix issue #707 (generic sealed hierarchy into non-generic one)") {
+    import Issue707.*
+
+    // A generic sealed source `DomainModel[A]` used to lose all of its subtypes (none conform to the abstract
+    // `DomainModel[A]`), producing an empty match that crashed derivation / threw a MatchError at runtime.
+    implicit def domainToApi[A]: Transformer[DomainModel[A], ApiModel] = Transformer.derive
+
+    (DomainModel.Foo: DomainModel[String]).transformInto[ApiModel] ==> ApiModel.Foo
+    (DomainModel.Bar: DomainModel[String]).transformInto[ApiModel] ==> ApiModel.Bar
+
+    // The same must hold for a recursive generic hierarchy.
+    implicit def domainTreeToApi[A]: Transformer[DomainTree[A], ApiTree] = Transformer.derive
+
+    (DomainTree.Leaf: DomainTree[String]).transformInto[ApiTree] ==> ApiTree.Leaf
+    (DomainTree.Node(DomainTree.Node(DomainTree.Leaf)): DomainTree[String])
+      .transformInto[ApiTree] ==> ApiTree.Node(ApiTree.Node(ApiTree.Leaf))
+  }
 }

@@ -73,6 +73,16 @@ private[compiletime] trait SealedHierarchies { this: ChimneyDefinitions & hearth
         if (acc.exists { case (n, c) => n == name && c.Underlying =:= child.Underlying }) acc
         else acc :+ subtype
       }
+      // GADT narrowing: for a concretely-applied sealed type (e.g. `Expr[Int]`) we drop subtypes that cannot conform
+      // (e.g. `BoolLit extends Expr[Boolean]`). But when `A`'s type arguments are abstract (e.g. a generic sealed
+      // hierarchy `Foo[A]` whose leaves are `Bar extends Foo[String]`), NONE of the concrete-argument leaves conform
+      // to `Foo[A]`, yet all of them are reachable at runtime - so we must keep them all, otherwise the subtype list
+      // collapses to empty and derivation crashes (see #707).
+      // A leaf is filtered out only when the parent is CONCRETELY applied; a type argument that is a free type
+      // variable (a type parameter - not abstract in Hearth's class/trait sense, and not a class) means no
+      // concrete-argument leaf can conform, so we must keep them all.
+      val hasAbstractTypeArguments =
+        UntypedType.typeArguments(UntypedType.fromTyped[A]).exists(arg => arg.isAbstract || !arg.isClass)
       Some(
         SealedEnum(
           deduplicated.toList
@@ -82,8 +92,9 @@ private[compiletime] trait SealedHierarchies { this: ChimneyDefinitions & hearth
                 SealedEnum.Element[A, Subtype](name = name, upcast = (expr: Expr[Subtype]) => expr.upcast[A])
               )
             }
-            // with GADT we can have subtypes that shouldn't appear in pattern matching
-            .filter(_.Underlying <:< Type[A])
+            // with GADT we can have subtypes that shouldn't appear in pattern matching - but only filter by
+            // conformance when `A` is concretely applied (see comment above).
+            .filter(subtype => hasAbstractTypeArguments || subtype.Underlying <:< Type[A])
         )
       )
     }
