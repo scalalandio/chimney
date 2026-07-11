@@ -239,7 +239,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                           case TransformerOverride.ComputedPartial(_, _, _, _) =>
                             s".withFieldComputedPartial(_.$anotherToName, ...)"
                           case TransformerOverride.Renamed(sourcePath, _) =>
-                            s".withFieldRenamed($sourcePath, _.$anotherToName})"
+                            s".withFieldRenamed($sourcePath, _.$anotherToName)"
                         }
                     }
                     .toList

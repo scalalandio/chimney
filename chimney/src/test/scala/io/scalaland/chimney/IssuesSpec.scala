@@ -746,7 +746,7 @@ class IssuesSpec extends ChimneySpec {
     ).check(
       "Chimney can't derive transformation from io.scalaland.chimney.IssuesSpec.Proto to io.scalaland.chimney.IssuesSpec.Domain",
       "io.scalaland.chimney.IssuesSpec.Domain",
-      "  field something: io.scalaland.chimney.IssuesSpec.Domain could not resolve overrides since the current BeanAware: TransformedNamedComparison treats the following overrides as the same: .withFieldRenamed(_.somethingDetail, _.isSomething}), .withFieldRenamed(_.somethingDetail, _.something}) making it ambiguous - change the field name comparator with .enableCustomFieldNameComparison to resolve the ambiguity",
+      "  field something: io.scalaland.chimney.IssuesSpec.Domain could not resolve overrides since the current BeanAware: TransformedNamedComparison treats the following overrides as the same: .withFieldRenamed(_.somethingDetail, _.isSomething), .withFieldRenamed(_.somethingDetail, _.something) making it ambiguous - change the field name comparator with .enableCustomFieldNameComparison to resolve the ambiguity",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
 
