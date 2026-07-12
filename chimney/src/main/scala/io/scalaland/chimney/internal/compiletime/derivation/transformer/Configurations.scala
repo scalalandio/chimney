@@ -479,8 +479,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         val entry: (??, ??, Vector[(SidedPath, TransformerOverride)], Boolean) =
           (Type[FromMatch].as_??, Type[ToMatch].as_??, overrides, isFromImplicitConfig)
         forAllOverrides :+ entry
-      }
-      )
+      })
 
     /** Exposed for ForAll extraction - returns the runtime overrides so they can be stored as forAll scoped overrides
       */
