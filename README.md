@@ -2,6 +2,11 @@
 
 # Chimney
 
+> [!warning]
+> 
+> This is the branch on which 1.x line was developed. This branch is no longer supported by the original authors,
+> but any fixes to Scala 2.12, or Scala 3.3 can be done by the community.
+
 [![Chimney Scala version support](https://index.scala-lang.org/scalalandio/chimney/chimney/latest.svg)](https://index.scala-lang.org/scalalandio/chimney/chimney)
 
 [![CI build](https://github.com/scalalandio/chimney/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/scalalandio/chimney/actions)

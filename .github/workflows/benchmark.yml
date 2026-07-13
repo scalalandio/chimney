@@ -2,10 +2,10 @@ name: Benchmark
 
 on:
   push:
-    branches: [ master ]
+    branches: [ line-1.x ]
     tags: [ '*' ]
   pull_request:
-    branches: [ master ]
+    branches: [ line-1.x ]
     types: [ opened, reopened, labeled, synchronize ]
 
 jobs:

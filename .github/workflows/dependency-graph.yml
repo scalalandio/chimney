@@ -2,7 +2,7 @@ name: Update Dependency Graph
 
 on:
   push:
-    branches: [ master ]
+    branches: [ line-1.x ]
 
 jobs:
   dependency-graph:

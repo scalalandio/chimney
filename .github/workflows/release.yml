@@ -2,7 +2,7 @@ name: Sonatype Release
 
 on:
   push:
-    branches: [ master ]
+    branches: [ line-1.x ]
     tags: [ '*' ]
 
 jobs:
