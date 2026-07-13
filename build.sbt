@@ -14,10 +14,6 @@ val mavenCentralSnapshots = "Maven Central Snapshots" at "https://central.sonaty
 // TODO: remove this once we have a release of Scala 2.13.17
 Global / resolvers += "scala-integration" at "https://scala-ci.typesafe.com/artifactory/scala-integration/"
 
-// hearth itself is now on a release (0.4.1); this resolver remains only for the kindlingsCatsIntegration
-// -SNAPSHOT pinned below (see its note). TODO: REMOVE once kindlingsCatsIntegration is on a release too.
-Global / resolvers += mavenCentralSnapshots
-
 // Versions:
 
 val versions = new {
@@ -36,10 +32,9 @@ val versions = new {
   // Dependencies.
   val hearth = "0.4.1"
   val cats = "2.13.0"
-  // TODO(kindlings-release): snapshot carrying kubuszok/kindlings#163 (NonEmptySeq/NonEmptyLazyList IsCollection
-  // providers); it is the last -SNAPSHOT dependency. Return to a released kindlings (on hearth 0.4.1) before
-  // merging PR #903.
-  val kindlingsCatsIntegration = "0.3.0-24-gfc36d68-SNAPSHOT"
+  // kindlings 0.3.1 is the first release on hearth 0.4.1 and includes kubuszok/kindlings#163
+  // (NonEmptySeq/NonEmptyLazyList IsCollection providers).
+  val kindlingsCatsIntegration = "0.3.1"
   val kindProjector = "0.13.4"
   val munit = "1.3.4"
   val scalaCollectionCompat = "2.14.0"
