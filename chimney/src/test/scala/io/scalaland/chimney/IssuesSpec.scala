@@ -980,4 +980,24 @@ class IssuesSpec extends ChimneySpec {
       )
       .transform ==> UserDAO(userId, createdAt)
   }
+
+  test("fix issue #739 (transformation from Tuple10 and onwards)") {
+    import Issue739.*
+
+    val t10: Tuple10[String, String, String, String, String, String, String, String, String, String] =
+      ("a", "b", "c", "d", "e", "f", "g", "h", "i", "j")
+    t10.transformInto[Order10] ==> Order10("a", "b", "c", "d", "e", "f", "g", "h", "i", "j")
+
+    val t22 = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22)
+    t22.transformInto[Order22] ==>
+      Order22(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22)
+  }
+
+  test("fix issue #899 (case class member computed as `this.transformInto[B]`)") {
+    import Issue899.*
+
+    // The reproduction is that `Issue899` compiles at all (it used to crash Scala 2.13 derivation with a
+    // CyclicReference); this asserts the derived value for good measure.
+    A().foo ==> B()
+  }
 }

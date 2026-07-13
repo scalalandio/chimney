@@ -9,6 +9,15 @@ import scala.annotation.{nowarn, unused}
 @nowarn("msg=unused import")
 class TotalTransformerJavaEnumSpec extends ChimneySpec {
 
+  test("fix issue #720 (Java enum declared with utility methods)") {
+    import io.scalaland.chimney.fixtures.Issue720.*
+
+    // A Java enum with per-constant method bodies (see javafixtures/jissue720/Side.java) used to crash Scala 3
+    // derivation with `expected a term symbol, but received class Side`.
+    (jissue720.Side.LEFT: jissue720.Side).transformInto[ScalaSide] ==> ScalaSide.LEFT
+    (jissue720.Side.RIGHT: jissue720.Side).transformInto[ScalaSide] ==> ScalaSide.RIGHT
+  }
+
   test(
     """transform from Java Enum "subset" instances to sealed hierarchy "superset" of case objects without modifiers"""
   ) {

@@ -301,3 +301,66 @@ object Issue707 {
     case object Leaf extends ApiTree
   }
 }
+
+object Issue720 {
+  // Cross-Scala target (sealed hierarchy of case objects) for the method-bearing Java enum in
+  // javafixtures/jissue720/Side.java.
+  sealed trait ScalaSide extends Product with Serializable
+  object ScalaSide {
+    case object LEFT extends ScalaSide
+    case object RIGHT extends ScalaSide
+  }
+}
+
+object Issue739 {
+  // Transforming from Tuple10 and onwards (by position) used to fail to derive.
+  case class Order10(
+      f1: String,
+      f2: String,
+      f3: String,
+      f4: String,
+      f5: String,
+      f6: String,
+      f7: String,
+      f8: String,
+      f9: String,
+      f10: String
+  )
+
+  case class Order22(
+      f1: Int,
+      f2: Int,
+      f3: Int,
+      f4: Int,
+      f5: Int,
+      f6: Int,
+      f7: Int,
+      f8: Int,
+      f9: Int,
+      f10: Int,
+      f11: Int,
+      f12: Int,
+      f13: Int,
+      f14: Int,
+      f15: Int,
+      f16: Int,
+      f17: Int,
+      f18: Int,
+      f19: Int,
+      f20: Int,
+      f21: Int,
+      f22: Int
+  )
+}
+
+object Issue899 {
+  import io.scalaland.chimney.dsl.*
+
+  // A case class member computed as `this.transformInto[B]` (NO explicit type) used to crash the Scala 2.13
+  // derivation with `CyclicReference: illegal cyclic reference involving value foo`; it works on Scala 3. The
+  // regression check is that this object COMPILES on both.
+  case class A() {
+    val foo = this.transformInto[B]
+  }
+  case class B()
+}
