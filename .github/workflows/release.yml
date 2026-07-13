@@ -23,7 +23,10 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
       - uses: coursier/setup-action@v3.0.0
         with:
-          jvm: 'temurin:1.8.0-392'
+          # Chimney 2.x targets -release 17 (Scala 3) / -release 11 (Scala 2.13) and its Scala 3.8 compiler
+          # bridge is compiled for Java 17, so publishing must run on JDK 17+ (the old JDK 8 fails with
+          # UnsupportedClassVersionError). The -release flags keep the emitted artifacts JDK 11/17 compatible.
+          jvm: 'temurin:17'
           apps: sbt
       - name: Publish all projects
         run:  sbt ci-release
