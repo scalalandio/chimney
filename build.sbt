@@ -14,8 +14,8 @@ val mavenCentralSnapshots = "Maven Central Snapshots" at "https://central.sonaty
 // TODO: remove this once we have a release of Scala 2.13.17
 Global / resolvers += "scala-integration" at "https://scala-ci.typesafe.com/artifactory/scala-integration/"
 
-// TODO(hearth-migration): REMOVE once versions.hearth is back on a release (see the LOUD WARNING at versions.hearth).
-// Global so that both library dependencies AND the Scala 3 hearth-cross-quotes compilerPlugin resolve the SNAPSHOT.
+// hearth itself is now on a release (0.4.1); this resolver remains only for the kindlingsCatsIntegration
+// -SNAPSHOT pinned below (see its note). TODO: REMOVE once kindlingsCatsIntegration is on a release too.
 Global / resolvers += mavenCentralSnapshots
 
 // Versions:
@@ -34,16 +34,11 @@ val versions = new {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Dependencies.
-  // !!! TODO(hearth-migration) LOUD WARNING !!! -----------------------------------------------------------------
-  // !!! SNAPSHOT PIN: 0.4.0-16-gd4adc1c-SNAPSHOT is a MOVING TARGET from Maven Central Snapshots (resolver below).
-  // !!! It MUST be replaced by a proper hearth RELEASE (and the snapshots resolver removed again)
-  // !!! BEFORE merging PR #903. Do NOT release/merge with a -SNAPSHOT hearth dependency.
-  // !!! -----------------------------------------------------------------------------------------------------------
-  val hearth = "0.4.0-55-g60be58f-SNAPSHOT"
+  val hearth = "0.4.1"
   val cats = "2.13.0"
-  // Latest published kindlings (its 0.3.0 depends on hearth 0.4.0, same as us; publishes JVM/JS/Native x 2.13/3).
   // TODO(kindlings-release): snapshot carrying kubuszok/kindlings#163 (NonEmptySeq/NonEmptyLazyList IsCollection
-  // providers). Return to a released kindlings before merging PR #903.
+  // providers); it is the last -SNAPSHOT dependency. Return to a released kindlings (on hearth 0.4.1) before
+  // merging PR #903.
   val kindlingsCatsIntegration = "0.3.0-24-gfc36d68-SNAPSHOT"
   val kindProjector = "0.13.4"
   val munit = "1.3.4"
