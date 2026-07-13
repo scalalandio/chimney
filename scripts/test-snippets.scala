@@ -100,8 +100,12 @@ class ChimneyExtendedRunner(runner: Runner)(
   *
   * on CI:
   * {{{
-  * # run all tests, use artifacts published locally from current tag
-  * scala-cli run scripts/test-snippets.scala -- --extra "chimney-version=$(sbt -batch -error 'print chimney/version')" "$PWD/docs/docs"
+  * # run all tests, use artifacts published locally from current tag (see docs/Justfile `test-snippets`)
+  * # NB: under sbt 2.x `print chimney/version` leaks ANSI + a `[success]` line, so strip/grep the version out:
+  * sbt --client "publish-local-for-tests"
+  * raw="$(sbt -batch -error 'print chimney/version' 2>&1 || true)"
+  * chimney_version="$(printf '%s\n' "$raw" | sed -E 's/\x1b\[[0-9;?]*[A-Za-z]//g' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+[A-Za-z0-9.+-]*' | head -1)"
+  * scala-cli run scripts/test-snippets.scala -- --extra "chimney-version=$chimney_version" "$PWD/docs/docs"
   * }}}
   *
   * during development:

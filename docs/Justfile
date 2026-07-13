@@ -5,5 +5,22 @@ serve: build
   docker run --rm -it -p 8000:8000 -v ${PWD}:/docs --env "CI_LATEST_TAG=$(git describe --tags)" mkdocs-chimney-docs
 
 test-snippets:
-  cd .. && sbt publish-local-for-tests
-  cd .. && scala-cli run scripts/test-snippets.scala -- --extra "chimney-version=$(sbt -batch -error 'print chimney/version')" "$PWD/docs/docs"
+  #!/usr/bin/env bash
+  set -euo pipefail
+  cd ..
+  sbt --client "publish-local-for-tests"
+  # sbt 2.x leaks ANSI escapes and a trailing `[success] elapsed time` line into `-error` output, so the
+  # old unfiltered `$(sbt -batch -error 'print chimney/version')` fed a polluted version to scala-cli and
+  # broke snippet dependency resolution. Query with a NON-client sbt (the `--client` thin client does not
+  # write `print` results to captured stdout in a non-TTY), strip ANSI, then grep out the version. Keep the
+  # sbt call and the pipeline as SEPARATE `|| true` statements so `set -euo pipefail` (grep no-match -> 1,
+  # head SIGPIPE -> 141) cannot abort before the guard. Mirrors how kindlings/hearth query their versions.
+  raw="$(sbt -batch -error 'print chimney/version' 2>&1 || true)"
+  chimney_version="$(printf '%s\n' "${raw}" | sed -E 's/\x1b\[[0-9;?]*[A-Za-z]//g' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+[A-Za-z0-9.+-]*' | head -1 || true)"
+  if [ -z "${chimney_version}" ]; then
+    echo "ERROR: could not determine chimney version. sbt output was:" >&2
+    printf '%s\n' "${raw}" >&2
+    exit 1
+  fi
+  echo "Using chimney-version=${chimney_version}"
+  scala-cli run scripts/test-snippets.scala -- --extra "chimney-version=${chimney_version}" "$PWD/docs/docs"
