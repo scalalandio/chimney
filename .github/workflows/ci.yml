@@ -64,16 +64,11 @@ jobs:
       matrix:
         scala: ["2_13", "3"]
         platform: ["jvm", "js", "native"]
-        # Chimney 2.x JDK baselines: Scala 2.13 targets JDK 11+ (-release 11), Scala 3 targets JDK 17+ (-release 17) -
-        # each Scala version is tested on its minimum plus the latest LTS.
-        jvm: ['temurin:11', 'temurin:1.21.0.1']
-        exclude:
-          - scala: "3"
-            jvm: 'temurin:11'
-        include:
-          - { scala: "3", platform: "jvm", jvm: 'temurin:17' }
-          - { scala: "3", platform: "js", jvm: 'temurin:17' }
-          - { scala: "3", platform: "native", jvm: 'temurin:17' }
+        # sbt 2.x requires JDK 17+ to run, so JDK 17 is the floor for every job (the old Scala 2.13-on-JDK-11
+        # job is no longer possible - sbt itself won't start on 11). Emitted artifacts stay JDK-11 compatible
+        # for Scala 2.13 (-release 11) and JDK-17 for Scala 3 (-release 17) via the -release flags; each Scala
+        # version is also exercised on the latest LTS.
+        jvm: ['temurin:17', 'temurin:1.21.0.1']
       fail-fast: false
 
     steps:

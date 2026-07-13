@@ -8,6 +8,11 @@ import scoverage.ScoverageKeys.coverageScalacPluginVersion
 lazy val isCI = sys.env.get("CI").contains("true")
 ThisBuild / scalafmtOnCompile := !isCI
 
+// sbt 2.x promotes dependency eviction conflicts to hard errors by default (sbt 1.x defaulted to a warning). One such
+// conflict is benign here: on Scala Native, cats-laws (Test) pulls scalacheck -> scala-native test-interface 0.5.8,
+// while chimney uses 0.5.12 - a compatible 0.5.x upgrade sbt resolves to 0.5.12. Restore the sbt 1.x warn level.
+ThisBuild / evictionErrorLevel := Level.Warn
+
 // Used to publish snapshots to Maven Central.
 val mavenCentralSnapshots = "Maven Central Snapshots" at "https://central.sonatype.com/repository/maven-snapshots"
 
@@ -15,69 +20,12 @@ val mavenCentralSnapshots = "Maven Central Snapshots" at "https://central.sonaty
 Global / resolvers += "scala-integration" at "https://scala-ci.typesafe.com/artifactory/scala-integration/"
 
 // Versions:
-
-val versions = new {
-  // Versions we are publishing for.
-  val scala213 = "2.13.18"
-  val scala3 = "3.8.4"
-  // For chimney-sandwich-test-cases-3 ONLY: sbt forbids Scala 2.13 subprojects from depending on Scala 3.8+
-  // subprojects (sbt-8728), and 2.13's -Ytasty-reader tops out below TASTy 28.8 - see the module for details.
-  val scala3Sandwich = "3.7.3"
-
-  // Which versions should be cross-compiled for publishing
-  val scalas = List(scala213, scala3)
-
-  val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
-
-  // Dependencies.
-  val hearth = "0.4.1"
-  val cats = "2.13.0"
-  // kindlings 0.3.1 is the first release on hearth 0.4.1 and includes kubuszok/kindlings#163
-  // (NonEmptySeq/NonEmptyLazyList IsCollection providers).
-  val kindlingsCatsIntegration = "0.3.1"
-  val kindProjector = "0.13.4"
-  val munit = "1.3.4"
-  val scalaCollectionCompat = "2.14.0"
-  val scalaJavaCompat = "1.0.2"
-  val scalaJavaTime = "2.7.0"
-  val scalapbRuntime = scalapb.compiler.Version.scalapbVersion
-
-  // Explicitly handle Scala 2.13 and Scala 3 separately.
-  def fold[A](scalaVersion: String)(for2_13: => Seq[A], for3: => Seq[A]): Seq[A] =
-    CrossVersion.partialVersion(scalaVersion) match {
-      case Some((2, 13)) => for2_13
-      case Some((3, _))  => for3
-      case _             => Seq.empty // for sbt
-    }
-}
-
-// Development settings:
-
-val dev = new {
-
-  val props = scala.util
-    .Using(new java.io.FileInputStream("dev.properties")) { fis =>
-      val props = new java.util.Properties()
-      props.load(fis)
-      props
-    }
-    .get
-
-  // Which version should be used in IntelliJ
-  val ideScala = props.getProperty("ide.scala") match {
-    case "2.13" => versions.scala213
-    case "3"    => versions.scala3
-  }
-  val idePlatform = props.getProperty("ide.platform") match {
-    case "jvm"    => VirtualAxis.jvm
-    case "js"     => VirtualAxis.js
-    case "native" => VirtualAxis.native
-  }
-
-  def isIdeScala(scalaVersion: String): Boolean =
-    CrossVersion.partialVersion(scalaVersion) == CrossVersion.partialVersion(ideScala)
-  def isIdePlatform(platform: VirtualAxis): Boolean = platform == idePlatform
-}
+//
+// `versions` (publish/dependency versions + the `fold` helper) and `dev` (IDE dev settings) are defined as objects in
+// project/BuildVersions.scala. Under sbt 1.x they were `val ... = new { ... }` in build.sbt, but sbt 2.x compiles
+// build.sbt with Scala 3, which hides an anonymous object's members and does not bring build.sbt-local objects into
+// the settings scope - so they were moved to project/*.scala, where they are real objects on the meta-build classpath
+// and remain referenceable here unqualified (`versions.scala3`, `dev.idePlatform`, ...).
 
 // Common settings:
 
@@ -192,22 +140,25 @@ val settings = Seq(
     for2_13 = Seq.empty
   ),
   Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings", "-Werror"),
+  // NOTE: the empties are typed `Seq.empty[String]`. sbt 2.x caches setting values and needs a JsonFormat for the
+  // value type; untyped `Seq.empty` infers `Seq[Nothing]`, for which no JsonFormat exists (the fold's other call sites
+  // infer `Seq[String]` from their non-empty branch, so only this both-empty call needs the annotation).
   Test / compile / scalacOptions --= versions.fold(scalaVersion.value)(
-    for3 = Seq.empty,
-    for2_13 = Seq.empty
+    for3 = Seq.empty[String],
+    for2_13 = Seq.empty[String]
   ),
   coverageExcludedPackages := ".*DefCache.*" // DefCache is kind-a experimental utility
 )
 
 val dependencies = Seq(
   libraryDependencies ++= Seq(
-    "org.scalameta" %%% "munit" % versions.munit % Test
+    "org.scalameta" %% "munit" % versions.munit % Test
   ),
   libraryDependencies ++= versions.fold(scalaVersion.value)(
     for3 = Seq.empty,
     for2_13 = Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided,
-      compilerPlugin("org.typelevel" % "kind-projector" % versions.kindProjector cross CrossVersion.full)
+      compilerPlugin(("org.typelevel" % "kind-projector" % versions.kindProjector).cross(CrossVersion.full))
     )
   )
 )
@@ -266,9 +217,17 @@ val mimaSettings = Seq(
 val noPublishSettings =
   Seq(publish / skip := true, publishArtifact := false)
 
+// NOTE: sbt 2.x's in-core projectMatrix flipped the cell-id suffix scheme vs sbt 1.x (sbt-projectmatrix). Under
+// sbt 1.x the Scala 2.13 cell was unsuffixed and Scala 3 was "3" (`chimney`, `chimney3`); under sbt 2.x the Scala 3
+// cell is unsuffixed and Scala 2.13 is "2_13" (`chimney`, `chimney2_13`). Platform still lives in the name (JS/Native).
+// These generated flat ids are the valid command-line references; the axis form `name@scalaBinaryVersion=3` also works
+// for Scala 3 but not for 2.13 (the `.` in the value breaks the parser), so we stick to flat ids everywhere.
 val ciCommand = (platform: String, scalaSuffix: String) => {
   val isJVM = platform == "JVM"
   val isSandwichable = isJVM
+  // The `scalaSuffix` argument still uses the old sbt 1.x convention ("" = 2.13, "3" = Scala 3); translate it to the
+  // sbt 2.x cell suffix ("" = Scala 3, "2_13" = Scala 2.13).
+  val cellScalaSuffix = if (scalaSuffix == "3") "" else "2_13"
 
   val clean = Vector("clean")
   def withCoverage(tasks: String*): Vector[String] =
@@ -283,13 +242,13 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
       if (isSandwichable) "chimneySandwichTests" else ""
     )
     if name.nonEmpty
-  } yield s"$name${if (isJVM) "" else platform}$scalaSuffix"
+  } yield s"$name${if (isJVM) "" else platform}$cellScalaSuffix"
   def tasksOf(name: String): Vector[String] = projects.map(project => s"$project/$name")
 
   val tasks = if (isJVM) {
     clean ++
       withCoverage((tasksOf("compile") ++ tasksOf("test") ++ tasksOf("coverageReport")).toSeq *) ++
-      Vector("benchmarks/compile") ++
+      Vector("benchmarks2_13/compile") ++ // benchmarks is Scala 2.13 / JVM only
       tasksOf("mimaReportBinaryIssues")
   } else {
     clean ++ tasksOf("test")
@@ -301,12 +260,9 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
 val publishLocalForTests = {
   val jvm = for {
     module <- Vector("chimney", "chimneyCats", "chimneyProtobufs")
-    moduleVersion <- Vector(module, module + "3")
-  } yield moduleVersion + "/publishLocal"
-  val js = for {
-    module <- Vector("chimney").map(_ + "JS")
-    moduleVersion <- Vector(module)
-  } yield moduleVersion + "/publishLocal"
+    cellScalaSuffix <- Vector("2_13", "") // Scala 2.13 then Scala 3
+  } yield s"$module$cellScalaSuffix/publishLocal"
+  val js = Vector("chimneyJS2_13/publishLocal") // Scala 2.13 / JS
   jvm ++ js
 }.mkString(" ; ")
 
@@ -338,10 +294,10 @@ lazy val root = project
          | - Scala JVM adds no suffix to a project name seen in build.sbt
          | - Scala.js adds the "JS" suffix to a project name seen in build.sbt
          | - Scala Native adds the "Native" suffix to a project name seen in build.sbt
-         | - Scala 2.13 adds no suffix to a project name seen in build.sbt
-         | - Scala 3 adds the suffix "3" to a project name seen in build.sbt
+         | - Scala 3 adds no suffix to a project name seen in build.sbt
+         | - Scala 2.13 adds the suffix "2_13" to a project name seen in build.sbt (sbt 2.x flipped the sbt 1.x scheme)
          |
-         |When working with IntelliJ or Scala Metals, edit "val ideScala = ..." and "val idePlatform = ..." within "val versions" in build.sbt to control which Scala version you're currently working with.
+         |When working with IntelliJ or Scala Metals, edit "ide.scala"/"ide.platform" in dev.properties (read by `dev` in project/BuildVersions.scala) to control which Scala version you're currently working with.
          |
          |If you need to test library locally in a different project, use publish-local-for-tests or manually publishLocal:
          | - chimney
@@ -356,8 +312,8 @@ lazy val root = project
           "Compile and test all projects in all Scala versions and platforms (beware! it uses a lot of memory and might OOM!)"
         )
         .noAlias,
-      sbtwelcome.UsefulTask("chimney3/console", "Drop into REPL with Chimney DSL imported (3)").noAlias,
-      sbtwelcome.UsefulTask("chimney/console", "Drop into REPL with Chimney DSL imported (2.13)").noAlias,
+      sbtwelcome.UsefulTask("chimney/console", "Drop into REPL with Chimney DSL imported (3)").noAlias,
+      sbtwelcome.UsefulTask("chimney2_13/console", "Drop into REPL with Chimney DSL imported (2.13)").noAlias,
       sbtwelcome
         .UsefulTask(releaseCommand(git.gitCurrentTags.value), "Publish everything to release or snapshot repository")
         .alias("ci-release"),
@@ -400,9 +356,9 @@ lazy val chimney = projectMatrix
       for3 = Seq("-skip-by-regex:io\\.scalaland\\.chimney\\.internal"),
       for2_13 = Seq("-skip-packages", "io.scalaland.chimney.internal")
     ),
-    libraryDependencies += "com.kubuszok" %%% "hearth" % versions.hearth,
+    libraryDependencies += "com.kubuszok" %% "hearth" % versions.hearth,
     // ChimneySpec is based on hearth-munit's MacroSuite (group/==>/compileErrors-check utilities).
-    libraryDependencies += "com.kubuszok" %%% "hearth-munit" % versions.hearth % Test,
+    libraryDependencies += "com.kubuszok" %% "hearth-munit" % versions.hearth % Test,
     // Cross-quotes: on Scala 2 they are macros (part of hearth), on Scala 3 they are a compiler plugin.
     libraryDependencies ++= versions.fold(scalaVersion.value)(
       for2_13 = Seq.empty,
@@ -433,7 +389,7 @@ lazy val chimneyEngineTestExtension = projectMatrix
     name := "chimney-engine-test-extension",
     description := "Test-only Hearth StandardMacroExtension used by chimney's engine test suites",
     mimaFailOnNoPrevious := false, // this module is not published
-    libraryDependencies += "com.kubuszok" %%% "hearth" % versions.hearth,
+    libraryDependencies += "com.kubuszok" %% "hearth" % versions.hearth,
     // Cross-quotes: on Scala 2 they are macros (part of hearth), on Scala 3 they are a compiler plugin.
     libraryDependencies ++= versions.fold(scalaVersion.value)(
       for2_13 = Seq.empty,
@@ -460,7 +416,7 @@ lazy val chimneyChimneyExtensionTest = projectMatrix
     name := "chimney-chimney-extension-test",
     description := "Test-only Chimney ChimneyMacroExtension used to prove the engine-aware macro-extension SPI",
     mimaFailOnNoPrevious := false, // this module is not published
-    libraryDependencies += "com.kubuszok" %%% "hearth" % versions.hearth,
+    libraryDependencies += "com.kubuszok" %% "hearth" % versions.hearth,
     // Cross-quotes: on Scala 2 they are macros (part of hearth), on Scala 3 they are a compiler plugin.
     libraryDependencies ++= versions.fold(scalaVersion.value)(
       for2_13 = Seq.empty,
@@ -486,13 +442,13 @@ lazy val chimneyCats = projectMatrix
   .settings(dependencies *)
   .settings(
     Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*, io.scalaland.chimney.cats.*",
-    libraryDependencies += "org.typelevel" %%% "cats-core" % versions.cats,
-    libraryDependencies += "org.typelevel" %%% "cats-laws" % versions.cats % Test,
+    libraryDependencies += "org.typelevel" %% "cats-core" % versions.cats,
+    libraryDependencies += "org.typelevel" %% "cats-laws" % versions.cats % Test,
     // Since 2.0.0 chimney-cats also ships a Chimney `ChimneyMacroExtension` (ServiceLoader-registered, see
     // src/main/resources/META-INF/services): engine-aware SpecialCaseHandlers restoring the total NonEmpty<->NonEmpty
     // (Traverse), NonEmptyMap/NonEmptySet and FunctionK conversions that used to live as `CatsDataImplicits`. The
     // handlers use Hearth's API + cross-quotes directly (hearth itself already comes transitively through chimney).
-    libraryDependencies += "com.kubuszok" %%% "hearth" % versions.hearth,
+    libraryDependencies += "com.kubuszok" %% "hearth" % versions.hearth,
     // Cross-quotes: on Scala 2 they are macros (part of hearth), on Scala 3 they are a compiler plugin.
     libraryDependencies ++= versions.fold(scalaVersion.value)(
       for2_13 = Seq.empty,
@@ -505,7 +461,7 @@ lazy val chimneyCats = projectMatrix
     // build with Scala 3.8+ (older compilers throw "Forward incompatible TASTy file" from hearth's extension loading).
     // Since hearth#325 (0.4.1) an unloadable extension jar is SKIPPED gracefully instead of poisoning every derivation
     // in the module - but the specs here obviously still need the extension to actually load.
-    libraryDependencies += "com.kubuszok" %%% "kindlings-cats-integration" % versions.kindlingsCatsIntegration % Test
+    libraryDependencies += "com.kubuszok" %% "kindlings-cats-integration" % versions.kindlingsCatsIntegration % Test
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 
@@ -539,7 +495,7 @@ lazy val chimneyProtobufs = projectMatrix
       .Settings(
         // Scala.js and Scala Native decided to not implement java.time and let an external library do it,
         // meanwhile we want to provide some type class instances for types in java.time.
-        libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % versions.scalaJavaTime
+        libraryDependencies += "io.github.cquiroz" %% "scala-java-time" % versions.scalaJavaTime
       )) *
   )
   .enablePlugins(GitVersioning, GitBranchPrompt)
@@ -567,7 +523,7 @@ lazy val chimneyProtobufs = projectMatrix
     // replaced the corresponding implicits, so those conversions work WITHOUT any import once this jar is on the
     // classpath. The providers use Hearth's API + cross-quotes directly, hence the explicit dependencies below
     // (hearth itself already comes transitively through the chimney module).
-    libraryDependencies += "com.kubuszok" %%% "hearth" % versions.hearth,
+    libraryDependencies += "com.kubuszok" %% "hearth" % versions.hearth,
     // Cross-quotes: on Scala 2 they are macros (part of hearth), on Scala 3 they are a compiler plugin.
     libraryDependencies ++= versions.fold(scalaVersion.value)(
       for2_13 = Seq.empty,
@@ -625,7 +581,11 @@ lazy val chimneySandwichTests = projectMatrix
     moduleName := "chimney-sandwich-tests",
     name := "chimney-sandwich-tests",
     description := "Tests macros in 2.13x3 cross-compilation",
-    mimaFailOnNoPrevious := false // this module is not published
+    mimaFailOnNoPrevious := false, // this module is not published
+    // This module IS the 2.13x3 sandwich: each cell depends on a test-cases fixture built with the OTHER Scala version
+    // (Scala 3 cell -> chimney-sandwich-test-cases-213, Scala 2.13 cell -> chimney-sandwich-test-cases-3). sbt 2.x
+    // rejects a cross-Scala projectDependency by default; opt in since the mismatch is the whole point here.
+    allowMismatchScala := true
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
   .dependsOn(chimneySandwichTestCases213 % s"$Test->$Test;$Compile->$Compile")
