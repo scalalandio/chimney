@@ -1,7 +1,7 @@
 // git
 addSbtPlugin("com.github.sbt" % "sbt-git" % "2.1.0")
 // linters
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.6.1")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.6.2")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.4.4")
 // cross-compile
 // sbt-projectmatrix was in-sourced into sbt 2 core (the standalone plugin has no sbt 2 build), so the
