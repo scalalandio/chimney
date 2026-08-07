@@ -9,7 +9,7 @@ import sbt.librarymanagement.CrossVersion
 
 object versions {
   // Versions we are publishing for.
-  val scala213 = "2.13.18"
+  val scala213 = "3.8.4"
   val scala3 = "3.8.4"
   // For chimney-sandwich-test-cases-3 ONLY: sbt forbids Scala 2.13 subprojects from depending on Scala 3.8+
   // subprojects (sbt-8728), and 2.13's -Ytasty-reader tops out below TASTy 28.8 - see the module for details.
