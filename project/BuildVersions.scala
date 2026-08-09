@@ -27,7 +27,7 @@ object versions {
   // (NonEmptySeq/NonEmptyLazyList IsCollection providers).
   val kindlingsCatsIntegration = "0.3.1"
   val kindProjector = "0.13.4"
-  val munit = "1.3.4"
+  val munit = "1.3.5"
   val scalaCollectionCompat = "2.14.0"
   val scalaJavaCompat = "1.0.2"
   val scalaJavaTime = "2.7.0"
