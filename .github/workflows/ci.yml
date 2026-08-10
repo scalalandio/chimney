@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: coursier/setup-action@v3.0.0
+      - uses: coursier/setup-action@v3.0.2
         with:
           apps: scalafmt
       - name: Check code and docs formatting
@@ -38,7 +38,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: extractions/setup-just@v4
-      - uses: coursier/setup-action@v3.0.0
+      - uses: coursier/setup-action@v3.0.2
         with:
           # publish-local-for-tests builds Scala 3 artifacts with -release 17 (Scala 2.13 uses -release 11),
           # so the snippets job needs JDK 17+ - don't rely on the runner's default JVM.
@@ -76,7 +76,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: coursier/cache-action@v8
-      - uses: coursier/setup-action@v3.0.0
+      - uses: coursier/setup-action@v3.0.2
         with:
           jvm: ${{ matrix.jvm }}
           apps: sbt

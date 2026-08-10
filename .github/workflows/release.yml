@@ -21,7 +21,7 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
-      - uses: coursier/setup-action@v3.0.0
+      - uses: coursier/setup-action@v3.0.2
         with:
           # Chimney 2.x targets -release 17 (Scala 3) / -release 11 (Scala 2.13) and its Scala 3.8 compiler
           # bridge is compiled for Java 17, so publishing must run on JDK 17+ (the old JDK 8 fails with
