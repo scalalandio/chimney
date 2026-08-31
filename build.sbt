@@ -68,6 +68,7 @@ val settings = Seq(
       "-no-indent",
       "-Wconf:msg=Unreachable case:s", // suppress fake (?) errors in internal.compiletime
       "-Wconf:msg=Missing symbol position:s", // suppress warning https://github.com/scala/scala3/issues/21672
+      "-Wconf:msg=Skipping coverage instrumentation:s", // Scala 3.9+ warns about large method bodies; not actionable for macro-generated code
       "-Wconf:msg=Implicit parameters should be provided with a `using` clause:s", // we're not rewriting this, since we are still cross-compiling with 2.13
       "-Wconf:msg=The syntax `<function> _` is no longer supported:s", // we're not rewriting this, since we are still cross-compiling with 2.13
       "-Wconf:msg=The trailing ` _` for eta-expansion is unnecessary:s", // Scala 3.8 wording of the warning above
