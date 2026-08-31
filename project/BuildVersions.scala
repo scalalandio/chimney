@@ -10,7 +10,7 @@ import sbt.librarymanagement.CrossVersion
 object versions {
   // Versions we are publishing for.
   val scala213 = "2.13.18"
-  val scala3 = "3.8.4"
+  val scala3 = "3.9.0"
   // For chimney-sandwich-test-cases-3 ONLY: sbt forbids Scala 2.13 subprojects from depending on Scala 3.8+
   // subprojects (sbt-8728), and 2.13's -Ytasty-reader tops out below TASTy 28.8 - see the module for details.
   val scala3Sandwich = "3.7.3"
@@ -21,11 +21,11 @@ object versions {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Dependencies.
-  val hearth = "0.4.1"
+  val hearth = "0.4.2"
   val cats = "2.13.0"
-  // kindlings 0.3.1 is the first release on hearth 0.4.1 and includes kubuszok/kindlings#163
-  // (NonEmptySeq/NonEmptyLazyList IsCollection providers).
-  val kindlingsCatsIntegration = "0.3.1"
+  // kindlings 0.3.2 is on hearth 0.4.2 (metaspace leak fix, ValueOf evaluation) and adds built-in type rules
+  // to circe/yaml/pureconfig/sconfig derivation + jsoniter singleton enum fixes.
+  val kindlingsCatsIntegration = "0.3.2"
   val kindProjector = "0.13.4"
   val munit = "1.3.5"
   val scalaCollectionCompat = "2.14.0"
