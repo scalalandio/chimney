@@ -20,8 +20,8 @@ object IsoDefinitionMacros {
       U: Type
   ](
       id: Expr[IsoDefinition[First, Second, FirstOverrides, SecondOverrides, Flags]],
-      selectorFirst: Expr[First => T],
-      selectorSecond: Expr[Second => U]
+      selectorFirst: Expr[Any],
+      selectorSecond: Expr[Any]
   )(using Quotes): Expr[IsoDefinition[First, Second, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] = {
     val m = new IsoDefinitionMacros(quotes)
     m.IsoDefinitionDsl

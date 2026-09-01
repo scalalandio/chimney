@@ -1,7 +1,13 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.compiletime.dsl.TransformerIntoForAllMacros
-import io.scalaland.chimney.internal.runtime.{Path, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{
+  ChimneySelector,
+  Path,
+  TransformerFlags,
+  TransformerOverrides,
+  WithRuntimeDataStore
+}
 import io.scalaland.chimney.partial
 
 /** Scoped builder for defining overrides that apply to all matching `[FromMatch, ToMatch]` derivations, used with
@@ -21,13 +27,15 @@ final class TransformerIntoForAll[
     val td: TransformerDefinition[From, To, Overrides, Flags]
 ) extends WithRuntimeDataStore {
 
+  private given ChimneySelector = null.asInstanceOf[ChimneySelector]
+
   /** Use the `selectorFrom` field in `FromMatch` to obtain the value of the `selectorTo` field in `ToMatch`.
     *
     * @since 1.10.0
     */
   transparent inline def withFieldRenamed[T, U](
-      inline selectorFrom: FromMatch => T,
-      inline selectorTo: ToMatch => U
+      inline selectorFrom: ChimneySelector ?=> FromMatch => T,
+      inline selectorTo: ChimneySelector ?=> ToMatch => U
   ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${
       TransformerIntoForAllMacros.withFieldRenamedImpl[From, To, Overrides, Flags, FromMatch, ToMatch, T, U](
@@ -42,7 +50,7 @@ final class TransformerIntoForAll[
     * @since 1.10.0
     */
   transparent inline def withFieldConst[T, U](
-      inline selector: ToMatch => T,
+      inline selector: ChimneySelector ?=> ToMatch => T,
       inline value: U
   )(using U <:< T): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${
@@ -58,7 +66,7 @@ final class TransformerIntoForAll[
     * @since 1.10.0
     */
   transparent inline def withFieldComputed[T, U](
-      inline selector: ToMatch => T,
+      inline selector: ChimneySelector ?=> ToMatch => T,
       inline f: FromMatch => U
   )(using U <:< T): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${

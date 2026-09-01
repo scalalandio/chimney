@@ -19,7 +19,7 @@ object TransformerIntoMacros {
       U: Type
   ](
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
-      selector: Expr[To => T],
+      selector: Expr[Any],
       value: Expr[U]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerIntoMacros(quotes)
@@ -38,7 +38,7 @@ object TransformerIntoMacros {
       U: Type
   ](
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
-      selector: Expr[To => T],
+      selector: Expr[Any],
       f: Expr[From => U]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerIntoMacros(quotes)
@@ -58,8 +58,8 @@ object TransformerIntoMacros {
       U: Type
   ](
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => S],
-      selectorTo: Expr[To => T],
+      selectorFrom: Expr[Any],
+      selectorTo: Expr[Any],
       f: Expr[S => U]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerIntoMacros(quotes)
@@ -78,8 +78,8 @@ object TransformerIntoMacros {
       U: Type
   ](
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => T],
-      selectorTo: Expr[To => U]
+      selectorFrom: Expr[Any],
+      selectorTo: Expr[Any]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerIntoMacros(quotes)
     m.TransformerIntoDsl
@@ -96,7 +96,7 @@ object TransformerIntoMacros {
       T: Type
   ](
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => T]
+      selectorFrom: Expr[Any]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerIntoMacros(quotes)
     m.TransformerIntoDsl
@@ -147,7 +147,7 @@ object TransformerIntoMacros {
       T: Type
   ](
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
-      selectorTo: Expr[To => T]
+      selectorTo: Expr[Any]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerIntoMacros(quotes)
     m.TransformerIntoDsl
@@ -182,7 +182,7 @@ object TransformerIntoMacros {
       FromFallback: Type
   ](
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => T],
+      selectorFrom: Expr[Any],
       fallback: Expr[FromFallback]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerIntoMacros(quotes)
@@ -218,7 +218,7 @@ object TransformerIntoMacros {
       Ctor: Type
   ](
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
-      selector: Expr[To => T],
+      selector: Expr[Any],
       f: Expr[Ctor]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerIntoMacros(quotes)
@@ -236,7 +236,7 @@ object TransformerIntoMacros {
       T: Type
   ](
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => T]
+      selectorFrom: Expr[Any]
   )(using Quotes): Expr[TransformerSourceFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, ? <: Path]] = {
     val m = new TransformerIntoMacros(quotes)
     m.transformerIntoWithSourceFlag[From, To, Overrides, Flags](ti, selectorFrom)
@@ -252,7 +252,7 @@ object TransformerIntoMacros {
       T: Type
   ](
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
-      selectorTo: Expr[To => T]
+      selectorTo: Expr[Any]
   )(using Quotes): Expr[TransformerTargetFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, ? <: Path]] = {
     val m = new TransformerIntoMacros(quotes)
     m.transformerIntoWithTargetFlag[From, To, Overrides, Flags](ti, selectorTo)

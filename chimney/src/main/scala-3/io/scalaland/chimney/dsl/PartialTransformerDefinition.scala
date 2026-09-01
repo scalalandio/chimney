@@ -4,6 +4,7 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Transfor
 import io.scalaland.chimney.{partial, PartialTransformer}
 import io.scalaland.chimney.internal.compiletime.dsl.*
 import io.scalaland.chimney.internal.runtime.{
+  ChimneySelector,
   IsFunction,
   Path,
   TransformerFlags,
@@ -37,6 +38,8 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     ]
     with WithRuntimeDataStore {
 
+  private given ChimneySelector = null.asInstanceOf[ChimneySelector]
+
   /** Use provided `value` for field picked using `selector`.
     *
     * By default, if `From` is missing field picked by `selector`, compilation fails.
@@ -59,7 +62,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @since 0.7.0
     */
   transparent inline def withFieldConst[T, U](
-      inline selector: To => T,
+      inline selector: ChimneySelector ?=> To => T,
       inline value: U
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldConstImpl('this, 'selector, 'value) }
@@ -86,7 +89,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @since 0.7.0
     */
   transparent inline def withFieldConstPartial[T, U](
-      inline selector: To => T,
+      inline selector: ChimneySelector ?=> To => T,
       inline value: partial.Result[U]
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldConstPartialImpl('this, 'selector, 'value) }
@@ -113,7 +116,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @since 0.7.0
     */
   transparent inline def withFieldComputed[T, U](
-      inline selector: To => T,
+      inline selector: ChimneySelector ?=> To => T,
       inline f: From => U
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldComputedImpl('this, 'selector, 'f) }
@@ -144,8 +147,8 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     *
     * @since 1.6.0
     */
-  transparent inline def withFieldComputedFrom[S, T, U](inline selectorFrom: From => S)(
-      inline selectorTo: To => T,
+  transparent inline def withFieldComputedFrom[S, T, U](inline selectorFrom: ChimneySelector ?=> From => S)(
+      inline selectorTo: ChimneySelector ?=> To => T,
       inline f: S => U
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldComputedFromImpl('this, 'selectorFrom, 'selectorTo, 'f) }
@@ -172,7 +175,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @since 0.7.0
     */
   transparent inline def withFieldComputedPartial[T, U](
-      inline selector: To => T,
+      inline selector: ChimneySelector ?=> To => T,
       inline f: From => partial.Result[U]
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldComputedPartialImpl('this, 'selector, 'f) }
@@ -201,7 +204,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @since 1.10.0
     */
   transparent inline def withFieldComputedPartialFailFast[T, U](
-      inline selector: To => T,
+      inline selector: ChimneySelector ?=> To => T,
       inline f: (From, Boolean) => partial.Result[U]
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldComputedPartialFailFastImpl('this, 'selector, 'f) }
@@ -232,8 +235,8 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     *
     * @since 1.6.0
     */
-  transparent inline def withFieldComputedPartialFrom[S, T, U](inline selectorFrom: From => S)(
-      inline selectorTo: To => T,
+  transparent inline def withFieldComputedPartialFrom[S, T, U](inline selectorFrom: ChimneySelector ?=> From => S)(
+      inline selectorTo: ChimneySelector ?=> To => T,
       inline f: S => partial.Result[U]
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldComputedPartialFromImpl('this, 'selectorFrom, 'selectorTo, 'f) }
@@ -266,8 +269,10 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     *
     * @since 1.10.0
     */
-  transparent inline def withFieldComputedPartialFromFailFast[S, T, U](inline selectorFrom: From => S)(
-      inline selectorTo: To => T,
+  transparent inline def withFieldComputedPartialFromFailFast[S, T, U](
+      inline selectorFrom: ChimneySelector ?=> From => S
+  )(
+      inline selectorTo: ChimneySelector ?=> To => T,
       inline f: (S, Boolean) => partial.Result[U]
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${
@@ -301,8 +306,8 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @since 0.7.0
     */
   transparent inline def withFieldRenamed[T, U](
-      inline selectorFrom: From => T,
-      inline selectorTo: To => U
+      inline selectorFrom: ChimneySelector ?=> From => T,
+      inline selectorTo: ChimneySelector ?=> To => U
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldRenamedImpl('this, 'selectorFrom, 'selectorTo) }
 
@@ -322,7 +327,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @since 1.7.0
     */
   transparent inline def withFieldUnused[T](
-      inline selectorFrom: From => T
+      inline selectorFrom: ChimneySelector ?=> From => T
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldUnusedImpl('this, 'selectorFrom) }
 
@@ -494,7 +499,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @since 1.7.0
     */
   transparent inline def withSealedSubtypeUnmatched[T](
-      inline selectorTo: To => T
+      inline selectorTo: ChimneySelector ?=> To => T
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${
       PartialTransformerDefinitionMacros.withSealedSubtypeUnmatchedImpl[From, To, Overrides, Flags, T](
@@ -508,7 +513,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @since 1.7.0
     */
   transparent inline def withEnumCaseUnmatched[T](
-      inline selectorTo: To => T
+      inline selectorTo: ChimneySelector ?=> To => T
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${
       PartialTransformerDefinitionMacros.withSealedSubtypeUnmatchedImpl[From, To, Overrides, Flags, T](
@@ -560,7 +565,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     *
     * @since 1.7.0
     */
-  transparent inline def withFallbackFrom[T, FromFallback](inline selectorFrom: From => T)(
+  transparent inline def withFallbackFrom[T, FromFallback](inline selectorFrom: ChimneySelector ?=> From => T)(
       inline fallback: FromFallback
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFallbackFromImpl('this, 'selectorFrom, 'fallback) }
@@ -612,7 +617,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     *
     * @since 1.6.0
     */
-  transparent inline def withConstructorTo[T, Ctor](inline selector: To => T)(
+  transparent inline def withConstructorTo[T, Ctor](inline selector: ChimneySelector ?=> To => T)(
       inline f: Ctor
   )(using IsFunction.Of[Ctor, T]): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withConstructorToImpl('this, 'selector, 'f) }
@@ -666,7 +671,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     *
     * @since 1.6.0
     */
-  transparent inline def withConstructorPartialTo[T, Ctor](inline selector: To => T)(
+  transparent inline def withConstructorPartialTo[T, Ctor](inline selector: ChimneySelector ?=> To => T)(
       inline f: Ctor
   )(using
       IsFunction.Of[Ctor, partial.Result[T]]
@@ -726,7 +731,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     *
     * @since 1.10.0
     */
-  transparent inline def withConstructorPartialToFailFast[T, Ctor](inline selector: To => T)(
+  transparent inline def withConstructorPartialToFailFast[T, Ctor](inline selector: ChimneySelector ?=> To => T)(
       inline f: Ctor
   )(using
       IsFunction.Of[Ctor, Boolean => partial.Result[T]]
@@ -783,7 +788,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     *
     * @since 1.6.0
     */
-  transparent inline def withConstructorEitherTo[T, Ctor](inline selector: To => T)(
+  transparent inline def withConstructorEitherTo[T, Ctor](inline selector: ChimneySelector ?=> To => T)(
       inline f: Ctor
   )(using
       IsFunction.Of[Ctor, Either[String, T]]
@@ -805,7 +810,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @since 1.6.0
     */
   transparent inline def withSourceFlag[T](
-      inline selectorFrom: From => T
+      inline selectorFrom: ChimneySelector ?=> From => T
   ): TransformerSourceFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, ? <: Path] =
     ${ PartialTransformerDefinitionMacros.withSourceFlagImpl[From, To, Overrides, Flags, T]('this, 'selectorFrom) }
 
@@ -824,7 +829,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @since 1.6.0
     */
   transparent inline def withTargetFlag[T](
-      inline selectorTo: To => T
+      inline selectorTo: ChimneySelector ?=> To => T
   ): TransformerTargetFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, ? <: Path] =
     ${ PartialTransformerDefinitionMacros.withTargetFlagImpl[From, To, Overrides, Flags, T]('this, 'selectorTo) }
 

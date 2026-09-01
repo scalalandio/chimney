@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.Codec
 import io.scalaland.chimney.internal.compiletime.derivation.codec.CodecMacros
 import io.scalaland.chimney.internal.compiletime.dsl.CodecDefinitionMacros
-import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
+import io.scalaland.chimney.internal.runtime.{ChimneySelector, TransformerFlags, TransformerOverrides}
 import scala.annotation.nowarn
 
 /** Allows customization of [[io.scalaland.chimney.Codec]] derivation.
@@ -36,6 +36,8 @@ final class CodecDefinition[
       Flags
     ] {
 
+  private given ChimneySelector = null.asInstanceOf[ChimneySelector]
+
   /** Use `selectorDomain` field in `Domain` to obtain the value of `selectorDto` field in `Dto`.
     *
     * By default, if `Domain` is missing field picked by `selectorDto` (or reverse) the compilation fails.
@@ -58,8 +60,8 @@ final class CodecDefinition[
     * @since 1.2.0
     */
   transparent inline def withFieldRenamed[T, U](
-      inline selectorDomain: Domain => T,
-      inline selectorDto: Dto => U
+      inline selectorDomain: ChimneySelector ?=> Domain => T,
+      inline selectorDto: ChimneySelector ?=> Dto => U
   ): CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags] =
     ${ CodecDefinitionMacros.withFieldRenamedImpl('this, 'selectorDomain, 'selectorDto) }
 

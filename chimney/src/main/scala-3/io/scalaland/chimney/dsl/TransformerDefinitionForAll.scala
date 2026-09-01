@@ -2,6 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.compiletime.dsl.TransformerDefinitionForAllMacros
 import io.scalaland.chimney.internal.runtime.{
+  ChimneySelector,
   IsFunction,
   Path,
   TransformerFlags,
@@ -38,13 +39,15 @@ final class TransformerDefinitionForAll[
     val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
 ) extends WithRuntimeDataStore {
 
+  private given ChimneySelector = null.asInstanceOf[ChimneySelector]
+
   /** Use the `selectorFrom` field in `FromMatch` to obtain the value of the `selectorTo` field in `ToMatch`.
     *
     * @since 1.10.0
     */
   transparent inline def withFieldRenamed[T, U](
-      inline selectorFrom: FromMatch => T,
-      inline selectorTo: ToMatch => U
+      inline selectorFrom: ChimneySelector ?=> FromMatch => T,
+      inline selectorTo: ChimneySelector ?=> ToMatch => U
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${
       TransformerDefinitionForAllMacros.withFieldRenamedImpl[From, To, Overrides, Flags, FromMatch, ToMatch, T, U](
@@ -59,7 +62,7 @@ final class TransformerDefinitionForAll[
     * @since 1.10.0
     */
   transparent inline def withFieldConst[T, U](
-      inline selector: ToMatch => T,
+      inline selector: ChimneySelector ?=> ToMatch => T,
       inline value: U
   )(using U <:< T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${
@@ -75,7 +78,7 @@ final class TransformerDefinitionForAll[
     * @since 1.10.0
     */
   transparent inline def withFieldComputed[T, U](
-      inline selector: ToMatch => T,
+      inline selector: ChimneySelector ?=> ToMatch => T,
       inline f: FromMatch => U
   )(using U <:< T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${
@@ -91,7 +94,7 @@ final class TransformerDefinitionForAll[
     * @since 1.10.0
     */
   transparent inline def withFieldComputedPartial[T, U](
-      inline selector: ToMatch => T,
+      inline selector: ChimneySelector ?=> ToMatch => T,
       inline f: FromMatch => partial.Result[U]
   )(using U <:< T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${
