@@ -245,8 +245,8 @@ You can also merge values!
       def transform(src: UserData): User = {
         val userData: UserData = src
         new User(
-          vector(0).asInstanceOf[UserMeta].id,
-          vector(0).asInstanceOf[UserMeta].isDeleted,
+          runtimeDataStore(0).asInstanceOf[UserMeta].id,
+          runtimeDataStore(0).asInstanceOf[UserMeta].isDeleted,
           userdata.name,
           userdata.surname
         )
