@@ -221,7 +221,7 @@ to a common supertype: `Any`. So from the JVM perspective, after type erasure, w
     ```
 
 At the end of this chain is an object which the macro (from `.transform`) can access to extract from it a `From` value
-and a `RuntimeDataStore` value (currently `type RuntimeDataStore = Vector[Any]`). It means, that as long as macro would
+and a `RuntimeDataStore` value. It means, that as long as macro would
 know what is stored at each `RuntimeDataStore` index, and what is the runtime type of the value, it would have all the
 information we provided it.
 

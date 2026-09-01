@@ -29,8 +29,8 @@ The simplified version of how the code above works:
 
 1. `.into[Bar]` wraps `Foo(1, "test")` value. The wrapper (here: `TransformerInto`) would store
    **both the transformed value and possible field/coproduct value overrides**
-2. these overrides are stored in `RuntimeDataStore` (currently implemented as `Vector[Any]`) -
-   `.withFieldConst(_.c, 3.0)` adds `3.0` as a value to this vector.
+2. these overrides are stored in `RuntimeDataStore` (a cons-cell linked list materialized into an array on first access) -
+   `.withFieldConst(_.c, 3.0)` adds `3.0` as a value to this store.
    **Both wrapping and override appending would happen during runtime**, so this DSL imposes some overhead
 3. the final `.transform` would generate a code similar to:
    ```scala

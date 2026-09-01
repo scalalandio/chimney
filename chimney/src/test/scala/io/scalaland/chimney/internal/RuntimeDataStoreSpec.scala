@@ -80,4 +80,41 @@ class RuntimeDataStoreSpec extends ChimneySpec {
     store(1) ==> "not null"
     store(2) ==> null
   }
+
+  test("repeated apply reuses materialized array (fast path)") {
+    val store = RuntimeDataStore.empty
+      .prepended("a")
+      .prepended("b")
+      .prepended("c")
+
+    store(0) ==> "c"
+    store(1) ==> "b"
+    store(2) ==> "a"
+    // second round of reads exercises the cached array
+    store(0) ==> "c"
+    store(1) ==> "b"
+    store(2) ==> "a"
+  }
+
+  test("materialize parent, then branch — children produce correct arrays") {
+    val parent = RuntimeDataStore.empty.prepended("x")
+    // force parent materialization
+    parent(0) ==> "x"
+
+    val childA = parent.prepended("a")
+    val childB = parent.prepended("b")
+
+    childA(0) ==> "a"
+    childA(1) ==> "x"
+    childB(0) ==> "b"
+    childB(1) ==> "x"
+    // parent still correct
+    parent(0) ==> "x"
+  }
+
+  test("toString shows contents") {
+    RuntimeDataStore.empty.toString ==> "RuntimeDataStore()"
+    RuntimeDataStore.empty.prepended("a").toString ==> "RuntimeDataStore(a)"
+    RuntimeDataStore.empty.prepended(1).prepended(2).toString ==> "RuntimeDataStore(2, 1)"
+  }
 }

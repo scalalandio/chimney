@@ -1,7 +1,7 @@
 package io.scalaland.chimney
 
-/** Verifies that [[dsl.TransformerDefinition]] chains with various combinations of data-carrying and type-only modifiers
-  * produce correct transformations — both from fresh expressions and from `val` references (branching).
+/** Verifies that [[dsl.TransformerDefinition]] chains with various combinations of data-carrying and type-only
+  * modifiers produce correct transformations — both from fresh expressions and from `val` references (branching).
   */
 class TotalTransformerDefinitionAllocationsSpec extends ChimneySpec {
 
@@ -138,6 +138,17 @@ class TotalTransformerDefinitionAllocationsSpec extends ChimneySpec {
       // original base still works independently
       val t2 = base.buildTransformer
       t2.transform(src) ==> TargetExtra(1, "hello", 3.14, 1L)
+    }
+
+    test("built transformer used multiple times (exercises materialized fast path)") {
+      val t = Transformer
+        .define[Source, TargetExtra]
+        .withFieldConst(_.d, 42L)
+        .withFieldComputed(_.a, _.a * 10)
+        .buildTransformer
+      t.transform(src) ==> TargetExtra(10, "hello", 3.14, 42L)
+      t.transform(Source(2, "world", 2.72)) ==> TargetExtra(20, "world", 2.72, 42L)
+      t.transform(src) ==> TargetExtra(10, "hello", 3.14, 42L)
     }
   }
 }
