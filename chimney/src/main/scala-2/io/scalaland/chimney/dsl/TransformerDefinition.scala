@@ -438,5 +438,5 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     macro TransformerMacros.deriveTotalTransformerWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags]
 
   private[chimney] def addOverride(overrideData: Any): this.type =
-    new TransformerDefinition(overrideData +: runtimeData).asInstanceOf[this.type]
+    new TransformerDefinition(runtimeData.prepended(overrideData)).asInstanceOf[this.type]
 }

@@ -837,5 +837,5 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     macro TransformerMacros.derivePartialTransformerWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags]
 
   private[chimney] def addOverride(overrideData: Any): this.type =
-    new PartialTransformerDefinition(overrideData +: runtimeData).asInstanceOf[this.type]
+    new PartialTransformerDefinition(runtimeData.prepended(overrideData)).asInstanceOf[this.type]
 }

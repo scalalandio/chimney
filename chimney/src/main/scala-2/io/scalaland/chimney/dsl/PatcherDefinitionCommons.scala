@@ -3,8 +3,8 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.internal.runtime.PatcherOverrides
 
 object PatcherDefinitionCommons {
-  type RuntimeDataStore = Vector[Any]
-  def emptyRuntimeDataStore: RuntimeDataStore = Vector.empty[Any]
+  type RuntimeDataStore = io.scalaland.chimney.internal.runtime.RuntimeDataStore
+  def emptyRuntimeDataStore: RuntimeDataStore = io.scalaland.chimney.internal.runtime.RuntimeDataStore.empty
 }
 
 private[chimney] trait PatcherDefinitionCommons[UpdateOverrides[_ <: PatcherOverrides]] {

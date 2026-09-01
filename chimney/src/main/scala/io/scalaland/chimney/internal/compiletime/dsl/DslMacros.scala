@@ -871,7 +871,7 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
         )(d =>
           Expr.quote {
             new io.scalaland.chimney.dsl.TransformerDefinition[From, To, O2, Flags](
-              Expr.splice(d) +: Expr.splice(prefix).runtimeData
+              Expr.splice(prefix).runtimeData.prepended(Expr.splice(d))
             )
           }
         )
@@ -987,7 +987,7 @@ private[compiletime] trait DslMacros extends DslDefinitions { this: ChimneyDefin
         )(d =>
           Expr.quote {
             new io.scalaland.chimney.dsl.PartialTransformerDefinition[From, To, O2, Flags](
-              Expr.splice(d) +: Expr.splice(prefix).runtimeData
+              Expr.splice(prefix).runtimeData.prepended(Expr.splice(d))
             )
           }
         )
