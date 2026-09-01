@@ -76,6 +76,8 @@ final class PartialTransformerDefinitionForAll[
       .withFieldComputedPartialImpl[From, To, Overrides, Flags, FromMatch, ToMatch]
 
   private[chimney] def addOverride(overrideData: Any): this.type =
-    new PartialTransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch](overrideData +: runtimeData)
+    new PartialTransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch](
+      runtimeData.prepended(overrideData)
+    )
       .asInstanceOf[this.type]
 }

@@ -100,6 +100,6 @@ final class TransformerDefinitionForAll[
     }
 
   private[chimney] def addOverride(overrideData: Any): this.type =
-    new TransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch](overrideData +: runtimeData)
+    new TransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch](runtimeData.prepended(overrideData))
       .asInstanceOf[this.type]
 }

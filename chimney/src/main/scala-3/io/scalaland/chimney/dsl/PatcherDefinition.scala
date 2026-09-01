@@ -156,5 +156,5 @@ final class PatcherDefinition[A, Patch, Overrides <: PatcherOverrides, Flags <: 
     ${ PatcherMacros.derivePatcherWithConfig[A, Patch, Overrides, Flags, ImplicitScopeFlags]('this) }
 
   private[chimney] def addOverride(overrideData: Any): this.type =
-    new PatcherDefinition(overrideData +: runtimeData).asInstanceOf[this.type]
+    new PatcherDefinition(runtimeData.prepended(overrideData)).asInstanceOf[this.type]
 }
