@@ -353,6 +353,19 @@ object Issue739 {
   )
 }
 
+object Issue935 {
+  sealed trait Foo
+  object Foo {
+    case object Default extends Foo
+    case object A extends Foo
+  }
+
+  sealed trait Bar
+  object Bar {
+    case object A extends Bar
+  }
+}
+
 object Issue899 {
   import io.scalaland.chimney.dsl.*
 
