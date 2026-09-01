@@ -44,7 +44,7 @@ The simplified version of how the code above works:
    }
    ```
 4. since there might be many overrides in `td.runtimeDataStore(0)` and the macro needs to know which field override is on
-   which position, **DSL needs to remember somehow what each index in the vector overrides**. For that purpose there
+   which position, **DSL needs to remember somehow what each index in the store overrides**. For that purpose there
    exist `TransformerCfg`, a phantom type (a type used only in compile time) which acts as a type-level list where each
    such information could be prepended. (You can think of it as of a tuple, which never get instantiated and only exist
    as expandable list of types). Each time user adds some override code is generated which would append a value in
