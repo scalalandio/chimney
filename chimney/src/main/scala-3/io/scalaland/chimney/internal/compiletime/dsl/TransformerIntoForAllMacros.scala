@@ -21,8 +21,8 @@ object TransformerIntoForAllMacros {
       U: Type
   ](
       ti: Expr[TransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch]],
-      selectorFrom: Expr[FromMatch => T],
-      selectorTo: Expr[ToMatch => U]
+      selectorFrom: Expr[Any],
+      selectorTo: Expr[Any]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerIntoForAllMacros(quotes)
     m.TransformerIntoForAllDsl
@@ -42,7 +42,7 @@ object TransformerIntoForAllMacros {
       U: Type
   ](
       ti: Expr[TransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch]],
-      selector: Expr[ToMatch => T],
+      selector: Expr[Any],
       value: Expr[U]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerIntoForAllMacros(quotes)
@@ -63,7 +63,7 @@ object TransformerIntoForAllMacros {
       U: Type
   ](
       ti: Expr[TransformerIntoForAll[From, To, Overrides, Flags, FromMatch, ToMatch]],
-      selector: Expr[ToMatch => T],
+      selector: Expr[Any],
       f: Expr[FromMatch => U]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerIntoForAllMacros(quotes)

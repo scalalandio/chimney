@@ -3,6 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.{partial, PartialTransformer, Patcher, Transformer}
 
 export io.scalaland.chimney.inlined.{into, intoPartial, using}
+export io.scalaland.chimney.internal.runtime.ChimneySelector
 export io.scalaland.chimney.syntax.{
   everyItem,
   everyMapKey,

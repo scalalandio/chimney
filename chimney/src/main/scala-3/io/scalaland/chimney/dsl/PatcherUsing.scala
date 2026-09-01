@@ -2,7 +2,13 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
 import io.scalaland.chimney.internal.compiletime.dsl.PatcherUsingMacros
-import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, Path, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{
+  ChimneySelector,
+  PatcherFlags,
+  PatcherOverrides,
+  Path,
+  WithRuntimeDataStore
+}
 import scala.annotation.nowarn
 
 /** Provides operations to customize [[io.scalaland.chimney.Patcher]] logic for specific object value and patch value.
@@ -32,6 +38,8 @@ final class PatcherUsing[A, Patch, Overrides <: PatcherOverrides, Flags <: Patch
 ) extends PatcherFlagsDsl[[Flags1 <: PatcherFlags] =>> PatcherUsing[A, Patch, Overrides, Flags1], Flags]
     with WithRuntimeDataStore {
 
+  private given ChimneySelector = null.asInstanceOf[ChimneySelector]
+
   /** Use the `value` provided here for the field picked using the `selectorObj`.
     *
     * By default, if `Patch` is missing a field, the original `A`'s field value is taken.
@@ -44,7 +52,7 @@ final class PatcherUsing[A, Patch, Overrides <: PatcherOverrides, Flags <: Patch
     *
     * @since 1.7.0
     */
-  transparent inline def withFieldConst[T, U](inline selectorObj: A => T, value: U)(using
+  transparent inline def withFieldConst[T, U](inline selectorObj: ChimneySelector ?=> A => T, value: U)(using
       U <:< T
   ): PatcherUsing[A, Patch, ? <: PatcherOverrides, Flags] =
     ${ PatcherUsingMacros.withFieldConstImpl('this, 'selectorObj, 'value) }
@@ -70,7 +78,7 @@ final class PatcherUsing[A, Patch, Overrides <: PatcherOverrides, Flags <: Patch
     * @since 1.7.0
     */
   transparent inline def withFieldComputed[T, U](
-      inline selectorObj: A => T,
+      inline selectorObj: ChimneySelector ?=> A => T,
       inline f: Patch => U
   )(using U <:< T): PatcherUsing[A, Patch, ? <: PatcherOverrides, Flags] =
     ${ PatcherUsingMacros.withFieldComputedImpl('this, 'selectorObj, 'f) }
@@ -100,8 +108,8 @@ final class PatcherUsing[A, Patch, Overrides <: PatcherOverrides, Flags <: Patch
     *
     * @since 1.7.0
     */
-  transparent inline def withFieldComputedFrom[S, T, U](inline selectorPatch: Patch => S)(
-      inline selectorObj: A => T,
+  transparent inline def withFieldComputedFrom[S, T, U](inline selectorPatch: ChimneySelector ?=> Patch => S)(
+      inline selectorObj: ChimneySelector ?=> A => T,
       inline f: S => U
   )(using U <:< T): PatcherUsing[A, Patch, ? <: PatcherOverrides, Flags] =
     ${ PatcherUsingMacros.withFieldComputedFromImpl('this, 'selectorPatch, 'selectorObj, 'f) }
@@ -121,7 +129,7 @@ final class PatcherUsing[A, Patch, Overrides <: PatcherOverrides, Flags <: Patch
     * @since 1.7.0
     */
   transparent inline def withFieldIgnored[T](
-      inline selectorPatch: Patch => T
+      inline selectorPatch: ChimneySelector ?=> Patch => T
   ): PatcherUsing[A, Patch, ? <: PatcherOverrides, Flags] =
     ${ PatcherUsingMacros.withFieldIgnoredImpl('this, 'selectorPatch) }
 
@@ -140,7 +148,7 @@ final class PatcherUsing[A, Patch, Overrides <: PatcherOverrides, Flags <: Patch
     * @since 1.7.0
     */
   transparent inline def withPatchedValueFlag[T](
-      inline selectorObj: A => T
+      inline selectorObj: ChimneySelector ?=> A => T
   ): PatcherPatchedValueFlagsDsl.OfPatcherUsing[A, Patch, Overrides, Flags, ? <: Path] =
     ${ PatcherUsingMacros.withPatchedValueFlagImpl('this, 'selectorObj) }
 

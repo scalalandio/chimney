@@ -19,7 +19,7 @@ object TransformerDefinitionMacros {
       U: Type
   ](
       td: Expr[TransformerDefinition[From, To, Overrides, Flags]],
-      selector: Expr[To => T],
+      selector: Expr[Any],
       value: Expr[U]
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerDefinitionMacros(quotes)
@@ -38,7 +38,7 @@ object TransformerDefinitionMacros {
       U: Type
   ](
       td: Expr[TransformerDefinition[From, To, Overrides, Flags]],
-      selector: Expr[To => T],
+      selector: Expr[Any],
       f: Expr[From => U]
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerDefinitionMacros(quotes)
@@ -58,8 +58,8 @@ object TransformerDefinitionMacros {
       U: Type
   ](
       td: Expr[TransformerDefinition[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => S],
-      selectorTo: Expr[To => T],
+      selectorFrom: Expr[Any],
+      selectorTo: Expr[Any],
       f: Expr[S => U]
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerDefinitionMacros(quotes)
@@ -78,8 +78,8 @@ object TransformerDefinitionMacros {
       U: Type
   ](
       td: Expr[TransformerDefinition[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => T],
-      selectorTo: Expr[To => U]
+      selectorFrom: Expr[Any],
+      selectorTo: Expr[Any]
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerDefinitionMacros(quotes)
     m.TransformerDefinitionDsl
@@ -96,7 +96,7 @@ object TransformerDefinitionMacros {
       T: Type
   ](
       td: Expr[TransformerDefinition[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => T]
+      selectorFrom: Expr[Any]
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerDefinitionMacros(quotes)
     m.TransformerDefinitionDsl
@@ -147,7 +147,7 @@ object TransformerDefinitionMacros {
       T: Type
   ](
       td: Expr[TransformerDefinition[From, To, Overrides, Flags]],
-      selectorTo: Expr[To => T]
+      selectorTo: Expr[Any]
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerDefinitionMacros(quotes)
     m.TransformerDefinitionDsl
@@ -182,7 +182,7 @@ object TransformerDefinitionMacros {
       FromFallback: Type
   ](
       td: Expr[TransformerDefinition[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => T],
+      selectorFrom: Expr[Any],
       fallback: Expr[FromFallback]
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerDefinitionMacros(quotes)
@@ -218,7 +218,7 @@ object TransformerDefinitionMacros {
       Ctor: Type
   ](
       td: Expr[TransformerDefinition[From, To, Overrides, Flags]],
-      selector: Expr[To => T],
+      selector: Expr[Any],
       f: Expr[Ctor]
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new TransformerDefinitionMacros(quotes)
@@ -236,7 +236,7 @@ object TransformerDefinitionMacros {
       T: Type
   ](
       td: Expr[TransformerDefinition[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => T]
+      selectorFrom: Expr[Any]
   )(using Quotes): Expr[TransformerSourceFlagsDsl.OfTransformerDefinition[From, To, Overrides, Flags, ? <: Path]] = {
     val m = new TransformerDefinitionMacros(quotes)
     m.transformerDefinitionWithSourceFlag[From, To, Overrides, Flags](td, selectorFrom)
@@ -252,7 +252,7 @@ object TransformerDefinitionMacros {
       T: Type
   ](
       td: Expr[TransformerDefinition[From, To, Overrides, Flags]],
-      selectorTo: Expr[To => T]
+      selectorTo: Expr[Any]
   )(using Quotes): Expr[TransformerTargetFlagsDsl.OfTransformerDefinition[From, To, Overrides, Flags, ? <: Path]] = {
     val m = new TransformerDefinitionMacros(quotes)
     m.transformerDefinitionWithTargetFlag[From, To, Overrides, Flags](td, selectorTo)

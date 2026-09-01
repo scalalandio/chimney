@@ -20,8 +20,8 @@ object CodecDefinitionMacros {
       U: Type
   ](
       cd: Expr[CodecDefinition[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags]],
-      selectorDomain: Expr[Domain => T],
-      selectorDto: Expr[Dto => U]
+      selectorDomain: Expr[Any],
+      selectorDto: Expr[Any]
   )(using Quotes): Expr[CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] = {
     val m = new CodecDefinitionMacros(quotes)
     m.CodecDefinitionDsl

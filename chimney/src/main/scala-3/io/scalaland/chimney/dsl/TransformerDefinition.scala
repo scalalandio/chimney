@@ -4,6 +4,7 @@ import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.*
 import io.scalaland.chimney.internal.runtime.{
+  ChimneySelector,
   IsFunction,
   Path,
   TransformerFlags,
@@ -39,6 +40,8 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     ]
     with WithRuntimeDataStore {
 
+  private given ChimneySelector = null.asInstanceOf[ChimneySelector]
+
   /** Lifts current transformer definition as `PartialTransformer` definition
     *
     * It keeps all the configuration, provided missing values, renames, coproduct instances etc.
@@ -71,7 +74,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @since 0.4.0
     */
   transparent inline def withFieldConst[T, U](
-      inline selector: To => T,
+      inline selector: ChimneySelector ?=> To => T,
       inline value: U
   )(using U <:< T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withFieldConstImpl('this, 'selector, 'value) }
@@ -98,7 +101,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @since 0.4.0
     */
   transparent inline def withFieldComputed[T, U](
-      inline selector: To => T,
+      inline selector: ChimneySelector ?=> To => T,
       inline f: From => U
   )(using U <:< T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withFieldComputedImpl('this, 'selector, 'f) }
@@ -129,8 +132,8 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     *
     * @since 1.6.0
     */
-  transparent inline def withFieldComputedFrom[S, T, U](inline selectorFrom: From => S)(
-      inline selectorTo: To => T,
+  transparent inline def withFieldComputedFrom[S, T, U](inline selectorFrom: ChimneySelector ?=> From => S)(
+      inline selectorTo: ChimneySelector ?=> To => T,
       inline f: S => U
   )(using U <:< T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withFieldComputedFromImpl('this, 'selectorFrom, 'selectorTo, 'f) }
@@ -157,8 +160,8 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @since 0.4.0
     */
   transparent inline def withFieldRenamed[T, U](
-      inline selectorFrom: From => T,
-      inline selectorTo: To => U
+      inline selectorFrom: ChimneySelector ?=> From => T,
+      inline selectorTo: ChimneySelector ?=> To => U
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withFieldRenamedImpl('this, 'selectorFrom, 'selectorTo) }
 
@@ -178,7 +181,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @since 1.7.0
     */
   transparent inline def withFieldUnused[T](
-      inline selectorFrom: From => T
+      inline selectorFrom: ChimneySelector ?=> From => T
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withFieldUnusedImpl('this, 'selectorFrom) }
 
@@ -271,7 +274,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @since 1.7.0
     */
   transparent inline def withSealedSubtypeUnmatched[T](
-      inline selectorTo: To => T
+      inline selectorTo: ChimneySelector ?=> To => T
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withSealedSubtypeUnmatchedImpl[From, To, Overrides, Flags, T]('this, 'selectorTo) }
 
@@ -280,7 +283,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @since 1.7.0
     */
   transparent inline def withEnumCaseUnmatched[T](
-      inline selectorTo: To => T
+      inline selectorTo: ChimneySelector ?=> To => T
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withSealedSubtypeUnmatchedImpl[From, To, Overrides, Flags, T]('this, 'selectorTo) }
 
@@ -326,7 +329,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     *
     * @since 1.7.0
     */
-  transparent inline def withFallbackFrom[T, FromFallback](inline selectorFrom: From => T)(
+  transparent inline def withFallbackFrom[T, FromFallback](inline selectorFrom: ChimneySelector ?=> From => T)(
       inline fallback: FromFallback
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withFallbackFromImpl('this, 'selectorFrom, 'fallback) }
@@ -378,7 +381,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     *
     * @since 1.6.0
     */
-  transparent inline def withConstructorTo[T, Ctor](inline selector: To => T)(
+  transparent inline def withConstructorTo[T, Ctor](inline selector: ChimneySelector ?=> To => T)(
       inline f: Ctor
   )(using IsFunction.Of[Ctor, T]): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withConstructorToImpl('this, 'selector, 'f) }
@@ -398,7 +401,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @since 1.6.0
     */
   transparent inline def withSourceFlag[T](
-      inline selectorFrom: From => T
+      inline selectorFrom: ChimneySelector ?=> From => T
   ): TransformerSourceFlagsDsl.OfTransformerDefinition[From, To, Overrides, Flags, ? <: Path] =
     ${ TransformerDefinitionMacros.withSourceFlagImpl[From, To, Overrides, Flags, T]('this, 'selectorFrom) }
 
@@ -417,7 +420,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @since 1.6.0
     */
   transparent inline def withTargetFlag[T](
-      inline selectorTo: To => T
+      inline selectorTo: ChimneySelector ?=> To => T
   ): TransformerTargetFlagsDsl.OfTransformerDefinition[From, To, Overrides, Flags, ? <: Path] =
     ${ TransformerDefinitionMacros.withTargetFlagImpl[From, To, Overrides, Flags, T]('this, 'selectorTo) }
 

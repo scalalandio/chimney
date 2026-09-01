@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.Iso
 import io.scalaland.chimney.internal.compiletime.derivation.iso.IsoMacros
 import io.scalaland.chimney.internal.compiletime.dsl.IsoDefinitionMacros
-import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
+import io.scalaland.chimney.internal.runtime.{ChimneySelector, TransformerFlags, TransformerOverrides}
 import scala.annotation.nowarn
 
 /** Allows customization of [[io.scalaland.chimney.Iso]] derivation.
@@ -36,6 +36,8 @@ final class IsoDefinition[
       Flags
     ] {
 
+  private given ChimneySelector = null.asInstanceOf[ChimneySelector]
+
   /** Use `selectorFirst` field in `First` to obtain the value of `selectorSecond` field in `Second`.
     *
     * By default, if `First` is missing field picked by `selectorSecond` (or reverse) the compilation fails.
@@ -58,8 +60,8 @@ final class IsoDefinition[
     * @since 1.2.0
     */
   transparent inline def withFieldRenamed[T, U](
-      inline selectorFirst: First => T,
-      inline selectorSecond: Second => U
+      inline selectorFirst: ChimneySelector ?=> First => T,
+      inline selectorSecond: ChimneySelector ?=> Second => U
   ): IsoDefinition[First, Second, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags] =
     ${ IsoDefinitionMacros.withFieldRenamedImpl('this, 'selectorFirst, 'selectorSecond) }
 

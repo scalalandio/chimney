@@ -18,12 +18,30 @@ private[compiletime] trait DslDefinitions { this: ChimneyDefinitions & hearth.Ma
   private val pathMarkers =
     Set("matching", "matchingSome", "matchingLeft", "matchingRight", "everyItem", "everyMapKey", "everyMapValue")
 
-  protected def parsePathType(selector: Expr[Any]): Either[String, ??<:[runtime.Path]] =
-    DestructuredExpr.parseUntyped(UntypedExpr.fromTyped(selector)) match {
-      case lambda: DestructuredExpr.Lambda if lambda.params.sizeIs == 1 =>
-        parsePathBody(selector, lambda.params.head, lambda.body)
+  protected def parsePathType(selector: Expr[Any]): Either[String, ??<:[runtime.Path]] = {
+    // Scala 3 context-function selectors (ChimneySelector ?=> From => T) may appear as:
+    //   1. A Block wrapping a val (resolved given) + lambda: { val contextual$N = ...; (x => x.field) }
+    //   2. A nested lambda: (cs => (x => x.field))
+    // In both cases, we need to unwrap to the actual single-param path lambda.
+    def unwrapToLambda(node: DestructuredExpr): Option[DestructuredExpr.Lambda] = node match {
+      case lambda: DestructuredExpr.Lambda => Some(lambda)
+      case block: DestructuredExpr.Block   => unwrapToLambda(block.result)
+      case _                               => None
+    }
+
+    unwrapToLambda(DestructuredExpr.parseUntyped(UntypedExpr.fromTyped(selector))) match {
+      case Some(lambda) if lambda.params.sizeIs == 1 =>
+        // If the body is another single-param lambda, this is a context function wrapper (case 2 above)
+        val (root, body) = lambda.body match {
+          case innerLambda: DestructuredExpr.Lambda if innerLambda.params.sizeIs == 1 =>
+            (innerLambda.params.head, innerLambda.body)
+          case _ =>
+            (lambda.params.head, lambda.body)
+        }
+        parsePathBody(selector, root, body)
       case _ => Left(invalidSelectorMessage(selector))
     }
+  }
 
   private def parsePathBody(
       selector: Expr[Any],

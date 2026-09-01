@@ -19,7 +19,7 @@ object PatcherUsingMacros {
       U: Type
   ](
       pu: Expr[PatcherUsing[A, Patch, Overrides, Flags]],
-      selectorObj: Expr[A => T],
+      selectorObj: Expr[Any],
       value: Expr[U]
   )(using Quotes): Expr[PatcherUsing[A, Patch, ? <: PatcherOverrides, Flags]] = {
     val m = new PatcherUsingMacros(quotes)
@@ -38,7 +38,7 @@ object PatcherUsingMacros {
       U: Type
   ](
       pu: Expr[PatcherUsing[A, Patch, Overrides, Flags]],
-      selectorObj: Expr[A => T],
+      selectorObj: Expr[Any],
       f: Expr[Patch => U]
   )(using Quotes): Expr[PatcherUsing[A, Patch, ? <: PatcherOverrides, Flags]] = {
     val m = new PatcherUsingMacros(quotes)
@@ -58,8 +58,8 @@ object PatcherUsingMacros {
       U: Type
   ](
       pu: Expr[PatcherUsing[A, Patch, Overrides, Flags]],
-      selectorPatch: Expr[Patch => S],
-      selectorObj: Expr[A => T],
+      selectorPatch: Expr[Any],
+      selectorObj: Expr[Any],
       f: Expr[S => U]
   )(using Quotes): Expr[PatcherUsing[A, Patch, ? <: PatcherOverrides, Flags]] = {
     val m = new PatcherUsingMacros(quotes)
@@ -77,7 +77,7 @@ object PatcherUsingMacros {
       T: Type
   ](
       pu: Expr[PatcherUsing[A, Patch, Overrides, Flags]],
-      selectorPatch: Expr[Patch => T]
+      selectorPatch: Expr[Any]
   )(using Quotes): Expr[PatcherUsing[A, Patch, ? <: PatcherOverrides, Flags]] = {
     val m = new PatcherUsingMacros(quotes)
     m.PatcherUsingDsl
@@ -94,7 +94,7 @@ object PatcherUsingMacros {
       T: Type
   ](
       pu: Expr[PatcherUsing[A, Patch, Overrides, Flags]],
-      selectorObj: Expr[A => T]
+      selectorObj: Expr[Any]
   )(using Quotes): Expr[PatcherPatchedValueFlagsDsl.OfPatcherUsing[A, Patch, Overrides, Flags, ? <: Path]] = {
     val m = new PatcherUsingMacros(quotes)
     m.patcherUsingWithPatchedValueFlag[A, Patch, Overrides, Flags](pu, selectorObj)

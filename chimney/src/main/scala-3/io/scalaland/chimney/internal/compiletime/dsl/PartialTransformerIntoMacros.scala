@@ -20,7 +20,7 @@ object PartialTransformerIntoMacros {
       U: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selector: Expr[To => T],
+      selector: Expr[Any],
       value: Expr[U]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
@@ -39,7 +39,7 @@ object PartialTransformerIntoMacros {
       U: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selector: Expr[To => T],
+      selector: Expr[Any],
       value: Expr[partial.Result[U]]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
@@ -58,7 +58,7 @@ object PartialTransformerIntoMacros {
       U: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selector: Expr[To => T],
+      selector: Expr[Any],
       f: Expr[From => U]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
@@ -78,8 +78,8 @@ object PartialTransformerIntoMacros {
       U: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => S],
-      selectorTo: Expr[To => T],
+      selectorFrom: Expr[Any],
+      selectorTo: Expr[Any],
       f: Expr[S => U]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
@@ -98,7 +98,7 @@ object PartialTransformerIntoMacros {
       U: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selector: Expr[To => T],
+      selector: Expr[Any],
       f: Expr[From => partial.Result[U]]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
@@ -118,8 +118,8 @@ object PartialTransformerIntoMacros {
       U: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => S],
-      selectorTo: Expr[To => T],
+      selectorFrom: Expr[Any],
+      selectorTo: Expr[Any],
       f: Expr[S => partial.Result[U]]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
@@ -138,7 +138,7 @@ object PartialTransformerIntoMacros {
       U: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selector: Expr[To => T],
+      selector: Expr[Any],
       f: Expr[(From, Boolean) => partial.Result[U]]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
@@ -158,8 +158,8 @@ object PartialTransformerIntoMacros {
       U: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => S],
-      selectorTo: Expr[To => T],
+      selectorFrom: Expr[Any],
+      selectorTo: Expr[Any],
       f: Expr[(S, Boolean) => partial.Result[U]]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
@@ -178,8 +178,8 @@ object PartialTransformerIntoMacros {
       U: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => T],
-      selectorTo: Expr[To => U]
+      selectorFrom: Expr[Any],
+      selectorTo: Expr[Any]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
     m.PartialTransformerIntoDsl
@@ -196,7 +196,7 @@ object PartialTransformerIntoMacros {
       T: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => T]
+      selectorFrom: Expr[Any]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
     m.PartialTransformerIntoDsl
@@ -281,7 +281,7 @@ object PartialTransformerIntoMacros {
       T: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selectorTo: Expr[To => T]
+      selectorTo: Expr[Any]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
     m.PartialTransformerIntoDsl
@@ -316,7 +316,7 @@ object PartialTransformerIntoMacros {
       FromFallback: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => T],
+      selectorFrom: Expr[Any],
       fallback: Expr[FromFallback]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
@@ -352,7 +352,7 @@ object PartialTransformerIntoMacros {
       Ctor: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selector: Expr[To => T],
+      selector: Expr[Any],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
@@ -388,7 +388,7 @@ object PartialTransformerIntoMacros {
       Ctor: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selector: Expr[To => T],
+      selector: Expr[Any],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
@@ -424,7 +424,7 @@ object PartialTransformerIntoMacros {
       Ctor: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selector: Expr[To => T],
+      selector: Expr[Any],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
@@ -460,7 +460,7 @@ object PartialTransformerIntoMacros {
       Ctor: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selector: Expr[To => T],
+      selector: Expr[Any],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerIntoMacros(quotes)
@@ -478,7 +478,7 @@ object PartialTransformerIntoMacros {
       T: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selectorFrom: Expr[From => T]
+      selectorFrom: Expr[Any]
   )(using Quotes): Expr[TransformerSourceFlagsDsl.OfPartialTransformerInto[From, To, Overrides, Flags, ? <: Path]] = {
     val m = new PartialTransformerIntoMacros(quotes)
     m.partialTransformerIntoWithSourceFlag[From, To, Overrides, Flags](ti, selectorFrom)
@@ -494,7 +494,7 @@ object PartialTransformerIntoMacros {
       T: Type
   ](
       ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
-      selectorTo: Expr[To => T]
+      selectorTo: Expr[Any]
   )(using Quotes): Expr[TransformerTargetFlagsDsl.OfPartialTransformerInto[From, To, Overrides, Flags, ? <: Path]] = {
     val m = new PartialTransformerIntoMacros(quotes)
     m.partialTransformerIntoWithTargetFlag[From, To, Overrides, Flags](ti, selectorTo)

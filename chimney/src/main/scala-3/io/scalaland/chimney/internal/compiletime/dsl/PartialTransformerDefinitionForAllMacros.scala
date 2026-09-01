@@ -22,8 +22,8 @@ object PartialTransformerDefinitionForAllMacros {
       U: Type
   ](
       td: Expr[PartialTransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch]],
-      selectorFrom: Expr[FromMatch => T],
-      selectorTo: Expr[ToMatch => U]
+      selectorFrom: Expr[Any],
+      selectorTo: Expr[Any]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerDefinitionForAllMacros(quotes)
     m.PartialTransformerDefinitionForAllDsl
@@ -43,7 +43,7 @@ object PartialTransformerDefinitionForAllMacros {
       U: Type
   ](
       td: Expr[PartialTransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch]],
-      selector: Expr[ToMatch => T],
+      selector: Expr[Any],
       value: Expr[U]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerDefinitionForAllMacros(quotes)
@@ -64,7 +64,7 @@ object PartialTransformerDefinitionForAllMacros {
       U: Type
   ](
       td: Expr[PartialTransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch]],
-      selector: Expr[ToMatch => T],
+      selector: Expr[Any],
       f: Expr[FromMatch => U]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerDefinitionForAllMacros(quotes)
@@ -85,7 +85,7 @@ object PartialTransformerDefinitionForAllMacros {
       U: Type
   ](
       td: Expr[PartialTransformerDefinitionForAll[From, To, Overrides, Flags, FromMatch, ToMatch]],
-      selector: Expr[ToMatch => T],
+      selector: Expr[Any],
       f: Expr[FromMatch => partial.Result[U]]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] = {
     val m = new PartialTransformerDefinitionForAllMacros(quotes)

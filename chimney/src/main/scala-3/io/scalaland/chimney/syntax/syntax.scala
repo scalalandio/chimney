@@ -1,7 +1,7 @@
 package io.scalaland.chimney.syntax
 
 import io.scalaland.chimney.{partial, PartialTransformer, Patcher, Transformer}
-import io.scalaland.chimney.internal.runtime.{IsCollection, IsEither, IsMap, IsOption}
+import io.scalaland.chimney.internal.runtime.{ChimneySelector, IsCollection, IsEither, IsMap, IsOption}
 
 import scala.annotation.unused
 
@@ -140,7 +140,7 @@ extension [A](obj: A) {
   *
   * @since 1.0.0
   */
-extension [A](@unused a: A) {
+extension [A](@unused a: A)(using ChimneySelector) {
 
   /** Allows paths like `_.adt.matching[Subtype].field` when selecting the target fields to override in Chimney DSL.
     *
@@ -201,7 +201,7 @@ extension [A](@unused a: A) {
   *
   * @since 1.0.0
   */
-extension [C[_], I](@unused cc: C[I]) {
+extension [C[_], I](@unused cc: C[I])(using ChimneySelector) {
 
   /** Allows paths like `_.collection.everyItem.field` when selecting the target fields to override in Chimney DSL.
     *
@@ -227,7 +227,7 @@ extension [C[_], I](@unused cc: C[I]) {
   *
   * @since 1.0.0
   */
-extension [M[_, _], K, V](@unused cc: M[K, V]) {
+extension [M[_, _], K, V](@unused cc: M[K, V])(using ChimneySelector) {
 
   /** Allows paths like `_.map.everyMapKey.field` when selecting the target fields to override in Chimney DSL.
     *
