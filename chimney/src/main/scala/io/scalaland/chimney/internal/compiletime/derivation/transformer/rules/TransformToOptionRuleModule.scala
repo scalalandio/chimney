@@ -64,8 +64,6 @@ private[compiletime] trait TransformToOptionRuleModule {
   private def wrapInOptionAndTransform[From, To](implicit
       ctx: TransformationContext[From, To]
   ): MIO[Rule.ExpansionResult[To]] = {
-    implicit val OptionFromType: Type[Option[From]] = optionTypeCompat[From]
-
     // Source-side subtype overrides (from withEnumCaseHandled / withSealedSubtypeHandled) return the
     // full target type (e.g. Option[Bar]).  The standard path wraps From into Option[From] and
     // delegates to OptionToOption, which recurses into From → InnerTo — but the override's path

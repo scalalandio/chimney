@@ -5,8 +5,8 @@ package io.scalaland.chimney.internal.runtime
   * passed to DSL methods like `withFieldConst`, `withFieldRenamed`, etc.
   *
   * On Scala 3, DSL selector parameters use context functions (`ChimneySelector ?=> From => T`) so the compiler
-  * automatically provides the `ChimneySelector` evidence within the lambda body, enabling the extension methods. Outside
-  * of DSL selectors, these extensions are not in scope.
+  * automatically provides the `ChimneySelector` evidence within the lambda body, enabling the extension methods.
+  * Outside of DSL selectors, these extensions are not in scope.
   *
   * @since 1.8.0
   */
