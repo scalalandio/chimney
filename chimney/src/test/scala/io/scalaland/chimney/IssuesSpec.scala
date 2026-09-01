@@ -993,6 +993,30 @@ class IssuesSpec extends ChimneySpec {
       Order22(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22)
   }
 
+  test("fix issue #935 (withEnumCaseHandled to Option target)") {
+    import Issue935.*
+
+    val transformer = Transformer
+      .define[Foo, Option[Bar]]
+      .withEnumCaseHandled[Foo.Default.type](_ => None)
+      .buildTransformer
+
+    transformer.transform(Foo.Default) ==> None
+    transformer.transform(Foo.A) ==> Some(Bar.A)
+  }
+
+  test("fix issue #935 (withSealedSubtypeHandledPartial to Option target)") {
+    import Issue935.*
+
+    val transformer = PartialTransformer
+      .define[Foo, Option[Bar]]
+      .withEnumCaseHandled[Foo.Default.type](_ => None)
+      .buildTransformer
+
+    transformer.transform(Foo.Default).asOption ==> Some(None)
+    transformer.transform(Foo.A).asOption ==> Some(Some(Bar.A))
+  }
+
   test("fix issue #899 (case class member computed as `this.transformInto[B]`)") {
     import Issue899.*
 
