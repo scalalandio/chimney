@@ -239,7 +239,7 @@ You can also merge values!
     ```scala
     // macro outputs code like this (reformatted a bit for readability):
 
-    val vector = ... // overrides stored by DSL in Vector[Any], here UserMeta fallback
+    val runtimeDataStore = ... // overrides stored by DSL in RuntimeDataStore, here UserMeta fallback
 
     final class $anon() extends Transformer[UserData, User] {
       def transform(src: UserData): User = {

@@ -6,8 +6,8 @@ import io.scalaland.chimney.fixtures.PatchDomain.*
 import scala.annotation.nowarn
 
 /** Verifies that patcher DSL chains ([[dsl.PatcherDefinition]] / [[dsl.PatcherUsing]]) with various combinations of
-  * data-carrying and type-only modifiers produce correct results — both from fresh expressions and from `val` references
-  * (branching).
+  * data-carrying and type-only modifiers produce correct results — both from fresh expressions and from `val`
+  * references (branching).
   */
 @nowarn("msg=unused import")
 class PatcherAllocationsSpec extends ChimneySpec {
