@@ -152,4 +152,51 @@ class RuntimeDataStoreSpec extends ChimneySpec {
     val store = RuntimeDataStore.wrap(Array[Any](1, 2, 3))
     store.toString ==> "RuntimeDataStore(1, 2, 3)"
   }
+
+  test("prependedAll combines values with existing store") {
+    val base = RuntimeDataStore.empty.prepended("a").prepended("b")
+    val result = base.prependedAll(Array[Any]("d", "c"))
+    result.size ==> 4
+    result(0) ==> "d"
+    result(1) ==> "c"
+    result(2) ==> "b"
+    result(3) ==> "a"
+  }
+
+  test("prependedAll with empty array returns this") {
+    val base = RuntimeDataStore.empty.prepended("a")
+    val result = base.prependedAll(Array.empty[Any])
+    result.size ==> 1
+    result(0) ==> "a"
+  }
+
+  test("prependedAll on empty store returns wrap of values") {
+    val result = RuntimeDataStore.empty.prependedAll(Array[Any]("c", "b", "a"))
+    result.size ==> 3
+    result(0) ==> "c"
+    result(1) ==> "b"
+    result(2) ==> "a"
+  }
+
+  test("prependedAll on wrapped store combines correctly") {
+    val base = RuntimeDataStore.wrap(Array[Any]("b", "a"))
+    val result = base.prependedAll(Array[Any]("d", "c"))
+    result.size ==> 4
+    result(0) ==> "d"
+    result(1) ==> "c"
+    result(2) ==> "b"
+    result(3) ==> "a"
+  }
+
+  test("prependedAll preserves original store") {
+    val base = RuntimeDataStore.wrap(Array[Any]("b", "a"))
+    val result = base.prependedAll(Array[Any]("c"))
+    base.size ==> 2
+    base(0) ==> "b"
+    base(1) ==> "a"
+    result.size ==> 3
+    result(0) ==> "c"
+    result(1) ==> "b"
+    result(2) ==> "a"
+  }
 }

@@ -68,8 +68,7 @@ final class TransformerMacros(ctx: blackbox.Context) extends PlatformBridge(ctx)
       tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]
   ): Expr[Transformer[From, To]] = retypecheck {
     // Called by TransformerDefinition => prefix is TransformerDefinition
-    val rds = flattenedDefinitionRuntimeDataStore()
-      .getOrElse(c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.runtimeData"))
+    val rds = flattenedDefinitionRDS(q"${c.prefix.tree}.runtimeData")
     val body = deriveTotalTransformer[From, To, Overrides, InstanceFlags, ImplicitScopeFlags](rds)
     c.Expr[Transformer[From, To]](q"{ ${Expr.suppressUnused(tc)}; $body }")
   }
@@ -154,8 +153,7 @@ final class TransformerMacros(ctx: blackbox.Context) extends PlatformBridge(ctx)
       tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]
   ): Expr[PartialTransformer[From, To]] = retypecheck {
     // Called by PartialTransformerDefinition => prefix is PartialTransformerDefinition
-    val rds = flattenedDefinitionRuntimeDataStore()
-      .getOrElse(c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.runtimeData"))
+    val rds = flattenedDefinitionRDS(q"${c.prefix.tree}.runtimeData")
     val body = derivePartialTransformer[From, To, Overrides, InstanceFlags, ImplicitScopeFlags](rds)
     c.Expr[PartialTransformer[From, To]](q"{ ${Expr.suppressUnused(tc)}; $body }")
   }
@@ -189,8 +187,29 @@ final class TransformerMacros(ctx: blackbox.Context) extends PlatformBridge(ctx)
     c.Expr[A](q"{ ${Expr.suppressUnused(implicitScopeConfig)}; $body }")
   }
 
-  private def flattenedDefinitionRuntimeDataStore(): Option[Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore]] =
-    RuntimeDataStoreFlattening.flattenedRuntimeDataStore(c.prefix.tree)(c)
+  private def flattenedDefinitionRDS(
+      fallback: => c.universe.Tree
+  ): c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore] = {
+    import RuntimeDataStoreFlattening.{EmptyBase, OpaqueBase}
+    val (base, data) = RuntimeDataStoreFlattening.analyzeChain(c.prefix.tree)(c)
+    base match {
+      case EmptyBase if data.nonEmpty =>
+        c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](
+          q"_root_.io.scalaland.chimney.internal.runtime.RuntimeDataStore.wrap(_root_.scala.Array[Any](..$data))"
+        )
+      case EmptyBase =>
+        c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](
+          q"_root_.io.scalaland.chimney.internal.runtime.RuntimeDataStore.empty"
+        )
+      case OpaqueBase(baseTree) if data.nonEmpty =>
+        val bt = baseTree.asInstanceOf[c.universe.Tree]
+        c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](
+          q"$bt.runtimeData.prependedAll(_root_.scala.Array[Any](..$data))"
+        )
+      case _ =>
+        c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](fallback)
+    }
+  }
 
   private def flattenedTransformationResult[
       From: WeakTypeTag,
@@ -200,15 +219,39 @@ final class TransformerMacros(ctx: blackbox.Context) extends PlatformBridge(ctx)
       ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]])(
       derive: (Expr[From], Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore]) => Expr[To]
-  ): Option[Expr[To]] =
-    for {
-      rds <- RuntimeDataStoreFlattening.flattenedRuntimeDataStore(c.prefix.tree)(c)
-      args <- RuntimeDataStoreFlattening.extractBaseConstructorArgs(c.prefix.tree)(c)
-      sourceTree <- args.headOption
-    } yield {
-      val body = derive(c.Expr[From](sourceTree), rds)
-      c.Expr[To](q"{ ${Expr.suppressUnused(tc)}; $body }")
+  ): Option[Expr[To]] = {
+    import RuntimeDataStoreFlattening.{EmptyBase, OpaqueBase}
+    val (base, data) = RuntimeDataStoreFlattening.analyzeChain(c.prefix.tree)(c)
+    base match {
+      case EmptyBase =>
+        RuntimeDataStoreFlattening.extractBaseConstructorArgs(c.prefix.tree)(c).flatMap(_.headOption).map {
+          sourceTree =>
+            val rds =
+              if (data.nonEmpty)
+                c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](
+                  q"_root_.io.scalaland.chimney.internal.runtime.RuntimeDataStore.wrap(_root_.scala.Array[Any](..$data))"
+                )
+              else
+                c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](
+                  q"_root_.io.scalaland.chimney.internal.runtime.RuntimeDataStore.empty"
+                )
+            val body = derive(c.Expr[From](sourceTree), rds)
+            c.Expr[To](q"{ ${Expr.suppressUnused(tc)}; $body }")
+        }
+      case OpaqueBase(baseTree) =>
+        val bt = baseTree.asInstanceOf[c.universe.Tree]
+        val baseName = TermName(c.freshName("chainBase"))
+        val rds =
+          if (data.nonEmpty)
+            c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](
+              q"$baseName.td.runtimeData.prependedAll(_root_.scala.Array[Any](..$data))"
+            )
+          else
+            c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"$baseName.td.runtimeData")
+        val body = derive(c.Expr[From](q"$baseName.source"), rds)
+        Some(c.Expr[To](q"{ val $baseName = $bt; ${Expr.suppressUnused(tc)}; $body }"))
     }
+  }
 
   private def flattenedPartialTransformationResult[
       From: WeakTypeTag,
@@ -220,15 +263,39 @@ final class TransformerMacros(ctx: blackbox.Context) extends PlatformBridge(ctx)
       derive: (Expr[From], Expr[Boolean], Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore]) => Expr[
         partial.Result[To]
       ]
-  ): Option[Expr[partial.Result[To]]] =
-    for {
-      rds <- RuntimeDataStoreFlattening.flattenedRuntimeDataStore(c.prefix.tree)(c)
-      args <- RuntimeDataStoreFlattening.extractBaseConstructorArgs(c.prefix.tree)(c)
-      sourceTree <- args.headOption
-    } yield {
-      val body = derive(c.Expr[From](sourceTree), failFast, rds)
-      c.Expr[partial.Result[To]](q"{ ${Expr.suppressUnused(tc)}; $body }")
+  ): Option[Expr[partial.Result[To]]] = {
+    import RuntimeDataStoreFlattening.{EmptyBase, OpaqueBase}
+    val (base, data) = RuntimeDataStoreFlattening.analyzeChain(c.prefix.tree)(c)
+    base match {
+      case EmptyBase =>
+        RuntimeDataStoreFlattening.extractBaseConstructorArgs(c.prefix.tree)(c).flatMap(_.headOption).map {
+          sourceTree =>
+            val rds =
+              if (data.nonEmpty)
+                c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](
+                  q"_root_.io.scalaland.chimney.internal.runtime.RuntimeDataStore.wrap(_root_.scala.Array[Any](..$data))"
+                )
+              else
+                c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](
+                  q"_root_.io.scalaland.chimney.internal.runtime.RuntimeDataStore.empty"
+                )
+            val body = derive(c.Expr[From](sourceTree), failFast, rds)
+            c.Expr[partial.Result[To]](q"{ ${Expr.suppressUnused(tc)}; $body }")
+        }
+      case OpaqueBase(baseTree) =>
+        val bt = baseTree.asInstanceOf[c.universe.Tree]
+        val baseName = TermName(c.freshName("chainBase"))
+        val rds =
+          if (data.nonEmpty)
+            c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](
+              q"$baseName.td.runtimeData.prependedAll(_root_.scala.Array[Any](..$data))"
+            )
+          else
+            c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"$baseName.td.runtimeData")
+        val body = derive(c.Expr[From](q"$baseName.source"), failFast, rds)
+        Some(c.Expr[partial.Result[To]](q"{ val $baseName = $bt; ${Expr.suppressUnused(tc)}; $body }"))
     }
+  }
 
   private def retypecheck[A: Type](expr: c.Expr[A]): c.Expr[A] = try {
     val res = c.typecheck(tree = c.untypecheck(expr.tree))

@@ -56,6 +56,26 @@ final class RuntimeDataStore private (
   def prepended(value: Any): RuntimeDataStore =
     new RuntimeDataStore(value, this, size + 1, null)
 
+  /** Bulk-prepend: creates a single pre-materialized store containing `values` followed by this store's data. Used by
+    * macro-generated code for partial chain optimization -- when the DSL chain is split by a `val`, the continuation's
+    * data is grouped into one `prependedAll` call instead of N individual [[prepended]] calls.
+    *
+    * The caller must not mutate `values` after this call.
+    */
+  def prependedAll(values: Array[Any]): RuntimeDataStore = {
+    val n = values.length
+    if (n == 0) this
+    else if (size == 0) RuntimeDataStore.wrap(values)
+    else {
+      val total = n + size
+      val arr = new Array[Any](total)
+      System.arraycopy(values, 0, arr, 0, n)
+      apply(0)
+      System.arraycopy(materialized, 0, arr, n, size)
+      new RuntimeDataStore(arr(0), null, total, arr)
+    }
+  }
+
   override def toString: String = {
     val sb = new java.lang.StringBuilder("RuntimeDataStore(")
     val arr = materialized
