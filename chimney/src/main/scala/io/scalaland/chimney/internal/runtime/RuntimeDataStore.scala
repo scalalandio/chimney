@@ -7,8 +7,13 @@ package io.scalaland.chimney.internal.runtime
   * by the macro into the derived transformer body), the list is materialized into an `Array` for O(1) random access.
   * This replaces the previous `Vector[Any]` backing which allocated a new collection on every prepend.
   *
-  * Thread safety: materialization uses a benign race -- two threads may both materialize, but the result is identical
-  * and the write to `materialized` is to a `@volatile` field, so subsequent reads on any thread see a consistent array.
+  * When the terminal macro (e.g. `buildTransformer`) can prove that the DSL chain is a linear expression (no `val`
+  * captures), it emits [[RuntimeDataStore.wrap]] to construct a pre-materialized store in a single allocation, skipping
+  * the cons-cell chain entirely.
+  *
+  * Thread safety: materialization uses a benign race -- two threads may both materialize, but the result is identical.
+  * The `materialized` field is intentionally non-volatile: a thread that does not see a prior write simply
+  * re-materializes (producing the same array contents), avoiding the overhead of a volatile read on every `apply()`.
   *
   * @since 2.0.0
   */
@@ -18,11 +23,12 @@ final class RuntimeDataStore private (
     private val tail: RuntimeDataStore,
     val size: Int,
     // --- materialized read phase ---
-    @volatile private var materialized: Array[Any]
+    private var materialized: Array[Any]
 ) {
 
   /** Retrieve the value at logical index `index` (0 = most recently prepended). On the first call the cons-cell chain
-    * is materialized into a flat array; subsequent calls are O(1).
+    * is materialized into a flat array; subsequent calls are O(1). If the tail (or any node in the chain) is already
+    * materialized (e.g. created via [[RuntimeDataStore.wrap]]), its array is bulk-copied via `System.arraycopy`.
     */
   def apply(index: Int): Any = {
     var arr = materialized
@@ -31,9 +37,15 @@ final class RuntimeDataStore private (
       var current = this
       var i = 0
       while (i < size) {
-        arr(i) = current.head
-        current = current.tail
-        i += 1
+        val currentMat = current.materialized
+        if (currentMat ne null) {
+          System.arraycopy(currentMat, 0, arr, i, current.size)
+          i = size
+        } else {
+          arr(i) = current.head
+          current = current.tail
+          i += 1
+        }
       }
       materialized = arr
     }
@@ -46,13 +58,22 @@ final class RuntimeDataStore private (
 
   override def toString: String = {
     val sb = new java.lang.StringBuilder("RuntimeDataStore(")
-    var current = this
+    val arr = materialized
     var i = 0
-    while (i < size) {
-      if (i > 0) { val _ = sb.append(", ") }
-      val _ = sb.append(current.head)
-      current = current.tail
-      i += 1
+    if (arr ne null) {
+      while (i < size) {
+        if (i > 0) { val _ = sb.append(", ") }
+        val _ = sb.append(arr(i))
+        i += 1
+      }
+    } else {
+      var current = this
+      while (i < size) {
+        if (i > 0) { val _ = sb.append(", ") }
+        val _ = sb.append(current.head)
+        current = current.tail
+        i += 1
+      }
     }
     sb.append(")").toString
   }
@@ -60,4 +81,17 @@ final class RuntimeDataStore private (
 
 object RuntimeDataStore {
   val empty: RuntimeDataStore = new RuntimeDataStore(null, null, 0, new Array[Any](0))
+
+  /** Create a pre-materialized store from the given array. Index 0 in the array corresponds to logical index 0 (the
+    * most recently prepended value). The caller must not mutate `values` after this call -- no defensive copy is made.
+    * This is safe when the array is freshly constructed by macro-generated code.
+    *
+    * A store created via `wrap` supports [[prepended]]: the child node's materialization loop detects the
+    * pre-materialized tail and bulk-copies via `System.arraycopy` instead of walking a cons-cell chain.
+    */
+  def wrap(values: Array[Any]): RuntimeDataStore = {
+    val n = values.length
+    if (n == 0) empty
+    else new RuntimeDataStore(values(0), null, n, values)
+  }
 }

@@ -117,4 +117,39 @@ class RuntimeDataStoreSpec extends ChimneySpec {
     RuntimeDataStore.empty.prepended("a").toString ==> "RuntimeDataStore(a)"
     RuntimeDataStore.empty.prepended(1).prepended(2).toString ==> "RuntimeDataStore(2, 1)"
   }
+
+  test("wrap creates a pre-materialized store with correct indexing") {
+    val store = RuntimeDataStore.wrap(Array[Any]("c", "b", "a"))
+    store.size ==> 3
+    store(0) ==> "c"
+    store(1) ==> "b"
+    store(2) ==> "a"
+  }
+
+  test("wrap with empty array returns empty") {
+    val store = RuntimeDataStore.wrap(Array.empty[Any])
+    store.size ==> 0
+  }
+
+  test("wrap store supports prepended (branching from flat base)") {
+    val base = RuntimeDataStore.wrap(Array[Any]("b", "a"))
+    val child1 = base.prepended("c1")
+    val child2 = base.prepended("c2")
+
+    child1(0) ==> "c1"
+    child1(1) ==> "b"
+    child1(2) ==> "a"
+
+    child2(0) ==> "c2"
+    child2(1) ==> "b"
+    child2(2) ==> "a"
+
+    base(0) ==> "b"
+    base(1) ==> "a"
+  }
+
+  test("wrap store toString uses materialized array") {
+    val store = RuntimeDataStore.wrap(Array[Any](1, 2, 3))
+    store.toString ==> "RuntimeDataStore(1, 2, 3)"
+  }
 }

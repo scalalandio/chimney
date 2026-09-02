@@ -3,6 +3,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.patcher
 import io.scalaland.chimney.dsl.PatcherDefinition
 import io.scalaland.chimney.Patcher
 import io.scalaland.chimney.internal.compiletime.PlatformBridge
+import io.scalaland.chimney.internal.compiletime.derivation.RuntimeDataStoreFlattening
 import io.scalaland.chimney.internal.runtime
 
 import scala.quoted.{Expr, Quotes, Type}
@@ -20,7 +21,9 @@ final class PatcherMacros(q: Quotes) extends PlatformBridge(q) with Derivation w
   ](
       pc: Expr[PatcherDefinition[A, Patch, Overrides, Flags]]
   ): Expr[Patcher[A, Patch]] =
-    derivePatcher[A, Patch, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{ $pc.runtimeData })
+    derivePatcher[A, Patch, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore =
+      RuntimeDataStoreFlattening.flattenedRuntimeDataStore(pc)(pc => '{ $pc.runtimeData })
+    )
 
   def derivePatcherWithDefaults[
       A: Type,
@@ -80,6 +83,6 @@ object PatcherMacros {
     new PatcherMacros(q).derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](
       obj,
       patch,
-      '{ $pd.runtimeData }
+      RuntimeDataStoreFlattening.flattenedRuntimeDataStore(pd)(pd => '{ $pd.runtimeData })
     )
 }

@@ -6,6 +6,8 @@ import io.scalaland.chimney.internal.compiletime.PlatformBridge
 import io.scalaland.chimney.internal.runtime
 import io.scalaland.chimney.partial
 
+import io.scalaland.chimney.internal.compiletime.derivation.RuntimeDataStoreFlattening
+
 import scala.quoted.{Expr, Quotes, Type}
 
 final class TransformerMacros(q: Quotes) extends PlatformBridge(q) with Derivation with Gateway {
@@ -21,7 +23,9 @@ final class TransformerMacros(q: Quotes) extends PlatformBridge(q) with Derivati
   ](
       td: Expr[TransformerDefinition[From, To, Overrides, Flags]]
   ): Expr[Transformer[From, To]] =
-    deriveTotalTransformer[From, To, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{ $td.runtimeData })
+    deriveTotalTransformer[From, To, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore =
+      RuntimeDataStoreFlattening.flattenedRuntimeDataStore(td)(td => '{ $td.runtimeData })
+    )
 
   def deriveTotalTransformerWithDefaults[
       From: Type,
@@ -60,9 +64,9 @@ final class TransformerMacros(q: Quotes) extends PlatformBridge(q) with Derivati
   ](
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]]
   ): Expr[PartialTransformer[From, To]] =
-    derivePartialTransformer[From, To, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{
-      $td.runtimeData
-    })
+    derivePartialTransformer[From, To, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore =
+      RuntimeDataStoreFlattening.flattenedRuntimeDataStore(td)(td => '{ $td.runtimeData })
+    )
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
       useImplicitScopeFlags: ??<:[runtime.TransformerFlags] => Expr[A]
@@ -140,7 +144,7 @@ object TransformerMacros {
           ImplicitScopeFlags
         ](
           source,
-          '{ $typedTd.runtimeData }
+          RuntimeDataStoreFlattening.flattenedRuntimeDataStore(typedTd)(td => '{ $td.runtimeData })
         )
     }
   }
@@ -202,7 +206,7 @@ object TransformerMacros {
         ](
           source,
           Expr(failFast),
-          '{ $typedTd.runtimeData }
+          RuntimeDataStoreFlattening.flattenedRuntimeDataStore(typedTd)(td => '{ $td.runtimeData })
         )
     }
   }
