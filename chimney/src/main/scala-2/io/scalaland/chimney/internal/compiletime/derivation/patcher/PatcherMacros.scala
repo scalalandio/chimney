@@ -2,6 +2,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
 import io.scalaland.chimney.{dsl, Patcher}
 import io.scalaland.chimney.internal.compiletime.PlatformBridge
+import io.scalaland.chimney.internal.compiletime.derivation.RuntimeDataStoreFlattening
 import io.scalaland.chimney.internal.runtime
 
 import scala.reflect.macros.blackbox
@@ -19,15 +20,28 @@ final class PatcherMacros(ctx: blackbox.Context) extends PlatformBridge(ctx) wit
   ](
       pc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
   ): c.Expr[A] = retypecheck(
-    // Called by PatcherUsing => prefix is PatcherUsing
-    cacheDefinition(c.Expr[dsl.PatcherUsing[A, Patch, Overrides, Flags]](c.prefix.tree)) { pu =>
+    // Called by PatcherUsing => prefix is PatcherUsing (constructor args: obj, objPatch, pd)
+    (for {
+      rds <- RuntimeDataStoreFlattening.flattenedRuntimeDataStore(c.prefix.tree)(c)
+      args <- RuntimeDataStoreFlattening.extractBaseConstructorArgs(c.prefix.tree)(c)
+      if args.sizeIs >= 2
+    } yield {
       val body = derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](
-        obj = c.Expr[A](q"$pu.obj"),
-        patch = c.Expr[Patch](q"$pu.objPatch"),
-        runtimeDataStore = c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](q"$pu.pd.runtimeData")
+        obj = c.Expr[A](args(0)),
+        patch = c.Expr[Patch](args(1)),
+        runtimeDataStore = rds
       )
       c.Expr[A](q"{ ${Expr.suppressUnused(pc)}; $body }")
-    }
+    }).getOrElse(
+      cacheDefinition(c.Expr[dsl.PatcherUsing[A, Patch, Overrides, Flags]](c.prefix.tree)) { pu =>
+        val body = derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](
+          obj = c.Expr[A](q"$pu.obj"),
+          patch = c.Expr[Patch](q"$pu.objPatch"),
+          runtimeDataStore = c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](q"$pu.pd.runtimeData")
+        )
+        c.Expr[A](q"{ ${Expr.suppressUnused(pc)}; $body }")
+      }
+    )
   )
 
   def derivePatcherWithConfig[
@@ -39,10 +53,11 @@ final class PatcherMacros(ctx: blackbox.Context) extends PlatformBridge(ctx) wit
   ](
       pc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
   ): Expr[Patcher[A, Patch]] = retypecheck {
-    val body = derivePatcher[A, Patch, Overrides, InstanceFlags, ImplicitScopeFlags](
-      // Called by PatcherDefinition => prefix is PatcherDefinition
-      c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.runtimeData")
-    )
+    // Called by PatcherDefinition => prefix is PatcherDefinition
+    val rds = RuntimeDataStoreFlattening
+      .flattenedRuntimeDataStore(c.prefix.tree)(c)
+      .getOrElse(c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.runtimeData"))
+    val body = derivePatcher[A, Patch, Overrides, InstanceFlags, ImplicitScopeFlags](rds)
     c.Expr[Patcher[A, Patch]](q"{ ${Expr.suppressUnused(pc)}; $body }")
   }
 
