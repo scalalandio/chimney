@@ -109,6 +109,71 @@ class DSLOverhead extends CommonBenchmarkSettings {
   @Benchmark
   def largeConstByHand: LargeOutput = doLargeByHandConst(samples.largeSample)
 
+  // --- partial chain: val captures the first half, continuation adds the second half ---
+
+  // format: off
+  @Benchmark
+  def largeConstChimneyIntoSplit: LargeOutput = {
+    val builder = samples.largeSample
+      .into[LargeOutput]
+      .withFieldConst(_.a, 834)
+      .withFieldConst(_.b, 834)
+      .withFieldConst(_.c, 834)
+      .withFieldConst(_.d, 834)
+      .withFieldConst(_.e, 834)
+      .withFieldConst(_.f, 834)
+      .withFieldConst(_.g, 834)
+      .withFieldConst(_.h, 834)
+      .withFieldConst(_.i, 834)
+      .withFieldConst(_.j, 834)
+      .withFieldConst(_.k, 834)
+    builder
+      .withFieldConst(_.l, 834)
+      .withFieldConst(_.m, 834)
+      .withFieldConst(_.n, 834)
+      .withFieldConst(_.o, 834)
+      .withFieldConst(_.p, 834)
+      .withFieldConst(_.q, 834)
+      .withFieldConst(_.r, 834)
+      .withFieldConst(_.s, 834)
+      .withFieldConst(_.t, 834)
+      .withFieldConst(_.u, 834)
+      .withFieldConst(_.v, 834)
+      .transform
+  }
+
+  @Benchmark
+  def largeConstChimneyDefinedSplit: LargeOutput = {
+    val builder = Transformer
+      .define[Large, LargeOutput]
+      .withFieldConst(_.a, 834)
+      .withFieldConst(_.b, 834)
+      .withFieldConst(_.c, 834)
+      .withFieldConst(_.d, 834)
+      .withFieldConst(_.e, 834)
+      .withFieldConst(_.f, 834)
+      .withFieldConst(_.g, 834)
+      .withFieldConst(_.h, 834)
+      .withFieldConst(_.i, 834)
+      .withFieldConst(_.j, 834)
+      .withFieldConst(_.k, 834)
+    builder
+      .withFieldConst(_.l, 834)
+      .withFieldConst(_.m, 834)
+      .withFieldConst(_.n, 834)
+      .withFieldConst(_.o, 834)
+      .withFieldConst(_.p, 834)
+      .withFieldConst(_.q, 834)
+      .withFieldConst(_.r, 834)
+      .withFieldConst(_.s, 834)
+      .withFieldConst(_.t, 834)
+      .withFieldConst(_.u, 834)
+      .withFieldConst(_.v, 834)
+      .buildTransformer
+      .transform(samples.largeSample)
+  }
+  // format: on
+
   final private val renameLargeTransformer: Transformer[Large, LargeRenamedOutput] =
     Transformer
       .define[Large, LargeRenamedOutput]

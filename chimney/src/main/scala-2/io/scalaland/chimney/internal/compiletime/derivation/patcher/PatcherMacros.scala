@@ -19,20 +19,48 @@ final class PatcherMacros(ctx: blackbox.Context) extends PlatformBridge(ctx) wit
       ImplicitScopeFlags <: runtime.PatcherFlags: WeakTypeTag
   ](
       pc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
-  ): c.Expr[A] = retypecheck(
+  ): c.Expr[A] = retypecheck {
+    import RuntimeDataStoreFlattening.{EmptyBase, OpaqueBase}
     // Called by PatcherUsing => prefix is PatcherUsing (constructor args: obj, objPatch, pd)
-    (for {
-      rds <- RuntimeDataStoreFlattening.flattenedRuntimeDataStore(c.prefix.tree)(c)
-      args <- RuntimeDataStoreFlattening.extractBaseConstructorArgs(c.prefix.tree)(c)
-      if args.sizeIs >= 2
-    } yield {
-      val body = derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](
-        obj = c.Expr[A](args(0)),
-        patch = c.Expr[Patch](args(1)),
-        runtimeDataStore = rds
-      )
-      c.Expr[A](q"{ ${Expr.suppressUnused(pc)}; $body }")
-    }).getOrElse(
+    val (base, data) = RuntimeDataStoreFlattening.analyzeChain(c.prefix.tree)(c)
+    val result: Option[c.Expr[A]] = base match {
+      case EmptyBase =>
+        RuntimeDataStoreFlattening.extractBaseConstructorArgs(c.prefix.tree)(c).collect {
+          case args if args.sizeIs >= 2 =>
+            val rds =
+              if (data.nonEmpty)
+                c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](
+                  q"_root_.io.scalaland.chimney.internal.runtime.RuntimeDataStore.wrap(_root_.scala.Array[Any](..$data))"
+                )
+              else
+                c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](
+                  q"_root_.io.scalaland.chimney.internal.runtime.RuntimeDataStore.empty"
+                )
+            val body = derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](
+              obj = c.Expr[A](args(0)),
+              patch = c.Expr[Patch](args(1)),
+              runtimeDataStore = rds
+            )
+            c.Expr[A](q"{ ${Expr.suppressUnused(pc)}; $body }")
+        }
+      case OpaqueBase(baseTree) =>
+        val bt = baseTree.asInstanceOf[c.universe.Tree]
+        val baseName = TermName(c.freshName("chainBase"))
+        val rds =
+          if (data.nonEmpty)
+            c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](
+              q"$baseName.pd.runtimeData.prependedAll(_root_.scala.Array[Any](..$data))"
+            )
+          else
+            c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](q"$baseName.pd.runtimeData")
+        val body = derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](
+          obj = c.Expr[A](q"$baseName.obj"),
+          patch = c.Expr[Patch](q"$baseName.objPatch"),
+          runtimeDataStore = rds
+        )
+        Some(c.Expr[A](q"{ val $baseName = $bt; ${Expr.suppressUnused(pc)}; $body }"))
+    }
+    result.getOrElse(
       cacheDefinition(c.Expr[dsl.PatcherUsing[A, Patch, Overrides, Flags]](c.prefix.tree)) { pu =>
         val body = derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](
           obj = c.Expr[A](q"$pu.obj"),
@@ -42,7 +70,7 @@ final class PatcherMacros(ctx: blackbox.Context) extends PlatformBridge(ctx) wit
         c.Expr[A](q"{ ${Expr.suppressUnused(pc)}; $body }")
       }
     )
-  )
+  }
 
   def derivePatcherWithConfig[
       A: WeakTypeTag,
@@ -53,10 +81,26 @@ final class PatcherMacros(ctx: blackbox.Context) extends PlatformBridge(ctx) wit
   ](
       pc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
   ): Expr[Patcher[A, Patch]] = retypecheck {
+    import RuntimeDataStoreFlattening.{EmptyBase, OpaqueBase}
     // Called by PatcherDefinition => prefix is PatcherDefinition
-    val rds = RuntimeDataStoreFlattening
-      .flattenedRuntimeDataStore(c.prefix.tree)(c)
-      .getOrElse(c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.runtimeData"))
+    val (base, data) = RuntimeDataStoreFlattening.analyzeChain(c.prefix.tree)(c)
+    val rds: c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore] = base match {
+      case EmptyBase if data.nonEmpty =>
+        c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](
+          q"_root_.io.scalaland.chimney.internal.runtime.RuntimeDataStore.wrap(_root_.scala.Array[Any](..$data))"
+        )
+      case EmptyBase =>
+        c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](
+          q"_root_.io.scalaland.chimney.internal.runtime.RuntimeDataStore.empty"
+        )
+      case OpaqueBase(baseTree) if data.nonEmpty =>
+        val bt = baseTree.asInstanceOf[c.universe.Tree]
+        c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](
+          q"$bt.runtimeData.prependedAll(_root_.scala.Array[Any](..$data))"
+        )
+      case _ =>
+        c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.runtimeData")
+    }
     val body = derivePatcher[A, Patch, Overrides, InstanceFlags, ImplicitScopeFlags](rds)
     c.Expr[Patcher[A, Patch]](q"{ ${Expr.suppressUnused(pc)}; $body }")
   }
