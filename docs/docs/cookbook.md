@@ -63,9 +63,9 @@ If we do not want to enable the same flag(s) in several places, we can define sh
 
 ## Changing the flags for every derivation in the project
 
-While `TransformerConfiguration` let us share configs (flags) between several derivations, we might also want to set up
-some of them globally, for the whole project. Luckily, Scala 2.12, 2.13 and 3.3 give us `-Xmacro-settings` flag, which
-is intended to pass configuration into the macros.
+While `TransformerConfiguration` lets us share configs (flags) between several derivations, we might also want to set up
+some of them globally for the whole project. Scala 2 and Scala 3 provide the `-Xmacro-settings` flag for passing
+configuration into macros.
 
 !!! example
 
@@ -1044,7 +1044,7 @@ For the reasons above the recommendations are as follows:
 !!! tip
 
     Available since Chimney 2.0.0. Same design and configuration keys as
-    [Kindlings' derivation policy](https://kubuszok.github.io/kindlings/user-guide/derivation-policy/).
+    [Kindlings' derivation policy](https://kindlings.readthedocs.io/en/stable/derivation-policy/).
 
 Some teams want tighter control over **where** transformations come into existence — for example, to ensure every
 canonical mapping is defined in one designated place rather than materialized ad-hoc at a random call site. The
@@ -1359,11 +1359,11 @@ Cats integration module contains the following utilities:
           (implementing also `Monad`, `Applicative`, `Functor`, `ApplicativeError`, `NonEmptyAlternative`, `MonoidK`,
           `SemigroupK`)
         - `[Source] => Parallel[PartialTransformer[Source, *]]` (implementing also `NonEmptyParallel`)
-        - `[Target] => Contravariant[Transformer[*, Target]]` (implementing also `Invariant`)
+        - `[Target] => Contravariant[PartialTransformer[*, Target]]` (implementing also `Invariant`)
      - for `partial.Result` data type:
-        - `MonadError[partial.Result, partial.Result.Errors] & CoflatMap[partial.Result] & Traverse[partial.Result] $ Alternative[partial.Result]`
+        - `MonadError[partial.Result, partial.Result.Errors] & CoflatMap[partial.Result] & Traverse[partial.Result] & Alternative[partial.Result]`
           (implementing also `Monad`, `Applicative`, `Functor`, `ApplicativeError`, `UnorderedTraverse`, `Foldable`,
-          `UnorderedFoldable`, `Invariant`, `Semigriupal`, `NonEmptyAlternative`, `SemigroupK`, `MonoidK`)
+          `UnorderedFoldable`, `Invariant`, `Semigroupal`, `NonEmptyAlternative`, `SemigroupK`, `MonoidK`)
         - `Parallel[partial.Result]` (implementing also`NonEmptyParallel`)
         - `Semigroup[partial.Result.Errors]`
      - for `Codec` type class:
@@ -1379,15 +1379,15 @@ Cats integration module contains the following utilities:
 
 !!! warning "Changed in 2.0.0"
 
-    Up to Chimney `1.x` the `chimney-cats` module also contained `io.scalaland.chimney.integrations` instances
-    letting Chimney recognize `cats.data` types (`Chain`, `NonEmptyList`, ...) as collections, plus
-    `Traverse`/`~>`-based outer transformers. These were **removed** in `2.0.0`:
+    Up to Chimney `1.x` the `chimney-cats` module contained `io.scalaland.chimney.integrations` instances letting
+    Chimney recognize `cats.data` types (`Chain`, `NonEmptyList`, ...) as collections. Those collection instances were
+    **removed** in `2.0.0`:
 
       - conversions to/from `cats.data` collections are now served by
         [Kindlings' `kindlings-cats-integration`](#conversions-tofrom-cats-collections) (classpath-only, no import)
-      - transforming `F[A]` to `G[B]` given implicit `F ~> G` and `Traverse[F]` is **no longer supported** - if you
-        relied on it, define your own
-        [`TotalOuterTransformer`/`PartialOuterTransformer`](#custom-outer-type-conversion)
+      - `chimney-cats` still supports mapping `F[A]` to `F[B]` given `Traverse[F]`, and `F[A]` to `G[B]` given
+        `Traverse[F]` and `F ~> G`; since `2.0.0` these conversions are provided by a classpath-loaded Chimney macro
+        extension instead of implicit outer transformers
 
 ### Conversion from/into Cats `Validated`
 
@@ -1499,9 +1499,10 @@ new extension methods: `asValidatedNec`, `asValidatedNel`, `asValidatedChain` an
     // )
     ```
 
-    Form validation logic is implemented in terms of `Validated` data type. You can easily convert
-    it to a `partial.Result` required by `withFieldComputedPartial` by just using `.toPartialResult`
-    which is available after importing the cats integration utilities (`import io.scalaland.chimney.cats._`).
+    Form validation logic is implemented in terms of the `Validated` data type. You can easily convert
+    it to a `partial.Result` required by `withFieldComputedPartial` by using `.asResult`, available after importing
+    both the partial-result syntax (`import io.scalaland.chimney.partial.syntax._`) and the Cats integration instances
+    (`import io.scalaland.chimney.cats._`).
     
     Result of the partial transformation is then converted to `ValidatedNel` or `ValidatedNec` using either
     `.asValidatedNel` or `.asValidatedNec` extension method call.
@@ -1536,17 +1537,14 @@ With it on the classpath you can:
 
 !!! warning "Changed in 2.0.0"
 
-    In `1.x` (with `import io.scalaland.chimney.cats._`) converting between two `NonEmptyChain`s (`NonEmptyMap`s,
-    `NonEmptySet`s, `NonEmptyVector`s, ...) of different element types was possible with a total `Transformer`.
-    With the smart-constructor-based detection these conversions are `PartialTransformer`-only now (except
-    `NonEmptyList` - see above). Also, the empty-input error message changed from `"empty value"` to
-    `"Cannot create <TypeName> from empty collection"`.
+    Kindlings' smart-constructor-based conversions *from an arbitrary collection* into `NonEmptyChain`, `NonEmptyMap`,
+    `NonEmptySet`, `NonEmptyVector`, and similar types are `PartialTransformer`-only. When `chimney-cats` is also on the
+    classpath, mapping between the same `F[_]` remains total for every `Traverse[F]`; total same-container mappings for
+    `NonEmptyMap` and `NonEmptySet` are restored as special cases as well. For partial smart-constructor conversions,
+    the empty-input error message changed from `"empty value"` to `"Cannot create <TypeName> from empty collection"`.
 
-!!! warning
-
-    `NonEmptySeq` and `NonEmptyLazyList` are **not** (yet) covered by `kindlings-cats-integration` `{{ libraries.kindlings }}` -
-    support for them was requested upstream. Until then you can provide your own
-    [`PartiallyBuildIterable`](#custom-collection-types) implicits for them.
+`NonEmptySeq` and `NonEmptyLazyList` are also covered by the current `kindlings-cats-integration`
+`{{ libraries.kindlings }}`.
 
 !!! warning "Scala 3 status"
 
@@ -2140,7 +2138,7 @@ The automatic conversion into a protobuf with such a field can be problematic:
     // protobuf.Address
     //   unknownFields: scalapb.UnknownFieldSet - no accessor named unknownFields in source type domain.Address
     //
-    // Consult https://scalalandio.github.io/chimney for usage examples.
+    // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
 There are 2 ways in which Chimney could handle this issue:
@@ -4356,18 +4354,15 @@ Out of the box, Chimney provides `partial.Result[A]` conversions:
 
   * from/to `Option[A]`:
     * `(option: Option[A]).asResult: partial.Result[A]`
-    * `(option: Option[A]).toPartialResult: partial.Result[A]` (old syntax)
-    * `(option: Option[A]).toPartialResultOrString(ifEmpty: String): partial.Result[A]` (old syntax)
+    * `(option: Option[A]).orStringAsResult(ifEmpty: String): partial.Result[A]`
     * `(result: partial.Result[A]).asOption: Option[A]`
 * from `Either[String, A]`:
     * `(either: Either[String, A]).asResult: partial.Result[A]`
-    * `(either: Either[String, A]).toPartialResult: partial.Result[A]` (old syntax)
  * from `Either[partial.Result.Errors, A]`:
     * `(either: Either[partial.Result.Errors, A]).asResult: partial.Result[A]`
     * `(result: partial.Result[A]).asEither: Either[partial.Result.Errors, A]`
  * from `Try[A]`:
     * `(ttry: Try[A]).asResult`
-    * `(ttry: Try[A]).toPartialResult` (old syntax)
 
 To enable `.asResult` syntax, all you need to do is providing an `implicit` instance of
 `io.scalaland.chimney.partial.AsResult` type class:
@@ -4692,267 +4687,23 @@ similar to [Cats](#cats-integration) and using [Integrations API](#integrations)
 You can find it on [GitHub](https://github.com/kinoplan/utils) or
 [Scaladex](https://index.scala-lang.org/kinoplan/utils/artifacts/utils-chimney-zio-prelude).
 
-## Reusing Chimney macros in your own macro library
+## Reusing Hearth in your own macro library
 
-Some parts of the Chimney macros could be useful to developers of other libraries. As part of the 0.8.0 refactor,
-we developed:
+Since Chimney `2.0.0`, its platform-independent macro utilities and derivation infrastructure are built on
+[Hearth](https://scala-hearth.readthedocs.io/). New macro libraries should use Hearth directly rather than
+`chimney-macro-commons`, which was extracted from this repository and has been superseded by Hearth.
 
- - a platform-agnostic way of defining macro logic - see [Under the Hood](under-the-hood.md) for more information
- - `chimney-macro-commons` - the module extracting non-Chimney-specific macro utilities: extracting fields/nullary
-   `def`s from classes, extracting constructors and all setters (if available), extracting enum subtypes/values,
-   exposing `blackbox.Context`/`Quotes` utilities in a platform-agnostic way, etc
- - an automatic derivation without the standard automatic derivation overhead
- - a recursive derivation engine based on the chain-of-responsibility pattern
+Hearth provides:
 
-For now there aren't many people interested in them, so comments and Chimney-code-as-examples is the only documentation
-available.
+ - [`MacroCommons` and the basic `Type`/`Expr` utilities](https://scala-hearth.readthedocs.io/en/stable/basic-utilities/)
+ - [cross-quotes](https://scala-hearth.readthedocs.io/en/stable/cross-quotes/) for sharing expression-building code
+   between Scala 2 and Scala 3
+ - [`MIO` and other small functional-programming utilities](https://scala-hearth.readthedocs.io/en/stable/micro-fp/)
+ - [standard extensions](https://scala-hearth.readthedocs.io/en/stable/standard-extensions/) for describing common
+   type shapes and extending macro libraries through `ServiceLoader`
 
-!!! tip
-
-    If you are starting a new macro library today, take a look at [Hearth](https://scala-hearth.readthedocs.io/) -
-    the spiritual successor of `chimney-macro-commons` (and the toolkit Chimney's own macros are built on since
-    `2.0.0`), with proper documentation, cross-quotes, `MIO` and the
-    [standard-extension mechanism](#hearth-macro-extensions).
-
-### `chimney-macro-commons`
-
-!!! warning
-
-    Since Chimney 2.0.0 the derivation engine is built on top of [Hearth](https://scala-hearth.readthedocs.io/) and
-    Chimney itself no longer depends on `chimney-macro-commons`. The library is still published and maintained as a
-    standalone artifact, and the description below (with source links pinned to the last Chimney version developing
-    it in this repository, 1.10.0) remains valid for it.
-
-This module contains no dependencies on Chimney runtime types, not Chimney-specific macro logic. It could be used to
-reuse Chimney utilities for e.g.:
-
- - extracting `val`ues and nullary `def`s from any class
- - extracting public constructors and setters
- - converting between singleton `Type[A]` and `Expr[A]`
- - providing a platform-agnostic utilities for some common types and expressions
-
-!!! note
-
-    This module is checked by MiMa, its API should be considered stable.
-
-#### macro-commons architecture
-
-The idea behind macro commond, (and whole Chimney), is to avoid using low-level macro API, and coding against higher level
-interface, where actual Scala 2/Scala 3 macros are mixed in later (it's a cake pattern):
-
-!!! example
-
-    DSL is defined using path-dependent types, we are using abstract type, extension methods and "companion objects"
-    to define our API
-
-    ```scala
-    // APIs related to types reporesentation
-    trait Types {
-
-      type Type[A]
-      val Type: TypeModule
-      trait TypeModule {: Type.type =>
-        
-        def apply[A](implicit A: Type[A]): Type[A] = A
-
-        def isSubtypeOf[A: Type, B: Type]: Boolean
-      }
-
-      implicit class TypeOps[A](private val A: Type[A]) {
-
-        def <:<[B](B: Type[B]): Boolean = Type.isSubtypeOf(A, B)
-      }
-    }
-    // APIs related to expressions
-    trait Exprs {
-
-      type Expr[A]
-      val Expr: ExprModule
-      trait ExprModule { Expr.type =>
-        
-        def asInstanceOfExpr[A: Type, B: Type](expr: Expr[A]): Expr[B]
-        def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B]
-      }
-
-      implicit class ExprOps[A: Type](private val expr: Expr[A]) {
-
-        def asInstanceOfExpr[B: Type]: Expr[B] = Expr.asInstanceOfExpr[A, B](expr)
-        def upcast[B: Type]: Expr[B] = Expr.upcast[A, B](expr)
-      }
-    }
-    // APIs related to e.g. reporting compilation errors
-    trait Results {
-
-      def reportError(errors: String): Nothing
-    }
-    // single trait to mix-in for convenience
-    trait Definitions extends Types with Exprs with Reports
-    ```
-
-    then we can code against this API:
-
-    ```scala
-    trait UpcastIfYouCan { this: Definitions =>
-
-      def upcastIfYouCan[A: Type, B: Type](expr: Expr[A]): Expr[B] =
-        if (Type[A] <:< Type[B]) expr.upcast[B] else reportError("Invalid upcasting")
-    }
-    ```
-
-    Meanwhile, all Scala 2/Scala 3 specific code can be contained inside platform-specific traits that would be mixed-in when composing whole macro:
-
-    ```scala
-    // Scala 2
-    trait TypesPlatform extends Types {
-      val c: blackbox.Context
-
-      import c.universe._
-
-      type Type[A] = c.WeakTypeTag[A]
-      object Type extends TypeModule {
-
-        def isSubtypeOf[A: Type, B: Type]: Boolean = Type[A].tpe <:< Type[B].tpe
-      }
-    }
-    trait ExprsPlatform extends Exprs { this: TypesPlatform =>
-      import c.universe._
-
-      type Expr[A] = c.Expr[A]
-      object Expr extends ExprModule {
-
-        def asInstanceOfExpr[A: Type, B: Type](expr: Expr[A]): Expr[B] = c.Expr[B](q"$expr.asInstanceOf[${Type[B]}]")
-        def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B] = c.Expr[B](q"($expr : ${Type[B]})")
-      }
-    }
-    trait ReportsPlatform extends Reports {
-      import c.universe._
-
-      def reportError(errors: String): Nothing = c.abort(c.enclosingPosition, errors)
-    }
-    trait DefinitionsPlatform extends Definitions with TypesPlatform with ExprsPlatform with ReportsPlatform
-    ```
-
-    ```scala
-    // Scala 3
-    abstract class TypesPlatform(using q: Quotes) extends Types {
-      import q.*, q.reflect.*
-
-      type Type[A] = quoted.Type[A]
-      object Type extends TypeModule {
-
-        def isSubtypeOf[A: Type, B: Type]: Boolean = TypeRepr.of(using A) <:< TypeRepr.of(using B)
-      }
-    }
-    trait ExprsPlatform extends Exprs { this: TypesPlatform =>
-      import q.*, q.reflect.*
-
-      type Expr[A] = quoted.Expr[A]
-      object Expr extends ExprModule {
-
-        def asInstanceOfExpr[A: Type, B: Type](expr: Expr[A]): Expr[B] = '{ ${ expr }.asInstanceOf[B] }
-        def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B] = expr.asInstanceOf[Expr[B]]
-      }
-    }
-    trait ReportsPlatform extends Reports { this: TypesPlatform =>
-      import q.*, q.reflect.*
-
-      def reportError(errors: String): Nothing = report.errorAndAbort(errors, Position.ofMacroExpansion)
-    }
-    abstract class DefinitionsPlatform(q: Quotes) extends Definitions with TypesPlatform with ExprsPlatform with ExprPromisesPlatform with ResultsPlatform
-    ```
-
-    Having both Scala-macro-agnostic logic and platform-specific implementation, we can build compose ourselves the final macro:
-
-    ```scala
-    // Scala 2
-
-    // So called macro bundle - class with a single argument - Context - whose method will be called during expansion 
-    final class UpcastingMacros(val c: blackbox.Context) extends DefinitionsPlatform(q) with UpcastIfYouCan {
-
-      import c.universe.*
-
-      // we have to align argument names and arity between macro and its definition
-      def upcastImpl[A: c.WeakTypeTag, B: c.WeakTypeTag](value: c.Expr[A]): c.Expr[B] = upcastIfYouCan[A, B](value)
-    }
-    object Upcasting {
-
-      def upcast[A, B](value: A): B = macro UpcastingMacros.upcastImpl[A, B]
-    }
-    ```
-
-    ```scala
-    // Scala 3
-
-    // Putting everything in one class is very convenient...
-    final class UpcastingMacros(q: Quotes) extends DefinitionsPlatform(q) with UpcastIfYouCan
-    // ...but Scala 3 requires us to store macros inside top-level objects
-    object UpcastingMacros {
-
-      def upcastImpl[A: Type, B: Type](a: Expr[A])(using q: Quotes): Expr[B] =
-        new UpcastingMacros(q).upcastIfYouCan[A, B](a)
-    }
-    
-    object Upcasting {
-
-      inline def upcast[A, B](inline value: A): B = ${ UpcastingMacros.upcast[A, B](${ value }) }
-    }
-    ```
-
-The whole premise of this approach relies on a few assumptions:
-
- * macros will grow bigger and more comples in time
- * library might target more than 1 scala macro system (2.12, 2.13, 3)
- * library authors see the value in separation of concerns, avoiding mixing levels of abstraction, DRY
- * library authors see the valud in coding against higher-level API which encapsulates how some corner cases are handled
-
-For smaller/simpler/short-living libraries it might feel over-engineered.
-
-#### Components of `chimney-macro-commons`
-
- - [Types](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Types.scala) - for types and definitions related to type manipulations and build-in `Type` support, e.g.:
-    - summoning with `Type[A]`
-    - printing type with `Type.prettyPrint[A]`
-    - comparison with `Type[A] =:= Type[B]`, `Type[A] <:< Type[B]`
-    - creating (`apply`) or matching (`unapply`) some build-in types: primitives, `Option`s, `Either`s, `Iterable`s, `Map`s, `Factory`ies
-    - implicit instances for some common types (`import Type.Implicits._`) - required in macro-agnostic code since it is not synthesising
-      `c.WeakTypeTag`s nor `scala.quoted.Type`
- - [Exprs](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Exprs.scala) - for types and definitions related to expression manipulations and build-in `Expr` support, e.g.:
-    - creating primitives' literals
-    - printing with `Expr.prettyPrint(expr)`
-    - creating instances of `Function1`/`Function2` out of `Expr[A] => Expr[B]`/``(Expr[A], Expr[B]) => Expr[C]`
-    - creating instances of `Array`s, `Option`s, `Either`s, `Iterable`s, `Map`s
-    - suppressing warnings
-    - summoning implicits
-    - creating `if`-`else` branches and blocks
-    - upcasting
- - [Results](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Results.scala) - for types and definitions related to returning info/error messages from macros:
-    - reporting `info` message that compiler should show in output/IDE
-    - reporting `error` message that compiler should show as the reason for macro failure
- - [Existentials](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Existentials.scala) - for types and definitions related to working with unknown types ("existential types"), e.g.:
-    - `ExistntialType` or `??` - usable via `import existentialType.Underlying as NewTypeName`
-    - `ExistentialExpr` - usable via `import existentialExpr.{Underlying as NewTypeName, value as expr}`
- - [ExprPromises](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/ExprPromises.scala) - for types and definitions related to computing `val`s/`lazy val`s/`def`s/`var`s before knowing the returned `Expr`'s `Type`, caching value as val, caching  derivation as `def`
- - [Definitions](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Definitions.scala) - for types and definitions related to reading macro configurations:
-    - `Definitions` contains all of the above traits for convenience
-    - additionally, exposes the content of `-Xmacro-setting` scalac option
- - [ProductTypes](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/ProductTypes.scala) - for types and definitions related to extractors and constructors of a product type:
-    - `Type[A] match { case Product.Extraction(getters) => ... }` - provides getters (`val`s, `var`s, Java Bean getters, nullary `defs`) - always available
-    - `Type[A] match { case Product.Constructor(getters, constructor) => ... }` - provides a constructor - primary constructor if it's public OR
-      the only public constructor if there is exactly one
-    - `Type[A] match { case Product(getters, constructor) => ... }` - provides both getters and constructor
- - [SealedHierarchies](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/SealedHierarchies.scala) - for types and definitions related to finding all subtypes of `sealed trait`s/`sealed abstrcto class`es/Scala 3 `enum`s/Java `enum`s:
-    - `Type[A] match { case SealedHierarchy(elements) => }` - provides a list of subtypes of a `sealed` hierarchy/Java `enum`/Scala 3 `enum`
- - [ValueClasses](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/ValueClasses.scala) - for types and definitions related to `AnyVal`s and "wrapper"s:
-    - `Type[A] match { case ValueClassType(valueType) => ... }` - provides `wrap` and `unwrap` method if `Type[A]` is a subtype of `AnyVal` with unary public constructor
-      and public value
-    - `Type[A] match { case WrapperClassType(valueType) => ... }` - provides `wrap` and `unwrap` method if `Type[A]` has unary public constructor and public value
- - [SingletonTypes](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/SingletonTypes.scala) - for types and definitions related to singleton types:
-    - `Type[A] match { case SingletonType(singleton) => ... }` - provides `Expr[A]` if it's a primitive type literal, `case object`, Scala 3 `enum` parameterless
-      `case` or Java `enum` value
- - [IterableOrArrays](https://github.com/scalalandio/chimney/blob/1.10.0/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/IterableOrArrays.scala) - for types and definitions related to unified interface for working with Arrays and Scala collections:
-    - `Type[A] match { case IterableOrArray(iOrA) => ... }` - provides `Factory`, `.map`, `.to` and `.interator` methods for Arrays/iterables/maps
-
-#### macro-commons examples
-
- * Chimney's source code - since 0.8.0 Chimney has been build upon this architecture
- * [`chimney-macro-commons` template](https://github.com/scalalandio/chimney-macro-commons-template) - can be used as a GitHub template
+The preceding [Hearth macro extensions](#hearth-macro-extensions) and
+[Chimney macro extensions](#chimney-macro-extensions) sections show how Chimney integrations use these APIs.
+The retired implementation remains available in the
+[`chimney-macro-commons` repository](https://github.com/scalalandio/chimney-macro-commons) for maintainers of
+existing integrations, but it should not be used as the starting point for new macro libraries.

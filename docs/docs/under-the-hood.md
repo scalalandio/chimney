@@ -235,8 +235,9 @@ and then you prepend each config similar to how cons works in normal list. You e
 
     ```scala
     source.withFieldConst(_.a, ???).withFieldRenamed(_.b, _.c).transform
-    // has a Cfg type like
-    TransformerCfg.FieldRenamed[fieldBType, fieldCType, TransformerCfg.FieldConst[fieldAType, TransformerCfg.Empty]]
+    // has an Overrides type like
+    TransformerOverrides.Renamed[fieldBPath, fieldCPath,
+      TransformerOverrides.Const[fieldAPath, TransformerOverrides.Empty]]
     // Let's not dive into how field names are represented.
     ```
 
@@ -248,9 +249,9 @@ The macro can parse this type, recovering the order in which types were applied,
 type of each enum's subtype, etc. From that it can calculate on which index each **override** is stored.
 
 Not everything though has to be stored in runtime. If you take a look at the source code you'll notice that there is
-another type, using similar tricks to `TransformerCfg`, called `TransformerFlags`. It is used to carry around settings
+another type, using similar tricks to `TransformerOverrides`, called `TransformerFlags`. It is used to carry around settings
 (in the form of **flags**), that have no relation to a particular type, but still drive the macro logic. Contrary to
-`TransformerCfg` flags can also be shared: you can create an implicit `TransformerConfiguration` - this is the only
+`TransformerOverrides`, flags can also be shared: you can create an implicit `TransformerConfiguration` - this is the only
 implicit always looked for by:
 
   - automatic derivation
@@ -273,14 +274,13 @@ And since it is an implicit, it can be shared between several different macro ex
     ```
 
 `PartialTransformer`s are virtually identical to `Transformers` when it comes to this mechanics. They have a few more
-configs, meaning that they need a separate builder, but they use the same `TransformerCfg` and `TransformerFlags`. 
+overrides, meaning that they need a separate builder, but they use the same `TransformerOverrides` and `TransformerFlags`.
 
 ### How DSL allows semiautomatic derivation
 
-`Transformer.derive[From, To]` works the same way as the automatic derivation - a macro is called, and internally it
-generates the expression of type `To`. Before returning the expression the macro wraps it with a type class. The only
-differences between automatic and semiautomatic is `implicit` keyword and upcasting `Transformer` to
-`Transformer.AutoDerived`. 
+`Transformer.derive[From, To]` invokes the same macro used by automatic derivation, but does so explicitly. Internally,
+it generates an expression of type `To` and wraps that expression in a `Transformer`. (`Transformer.AutoDerived` is
+only a compatibility alias for `Transformer` in 2.x; it is no longer a separate fallback type.)
 
 `Transformer.define[From, To].buildTransformer` works like a mix of `Transformer.derive[From, To]` and
 `from.into[To].transform`: it carries around `RuntimeDataStore` like `into.transform`, but don't need to store
@@ -670,8 +670,8 @@ codebase where every macro concept (`Type[A]`, `Expr[A]`, product/sealed-hierarc
 interface implemented twice: once with `scala.reflect` (Scala 2) and once with `scala.quoted` (Scala 3), following
 a pattern similar to
 [C. Hofer et al. **Polymorphic Embedding of DSLs**, GPCE, 2008](https://www.informatik.uni-marburg.de/~rendel/hofer08polymorphic.pdf)
-used in Endpoints4s and Endless4s. That layer was extracted as `chimney-macro-commons`
-(still [maintained as a standalone library](cookbook.md#chimney-macro-commons)).
+used in Endpoints4s and Endless4s. That layer was later extracted into the standalone
+[`chimney-macro-commons` repository](https://github.com/scalalandio/chimney-macro-commons) and superseded by Hearth.
 
 Since `2.0.0` this role is played by [Hearth](https://scala-hearth.readthedocs.io/) - a general-purpose toolkit for
 writing cross-compiled macros (grown out of, among others, Chimney's experience). The building blocks:

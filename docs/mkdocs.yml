@@ -89,7 +89,7 @@ extra:
     - icon: fontawesome/solid/book-bookmark
       link: https://index.scala-lang.org/scalalandio/chimney
     - icon: fontawesome/brands/twitter
-      link: https://twitter.com/@scalaland
+      link: https://twitter.com/scalaland
   scala:
     2_12: "2.12.21"
     2_13: "2.13.18"

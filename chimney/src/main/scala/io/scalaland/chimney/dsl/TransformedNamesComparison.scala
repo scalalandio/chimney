@@ -28,8 +28,7 @@ object TransformedNamesComparison {
   /** Matches names, dropping is/get/set prefixes and then lowercasing the first letter if it was a Bean name. */
   case object BeanAware extends TransformedNamesComparison {
 
-    // While it's bad to refer to compiletime package this code should only be used by this compiletime package.
-    // Additionally, current module has to rely on chimney-macro-commons, not the other way round.
+    // Although this runtime DSL type refers to the compiletime package, this implementation is only used by derivation.
     import io.scalaland.chimney.internal.compiletime.datatypes.ProductTypes
     private val normalize = ProductTypes.BeanAware.dropGetIs andThen ProductTypes.BeanAware.dropSet
 

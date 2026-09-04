@@ -39,7 +39,7 @@ final case class Error(message: ErrorMessage, path: Path = Path.Empty) {
     * again. This method allows this.
     *
     * @return
-    *   error with a path prepended with provided path element
+    *   this error with its path unsealed
     *
     * @since 1.6.0
     */

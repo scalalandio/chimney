@@ -59,7 +59,7 @@ extension [From](source: From) {
   *
   * @param obj
   *   wrapped object to patch
-  * @tparam T
+  * @tparam A
   *   type of object to patch
   *
   * @since 0.1.3

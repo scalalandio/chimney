@@ -14,8 +14,7 @@ export io.scalaland.chimney.syntax.{
   matchingSome
 }
 
-// Extension methods in dsl.* summon TypeClass.AutoDerived while extension methods in syntax.* summon TypeClass.
-// This helps us preserve legacy behavior in dsl code while keeping stricter separation in auto/syntax imports.
+// dsl.* combines inlined and summoning extensions; syntax.* provides summoning extensions only.
 
 /** Provides transformer operations on values of any type.
   *
@@ -30,8 +29,7 @@ extension [From](source: From) {
 
   /** Performs in-place transformation of captured source value to target type.
     *
-    * If you want to customize transformer behavior, consider using [[io.scalaland.chimney.dsl.TransformerOps#into]]
-    * method.
+    * If you want to customize transformer behavior, consider using [[io.scalaland.chimney.inlined.into]] method.
     *
     * @see
     *   [[io.scalaland.chimney.Transformer#derive]] for default implicit instance
@@ -62,8 +60,7 @@ extension [From](source: From) {
 
   /** Performs in-place partial transformation of captured source value to target type.
     *
-    * If you want to customize transformer behavior, consider using
-    * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartial]] method.
+    * If you want to customize transformer behavior, consider using [[io.scalaland.chimney.inlined.intoPartial]] method.
     *
     * @see
     *   [[io.scalaland.chimney.PartialTransformer#derive]] for default implicit instance
@@ -71,7 +68,7 @@ extension [From](source: From) {
     * @tparam To
     *   result target type of partial transformation
     * @param transformer
-    *   implicit instance of [[io.scalaland.chimney.Transformer]] type class
+    *   implicit instance of [[io.scalaland.chimney.PartialTransformer]] type class
     * @return
     *   partial transformation result value of target type `To`
     *
@@ -84,8 +81,7 @@ extension [From](source: From) {
 
   /** Performs in-place partial transformation of captured source value to target type.
     *
-    * If you want to customize transformer behavior, consider using
-    * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartial]] method.
+    * If you want to customize transformer behavior, consider using [[io.scalaland.chimney.inlined.intoPartial]] method.
     *
     * @see
     *   [[io.scalaland.chimney.PartialTransformer#derive]] for default implicit instance
@@ -95,7 +91,7 @@ extension [From](source: From) {
     * @param failFast
     *   should fail as early as the first set of errors appear
     * @param transformer
-    *   implicit instance of [[io.scalaland.chimney.Transformer]] type class
+    *   implicit instance of [[io.scalaland.chimney.PartialTransformer]] type class
     * @return
     *   partial transformation result value of target type `To`
     *
@@ -111,7 +107,7 @@ extension [From](source: From) {
   *
   * @param obj
   *   wrapped object to patch
-  * @tparam T
+  * @tparam A
   *   type of object to patch
   *
   * @since 0.1.3
@@ -120,8 +116,7 @@ extension [A](obj: A) {
 
   /** Performs in-place patching of wrapped object with provided value.
     *
-    * If you want to customize patching behavior, consider using [[io.scalaland.chimney.dsl.PatcherOps#using using]]
-    * method.
+    * If you want to customize patching behavior, consider using [[io.scalaland.chimney.inlined.using]] method.
     *
     * @see
     *   [[io.scalaland.chimney.Patcher#derive]] for default implicit instance

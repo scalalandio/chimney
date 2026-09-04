@@ -280,7 +280,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
   def disableNonAnyValWrappers: UpdateFlag[Disable[NonAnyValWrappers, Flags]] =
     disableFlag[NonAnyValWrappers]
 
-  /** Enable using [[scala.Predef.<:<]] or [[scala.Predef.=:=]] to prove that `From` is a subtype of `To`.
+  /** Enable using `scala.<:<` or `scala.=:=` to prove that `From` is a subtype of `To`.
     *
     * By default, such evidence is ignored.
     *
@@ -292,7 +292,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
   def enableTypeConstraintEvidence: UpdateFlag[Enable[TypeConstraintEvidence, Flags]] =
     enableFlag[TypeConstraintEvidence]
 
-  /** Disable using [[scala.Predef.<:<]] or [[scala.Predef.=:=]] to prove that `From` is a subtype of `To`.
+  /** Disable using `scala.<:<` or `scala.=:=` to prove that `From` is a subtype of `To`.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#type-evidence-based-conversions]] for more details

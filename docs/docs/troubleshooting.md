@@ -77,10 +77,10 @@ Breaking changes in API:
       `NonEmptySet`, ...) were **removed** from `chimney-cats` - add
       [`com.kubuszok::kindlings-cats-integration`](cookbook.md#conversions-tofrom-cats-collections) to the classpath
       instead (no import needed); note [the behavior changes](cookbook.md#conversions-tofrom-cats-collections):
-      same-type `NonEmpty*` conversions (except `NonEmptyList`) are `PartialTransformer`-only now, the empty-input
-      error message changed, and `NonEmptySeq`/`NonEmptyLazyList` are not covered yet
-    - the `Traverse`/`~>` (FunctionK)-based outer transformers were **removed** without replacement - if you relied
-      on them, define your own [`TotalOuterTransformer`/`PartialOuterTransformer`](cookbook.md#custom-outer-type-conversion)
+      the empty-input error message changed, while `NonEmptySeq` and `NonEmptyLazyList` are covered by the current
+      Kindlings integration
+    - the old `Traverse`/`~>` (FunctionK)-based implicit outer transformers were removed, but their behavior is restored
+      by a classpath-loaded Chimney macro extension shipped in `chimney-cats`
     - the type class instances for Chimney's types and the `Validated` <-> `partial.Result` conversions stay in
       `chimney-cats` unchanged
   - in Protobuf integration module:
@@ -2094,7 +2094,7 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
 
 Since Ducktape is inspired by Chimney, there is a huge overlap in functionality. However, there are some differences:
 
- * Ducktape is developed only on Scala 3, while Chimney supports 2.12 and 2.13 as well
+ * Ducktape is developed only on Scala 3, while Chimney also supports Scala 2.13
  * Ducktape provides support to arbitrary effect `F[_]` through `Mode[F]` combined with 2 modes of derivation:
    `Mode.Accumulating[F]`  (aggregating errors from different fields, basically `Applicative`/`Parallel`) and
    `Mode.FailFast[F]` (terminating on the first error, basically `Monad`). Chimney supports one, dedicated and optimized
@@ -2303,7 +2303,7 @@ if update is impossible the workaround would be to remove the unused definition 
 
 !!! tip
 
-    This issue was solved on Scala 2.0.0 line, so if you can, update Chimney to newest 2.x version.
+    This issue is solved on the Chimney 2.0.0 line, so if you can, update Chimney to the newest 2.x version.
 
     The workaround below is only intended for people stuck on 1.x line.
 
@@ -2345,10 +2345,11 @@ is broken when one tries to use semiautomatic derivation:
 
     that cannot be "simply" fixed with some backward compatible change in implicits or macros internals.
 
-This issue will be properly addressed in Chimney 2.0.0, which will be released for next Scala LTS
-(the fix involves using [macro feature available since 3.7.0](https://github.com/scala/scala3/discussions/21909)).
+This issue is addressed in Chimney 2.0.0 using a
+[macro feature available since Scala 3.7.0](https://github.com/scala/scala3/discussions/21909) and backported to
+Scala 2.13.17.
 
-In the meantime, there are 2 ways to work around it (that works for now):
+On Chimney 1.x, there are 2 ways to work around it:
 
  * if instead of taking implicit as an argument to `def` extension method
    it will be summoned with `summonInline`
@@ -2624,7 +2625,7 @@ would generate:
 !!! tip
 
     Available since Chimney 2.0.0. The same idiom is used by every
-    [Kindlings](https://kubuszok.github.io/kindlings/) module.
+    [Kindlings](https://kindlings.readthedocs.io/) module.
 
 Besides the `.enableMacrosLogging` flag, logging can be enabled without modifying the transformation itself:
 
@@ -2661,7 +2662,7 @@ keep working and enable logging for only one kind of macro.)
 
 ### Profiling derivation with flame graphs
 
-Chimney's derivation engine runs on [Hearth](https://kubuszok.github.io/hearth/), which can profile how long each
+Chimney's derivation engine runs on [Hearth](https://scala-hearth.readthedocs.io/), which can profile how long each
 derivation step takes and emit a flame graph per macro expansion. Add these scalac options:
 
 !!! example
