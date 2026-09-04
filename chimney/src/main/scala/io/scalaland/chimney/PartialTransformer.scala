@@ -245,10 +245,10 @@ object PartialTransformer extends PartialTransformerLowPriorityImplicits1 {
   def define[From, To]: PartialTransformerDefinition[From, To, TransformerOverrides.Empty, TransformerFlags.Default] =
     new PartialTransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
 
-  /** Type class used when you want to allow using automatically derived transformations.
+  /** Compatibility alias retained for source compatibility with Chimney 1.x.
     *
-    * When we want to only allow semiautomatically derived/manually defined instances you should use
-    * [[io.scalaland.chimney.PartialTransformer]].
+    * Since Chimney 2.0.0 automatic and explicitly derived transformations use the same
+    * [[io.scalaland.chimney.PartialTransformer]] type.
     *
     * @see
     *   [[https://chimney.readthedocs.io/cookbook/#automatic-semiautomatic-and-inlined-derivation]] for more details

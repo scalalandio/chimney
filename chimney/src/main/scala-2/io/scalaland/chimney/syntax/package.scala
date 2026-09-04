@@ -10,9 +10,6 @@ import scala.annotation.{compileTimeOnly, unused}
   */
 package object syntax {
 
-  // Extension methods in dsl.* summon TypeClass.AutoDerived while extension methods in syntax.* summon TypeClass.
-  // This help us preserve legacy behavior in dsl code while keeping stricter separation in auto/syntax imports.
-
   /** Provides transformer operations on values of any type.
     *
     * @tparam From
@@ -30,7 +27,7 @@ package object syntax {
       * method.
       *
       * @see
-      *   [[io.scalaland.chimney.auto#deriveAutomaticTransformer]] for default implicit instance
+      *   [[io.scalaland.chimney.Transformer#derive]] for deriving an implicit instance
       *
       * @tparam To
       *   target type
@@ -62,12 +59,12 @@ package object syntax {
       * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartial]] method.
       *
       * @see
-      *   [[io.scalaland.chimney.auto#deriveAutomaticPartialTransformer]] for default implicit instance
+      *   [[io.scalaland.chimney.PartialTransformer#derive]] for deriving an implicit instance
       *
       * @tparam To
       *   result target type of partial transformation
       * @param transformer
-      *   implicit instance of [[io.scalaland.chimney.Transformer]] type class
+      *   implicit instance of [[io.scalaland.chimney.PartialTransformer]] type class
       * @return
       *   partial transformation result value of target type `To`
       *
@@ -84,14 +81,14 @@ package object syntax {
       * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartial]] method.
       *
       * @see
-      *   [[io.scalaland.chimney.auto#deriveAutomaticPartialTransformer]] for default implicit instance
+      *   [[io.scalaland.chimney.PartialTransformer#derive]] for deriving an implicit instance
       *
       * @tparam To
       *   result target type of partial transformation
       * @param failFast
       *   should fail as early as the first set of errors appear
       * @param transformer
-      *   implicit instance of [[io.scalaland.chimney.Transformer]] type class
+      *   implicit instance of [[io.scalaland.chimney.PartialTransformer]] type class
       * @return
       *   partial transformation result value of target type `To`
       *
@@ -120,7 +117,7 @@ package object syntax {
       * method.
       *
       * @see
-      *   [[io.scalaland.chimney.auto#deriveAutomaticPatcher]] for default implicit instance
+      *   [[io.scalaland.chimney.Patcher#derive]] for deriving an implicit instance
       *
       * @tparam Patch
       *   type of patch object

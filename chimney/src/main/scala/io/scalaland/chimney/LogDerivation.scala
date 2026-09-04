@@ -7,7 +7,7 @@ package io.scalaland.chimney
   * `debug._` imports.
   *
   * @see
-  *   [[https://chimney.readthedocs.io Chimney documentation - debugging chapter]]
+  *   [[https://chimney.readthedocs.io/troubleshooting/#debug-logging-without-touching-the-code-import-or-scalac-option Chimney documentation - debugging chapter]]
   *
   * @since 2.0.0
   */

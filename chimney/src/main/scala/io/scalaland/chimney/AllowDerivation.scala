@@ -9,7 +9,7 @@ package io.scalaland.chimney
   * A no-op under the default `always-allowed` policy.
   *
   * @see
-  *   [[https://chimney.readthedocs.io Chimney documentation - derivation policy chapter]]
+  *   [[https://chimney.readthedocs.io/cookbook/#derivation-policy-restricting-where-derivation-may-happen Chimney documentation - derivation policy chapter]]
   *
   * @since 2.0.0
   */

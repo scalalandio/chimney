@@ -28,9 +28,9 @@ This section is short summary of all Chimney features (described in more detail 
 
     ```scala
     // Summoning:
-    // source.transformInto[Target]        summons Transformer.AutoDerived
-    // source.transformIntoPartial[Target] summons PartialTransformer.AutoDerived
-    // obj.patchUsing(patch)               summons Patcher.AutoDerived
+    // source.transformInto[Target]        summons or derives Transformer
+    // source.transformIntoPartial[Target] summons or derives PartialTransformer
+    // obj.patchUsing(patch)               summons or derives Patcher
     //
     // Inlined code:
     // source.into[Target].customization.transform        generates inlined Transformer code
@@ -52,22 +52,17 @@ This section is short summary of all Chimney features (described in more detail 
     // source.into[Target].customization.transform        generates inlined Transformer code
     // source.intoPartial[Target].customization.transform generates inlined PartialTransformer code
     // obj.using(patch).customization.patch               generates inlined Patcher code
-    import io.scalaland.chimney.inline._
-
-    // Automatic derivation returns Transformer/PartialTransformer/Patcher
-    // instead of Transformer.AutoDerived/PartialTransformer.AutoDerived/Patcher.AutoDerived
-    // (see below).
-    import io.scalaland.chimney.auto._
+    import io.scalaland.chimney.inlined._
     ```
 
 !!! warning
 
-    Chimney uses [sanely-automatic derivation](cookbook.md#automatic-semiautomatic-and-inlined-derivation) - it tries
-    to derive instance recursively with a single macro expansion, with is both less taking on typer (faster compilation)
-    as well as allows avoiding unnecessary boxing with `partial.Result`.
-    
-    By importing `io.scalaland.chimney.auto._` we're forcng Chimney to create intermediate instances which breaks
-    these improvements (but it might be more familiar behavior for people coming from e.g. Circe).
+    Chimney uses [sanely-automatic derivation](cookbook.md#automatic-semiautomatic-and-inlined-derivation): it tries
+    to derive an instance recursively with a single macro expansion. This reduces work for the typer (improving
+    compilation time) and avoids unnecessary boxing with `partial.Result`.
+
+    Chimney 2.x no longer provides `io.scalaland.chimney.auto._`. Automatic derivation is provided from the type-class
+    companions, while `syntax._` and `inlined._` let you choose which extension methods to import.
 
 !!! example "Partial Results"
 
@@ -98,7 +93,7 @@ This is the most common way users would use Chimney.
 
 | Syntax                                                              | What it does                                                                                                                                                                                                                                                                       |
 |---------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `source.transformInto[Target]`                                      | summons a user-defined `Transformer[Source, Target]`, if there is none, falls back on a `Transformer.AutoDerived[Source, Target]`, then uses it to convert the `source: Source` into the `Target`                                                                                  |
+| `source.transformInto[Target]`                                      | summons a user-defined `Transformer[Source, Target]`, or derives one if none is available, then uses it to convert the `source: Source` into the `Target`                                                                                                                     |
 | `source.into[Target].transform`                                     | summons a user-defined `Transformer[Source, Target]` and uses it to convert the `source: Source` into the `Target`, if there is none, generates the inlined conversion (without a `new Transformer`!) - see: [inlined](cookbook.md#automatic-semiautomatic-and-inlined-derivation) |
 | `source.into[Target] .customization.transform`                      | uses provided overrides/flags to generate an inlined conversion from the `source: Source` into the `Target` (without a `new Transformer`!) - see: [inlined](cookbook.md#automatic-semiautomatic-and-inlined-derivation)                                                            |
 | `Transformer.derive[Source,Target]`                                 | generates a new instance of `Transformer[Source, Target]` - see: [semi](cookbook.md#automatic-semiautomatic-and-inlined-derivation)                                                                                                                                                |
@@ -108,7 +103,7 @@ This is the most common way users would use Chimney.
 
 | Syntex                                                                      | What it does                                                                                                                                                                                                                                                                                                                                                                                |
 |-----------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `source .transformIntoPartial[Target]`                                      | summons a user-defined `PartialTransformer[Source, Target]`, if there is none, falls back on user-defined `Transformer[Source, Target]`, if there is none, falls back on a `PartialTransformer.AutoDerived[Source, Target]`, then uses it to convert the `source: Source` into the `partial.Result[Target]`                                                                                 |
+| `source .transformIntoPartial[Target]`                                      | summons a user-defined `PartialTransformer[Source, Target]`, falls back on a user-defined `Transformer[Source, Target]`, or derives a partial transformer if neither is available, then uses it to convert the `source: Source` into the `partial.Result[Target]`                                                                                                                          |
 | `source.intoPartial[Target] .transform`                                     | summons a user-defined `PartialTransformer[Source, Target]` and uses it to convert the `source: Source` into the `partial.Result[Target]`, if there is none, falls back on user-defined `Transformer[Source, Target]`,if there is none, generates the inlined conversion (without a `new PartialTransformer`!) - see: [inlined](cookbook.md#automatic-semiautomatic-and-inlined-derivation) |
 | `source.intoPartial[Target] .customization.transform`                       | uses provided overrides/flags to generate an inlined conversion from the `source: Source` into the `partial.Result[Target]` (without a `new PartialTransformer`!) - see: [inlined](cookbook.md#automatic-semiautomatic-and-inlined-derivation)                                                                                                                                              |
 | `PartialTransformer .derive[Source,Target]`                                 | generates a new instance of `PartialTransformer[Source, Target]` - see: [semi](cookbook.md#automatic-semiautomatic-and-inlined-derivation)                                                                                                                                                                                                                                                  |
@@ -118,7 +113,7 @@ This is the most common way users would use Chimney.
 
 | Syntax                                                | What it does                                                                                                                                                                                                                                                     |
 |-------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `obj.patchUsing(patch)`                               | summons a user-defined `Patcher[A, Patch]`, if there is none, falls back on a `Patcher.AutoDerived[A, Patch]`, then uses it to patch the `obj: A` with the `patch: Patch`                                                                                        |
+| `obj.patchUsing(patch)`                               | summons a user-defined `Patcher[A, Patch]`, or derives one if none is available, then uses it to patch the `obj: A` with the `patch: Patch`                                                                                                                     |
 | `obj.using(patch).patch`                              | summons a user-defined `Patcher[A, Patch]` and uses it to patch the `obj: A` with the `patch: Patch`, if there is none, generates the inlined conversion (without a `new Patcher`!) - see: [inlined](cookbook.md#automatic-semiautomatic-and-inlined-derivation) |
 | `obj.using(patch) .customization.patch`               | uses provided overrides/flags to generate a patching of the `obj: A` with the `patch: Patch` (without a `new Patcher`!) - see: [inlined](cookbook.md#automatic-semiautomatic-and-inlined-derivation)                                                             |
 | `Patcher.derive[A,Patch]`                             | generates a new instance of `Patcher[A, Patch]` - see: [semi](cookbook.md#automatic-semiautomatic-and-inlined-derivation)                                                                                                                                        |
@@ -390,7 +385,7 @@ Before writing one, it's worth knowing that:
     // derived or provided - use only when the derivation could not be customized
     // nor can be provided by integrations.
     implicit def transformerWithHardcodedTypes2(
-      implicit transformer: Transformer.AutoDerived[C, D] // make sure it's .AutoDerived!
+      implicit transformer: Transformer[C, D]
     ): Transformer[E, F] = ...
     ```
 
@@ -473,7 +468,7 @@ Before writing one, it's worth knowing that:
     // derived or provided - use only when the derivation could not be customized
     // nor can be provided by integrations.
     implicit def transformerWithHardcodedTypes2(
-      implicit transformer: PartialTransformer.AutoDerived[C, D] // make sure it's .AutoDerived!
+      implicit transformer: PartialTransformer[C, D]
     ): PartialTransformer[E, F] = ...
     ```
 
@@ -533,6 +528,6 @@ Before writing one, it's worth knowing that:
     // derived or provided - use only when the derivation could not be customized
     // nor can be provided by integrations.
     implicit def patcherWithHardcodedTypes2(
-      implicit patcher: Patcher.AutoDerived[C, D] // make sure it's .AutoDerived!
+      implicit patcher: Patcher[C, D]
     ): Patcher[E, F] = ...
     ```

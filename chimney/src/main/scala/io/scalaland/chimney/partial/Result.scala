@@ -156,7 +156,8 @@ sealed trait Result[+A] {
     case _: Result.Errors    => this.asInstanceOf[Result[B]]
   }
 
-  /** Prepends a [[io.scalaland.chimney.partial.PathElement]] to all errors represented by this result.
+  /** Returns this result when it is successful, otherwise evaluates the fallback and combines both sets of errors if it
+    * also fails.
     *
     * @tparam B
     *   the element type of the returned result
@@ -203,7 +204,7 @@ sealed trait Result[+A] {
     * again. This method allows this.
     *
     * @return
-    *   error with a path prepended with provided path element
+    *   this result with every error path unsealed
     *
     * @since 1.6.0
     */
@@ -591,10 +592,10 @@ object Result {
     * @tparam A
     *   type of successful result
     * @param value
-    *   computation to run while catching its Exceptions
+    *   computation to run while catching any [[java.lang.Throwable]]
     * @return
     *   successful [[io.scalaland.chimney.partial.Result.Value]] if computation didn't throw, failed
-    *   [[io.scalaland.chimney.partial.Result.Errors]] with caught Exception if it threw
+    *   [[io.scalaland.chimney.partial.Result.Errors]] with the caught [[java.lang.Throwable]] if it threw
     *
     * @since 0.7.0
     */
