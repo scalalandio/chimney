@@ -1,6 +1,6 @@
 # Quick Start
 
-Chimney is supported for Scala **2.13**, **3.8.4+** on [**JVM**](https://www.scala-lang.org/),
+Chimney is supported for Scala **2.13**, **3.9.0+** on [**JVM**](https://www.scala-lang.org/),
 [**Scala.js**](https://www.scala-js.org/) and [**Scala Native**](https://scala-native.org/) with full feature parity
 between each version.
 

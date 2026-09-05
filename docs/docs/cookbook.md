@@ -751,9 +751,9 @@ are described in each type's section.
     had a bad experience (long compilation times, poor performance) with the automatic derivation, please note that
     Chimney derivation DOES NOT work the same way, so your experiences are unlikely to carry over to Chimney.
     
-    Please, read the section below, as it will explain why replacing `import io.scalaland.chimney.dsl._` with
-    `Transformer.derive` + `import io.scalaland.chimney.syntax._` + `import io.scalaland.chimney.auto._` (the last one only available on 1.x line)
-    might actually *degrade* the performance, instead of improving it.
+    Please read the section below: it explains why Chimney's automatic derivation does not have the usual performance
+    problem. On Chimney 2.x, `io.scalaland.chimney.auto._` no longer exists; if you need to restrict where automatic
+    derivation may happen, use the [derivation policy](#derivation-policy-restricting-where-derivation-may-happen).
     
     In depth explanation why automatic derivation is slow (when it's slow!) and how Chimney avoided such slowdown can be
     found in [*Slow-Auto, Inconvenient-Semi: escaping false dichotomy with sanely-automatic derivation*](https://mateuszkubuszok.github.io/SlowAutoInconvenientSemi/)
@@ -819,26 +819,27 @@ The last property is a reason many projects encourage the usage of semiautomatic
 and many libraries provide automatic derivation as a quick and dirty way of doing things
 requiring an opt-in.
 
-Chimney's defaults for (good) historical reasons mix these 2 modes (and one more, which
-will describe in a moment), but (_due to popular demand_) it also allows you to selectively
-use these imports
+On the 1.x line, Chimney's defaults mixed these two modes (and one more, described below), but also allowed users to
+compose these imports selectively:
 
 !!! example
 
     ```scala
-    import io.scalaland.chimney.auto._ // Not available on Chimney 2.+, see below
+    import io.scalaland.chimney.auto._ // 1.x only
     import io.scalaland.chimney.inlined._
     import io.scalaland.chimney.syntax._
     ```
 
-instead of `io.scalaland.chimney.dsl` to achieve a similar behavior:
+instead of `io.scalaland.chimney.dsl` to achieve a similar behavior. On 2.x, `syntax._` and `inlined._` remain
+available, while automatic derivation is provided directly by the `Transformer`, `PartialTransformer`, and `Patcher`
+companions:
 
   - if you `import io.scalaland.chimney.syntax._` it will expose only extension
     methods working with type classes (`Transformer`, `PartialTransformer` and `Patcher`),
     but with no derivation
 
-  - if you `import io.scalaland.chimney.auto._` it will only provide implicit instances
-    generated through derivation.
+  - on 1.x, `import io.scalaland.chimney.auto._` provided implicit instances generated through derivation. This
+    separate import does not exist on 2.x.
 
     Semiautomatic derivation was available for a long time using methods:
 
@@ -955,9 +956,8 @@ or there is none and macro will handle recursion internally.
     This also allows to replace a bunch of anonymous instances calling one another with a single
     instance - limitting the number of allocations and improving performance.
 
-However, with `import io.scalaland.chimney.auto._` the same semantics as in other
-libraries is used: `implicit def` returns `Transformer`, so if derivation with defaults
-is possible it will always be triggered.
+Prior to 2.0.0, `import io.scalaland.chimney.auto._` used the same semantics as automatic derivation in other
+libraries: an `implicit def` returned a `Transformer`, so derivation with defaults was triggered whenever possible.
 
 !!! important
 
@@ -983,7 +983,7 @@ is possible it will always be triggered.
     ```scala
     trait TypeClass[A]
     object TypeClass {
-      inline given derived[A]: AutoDerived[A] =
+      inline given derived[A]: TypeClass[A] =
         ${ macroUsingSimmonIgnoring[A] }
         // Inside it uses:
         // Expr.summonIgnoring[TypeClass[A]](
@@ -994,7 +994,7 @@ is possible it will always be triggered.
     extension [A](value: A) def foo(using TypeClass[A]) = ...
     ```
 
-    For that reason `import io.scalaland.chimney.auto._` does not exists on Chimney 2.0.0 for Scala 3.
+    For that reason `import io.scalaland.chimney.auto._` does not exist on Chimney 2.0.0 for Scala 3.
 
     And thanks to porting the solution from Scala 3.7.0 to 2.13.17, Scala 2.13 could have align the API
     again - removing `import io.scalaland.chimney.auto._` as well in the process. (The other consequence
@@ -1008,7 +1008,7 @@ provide `implicitConflictResolution` flag.
 
 !!! note
 
-    In other words, replicating the setup where you do:
+    In other words, on Chimney 1.x, replicating the setup where you do:
     
     ```scala
     implicit val transformer: Transformer[From, To] = locally {
@@ -1030,11 +1030,10 @@ provide `implicitConflictResolution` flag.
 
 For the reasons above the recommendations are as follows:
 
-  - if you care about performance, use either inlined derivation (`.into.transform`, for a one-time-usage) or
-    semi-automatic derivation with recursion handled in the macro(`.derive`/`.define.build*` + `syntax._`, without
-    importing `auto._`)
-  - only use `import auto._` when you want predictable behavior similar to other libraries
-    (predictably bad)
+  - if you care about performance, use either inlined derivation (`.into.transform`, for a one-time usage) or
+    semiautomatic derivation with recursion handled in the macro (`.derive`/`.define.build*` + `syntax._`)
+  - on Chimney 2.x, use the [derivation policy](#derivation-policy-restricting-where-derivation-may-happen) when you
+    need to prevent ad-hoc structural derivation outside designated scopes
   - use unit tests to ensure, that your code does what it should do
   - use benchmarks to ensure it is reasonably fast
   - and keep on using `import dsl._` until you have some good proof that (recursive) semi-automatic derivation is needed 
@@ -1050,6 +1049,10 @@ Some teams want tighter control over **where** transformations come into existen
 canonical mapping is defined in one designated place rather than materialized ad-hoc at a random call site. The
 **derivation policy** provides this without a separate semi-automatic API: it is a compile-time switch configured
 entirely through `-Xmacro-settings`.
+
+On Chimney 2.x this is the replacement for controlling automatic derivation through selective
+`import io.scalaland.chimney.auto._` imports. The `auto` package no longer exists; derivation is available through the
+unified type classes, and this policy decides where their macros may generate new structural transformations.
 
 The policy gates only **structural derivation** — generating new transformation code for a `case class` or a `sealed`
 hierarchy / `enum`. Everything else keeps working unconditionally: pre-existing implicits (your hand-written
@@ -1549,8 +1552,9 @@ With it on the classpath you can:
 !!! warning "Scala 3 status"
 
     A macro extension must be **loadable by the compiler that expands the macro**, so its TASTy version matters:
-    `kindlings-cats-integration` `{{ libraries.kindlings }}`'s Scala 3 artifacts are built with Scala 3.8, which is
-    why Chimney `2.0.0` itself is built with Scala 3.8.4+ - the integration works on **both** Scala 2.13 and Scala 3.
+    `kindlings-cats-integration` `{{ libraries.kindlings }}`'s Scala 3 artifacts are built with Scala 3.9.0, which is
+    why Chimney `2.0.0` itself is built with Scala 3.9.0 (TASTy 28.9) - the integration works on **both** Scala 2.13
+    and Scala 3.
 
 !!! example "Converting from Cats collections"
 

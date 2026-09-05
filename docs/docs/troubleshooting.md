@@ -44,8 +44,8 @@ If you:
 
 Scala 2.12 support was dropped, so if you want to migrate to 2.x, we recommend migrating to 1.x before.
 
-On Scala 3 the minimal supported compiler version was raised from 3.3 (LTS) to **3.8.4** - the artifacts are built
-with Scala 3.8.4 (TASTy 28.8), so older Scala 3 compilers cannot consume them.
+On Scala 3 the minimum supported compiler version was raised from 3.3 (LTS) to **3.9.0** - the artifacts are built
+with Scala 3.9.0 (TASTy 28.9), so older Scala 3 compilers cannot consume them.
 
 On the JVM, JDK requirements were raised: Scala 2.13 artifacts require **JDK 11+** and Scala 3 artifacts require
 **JDK 17+** (Chimney's macros are built on top of [Hearth](https://scala-hearth.readthedocs.io/), which is JDK 11+).
@@ -56,7 +56,13 @@ Chimney 2.0.0 no longer requires distinction between:
  - `PartialTransformer` and `PartialTransformer.AutoDerived`
  - `Patcher` and `Patcher.AutoDerived`
 
-to make migration easier, `AutoDerived` still exist but as a type alias.
+To make migration easier, the `AutoDerived` names still exist as type aliases.
+
+The separate `import io.scalaland.chimney.auto._` was also removed. Automatic derivation is now provided by the same
+`Transformer`, `PartialTransformer`, and `Patcher` types used for explicitly defined instances. If you previously
+controlled automatic derivation by importing `auto._` only in selected scopes, configure the
+[derivation policy](cookbook.md#derivation-policy-restricting-where-derivation-may-happen) instead. It can allow
+structural derivation only in designated packages, objects, or classes, with an optional local opt-in import.
 
 Breaking changes in API:
 
