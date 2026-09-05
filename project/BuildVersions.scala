@@ -27,7 +27,7 @@ object versions {
   // to circe/yaml/pureconfig/sconfig derivation + jsoniter singleton enum fixes.
   val kindlingsCatsIntegration = "0.3.2"
   val kindProjector = "0.13.4"
-  val munit = "1.3.5"
+  val munit = "1.3.6"
   val scalaCollectionCompat = "2.14.0"
   val scalaJavaCompat = "1.0.2"
   val scalaJavaTime = "2.7.0"
