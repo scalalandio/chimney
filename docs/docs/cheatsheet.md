@@ -62,7 +62,9 @@ This section is short summary of all Chimney features (described in more detail 
     compilation time) and avoids unnecessary boxing with `partial.Result`.
 
     Chimney 2.x no longer provides `io.scalaland.chimney.auto._`. Automatic derivation is provided from the type-class
-    companions, while `syntax._` and `inlined._` let you choose which extension methods to import.
+    companions, while `syntax._` and `inlined._` let you choose which extension methods to import. Use the
+    [derivation policy](cookbook.md#derivation-policy-restricting-where-derivation-may-happen) to restrict structural
+    derivation to designated scopes.
 
 !!! example "Partial Results"
 

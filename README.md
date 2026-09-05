@@ -15,7 +15,7 @@
 [![Scaladoc 2.13](https://javadoc.io/badge2/io.scalaland/chimney_2.13/scaladoc%202.13.svg)](https://javadoc.io/doc/io.scalaland/chimney_2.13)
 [![Scaladoc 3](https://javadoc.io/badge2/io.scalaland/chimney_3/scaladoc%203.svg)](https://javadoc.io/doc/io.scalaland/chimney_3)
 
-The battle-tested Scala library for data transformations. Supported for (2.13, 3.8.4+) x (JVM, Scala.js, Scala Native).
+The battle-tested Scala library for data transformations. Supported for (2.13, 3.9.0+) x (JVM, Scala.js, Scala Native).
 On the JVM, Scala 2.13 artifacts require JDK 11+ and Scala 3 artifacts require JDK 17+. Powered by [Hearth](https://github.com/kubuszok/hearth).
 
 Chimney documentation is available at https://chimney.readthedocs.io. Read the Docs keeps it versioned in case you need
