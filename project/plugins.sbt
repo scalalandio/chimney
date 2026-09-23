@@ -12,7 +12,7 @@ addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.5.12")
 // publishing
 addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.3.2")
 // MiMa
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.2.0")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.2.1")
 // benchmarks
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.8")
 // disabling projects in IDE
