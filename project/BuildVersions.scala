@@ -21,7 +21,7 @@ object versions {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Dependencies.
-  val hearth = "0.4.2"
+  val hearth = "0.4.2-14-g929c227-SNAPSHOT"
   val cats = "2.13.0"
   // kindlings 0.3.2 is on hearth 0.4.2 (metaspace leak fix, ValueOf evaluation) and adds built-in type rules
   // to circe/yaml/pureconfig/sconfig derivation + jsoniter singleton enum fixes.
