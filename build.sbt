@@ -210,7 +210,7 @@ val mimaSettings = Seq(
     val previousVersions = moduleName.value match {
       case "chimney" | "chimney-cats" | "chimney-protobufs" => Set()
       // TODO: restore after 2.0.0 release
-      case _ => Set()
+      case _ => Set("2.0.0")
     }
     previousVersions.map(organization.value %% moduleName.value % _)
   },
