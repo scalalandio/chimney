@@ -18,30 +18,14 @@ private[compiletime] trait DslDefinitions { this: ChimneyDefinitions & hearth.Ma
   private val pathMarkers =
     Set("matching", "matchingSome", "matchingLeft", "matchingRight", "everyItem", "everyMapKey", "everyMapValue")
 
-  protected def parsePathType(selector: Expr[Any]): Either[String, ??<:[runtime.Path]] = {
-    // Scala 3 context-function selectors (ChimneySelector ?=> From => T) may appear as:
-    //   1. A Block wrapping a val (resolved given) + lambda: { val contextual$N = ...; (x => x.field) }
-    //   2. A nested lambda: (cs => (x => x.field))
-    // In both cases, we need to unwrap to the actual single-param path lambda.
-    def unwrapToLambda(node: DestructuredExpr): Option[DestructuredExpr.Lambda] = node match {
-      case lambda: DestructuredExpr.Lambda => Some(lambda)
-      case block: DestructuredExpr.Block   => unwrapToLambda(block.result)
-      case _                               => None
-    }
-
-    unwrapToLambda(DestructuredExpr.parseUntyped(UntypedExpr.fromTyped(selector))) match {
-      case Some(lambda) if lambda.params.sizeIs == 1 =>
-        // If the body is another single-param lambda, this is a context function wrapper (case 2 above)
-        val (root, body) = lambda.body match {
-          case innerLambda: DestructuredExpr.Lambda if innerLambda.params.sizeIs == 1 =>
-            (innerLambda.params.head, innerLambda.body)
-          case _ =>
-            (lambda.params.head, lambda.body)
-        }
-        parsePathBody(selector, root, body)
+  protected def parsePathType(selector: Expr[Any]): Either[String, ??<:[runtime.Path]] =
+    // Scala 3 context-function selectors (`ChimneySelector ?=> From => T`) arrive wrapped in a contextual lambda or in a
+    // block binding the resolved given (`{ val contextual$N = ...; (x => x.field) }`) - Hearth peels both.
+    DestructuredExpr.skipContextualWrappers(DestructuredExpr.parseUntyped(UntypedExpr.fromTyped(selector))) match {
+      case lambda: DestructuredExpr.Lambda if lambda.params.sizeIs == 1 =>
+        parsePathBody(selector, lambda.params.head, lambda.body)
       case _ => Left(invalidSelectorMessage(selector))
     }
-  }
 
   private def parsePathBody(
       selector: Expr[Any],
@@ -87,17 +71,10 @@ private[compiletime] trait DslDefinitions { this: ChimneyDefinitions & hearth.Ma
 
     mc.method.name match {
       case marker if pathMarkers(marker) && !isPlainAccess =>
-        // On Scala 2 the receiver is hidden inside the implicit-class conversion call (its first value argument);
-        // on Scala 3 Hearth already normalizes the extension receiver into the instance slot.
-        val subject = instance match {
-          case Some(wrapper: DestructuredExpr.MethodCall) if wrapper.method.isImplicit =>
-            wrapper.applied
-              .collectFirst {
-                case av: DestructuredExpr.MethodCall.AppliedValues if av.args.nonEmpty => av.args.head
-              }
-              .getOrElse(wrapper)
-          case Some(direct) => direct
-          case None         => return Left(invalidSelectorMessage(selector))
+        // `receiver` sees through the implicit-class conversion (Scala 2) as well as extension methods (Scala 3)
+        val subject = mc.receiver match {
+          case Some(subject) => subject
+          case None          => return Left(invalidSelectorMessage(selector))
         }
         recurse(subject).flatMap { init =>
           (marker, markerTypeArgs) match {
@@ -141,7 +118,9 @@ private[compiletime] trait DslDefinitions { this: ChimneyDefinitions & hearth.Ma
 
   private def isExternalIdentifier(node: DestructuredExpr): Boolean = node match {
     case _: DestructuredExpr.Singleton => true
-    // A local val/var reference: an identifier the destructurer could not resolve further.
+    // A local val/var (or a parameter of the enclosing method) - defined outside of the selector lambda.
+    case _: DestructuredExpr.LocalReference => true
+    // e.g. `this` - an identifier the destructurer could not resolve further.
     case nd: DestructuredExpr.NonDestructurable => isSimpleIdentifier(nd.description)
     case _                                      => false
   }
