@@ -25,7 +25,7 @@ object versions {
   val cats = "2.13.0"
   // kindlings 0.3.2 is on hearth 0.4.2 (metaspace leak fix, ValueOf evaluation) and adds built-in type rules
   // to circe/yaml/pureconfig/sconfig derivation + jsoniter singleton enum fixes.
-  val kindlingsCatsIntegration = "0.3.2"
+  val kindlingsCatsIntegration = "0.3.3"
   val kindProjector = "0.13.4"
   val munit = "1.3.6"
   val scalaCollectionCompat = "2.14.0"
