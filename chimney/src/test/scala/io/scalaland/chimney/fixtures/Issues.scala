@@ -395,3 +395,30 @@ object Issue960 {
   case class PublicTarget(x: PublicU[String], y: Int)
   case class PublicPatch(x: PublicU[String])
 }
+
+object Issue966 {
+  import io.scalaland.chimney.{PartialTransformer, Transformer}
+  import io.scalaland.chimney.partial.Result
+
+  final case class Dto(Id: String, LeadId: Option[String], ContactId: Option[String])
+  final case class View(id: String, prospect: String)
+  final case class Empty()
+
+  // failFast is not used when there is at most 1 partial field
+  val dtoToView: PartialTransformer[Dto, View] =
+    Transformer
+      .definePartial[Dto, View]
+      .withFieldRenamed(_.Id, _.id)
+      .withFieldComputedPartial(_.prospect, dto => Result.fromOption(dto.ContactId.orElse(dto.LeadId)))
+      .buildTransformer
+
+  // the source is not used when all fields are constant
+  val totalConstOnly: Transformer[Dto, View] =
+    Transformer.define[Dto, View].withFieldConst(_.id, "const").withFieldConst(_.prospect, "const").buildTransformer
+  val partialConstOnly: PartialTransformer[Dto, View] =
+    Transformer
+      .definePartial[Dto, View]
+      .withFieldConst(_.id, "const")
+      .withFieldConst(_.prospect, "const")
+      .buildTransformer
+}
