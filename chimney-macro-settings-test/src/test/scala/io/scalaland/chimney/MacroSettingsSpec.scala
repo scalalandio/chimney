@@ -6,8 +6,8 @@ import io.scalaland.chimney.dsl.*
   * `chimney.SuppressWarnings`), so the generated code is annotated with both `@SuppressWarnings` and `@nowarn`.
   *
   * The regression check is that this spec COMPILES: a position-less `@nowarn` used to crash Scala 2 with
-  * `UnsupportedOperationException: Position.point on NoPosition`
-  * (https://github.com/scalalandio/chimney/issues/966); the derived values are asserted for good measure.
+  * `UnsupportedOperationException: Position.point on NoPosition` (https://github.com/scalalandio/chimney/issues/966);
+  * the derived values are asserted for good measure.
   */
 class MacroSettingsSpec extends ChimneySpec {
   import MacroSettingsSpec.*
