@@ -242,6 +242,7 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
       "chimneyCats",
       "chimneyProtobufs",
       if (isJVM) "chimneyJavaCollections" else "",
+      if (isJVM) "chimneyMacroSettingsTest" else "",
       if (isSandwichable) "chimneySandwichTests" else ""
     )
     if name.nonEmpty
@@ -284,6 +285,7 @@ lazy val root = project
   .aggregate(chimneyChimneyExtensionTest.projectRefs *)
   .aggregate(chimneyCats.projectRefs *)
   .aggregate(chimneyJavaCollections.projectRefs *)
+  .aggregate(chimneyMacroSettingsTest.projectRefs *)
   .aggregate(chimneyProtobufs.projectRefs *)
   .aggregate(chimneySandwichTests.projectRefs *)
   .settings(
@@ -487,6 +489,31 @@ lazy val chimneyJavaCollections = projectMatrix
   .settings(noPublishSettings *)
   .settings(
     mimaFailOnNoPrevious := false // this module is not published
+  )
+  .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
+
+// Test-only module: -Xmacro-settings apply to the whole compilation, so the generated code's annotations configured with
+// them (chimney.nowarn, chimney.SuppressWarnings) can only be tested in a separate module. It is not used for the main
+// test suite, since @nowarn could hide the warnings that it should catch in the generated code.
+lazy val chimneyMacroSettingsTest = projectMatrix
+  .in(file("chimney-macro-settings-test"))
+  .someVariations(versions.scalas, List(VirtualAxis.jvm))(only1VersionInIDE *)
+  .enablePlugins(GitVersioning, GitBranchPrompt)
+  .disablePlugins(WelcomePlugin, ProtocPlugin)
+  .settings(
+    moduleName := "chimney-macro-settings-test",
+    name := "chimney-macro-settings-test",
+    description := "Tests of the generated code annotations configured with -Xmacro-settings"
+  )
+  .settings(settings *)
+  .settings(publishSettings *)
+  .settings(noPublishSettings *)
+  .settings(
+    mimaFailOnNoPrevious := false, // this module is not published
+    Test / scalacOptions ++= Seq(
+      "-Xmacro-settings:chimney.nowarn=true",
+      "-Xmacro-settings:chimney.SuppressWarnings=org.wartremover.warts.All;all"
+    )
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 

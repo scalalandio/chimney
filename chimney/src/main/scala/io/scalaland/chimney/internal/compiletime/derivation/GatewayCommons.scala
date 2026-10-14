@@ -172,7 +172,7 @@ private[compiletime] trait GatewayCommons {
         if (value == "none") None else if (value == "true") Option(None) else Option(Some(value))
       case (cfg, _) => cfg
     }
-    val nowarnedExpr = nowarnCfg.fold(suppressedWarningsExpr)(nowarnExpr(_)(expr))
+    val nowarnedExpr = nowarnCfg.fold(suppressedWarningsExpr)(nowarnExpr(_)(suppressedWarningsExpr))
 
     nowarnedExpr
   }
