@@ -377,3 +377,21 @@ object Issue899 {
   }
   case class B()
 }
+
+object Issue960 {
+  // A type alias whose arguments don't line up with the aliased class's type params (3 params vs 1 argument) used to
+  // crash Scala 3 Patcher derivation with an IndexOutOfBoundsException in `Substituters.substParams`.
+  final class P[R, E, A] private (val a: Int)
+  object P { def make[A](a: Int): P[Any, Nothing, A] = new P(a) }
+  type U[A] = P[Any, Nothing, A]
+
+  case class Target(x: U[String], y: Int)
+  case class Patch(x: U[String])
+
+  // Same with a public constructor - it crashed already on 1.11.0.
+  final class PublicP[R, E, A](val a: Int)
+  type PublicU[A] = PublicP[Any, Nothing, A]
+
+  case class PublicTarget(x: PublicU[String], y: Int)
+  case class PublicPatch(x: PublicU[String])
+}
