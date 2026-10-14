@@ -103,4 +103,32 @@ class IssuesScala3Spec extends ChimneySpec {
     }
   }
 
+  group("fix issue #962 (transforming opaque types into Options of opaque types)") {
+    import io.scalaland.chimney.fixtures.issue962.*
+
+    test("opaque type into the same opaque type") {
+      Foo(MyInt(1), MyString("x")).transformInto[Bar] ==> Bar(MyInt(1), MyString("x"))
+    }
+
+    test("opaque type into Option of the same opaque type") {
+      Foo(MyInt(1), MyString("x")).transformInto[Baz] ==> Baz(Some(MyInt(1)), Some(MyString("x")))
+      Foo(MyInt(1), MyString("x")).transformIntoPartial[Baz].asOption ==> Some(
+        Baz(Some(MyInt(1)), Some(MyString("x")))
+      )
+    }
+
+    test("Option of opaque type into opaque type") {
+      Baz(Some(MyInt(1)), Some(MyString("x"))).transformIntoPartial[Foo].asOption ==> Some(
+        Foo(MyInt(1), MyString("x"))
+      )
+      Baz(None, Some(MyString("x"))).transformIntoPartial[Foo].asOption ==> None
+    }
+
+    test("opaque type into Option of its underlying type and back") {
+      MyString("x").transformInto[Option[String]] ==> Some("x")
+      MyInt(1).transformInto[Option[Int]] ==> Some(1)
+      "x".transformInto[Option[MyString]] ==> Some(MyString("x"))
+      1.transformInto[Option[MyInt]] ==> Some(MyInt(1))
+    }
+  }
 }

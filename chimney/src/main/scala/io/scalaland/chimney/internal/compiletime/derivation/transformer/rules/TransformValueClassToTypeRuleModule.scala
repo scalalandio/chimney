@@ -35,7 +35,9 @@ private[compiletime] trait TransformValueClassToTypeRuleModule {
           if (ctx.config.areOverridesEmpty) {
             import from2.{Underlying as InnerFrom, value as valueFrom}
             // Extension-provided value types skip the flag - see ValueClasses.WrapperClass.fromStdExtension.
-            if (ctx.config.flags.nonAnyValWrappers || valueFrom.fromStdExtension) {
+            if (valueFrom.fromStdExtension && isOptionalTarget[To])
+              attemptNextRuleBecause(extensionValueTypeIntoOptionalReason)
+            else if (ctx.config.flags.nonAnyValWrappers || valueFrom.fromStdExtension) {
               unwrapAndTransform[From, To, InnerFrom](valueFrom.fieldName, valueFrom.unwrap)
             } else
               attemptNextRuleBecause("Unwrapping from non-AnyVal wrapper types was disabled by a flag")
@@ -46,10 +48,23 @@ private[compiletime] trait TransformValueClassToTypeRuleModule {
           // flag - see ValueClasses.WrapperClass.fromStdExtension for the rationale.
           if (ctx.config.areOverridesEmpty) {
             import from2.{Underlying as InnerFrom, value as valueFrom}
-            unwrapAndTransform[From, To, InnerFrom](valueFrom.fieldName, valueFrom.unwrap)
+            if (isOptionalTarget[To]) attemptNextRuleBecause(extensionValueTypeIntoOptionalReason)
+            else unwrapAndTransform[From, To, InnerFrom](valueFrom.fieldName, valueFrom.unwrap)
           } else attemptNextRuleBecause("Configuration has defined overrides")
         case _ => attemptNextRule
       }
+
+    // Extension-provided value types (Scala 3 opaque types, Hearth IsValueType providers) were not value types at all
+    // in Chimney 1.x, so `MyOpaque -> Option[MyOpaque]` was lifted by ToOption (`Option(src)`) instead of being unwrapped
+    // and re-wrapped through the smart constructor. Defer to ToOption for optional targets to keep that behavior (and
+    // its null-safety); the wrapper is still unwrapped by the recursive `From -> InnerTo` derivation if needed. AnyVals
+    // keep their (1.x) unwrapping here. See https://github.com/scalalandio/chimney/issues/962.
+    private def isOptionalTarget[To: Type]: Boolean = Type[To] match {
+      case OptionalValue(_) => true
+      case _                => false
+    }
+    private val extensionValueTypeIntoOptionalReason =
+      "Extension-provided value types are lifted into optional targets by the ToOption rule"
 
     private def unwrapAndTransform[From, To, InnerFrom: Type](
         innerFromFieldName: String,
