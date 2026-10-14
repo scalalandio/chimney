@@ -1024,4 +1024,18 @@ class IssuesSpec extends ChimneySpec {
     // CyclicReference); this asserts the derived value for good measure.
     A().foo ==> B()
   }
+
+  test("fix issue #960 (patching field with type alias not lining up with the class' type params)") {
+    import Issue960.*
+
+    val patched = Target(P.make(1), 2).patchUsing(Patch(P.make(3)))
+    patched.x.a ==> 3
+    patched.y ==> 2
+
+    val publicPatched =
+      PublicTarget(new PublicP[Any, Nothing, String](1), 2)
+        .patchUsing(PublicPatch(new PublicP[Any, Nothing, String](3)))
+    publicPatched.x.a ==> 3
+    publicPatched.y ==> 2
+  }
 }
