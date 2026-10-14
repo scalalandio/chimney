@@ -159,7 +159,7 @@ class PartialTransformerJavaEnumSpec extends ChimneySpec {
     test(
       """transform from Java Enum "superset" instances to sealed hierarchy "subset" of case objects when user-provided mapping handled additional cases"""
     ) {
-      def blackIsRed(b: jcolors2.Color.Black.type): partial.Result[colors1.Color] =
+      def blackIsRed(@unused b: jcolors2.Color.Black.type): partial.Result[colors1.Color] =
         partial.Result.fromEmpty
 
       (jcolors2.Color.Black: jcolors2.Color)
@@ -193,7 +193,7 @@ class PartialTransformerJavaEnumSpec extends ChimneySpec {
     test(
       """transform from Java Enum "superset" instances to sealed hierarchy "subset" of case objects when user-provided mapping handled additional cases"""
     ) {
-      def blackIsRed(b: jcolors2.Color.Black.type): partial.Result[colors1.Color] =
+      def blackIsRed(@unused b: jcolors2.Color.Black.type): partial.Result[colors1.Color] =
         partial.Result.fromEmpty
 
       (jcolors2.Color.Black: jcolors2.Color)

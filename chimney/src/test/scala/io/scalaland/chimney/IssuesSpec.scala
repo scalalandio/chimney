@@ -1038,4 +1038,15 @@ class IssuesSpec extends ChimneySpec {
     publicPatched.x.a ==> 3
     publicPatched.y ==> 2
   }
+
+  test("fix issue #966 (generated params unused by the derived body should not trigger -Wunused:params on Scala 2)") {
+    import Issue966.*
+
+    // The regression check is that this spec COMPILES: Scala 2.13 tests are compiled with
+    // -Wunused:params -Ywarn-macros:after -Xfatal-warnings; this asserts the derived values for good measure.
+    dtoToView.transform(Dto("id", Some("lead"), None)).asOption ==> Some(View("id", "lead"))
+    totalConstOnly.transform(Dto("id", None, None)) ==> View("const", "const")
+    partialConstOnly.transform(Dto("id", None, None)).asOption ==> Some(View("const", "const"))
+    Dto("id", None, None).patchUsing(Empty()) ==> Dto("id", None, None)
+  }
 }

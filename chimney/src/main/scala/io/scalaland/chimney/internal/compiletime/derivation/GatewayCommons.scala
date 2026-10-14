@@ -149,7 +149,10 @@ private[compiletime] trait GatewayCommons {
     }
 
   /** Adds @SuppressWarnings/@nowarn annotation the generated code - allows customizing it with a compiler flag. */
-  protected def suppressWarnings[A: Type](expr: Expr[A]): Expr[A] = {
+  protected def suppressWarnings[A: Type](exprWithUnusedParams: Expr[A]): Expr[A] = {
+    // Every derivation passes through here, so it is the single place to mark generated params as used (see #966).
+    val expr = suppressUnusedGeneratedParamsCompat(exprWithUnusedParams)
+
     // Add @SuppressWarnings(...) to the expr:
     // - by default use: "org.wartremover.warts.All" (WartRemover) and "all" (Scapegoat)
     // - overridden with "-Xmacro-settings:chimney.SuppressWarnings=value"

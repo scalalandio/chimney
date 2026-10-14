@@ -136,7 +136,11 @@ val settings = Seq(
       "-Wconf:msg=unused local definition:s", // silence warn that appears since 3.3.7
       "-Wconf:msg=with as a type operator has been deprecated:s" // silence deprecation of `with` in Scala 3.4+
     ),
-    for2_13 = Seq.empty
+    for2_13 = Seq(
+      // Combined with -Ywarn-macros:after it checks the macro-generated code: users with sbt-tpolecat have it enabled
+      // and the warnings have no position, so they cannot @nowarn them (https://github.com/scalalandio/chimney/issues/966)
+      "-Wunused:params"
+    )
   ),
   Compile / doc / scalacOptions ++= versions.fold(scalaVersion.value)(
     for3 = Seq("-Ygenerate-inkuire"), // type-based search for Scala 3, this option cannot go into compile
