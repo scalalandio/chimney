@@ -18,7 +18,7 @@ val mavenCentralSnapshots = "Maven Central Snapshots" at "https://central.sonaty
 
 // TODO: remove this once we have a release of Scala 2.13.17
 Global / resolvers += "scala-integration" at "https://scala-ci.typesafe.com/artifactory/scala-integration/"
-// TODO: remove once Hearth 0.4.3 is released - needed to test against its PR snapshot.
+// TODO: remove once Hearth with kubuszok/hearth#388 is released - needed to test against its PR snapshot.
 Global / resolvers += mavenCentralSnapshots
 
 // Versions:
