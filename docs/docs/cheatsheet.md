@@ -154,7 +154,7 @@ All flags and overrides are described in more detail in the [Supported Transform
     Override names are constructed in the following way:
 
      * they start with the target of on override:
-        * `withConstructor` - instead of using the primary contructor, provided constructor should be used
+        * `withConstructor` - instead of using the primary constructor, provided constructor should be used
         * `withFallback` - when the source value is missing a field, this value would be used next
         * `withField` - instead of using the source field matched by name/position (in case of tuples), this value/function should be used
         * `withSealedSubtype`/`withEnumCase` - instead of using the target subtype matched by name, this function should be used

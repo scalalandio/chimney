@@ -124,7 +124,7 @@ else
   expr.withFieldConst(_.c, 4.0).transform
 ```
 
-That's why it is simpy easier to treat each modifier method as a checkpoint which would store all the added information
+That's why it is simply easier to treat each modifier method as a checkpoint which would store all the added information
 in the value's type.
 
 There are actually 2 sets of configuration options that are stored by DSL in type level:
