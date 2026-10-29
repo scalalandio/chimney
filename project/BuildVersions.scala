@@ -31,7 +31,7 @@ object versions {
   val munit = "1.3.6"
   val scalaCollectionCompat = "2.14.0"
   val scalaJavaCompat = "1.0.2"
-  val scalaJavaTime = "2.7.0"
+  val scalaJavaTime = "2.9.0"
   val scalapbRuntime = scalapb.compiler.Version.scalapbVersion
 
   // Explicitly handle Scala 2.13 and Scala 3 separately.
