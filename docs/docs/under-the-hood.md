@@ -702,10 +702,13 @@ able to pass them into macro.
 
 !!! note "Building Chimney from source"
 
-    Because of cross-quotes, compiling Chimney's (or any Hearth-based) Scala 3 sources requires Hearth's
-    `hearth-cross-quotes` **compiler plugin** (Chimney's `build.sbt` already configures it - this only matters if
-    you vendor the sources into your own build). Hearth also sets the JDK baseline: **JDK 11+** for Scala 2.13
-    and **JDK 17+** for Scala 3 artifacts.
+    Chimney's sources are shared between Scala 2.13 and Scala 3 using cross-quotes, so compiling them on Scala 3
+    requires Hearth's `hearth-cross-quotes` **compiler plugin** (Chimney's `build.sbt` already configures it - this
+    only matters if you vendor the sources into your own build). The same applies to any Hearth-based code that uses
+    `Expr.quote`/`Expr.splice` on Scala 3, e.g. a cross-compiled
+    [macro extension](cookbook.md#hearth-macro-extensions). **Using** Chimney or its integrations requires no
+    compiler plugin. Hearth also sets the JDK baseline: **JDK 11+** for Scala 2.13 and **JDK 17+** for Scala 3
+    artifacts.
 
 ### Debugging and profiling the macros
 

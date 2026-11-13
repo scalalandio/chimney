@@ -21,17 +21,16 @@ import io.scalaland.chimney.partial
   *     they can reproduce total/partial asymmetry and honour `enableImplicitConflictResolution`.
   *
   * The re-exposed `SpecialCase*`/`DerivedExpr` aliases exist because the engine types they point at
-  * (`TransformationContext`, `Rule.ExpansionResult`, `TransformationExpr`) are `protected`; the aliases are
-  * `private[chimney]` so that separately-compiled IN-TREE integration artifacts (`chimney-protobufs`,
-  * `chimney-engine-test-extension`) can name them. Promoting the SPI to fully public API is a follow-up once the shape
-  * is signed off.
+  * (`TransformationContext`, `Rule.ExpansionResult`, `TransformationExpr`) are `protected`; the aliases are public so
+  * that separately-compiled integration artifacts (in-tree ones like `chimney-protobufs`/`chimney-cats`, as well as
+  * third-party ones) can name them.
   *
   * CROSS-QUOTES CONTRACT: a handler's produced `Expr` and any `Expr`s recursively derived through [[deriveInner]] are
   * built lazily, INSIDE the running derivation program (the `MIO` returned by `specialCase` is only run while the
   * special-cased rule expands, i.e. inside the splicing context) - exactly like the built-in
   * `TransformImplicitOuterTransformerRule`, so the pieces compose without owner/scope violations.
   */
-private[chimney] trait ChimneyEngineExtensionApi extends Contexts with rules.TransformationRules {
+trait ChimneyEngineExtensionApi extends Contexts with rules.TransformationRules {
   this: Derivation & hearth.MacroCommons =>
 
   /** The derivation context for a special-cased pair (total or partial, with config/flags/src/fallbacks). Its members
@@ -44,7 +43,7 @@ private[chimney] trait ChimneyEngineExtensionApi extends Contexts with rules.Tra
 
   /** A handler registered by an integration. Asked - via [[IsChimneySpecialCased]] - whether it special-cases a pair.
     */
-  private[chimney] trait SpecialCaseHandler {
+  trait SpecialCaseHandler {
 
     /** Return `Some(handler)` iff this extension special-cases the `(From, To)` pair, else `None`. */
     def apply[From, To](implicit From: Type[From], To: Type[To]): Option[SpecialCasedTransformation[From, To]]
@@ -54,7 +53,7 @@ private[chimney] trait ChimneyEngineExtensionApi extends Contexts with rules.Tra
     * when it produces a transformation, or `None` to DECLINE after matching by type (e.g. no total path in a total
     * context) so derivation continues with the next rule.
     */
-  private[chimney] trait SpecialCasedTransformation[From, To] {
+  trait SpecialCasedTransformation[From, To] {
 
     /** Build the transformation for the (already matched) `(From, To)` pair, deferring inner values via
       * [[deriveInner]].
@@ -65,7 +64,7 @@ private[chimney] trait ChimneyEngineExtensionApi extends Contexts with rules.Tra
   private val specialCaseHandlers = scala.collection.mutable.ListBuffer.empty[SpecialCaseHandler]
 
   /** Register a handler (call from `ChimneyMacroExtension.extend`). First registered, first asked. */
-  private[chimney] def registerSpecialCase(handler: SpecialCaseHandler): Unit = {
+  def registerSpecialCase(handler: SpecialCaseHandler): Unit = {
     specialCaseHandlers += handler
     ()
   }
@@ -78,7 +77,7 @@ private[chimney] trait ChimneyEngineExtensionApi extends Contexts with rules.Tra
     * }
     * }}}
     */
-  private[chimney] object IsChimneySpecialCased {
+  object IsChimneySpecialCased {
 
     def unapply[From, To](types: (Type[From], Type[To])): Option[SpecialCasedTransformation[From, To]] = {
       implicit val from: Type[From] = types._1
@@ -90,21 +89,21 @@ private[chimney] trait ChimneyEngineExtensionApi extends Contexts with rules.Tra
   // Result builders re-exposed for handler authors (they never touch `Rule.ExpansionResult`/`TransformationExpr.*`).
 
   /** Yield a total transformation `Expr[To]`. */
-  private[chimney] def specialCasedTotal[To](expr: Expr[To]): MIO[Option[DerivedExpr[To]]] =
+  def specialCasedTotal[To](expr: Expr[To]): MIO[Option[DerivedExpr[To]]] =
     MIO.pure(Some(TransformationExpr.fromTotal(expr)))
 
   /** Yield a partial transformation `Expr[partial.Result[To]]`. */
-  private[chimney] def specialCasedPartial[To](expr: Expr[partial.Result[To]]): MIO[Option[DerivedExpr[To]]] =
+  def specialCasedPartial[To](expr: Expr[partial.Result[To]]): MIO[Option[DerivedExpr[To]]] =
     MIO.pure(Some(TransformationExpr.fromPartial(expr)))
 
   /** Yield an already-built (total or partial) [[DerivedExpr]] (e.g. one composed out of [[deriveInner]] results). */
-  private[chimney] def specialCasedExpr[To](expr: DerivedExpr[To]): MIO[Option[DerivedExpr[To]]] = MIO.pure(Some(expr))
+  def specialCasedExpr[To](expr: DerivedExpr[To]): MIO[Option[DerivedExpr[To]]] = MIO.pure(Some(expr))
 
   /** Decline this pair AFTER matching by type (e.g. no total path in a total context) - derivation continues. */
-  private[chimney] def specialCaseYield[To]: MIO[Option[DerivedExpr[To]]] = MIO.pure(None)
+  def specialCaseYield[To]: MIO[Option[DerivedExpr[To]]] = MIO.pure(None)
 
   /** Defer an inner value to the full rule pipeline recursively (the mechanism the OUTER handler builds around). */
-  private[chimney] def deriveInner[InnerFrom: Type, InnerTo: Type](
+  def deriveInner[InnerFrom: Type, InnerTo: Type](
       inner: Expr[InnerFrom]
   )(implicit ctx: SpecialCaseContext[?, ?]): MIO[DerivedExpr[InnerTo]] =
     deriveRecursiveTransformationExpr[InnerFrom, InnerTo](inner)
@@ -125,7 +124,7 @@ private[chimney] trait ChimneyEngineExtensionApi extends Contexts with rules.Tra
     * Mirrors the built-in `TransformImplicitOuterTransformerRule`, so the produced pieces compose under the
     * cross-quotes contract exactly like a summoned `TotalOuterTransformer` would.
     */
-  private[chimney] def specialCasedOuterMap[From, To, InnerFrom: Type, InnerTo: Type](
+  def specialCasedOuterMap[From, To, InnerFrom: Type, InnerTo: Type](
       onTotalInner: Expr[InnerFrom => InnerTo] => Expr[To]
   )(
       onPartialInner: (Expr[InnerFrom => partial.Result[InnerTo]], Expr[Boolean]) => Expr[partial.Result[To]]
@@ -154,14 +153,14 @@ private[chimney] trait ChimneyEngineExtensionApi extends Contexts with rules.Tra
   // Context accessors (the context's own members stay `protected`; these facade helpers reach them from inside the cake).
 
   /** The source expression being transformed. */
-  private[chimney] def sourceOf[From, To](implicit ctx: SpecialCaseContext[From, To]): Expr[From] = ctx.src
+  def sourceOf[From, To](implicit ctx: SpecialCaseContext[From, To]): Expr[From] = ctx.src
 
   /** `true` in a partial (`PartialTransformer`/`transformIntoPartial`) context, `false` in a total one. */
-  private[chimney] def isPartialContext(implicit ctx: SpecialCaseContext[?, ?]): Boolean =
+  def isPartialContext(implicit ctx: SpecialCaseContext[?, ?]): Boolean =
     ctx.fold(_ => false)(_ => true)
 
   /** `true` iff the user set `enableImplicitConflictResolution(PreferPartialTransformer)`. */
-  private[chimney] def prefersPartialTransformer(implicit ctx: SpecialCaseContext[?, ?]): Boolean =
+  def prefersPartialTransformer(implicit ctx: SpecialCaseContext[?, ?]): Boolean =
     ctx.config.flags.implicitConflictResolution.contains(PreferPartialTransformer)
 
   // Load handlers once per macro-bundle instance (mirrors `ensureStandardExtensionsLoaded`).

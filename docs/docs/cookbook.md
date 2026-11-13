@@ -4468,6 +4468,20 @@ A minimal `IsValueType` extension (making `MyWrapper` wrap/unwrap like an `AnyVa
 cross-platform `Type`/`Expr`/`Expr.quote` API - see
 [Hearth's documentation](https://scala-hearth.readthedocs.io/) for details):
 
+!!! note "Do I need cross-quotes?"
+
+    The examples in this and the next section use Hearth's
+    [cross-quotes](https://scala-hearth.readthedocs.io/en/stable/cross-quotes/) (`Expr.quote`/`Expr.splice`), so
+    that **one** source compiles for both Scala 2.13 and Scala 3. You only need them (and, on Scala 3, Hearth's
+    `hearth-cross-quotes` compiler plugin) if you want to cross-compile your macro extension like that. An extension
+    built for only one Scala version can use that version's native API instead (Scala 3 `'{ ... }`/`${ ... }` quotes,
+    Scala 2 quasiquotes/`c.Expr`) - see
+    [Hearth's basic utilities](https://scala-hearth.readthedocs.io/en/stable/basic-utilities/) for how to use Hearth
+    with Scala-2-only or Scala-3-only macros.
+
+    Integrations that do not ship a macro extension at all (the type-class-based ones from the previous sections) and
+    your users don't need cross-quotes or any compiler plugin.
+
 !!! example
 
     ```scala
@@ -4638,18 +4652,17 @@ value to the engine) looks like this:
 
     Real-world example to crib from: Chimney's own
     [`ProtobufsChimneyMacroExtension`](https://github.com/scalalandio/chimney/blob/master/chimney-protobufs/src/main/scala/io/scalaland/chimney/protobufs/internal/compiletime/ProtobufsChimneyMacroExtension.scala)
-    (the `Duration` family + `Empty`). The same cross-quotes caveats as for Hearth extensions apply (see the warning in
-    the previous section) - additionally, avoid referencing package-object/`enum` **constants** inside `Expr.quote` on
-    Scala 2 (they reify by simple name and fail to resolve downstream - use a companion **method** instead, e.g.
-    `scala.concurrent.duration.Duration.fromNanos(...)` rather than the `SECONDS` `TimeUnit` constant), and do not name
-    the implicit `SpecialCaseContext` parameter `ctx` (it would shadow the extension `ctx` that `import ctx.*` relies
-    on).
+    (the `Duration` family + `Empty`). If you use cross-quotes, the same caveats as for Hearth extensions apply (see
+    the warning in the previous section) - additionally, avoid referencing package-object/`enum` **constants** inside
+    `Expr.quote` on Scala 2 (they reify by simple name and fail to resolve downstream - use a companion **method**
+    instead, e.g. `scala.concurrent.duration.Duration.fromNanos(...)` rather than the `SECONDS` `TimeUnit` constant).
+    Also, do not name the implicit `SpecialCaseContext` parameter `ctx` (it would shadow the extension `ctx` that
+    `import ctx.*` relies on).
 
-!!! warning
+!!! note
 
-    `ChimneyMacroExtension` and `ChimneyEngineExtensionApi` are currently `private[chimney]` (usable by in-tree
-    integration modules while the shape is finalized); the SPI is expected to be promoted to a fully public, stable API
-    in a subsequent release.
+    Although `ChimneyEngineExtensionApi` lives in the `internal.compiletime` package (next to the derivation engine it
+    exposes), it is - like `ChimneyMacroExtension` - public and meant to be used by third-party integrations.
 
 ### Third-party integrations
 

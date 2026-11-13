@@ -1,4 +1,4 @@
-package io.scalaland.chimney.chimneyextensiontest
+package thirdparty.chimneyextensiontest
 
 /** Special-cased leaf, supported EXCLUSIVELY through the engine-aware [[TestChimneyMacroExtension]] (a
   * `ChimneyMacroExtension` handler): private constructor, no structural single-field/value-class shape and no implicit -

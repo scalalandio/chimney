@@ -1,4 +1,4 @@
-package io.scalaland.chimney.chimneyextensiontest
+package thirdparty.chimneyextensiontest
 
 import hearth.MacroCommons
 import hearth.fp.effect.MIO
@@ -41,7 +41,7 @@ final class TestChimneyMacroExtension extends ChimneyMacroExtension { loader =>
         ): MIO[scala.Option[DerivedExpr[TestSpecialLeaf]]] =
           specialCasedTotal(
             Expr.quote(
-              io.scalaland.chimney.chimneyextensiontest.TestSpecialLeaf.wrap(Expr.splice(sourceOf(context)))
+              thirdparty.chimneyextensiontest.TestSpecialLeaf.wrap(Expr.splice(sourceOf(context)))
             )
           )
       }
@@ -57,7 +57,7 @@ final class TestChimneyMacroExtension extends ChimneyMacroExtension { loader =>
             scala.util.Try(s.trim.toInt).toOption match {
               case scala.Some(i) =>
                 io.scalaland.chimney.partial.Result.fromValue(
-                  io.scalaland.chimney.chimneyextensiontest.TestSpecialLeaf.wrap(i)
+                  thirdparty.chimneyextensiontest.TestSpecialLeaf.wrap(i)
                 )
               case scala.None => io.scalaland.chimney.partial.Result.fromErrorString("not a number: " + s)
             }
@@ -86,7 +86,7 @@ final class TestChimneyMacroExtension extends ChimneyMacroExtension { loader =>
                 firstDerived.flatMap[TestSpecialBox2[C, D]] { (cExpr: Expr[C]) =>
                   secondDerived.map[TestSpecialBox2[C, D]] { (dExpr: Expr[D]) =>
                     Expr.quote(
-                      io.scalaland.chimney.chimneyextensiontest.TestSpecialBox2
+                      thirdparty.chimneyextensiontest.TestSpecialBox2
                         .of[C, D](Expr.splice(cExpr), Expr.splice(dExpr))
                     )
                   }
