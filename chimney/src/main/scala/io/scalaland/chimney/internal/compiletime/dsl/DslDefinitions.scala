@@ -142,13 +142,15 @@ private[compiletime] trait DslDefinitions { this: ChimneyDefinitions & hearth.Ma
     }
     if (!isNamedTupleModule) None
     else {
-      val valueClauses = mc.applied.collect { case av: DestructuredExpr.MethodCall.AppliedValues => av.args }
+      // `(subject)(nameIdx)` may arrive as two `AppliedValues` steps or as one merged step (Hearth merges value
+      // clauses that do not depend on each other), so read the arguments positionally across all value clauses.
+      val valueArgs = mc.applied.collect { case av: DestructuredExpr.MethodCall.AppliedValues => av.args }.flatten
       for {
         names <- mc.applied
           .collectFirst { case at: DestructuredExpr.MethodCall.AppliedTypes => at.typeArgs }
           .flatMap(_.headOption)
-        subject <- valueClauses.headOption.flatMap(_.headOption)
-        index <- valueClauses.lift(1).flatMap(_.headOption).collect { case literal: DestructuredExpr.Literal =>
+        subject <- valueArgs.headOption
+        index <- valueArgs.lift(1).collect { case literal: DestructuredExpr.Literal =>
           literal.value
         } match {
           case Some(i: Int) => Some(i)

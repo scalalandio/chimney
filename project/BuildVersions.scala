@@ -21,8 +21,8 @@ object versions {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Dependencies.
-  // TODO: switch to a release once kubuszok/hearth#388 (Chimney #962 fix, master aded1a31) is released
-  val hearth = "0.4.3-4-gaded1a3-SNAPSHOT"
+  // TODO: switch to a release once kubuszok/hearth#396 and #401 (master c2c1ffe) are released
+  val hearth = "0.4.3-79-gc2c1ffe-SNAPSHOT"
   val cats = "2.13.0"
   // kindlings 0.3.2 is on hearth 0.4.2 (metaspace leak fix, ValueOf evaluation) and adds built-in type rules
   // to circe/yaml/pureconfig/sconfig derivation + jsoniter singleton enum fixes.
