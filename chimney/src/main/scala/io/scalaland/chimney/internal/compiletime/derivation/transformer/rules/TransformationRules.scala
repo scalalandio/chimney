@@ -67,7 +67,7 @@ private[compiletime] trait TransformationRules { this: Derivation & hearth.Macro
 
   /** Let us store both `Expr[A]` and `Expr[partial.Result[A]]` as one type for convenience.
     *
-    * Public (not `protected`): re-exposed to in-tree integration artifacts by the engine-aware macro-extension SPI
+    * Public (not `protected`): re-exposed to integration artifacts by the engine-aware macro-extension SPI
     * (`ChimneyEngineExtensionApi`) as `DerivedExpr`, so a handler can compose the results of `deriveInner` recursive
     * derivations (a `private[chimney]` type member does not resolve cross-file through a path on Scala 3). It lives in
     * the mima-excluded `internal.compiletime` package; its `TotalExpr`/`PartialExpr` cases stay `protected`.

@@ -103,10 +103,13 @@ Breaking changes in API:
       all** (just keep `chimney-protobufs` on the classpath)
     - `import io.scalaland.chimney.protobufs._` is still needed for `Empty`, the `Duration` family, empty `oneof`
       handling, `UnrecognizedEnum` and `DefaultValue[UnknownFieldSet]`
-  - if you build Chimney (or a Hearth-based macro library) **from source**: the Scala 3 sources require Hearth's
+  - if you build Chimney **from source**: its Scala 3 sources use cross-quotes and require Hearth's
     `hearth-cross-quotes` compiler plugin (see
     [Under the Hood](under-the-hood.md#scala-2-vs-scala-3-in-derivation)) - Chimney's own `build.sbt` configures it
-    already, this only matters when vendoring the sources into another build
+    already, this only matters when vendoring the sources into another build. Writing a macro extension needs the
+    plugin only if it is cross-compiled for Scala 2 and 3 with cross-quotes (see
+    [Hearth macro extensions](cookbook.md#hearth-macro-extensions)); using Chimney and its integrations needs no
+    plugin at all
    
 ## Migration from 0.8.x to 1.0.0
 
