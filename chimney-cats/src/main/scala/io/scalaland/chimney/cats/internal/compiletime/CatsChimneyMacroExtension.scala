@@ -47,12 +47,10 @@ final class CatsChimneyMacroExtension extends ChimneyMacroExtension { loader =>
 
     val TraverseCtor = Type.CtorK1.of[_root_.cats.Traverse]
     val OrderCtor = Type.Ctor1.of[_root_.cats.kernel.Order]
-    // `NonEmptyMap`/`NonEmptySet` are cats NEWTYPE aliases (`*Impl.Type`); round-tripping the constructor through
-    // `fromUntyped(of[...].asUntyped)` normalizes it so `unapply` matches the dealiased applied form (as kindlings does).
-    val NonEmptyMapCtor =
-      Type.Ctor2.fromUntyped[_root_.cats.data.NonEmptyMap](Type.Ctor2.of[_root_.cats.data.NonEmptyMap].asUntyped)
-    val NonEmptySetCtor =
-      Type.Ctor1.fromUntyped[_root_.cats.data.NonEmptySet](Type.Ctor1.of[_root_.cats.data.NonEmptySet].asUntyped)
+    // `NonEmptyMap`/`NonEmptySet` are cats NEWTYPE aliases (`*Impl.Type`); since hearth#389 `Type.CtorN.unapply`
+    // matches aliases and subtypes directly, so no `fromUntyped(of[...].asUntyped)` normalization is needed.
+    val NonEmptyMapCtor = Type.Ctor2.of[_root_.cats.data.NonEmptyMap]
+    val NonEmptySetCtor = Type.Ctor1.of[_root_.cats.data.NonEmptySet]
     // A concrete FunctionK application used only to obtain the `FunctionK` type constructor (there is no `CtorK2`).
     val FunctionKSample = Type.of[_root_.cats.arrow.FunctionK[List, Option]]
 
