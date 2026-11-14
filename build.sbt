@@ -18,8 +18,6 @@ val mavenCentralSnapshots = "Maven Central Snapshots" at "https://central.sonaty
 
 // TODO: remove this once we have a release of Scala 2.13.17
 Global / resolvers += "scala-integration" at "https://scala-ci.typesafe.com/artifactory/scala-integration/"
-// TODO: remove once Hearth and Kindlings releases replace the master snapshots pinned in project/BuildVersions.scala.
-Global / resolvers += mavenCentralSnapshots
 
 // Versions:
 //

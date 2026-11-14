@@ -21,13 +21,10 @@ object versions {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Dependencies.
-  // TODO: switch to a release once kubuszok/hearth#396, #401 and #402 (master c3f9223) are released. Keep it in sync
-  // with the Hearth version kindlingsCatsIntegration depends on (one Hearth version on every classpath).
-  val hearth = "0.4.3-90-gc3f9223-SNAPSHOT"
+  // Keep in sync with the Hearth version kindlingsCatsIntegration depends on (one Hearth version on every classpath).
+  val hearth = "0.4.4"
   val cats = "2.13.0"
-  // TODO: switch to a release once Kindlings master c27d0ea5 is released - this snapshot is built against
-  // hearth 0.4.3-90-gc3f9223-SNAPSHOT (see above).
-  val kindlingsCatsIntegration = "0.3.3-57-gc27d0ea-SNAPSHOT"
+  val kindlingsCatsIntegration = "0.3.4"
   val kindProjector = "0.13.4"
   val munit = "1.3.6"
   val scalaCollectionCompat = "2.14.0"
