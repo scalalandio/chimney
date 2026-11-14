@@ -18,8 +18,7 @@ val mavenCentralSnapshots = "Maven Central Snapshots" at "https://central.sonaty
 
 // TODO: remove this once we have a release of Scala 2.13.17
 Global / resolvers += "scala-integration" at "https://scala-ci.typesafe.com/artifactory/scala-integration/"
-// TODO: remove once a Hearth release includes kubuszok/hearth#388, #396 and #401 - needed for the master snapshot
-// pinned in project/BuildVersions.scala.
+// TODO: remove once Hearth and Kindlings releases replace the master snapshots pinned in project/BuildVersions.scala.
 Global / resolvers += mavenCentralSnapshots
 
 // Versions:
@@ -467,8 +466,8 @@ lazy val chimneyCats = projectMatrix
     // Hearth StandardMacroExtension with IsCollection/IsMap providers for cats.data types (NonEmptyList, Chain, ...).
     // Test-scoped: it is consulted at MACRO-EXPANSION time of the TEST sources (ServiceLoader on the compile
     // classpath of the code being derived) - the specs prove cats collections derive WITHOUT chimney-cats implicits.
-    // NOTE: kindlings' Scala 3 artifacts are built with Scala 3.9.x (TASTy 28.9) - loading them requires chimney to
-    // build with Scala 3.9+ (older compilers throw "Forward incompatible TASTy file" from hearth's extension loading).
+    // NOTE: kindlings' Scala 3 artifacts are built with Scala 3.8.4 (TASTy 28.8) - loading them requires chimney to
+    // build with Scala 3.8+ (older compilers throw "Forward incompatible TASTy file" from hearth's extension loading).
     // Since hearth#325 (0.4.1) an unloadable extension jar is SKIPPED gracefully instead of poisoning every derivation
     // in the module - but the specs here obviously still need the extension to actually load.
     libraryDependencies += "com.kubuszok" %% "kindlings-cats-integration" % versions.kindlingsCatsIntegration % Test
