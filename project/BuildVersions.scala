@@ -21,8 +21,9 @@ object versions {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Dependencies.
-  // Keep in sync with the Hearth version kindlingsCatsIntegration depends on (one Hearth version on every classpath).
-  val hearth = "0.4.4"
+  // TODO: switch to a release once kubuszok/hearth c6a37aac (Chimney #986 fix, master b8ae5aa) is released. Keep it in
+  // sync with the Hearth version kindlingsCatsIntegration depends on (one Hearth version on every classpath).
+  val hearth = "0.4.4-6-gb8ae5aa-SNAPSHOT"
   val cats = "2.13.0"
   val kindlingsCatsIntegration = "0.3.4"
   val kindProjector = "0.13.4"
