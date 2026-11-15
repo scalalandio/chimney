@@ -61,6 +61,33 @@ class IssuesScala3Spec extends ChimneySpec {
       )
     }
   }
+  group("fix issue #986 (exported sealed Type)") {
+    object Issue986 {
+      object Inner {
+        sealed trait Id
+        object Id {
+          case class Foo(value: String) extends Id
+        }
+        enum Color {
+          case Red, Blue
+        }
+      }
+      export Inner.{Color, Id}
+    }
+
+    import Issue986.{Color, Id}
+    case class Foo(id: Id, color: Color)
+    case class Bar(id: Id, color: Color)
+
+    test("sealed trait and enum") {
+      Foo(Id.Foo("a"), Color.Red).transformInto[Bar] ==> Bar(Id.Foo("a"), Color.Red)
+    }
+
+    test("sealed trait and enum transformIntoPartial") {
+      Foo(Id.Foo("a"), Color.Red).transformIntoPartial[Bar].asOption ==> Some(Bar(Id.Foo("a"), Color.Red))
+    }
+  }
+
   test("fix issue #818 (deterministic case class to tuple field ordering)") {
     case class Request(id: String, isPublic: Boolean)
     Request("abc", true).transformInto[(String, Boolean)] ==> ("abc", true)
