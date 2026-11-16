@@ -191,6 +191,8 @@ val publishSettings = Seq(
         // skip test configurations, and the "-internal" ones mirroring compile/runtime/test
         .filterNot { case (name, _) => name.toLowerCase.contains("test") || name.endsWith("-internal") }
         .flatMap { case (name, report) => report.modules.map(module => module.module -> name) }
+        // modules of this build always share its version, so only external dependencies matter
+        .filter { case (module, _) => module.organization != organization.value }
         .filter { case (module, _) => module.revision.endsWith("-SNAPSHOT") }
         .groupBy { case (module, _) => s"${module.organization}:${module.name}:${module.revision}" }
         .map { case (module, configurations) =>
