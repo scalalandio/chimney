@@ -51,6 +51,9 @@ private[runtime] trait IsCollectionImplicits2 extends IsCollectionImplicits3 { t
 
   // build-in Chimney support for Arrays is always provided
   implicit def arrayIsCollection[A]: IsCollection.Of[Array[A], A] = Impl.asInstanceOf[IsCollection.Of[Array[A], A]]
+
+  // build-in Chimney support for :: (non-empty List) is always provided - it has no Factory of its own
+  implicit def consIsCollection[A]: IsCollection.Of[::[A], A] = Impl.asInstanceOf[IsCollection.Of[::[A], A]]
 }
 private[runtime] trait IsCollectionImplicits3 extends IsCollectionImplicits4 { this: IsCollection.type =>
 

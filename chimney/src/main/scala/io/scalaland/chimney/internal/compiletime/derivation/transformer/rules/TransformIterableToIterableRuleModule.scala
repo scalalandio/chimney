@@ -18,6 +18,13 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
 
     private lazy val Tuple2Ctor: Type.Ctor2[Tuple2] = Type.Ctor2.of[Tuple2]
 
+    /** `scala.collection.immutable.::` - a statically non-empty `List`. There is no `Factory` building it, so as a
+      * target it is only partially buildable (Hearth's provider collects into a `List` and fails for an empty one).
+      * Mapping a `::` element by element keeps it non-empty, though, so `::[A] => ::[B]` is derived totally (see
+      * [[mapCons]]).
+      */
+    private lazy val ConsCtor: Type.Ctor1[scala.collection.immutable.::] = Type.Ctor1.of[scala.collection.immutable.::]
+
     // Not implicit, re-exposed as a method-local implicit val where needed (the hearth#316 sibling-implicit-lazy-Type
     // deadlock this guarded against is fixed since 0.4.1 - kept explicit to avoid ambient-implicit ambiguity).
     private lazy val AnyType: Type[Any] = Type.of[Any]
@@ -25,6 +32,39 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
     // Cross-quotes helpers in methods with regular type parameters (the cross-quotes helper-def pattern).
 
     private def iteratorTypeCompat[A: Type]: Type[Iterator[A]] = Type.of[Iterator[A]]
+
+    /** `{ val f = fn; val s = src; new ::(f(s.head), s.tail.map(f)) }` - total, since `src` is non-empty. */
+    @scala.annotation.nowarn("msg=is never used")
+    private def consMapCompat[A: Type, B: Type](
+        src: Expr[scala.collection.immutable.::[A]],
+        fn: Expr[A => B]
+    ): Expr[scala.collection.immutable.::[B]] = {
+      implicit val FnAB: Type[A => B] = Type.of[A => B]
+      implicit val ConsA: Type[scala.collection.immutable.::[A]] = Type.of[scala.collection.immutable.::[A]]
+      ValDefs.createVal[A => B](fn, FreshName.FromType).use { fRef =>
+        ValDefs.createVal[scala.collection.immutable.::[A]](src, FreshName.FromType).use { sRef =>
+          Expr.quote {
+            new scala.collection.immutable.::(
+              Expr.splice(fRef).apply(Expr.splice(sRef).head),
+              Expr.splice(sRef).tail.map(Expr.splice(fRef))
+            )
+          }
+        }
+      }
+    }
+
+    /** `new ::(e1.head, e1.tail ++ e2)` - appending to a non-empty list keeps it non-empty. */
+    private def consConcatCompat[A: Type](
+        e1: Expr[scala.collection.immutable.::[A]],
+        e2: Expr[scala.collection.immutable.::[A]]
+    ): Expr[scala.collection.immutable.::[A]] = {
+      implicit val ConsA: Type[scala.collection.immutable.::[A]] = Type.of[scala.collection.immutable.::[A]]
+      ValDefs.createVal[scala.collection.immutable.::[A]](e1, FreshName.FromType).use { ref =>
+        Expr.quote {
+          new scala.collection.immutable.::(Expr.splice(ref).head, Expr.splice(ref).tail ++ Expr.splice(e2))
+        }
+      }
+    }
 
     private def factoryTypeCompat[A: Type, C: Type]: Type[Factory[A, C]] = Type.of[Factory[A, C]]
 
@@ -161,6 +201,14 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
                 to2.value.asInstanceOf[TotallyOrPartiallyBuildIterable[To, (ToK, ToV)]],
                 failFast
               )
+          )
+        // `::[A] => ::[B]` in a total context: the target is only partially buildable in general, but mapping a
+        // non-empty source keeps it non-empty.
+        case (TransformationContext.ForTotal(_), ConsCtor(fromInner), ConsCtor(toInner)) =>
+          import fromInner.Underlying as InnerFrom, toInner.Underlying as InnerTo
+          Right(
+            Log.info(s"Resolved ${Type.prettyPrint[From]} and ${Type.prettyPrint[To]} as non-empty lists (::)") >>
+              mapCons[From, To, InnerFrom, InnerTo]
           )
         case (TransformationContext.ForTotal(_), TotallyOrPartiallyBuildIterable(_), PartiallyBuildIterable(to2)) =>
           Left(
@@ -376,6 +424,39 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
         }
     }
 
+    /** Total `::[InnerFrom] => ::[InnerTo]`: derives the item mapping (honouring `everyItem` overrides, like
+      * [[mapIterables]]) and rebuilds the non-empty list around it.
+      */
+    private def mapCons[From, To, InnerFrom: Type, InnerTo: Type](implicit
+        ctx: TransformationContext[From, To]
+    ): MIO[TransformationExpr[To]] =
+      LambdaBuilder
+        .of1[InnerFrom]()
+        .traverse[MIO, TransformationExpr[InnerTo]] { (newFromSrc: Expr[InnerFrom]) =>
+          useOverrideIfPresentOr("everyItem", ctx.config.filterCurrentOverridesForEveryItem) {
+            Log.namedScope("Derive collection's item mapping") {
+              deriveRecursiveTransformationExpr[InnerFrom, InnerTo](
+                newFromSrc,
+                followFrom = Path(_.everyItem),
+                followTo = Path(_.everyItem),
+                updateFallbacks = _ => Vector.empty
+              )
+            }
+          }
+        }
+        .flatMap { (to2P: LambdaBuilder[InnerFrom => *, TransformationExpr[InnerTo]]) =>
+          to2P.foldTransformationExpr { (totalP: LambdaBuilder[InnerFrom => *, Expr[InnerTo]]) =>
+            totalExpr(
+              consMapCompat[InnerFrom, InnerTo](
+                ctx.src.asInstanceOf[Expr[scala.collection.immutable.::[InnerFrom]]],
+                totalP.build[InnerTo]
+              ).asInstanceOf[Expr[To]]
+            )
+          } { (_: LambdaBuilder[InnerFrom => *, Expr[partial.Result[InnerTo]]]) =>
+            MIO.fail(new AssertionError("Derived Partial Expr for Total Context"))
+          }
+        }
+
     /** Wraps the derived per-item partial lambda into the `((InnerFrom, Int)) => partial.Result[InnerTo]` shape that
       * `partial.Result.traverse` over `iterator.zipWithIndex` expects.
       */
@@ -403,6 +484,23 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
     ): MIO[TransformationExpr[To]] = result1.map2(result2)(mergeTotalExprs[To])
 
     def mergeTotalExprs[To: Type](
+        texpr1: TransformationExpr[To],
+        texpr2: TransformationExpr[To]
+    ): TransformationExpr[To] = Type[To] match {
+      // `::` targets are not totally buildable - concatenate them directly (see [[mapCons]])
+      case ConsCtor(toInner) =>
+        import toInner.Underlying as InnerTo
+        type Cons = scala.collection.immutable.::[InnerTo]
+        TransformationExpr.fromTotal(
+          consConcatCompat[InnerTo](
+            texpr1.ensureTotal.asInstanceOf[Expr[Cons]],
+            texpr2.ensureTotal.asInstanceOf[Expr[Cons]]
+          ).asInstanceOf[Expr[To]]
+        )
+      case _ => mergeTotalBuildIterableExprs[To](texpr1, texpr2)
+    }
+
+    private def mergeTotalBuildIterableExprs[To: Type](
         texpr1: TransformationExpr[To],
         texpr2: TransformationExpr[To]
     ): TransformationExpr[To] = {

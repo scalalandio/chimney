@@ -710,6 +710,21 @@ class TotalMergingStdLibSpec extends ChimneySpec {
         .toVector ==> Vector("1" -> "2", "3" -> "4", "5" -> "6", "7" -> "8")
     }
 
+    test("should merge :: (non-empty List) with fallbacks when collection fallback merge strategy is enabled") {
+      implicit val i2s: Transformer[Int, String] = _.toString
+
+      ::(1, List(2))
+        .into[::[String]]
+        .withFallback(::(3, List(4)))
+        .enableCollectionFallbackMerge(SourceAppendFallback)
+        .transform ==> ::("1", List("2", "3", "4"))
+      ::(1, List(2))
+        .into[::[String]]
+        .withFallback(::(3, List(4)))
+        .enableCollectionFallbackMerge(FallbackAppendSource)
+        .transform ==> ::("3", List("4", "1", "2"))
+    }
+
     test("should merge sequential-types from fallback to source when FallbackAppendSource strategy is enabled") {
       import merges.Nested
 

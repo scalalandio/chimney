@@ -385,6 +385,22 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       .asErrorPathMessageStrings ==> Iterable("(1)" -> "empty value")
   }
 
+  test("transform from and into :: (non-empty List)") {
+    implicit val intParserOpt: PartialTransformer[String, Int] =
+      PartialTransformer(_.parseInt.asResult)
+
+    ::("123", List("456")).transformIntoPartial[::[Int]].asOption ==> Some(::(123, List(456)))
+    ::("123", List("456")).transformIntoPartial[Vector[Int]].asOption ==> Some(Vector(123, 456))
+    List("123", "456").transformIntoPartial[::[Int]].asOption ==> Some(::(123, List(456)))
+
+    ::("abc", List("456", "ghi"))
+      .transformIntoPartial[::[Int]](failFast = false)
+      .asErrorPathMessageStrings ==> Iterable("(0)" -> "empty value", "(2)" -> "empty value")
+    List.empty[String].transformIntoPartial[::[Int]].asErrorPathMessageStrings ==> Iterable(
+      "" -> "Expected a non-empty list for ::"
+    )
+  }
+
   test("transform Array-type to Array-type, using Total Transformer for inner type transformation") {
     implicit val intPrinter: Transformer[Int, String] = _.toString
 

@@ -221,6 +221,31 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
       .transform ==> List(UserPLStd(1, "Kuba", Some(28)))
   }
 
+  test("transform from and into :: (non-empty List)") {
+    ::(Foo("a"), List(Foo("b"))).transformInto[::[Bar]] ==> ::(Bar("a"), List(Bar("b")))
+    ::(Foo("a"), Nil).transformInto[::[Bar]] ==> ::(Bar("a"), Nil)
+    ::("a", List("b")).transformInto[::[String]] ==> ::("a", List("b"))
+
+    ::(Foo("a"), List(Foo("b"))).transformInto[List[Bar]] ==> List(Bar("a"), Bar("b"))
+    ::(Foo("a"), List(Foo("b"))).transformInto[Vector[Bar]] ==> Vector(Bar("a"), Bar("b"))
+    ::("a", List("b")).transformInto[Seq[String]] ==> Seq("a", "b")
+
+    ::(Foo("a"), List(Foo("b"))).into[::[Bar]].withFieldConst(_.everyItem.value, "override").transform ==> ::(
+      Bar("override"),
+      List(Bar("override"))
+    )
+
+    NonEmptyFoos(::(Foo("a"), List(Foo("b")))).transformInto[NonEmptyBars] ==> NonEmptyBars(
+      ::(Bar("a"), List(Bar("b")))
+    )
+  }
+
+  test("not support total transformation into :: from a possibly empty collection") {
+    compileErrors("""List(Foo("a")).transformInto[::[Bar]]""").check(
+      "Chimney can't derive transformation from scala.collection.immutable.List[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo] to scala.collection.immutable.::[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar]"
+    )
+  }
+
   test("transform from Map-type to Map-type") {
     Map("test" -> Foo("a")).transformInto[Map[String, Bar]] ==> Map("test" -> Bar("a"))
     Map("test" -> "a").transformInto[Map[String, String]] ==> Map("test" -> "a")
@@ -351,5 +376,7 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
 object TotalTransformerStdLibTypesSpec {
 
   case class Foo(value: String)
+  case class NonEmptyFoos(values: ::[Foo])
+  case class NonEmptyBars(values: ::[Bar])
   case class Bar(value: String)
 }
