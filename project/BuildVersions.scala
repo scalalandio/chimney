@@ -22,9 +22,9 @@ object versions {
 
   // Dependencies.
   // Keep in sync with the Hearth version kindlingsCatsIntegration depends on (one Hearth version on every classpath).
-  val hearth = "0.4.4"
+  val hearth = "0.4.4-13-g9038396-SNAPSHOT"
   val cats = "2.13.0"
-  val kindlingsCatsIntegration = "0.3.4"
+  val kindlingsCatsIntegration = "0.3.4-67-g607aa56-SNAPSHOT"
   val kindProjector = "0.13.4"
   val munit = "1.3.6"
   val scalaCollectionCompat = "2.14.0"
