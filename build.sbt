@@ -13,8 +13,11 @@ ThisBuild / scalafmtOnCompile := !isCI
 // while chimney uses 0.5.12 - a compatible 0.5.x upgrade sbt resolves to 0.5.12. Restore the sbt 1.x warn level.
 ThisBuild / evictionErrorLevel := Level.Warn
 
-// Used to publish snapshots to Maven Central.
+// Used to publish snapshots to Maven Central, and to resolve them: we test against snapshots of our dependencies (e.g.
+// Hearth, Kindlings) before they are released, so this resolver is permanent. Releasing against a snapshot dependency
+// is prevented by `checkNoSnapshotDependencies` below instead.
 val mavenCentralSnapshots = "Maven Central Snapshots" at "https://central.sonatype.com/repository/maven-snapshots"
+Global / resolvers += mavenCentralSnapshots
 
 // TODO: remove this once we have a release of Scala 2.13.17
 Global / resolvers += "scala-integration" at "https://scala-ci.typesafe.com/artifactory/scala-integration/"
@@ -170,7 +173,40 @@ val dependencies = Seq(
 
 val versionSchemeSettings = Seq(versionScheme := Some("early-semver"))
 
+// Fails a RELEASE (non-snapshot version) of a published module that depends on a -SNAPSHOT artifact in any
+// non-test configuration (library dependencies, transitive ones, compiler plugins). Snapshot publishing and
+// publishLocal are unaffected, so we can keep testing (and publishing snapshots) against dependency snapshots.
+// @transient: never cache it (sbt 2) - it has to run on every release.
+@transient
+val checkNoSnapshotDependencies =
+  taskKey[Unit]("Fails when a release of a published module depends on a -SNAPSHOT artifact")
+
 val publishSettings = Seq(
+  checkNoSnapshotDependencies := {
+    val project = thisProject.value.id
+    if ((publish / skip).value || isSnapshot.value) ()
+    else {
+      val snapshots = update.value.configurations
+        .map(report => report.configuration.name -> report)
+        // skip test configurations, and the "-internal" ones mirroring compile/runtime/test
+        .filterNot { case (name, _) => name.toLowerCase.contains("test") || name.endsWith("-internal") }
+        .flatMap { case (name, report) => report.modules.map(module => module.module -> name) }
+        .filter { case (module, _) => module.revision.endsWith("-SNAPSHOT") }
+        .groupBy { case (module, _) => s"${module.organization}:${module.name}:${module.revision}" }
+        .map { case (module, configurations) =>
+          s"$module (${configurations.map(_._2).distinct.sorted.mkString(", ")})"
+        }
+        .toList
+        .sorted
+      if (snapshots.nonEmpty) {
+        val message = s"Refusing to release $project ${version.value} with SNAPSHOT dependencies:\n" +
+          snapshots.map(dependency => s"  - $dependency").mkString("\n")
+        throw new MessageOnlyException(message)
+      }
+    }
+  },
+  publish := publish.dependsOn(checkNoSnapshotDependencies).value,
+  publishSigned := publishSigned.dependsOn(checkNoSnapshotDependencies).value,
   organization := "io.scalaland",
   homepage := Some(url("https://scalaland.io/chimney")),
   organizationHomepage := Some(url("https://scalaland.io")),
