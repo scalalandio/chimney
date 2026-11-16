@@ -4521,6 +4521,42 @@ With `PartialTransformer`s ware able to handle fallible conversions, tracing at 
     If you need to provide support for your collection types, please, read about
     [custom collection types](cookbook.md#custom-collection-types).
 
+`scala.collection.immutable.::` (a `List` known to be non-empty) has no `Factory`, but it is supported as well:
+
+  - as a source, it can be converted like any other `List`,
+  - as a target, it can be converted from another `::` with both `Transformer`s and `PartialTransformer`s (mapping
+    a non-empty list keeps it non-empty), and from any other collection only with `PartialTransformer`s (which fail
+    for an empty collection).
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(a: String)
+    case class Bar(a: Option[String])
+
+    pprint.pprintln(
+      ::(Foo("a"), List(Foo("b"))).transformInto[::[Bar]]
+    )
+    pprint.pprintln(
+      ::(Foo("a"), List(Foo("b"))).transformInto[Vector[Bar]]
+    )
+    pprint.pprintln(
+      List(Foo("a")).transformIntoPartial[::[Bar]].asOption
+    )
+    pprint.pprintln(
+      List.empty[Foo].transformIntoPartial[::[Bar]].asOption
+    )
+    // expected output:
+    // List(Bar(a = Some(value = "a")), Bar(a = Some(value = "b")))
+    // Vector(Bar(a = Some(value = "a")), Bar(a = Some(value = "b")))
+    // Some(value = List(Bar(a = Some(value = "a"))))
+    // None
+    ```
+
 !!! tip
 
     You can use all the flags, renames, value provisions, and computations that are available to case classes,
