@@ -1,5 +1,5 @@
 // git
-addSbtPlugin("com.github.sbt" % "sbt-git" % "2.2.0")
+addSbtPlugin("com.github.sbt" % "sbt-git" % "3.0.0")
 // linters
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.6.2")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.4.4")
