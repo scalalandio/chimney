@@ -7,7 +7,7 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.4.4")
 // sbt-projectmatrix was in-sourced into sbt 2 core (the standalone plugin has no sbt 2 build), so the
 // `projectMatrix`/`VirtualAxis`/`MatrixAction` API now comes from sbt itself - no addSbtPlugin needed.
 addSbtPlugin("com.indoorvivants" % "sbt-commandmatrix" % "0.2.0")
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.22.0")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.23.0")
 addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.5.13")
 // publishing
 addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.4.0")
