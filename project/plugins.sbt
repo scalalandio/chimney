@@ -23,7 +23,7 @@ addSbtPlugin("org.jetbrains.scala" % "sbt-ide-settings" % "1.1.4")
 // (0.11.20) still resolves the protoc-gen_2.13/protoc-bridge_2.13 chain, and mixing that with sbt-protoc's
 // protoc-bridge_3 fails sbt's cross-version-suffix check. So the sbt 2 migration forces scalapb 1.0.0-alpha.6
 // for BOTH the codegen (here) and the runtime (versions.scalapbRuntime derives from it). See build.sbt.
-addSbtPlugin("com.thesamet" % "sbt-protoc" % "1.1.0-RC2")
+addSbtPlugin("com.thesamet" % "sbt-protoc" % "1.1.0-RC3")
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "1.0.0-alpha.6"
 // documentation
 addSbtPlugin("com.github.reibitto" % "sbt-welcome" % "0.6.0")
